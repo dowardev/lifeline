@@ -105,476 +105,91 @@
             </tr>
 
             <tr>
-              <td>
+              <td v-for="date in [0, 1, 2, 3, 4, 5, 6]" :key="date">
                 <ion-button
                   fill="clear"
                   :class="{
-                    buttonDaySelected: fechas[0].selected,
+                    buttonDaySelected: fechas[date].selected,
                   }"
-                  v-if="fechas[0].day != ''"
+                  v-if="fechas[date].day != ''"
+                  v-on:click="selectDay()"
                 >
-                  {{ fechas[0].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[1].selected,
-                  }"
-                  v-if="fechas[1].day != ''"
-                >
-                  {{ fechas[1].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[2].selected,
-                  }"
-                  v-if="fechas[2].day != ''"
-                >
-                  {{ fechas[2].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[3].selected,
-                  }"
-                  v-if="fechas[3].day != ''"
-                >
-                  {{ fechas[3].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[4].selected,
-                  }"
-                  v-if="fechas[4].day != ''"
-                >
-                  {{ fechas[4].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[5].selected,
-                  }"
-                  v-if="fechas[5].day != ''"
-                >
-                  {{ fechas[5].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[6].selected,
-                  }"
-                  v-if="fechas[6].day != ''"
-                >
-                  {{ fechas[6].day }}
+                  {{ fechas[date].day }}
                 </ion-button>
               </td>
             </tr>
+
             <tr>
-              <td>
+              <td v-for="date in [7, 8, 9, 10, 11, 12, 13]" :key="date">
                 <ion-button
                   fill="clear"
                   :class="{
-                    buttonDaySelected: fechas[7].selected,
+                    buttonDaySelected: fechas[date].selected,
                   }"
-                  v-if="fechas[7].day != ''"
+                  v-if="fechas[date].day != ''"
+                  v-on:click="selectDay()"
                 >
-                  {{ fechas[7].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[8].selected,
-                  }"
-                  v-if="fechas[8].day != ''"
-                >
-                  {{ fechas[8].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[9].selected,
-                  }"
-                  v-if="fechas[9].day != ''"
-                >
-                  {{ fechas[9].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[10].selected,
-                  }"
-                  v-if="fechas[10].day != ''"
-                >
-                  {{ fechas[10].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[11].selected,
-                  }"
-                  v-if="fechas[11].day != ''"
-                >
-                  {{ fechas[11].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[12].selected,
-                  }"
-                  v-if="fechas[12].day != ''"
-                >
-                  {{ fechas[12].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[13].selected,
-                  }"
-                  v-if="fechas[13].day != ''"
-                >
-                  {{ fechas[13].day }}
+                  {{ fechas[date].day }}
                 </ion-button>
               </td>
             </tr>
+
             <tr>
-              <td>
+              <td v-for="date in [14, 15, 16, 17, 18, 19, 20]" :key="date">
                 <ion-button
                   fill="clear"
                   :class="{
-                    buttonDaySelected: fechas[14].selected,
+                    buttonDaySelected: fechas[date].selected,
                   }"
-                  v-if="fechas[14].day != ''"
+                  v-if="fechas[date].day != ''"
+                  v-on:click="selectDay()"
                 >
-                  {{ fechas[14].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[15].selected,
-                  }"
-                  v-if="fechas[15].day != ''"
-                >
-                  {{ fechas[15].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[16].selected,
-                  }"
-                  v-if="fechas[16].day != ''"
-                >
-                  {{ fechas[16].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[17].selected,
-                  }"
-                  v-if="fechas[17].day != ''"
-                >
-                  {{ fechas[17].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[18].selected,
-                  }"
-                  v-if="fechas[18].day != ''"
-                >
-                  {{ fechas[18].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[19].selected,
-                  }"
-                  v-if="fechas[19].day != ''"
-                >
-                  {{ fechas[19].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[20].selected,
-                  }"
-                  v-if="fechas[20].day != ''"
-                >
-                  {{ fechas[20].day }}
+                  {{ fechas[date].day }}
                 </ion-button>
               </td>
             </tr>
+
             <tr>
-              <td>
+              <td v-for="date in [21, 22, 23, 24, 25, 26, 27]" :key="date">
                 <ion-button
                   fill="clear"
                   :class="{
-                    buttonDaySelected: fechas[21].selected,
+                    buttonDaySelected: fechas[date].selected,
                   }"
-                  v-if="fechas[21].day != ''"
+                  v-if="fechas[date].day != ''"
+                  v-on:click="selectDay()"
                 >
-                  {{ fechas[21].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[22].selected,
-                  }"
-                  v-if="fechas[22].day != ''"
-                >
-                  {{ fechas[22].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[23].selected,
-                  }"
-                  v-if="fechas[23].day != ''"
-                >
-                  {{ fechas[23].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[24].selected,
-                  }"
-                  v-if="fechas[24].day != ''"
-                >
-                  {{ fechas[24].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[25].selected,
-                  }"
-                  v-if="fechas[25].day != ''"
-                >
-                  {{ fechas[25].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[26].selected,
-                  }"
-                  v-if="fechas[26].day != ''"
-                >
-                  {{ fechas[26].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[27].selected,
-                  }"
-                  v-if="fechas[27].day != ''"
-                >
-                  {{ fechas[27].day }}
+                  {{ fechas[date].day }}
                 </ion-button>
               </td>
             </tr>
+
             <tr>
-              <td>
+              <td v-for="date in [28, 29, 30, 31, 32, 33, 34]" :key="date">
                 <ion-button
                   fill="clear"
                   :class="{
-                    buttonDaySelected: fechas[28].selected,
+                    buttonDaySelected: fechas[date].selected,
                   }"
-                  v-if="fechas[28].day != ''"
+                  v-if="fechas[date].day != ''"
+                  v-on:click="selectDay()"
                 >
-                  {{ fechas[28].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[29].selected,
-                  }"
-                  v-if="fechas[29].day != ''"
-                >
-                  {{ fechas[29].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[30].selected,
-                  }"
-                  v-if="fechas[30].day != ''"
-                >
-                  {{ fechas[30].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[31].selected,
-                  }"
-                  v-if="fechas[31].day != ''"
-                >
-                  {{ fechas[31].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[32].selected,
-                  }"
-                  v-if="fechas[32].day != ''"
-                >
-                  {{ fechas[32].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[33].selected,
-                  }"
-                  v-if="fechas[33].day != ''"
-                >
-                  {{ fechas[33].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[34].selected,
-                  }"
-                  v-if="fechas[34].day != ''"
-                >
-                  {{ fechas[34].day }}
+                  {{ fechas[date].day }}
                 </ion-button>
               </td>
             </tr>
+
             <tr>
-              <td>
+              <td v-for="date in [35, 36, 37, 38, 39, 40, 41]" :key="date">
                 <ion-button
                   fill="clear"
                   :class="{
-                    buttonDaySelected: fechas[35].selected,
+                    buttonDaySelected: fechas[date].selected,
                   }"
-                  v-if="fechas[35].day != ''"
+                  v-if="fechas[date].day != ''"
+                  v-on:click="selectDay()"
                 >
-                  {{ fechas[35].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[36].selected,
-                  }"
-                  v-if="fechas[36].day != ''"
-                >
-                  {{ fechas[36].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[37].selected,
-                  }"
-                  v-if="fechas[37].day != ''"
-                >
-                  {{ fechas[37].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[38].selected,
-                  }"
-                  v-if="fechas[38].day != ''"
-                >
-                  {{ fechas[38].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[39].selected,
-                  }"
-                  v-if="fechas[39].day != ''"
-                >
-                  {{ fechas[39].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[40].selected,
-                  }"
-                  v-if="fechas[40].day != ''"
-                >
-                  {{ fechas[40].day }}
-                </ion-button>
-              </td>
-              <td>
-                <ion-button
-                  fill="clear"
-                  :class="{
-                    buttonDaySelected: fechas[41].selected,
-                  }"
-                  v-if="fechas[41].day != ''"
-                >
-                  {{ fechas[41].day }}
+                  {{ fechas[date].day }}
                 </ion-button>
               </td>
             </tr>
@@ -621,10 +236,6 @@ export default defineComponent({
     return { chevronBackOutline, chevronForwardOutline, todayOutline };
   },
   mounted() {
-    this.today();
-    this.daySelected = this.currentDay;
-    this.monthSelected = this.currentMonth;
-    this.yearSelected = this.currentYear;
     this.today();
   },
   data() {
@@ -706,7 +317,6 @@ export default defineComponent({
       this.setCurrentMonth();
       this.setCurrentYear();
       this.generateYears();
-      this.createMonth();
       this.daySelected = this.currentDay;
       this.monthSelected = this.currentMonth;
       this.yearSelected = this.currentYear;
@@ -845,9 +455,9 @@ export default defineComponent({
       }
       this.createMonth();
     },
-    /*   selectDay(){
-
-    } */
+    selectDay() {
+      this.$router.push("/eventos");
+    },
   },
 });
 </script>
