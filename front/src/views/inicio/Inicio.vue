@@ -2,6 +2,9 @@
   <ion-page>
     <ion-header class="ion-no-border" mode="ios" :translucent="true">
       <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-menu-button menu="firstMenu" mode="md"></ion-menu-button>
+        </ion-buttons>
         <ion-title>Inicio</ion-title>
         <ion-buttons slot="end">
           <ion-button v-on:click="today()">
@@ -208,10 +211,10 @@ import {
   IonTitle,
   IonToolbar,
   IonItem,
-  IonLabel,
   IonSelect,
   IonSelectOption,
   IonButton,
+  IonMenuButton,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import {
@@ -231,6 +234,7 @@ export default defineComponent({
     IonSelectOption,
     IonTitle,
     IonButton,
+    IonMenuButton,
   },
   setup() {
     return { chevronBackOutline, chevronForwardOutline, todayOutline };
