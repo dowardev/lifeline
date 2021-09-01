@@ -3,9 +3,11 @@
     <ion-header class="ion-no-border" mode="ios" :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-menu-button menu="firstMenu" mode="md"></ion-menu-button>
+          <ion-button v-on:click="$router.go(-1)">
+            <ion-icon :icon="chevronBackOutline"></ion-icon>
+          </ion-button>
         </ion-buttons>
-        <ion-title>Blank</ion-title>
+        <ion-title>Crear cuenta</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -26,7 +28,7 @@
             <ion-card-header>
               <div class="center">
                 <img
-                  src="../../../public/assets/otros/user.svg"
+                  src="../../../../public/assets/otros/user.svg"
                   alt=""
                   class="imagen-usuario"
                 />
@@ -160,8 +162,8 @@ import {
   loadingController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import sesion from "../../services/sesion.vue";
-import { eyeOutline, eyeOffOutline } from "ionicons/icons";
+import sesion from "../../../services/sesion.vue";
+import { eyeOutline, eyeOffOutline, chevronBackOutline } from "ionicons/icons";
 export default defineComponent({
   name: "Register",
   components: {
@@ -178,6 +180,7 @@ export default defineComponent({
       userRegister,
       eyeOutline,
       eyeOffOutline,
+      chevronBackOutline,
     };
   },
   data() {
@@ -204,9 +207,8 @@ export default defineComponent({
       this.userRegister(this.name, this.user, email, this.password)
         .then(() => {
           loading.dismiss();
-          // this.alertConfirmacionemail();
+          this.alertConfirmacionEmail();
           this.clearInputs();
-          this.$router.push("/");
           this.presentToast("Registrado correctamente", "success");
         })
         .catch((e) => {
@@ -240,15 +242,15 @@ export default defineComponent({
     changeInputTypePassword2(type: string) {
       this.inputTypePassword2 = type;
     },
-    async alertConfirmacionemail() {
+    async alertConfirmacionEmail() {
       const alert = await alertController.create({
         cssClass: "my-custom-class",
         header: "Alerta",
         subHeader: "Confirmacion",
         message:
-          "Hemos enviado un correo electronico a " +
+          "Hemos enviado un correo electronico a <b>" +
           this.email +
-          " con un enlace para verificar tu identidad.",
+          "</b> con un enlace para verificar tu identidad.",
         buttons: [
           {
             text: "Continuar",

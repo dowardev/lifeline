@@ -6,7 +6,8 @@ import Eventos from "../views/inicio/eventos/Eventos.vue";
 import Evento from "../views/inicio/eventos/evento/Evento.vue";
 import Horario from "../views/inicio/eventos/evento/horario/Horario.vue";
 import Repetir from "../views/inicio/eventos/evento/repetir/Repetir.vue";
-import Register from "../views/sesion/Register.vue";
+import Register from "../views/sesion/register/Register.vue";
+import Login from "../views/sesion/login/Login.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -47,6 +48,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/registro",
     name: "Register",
     component: Register,
+  },
+  {
+    path: "/sesion",
+    name: "Login",
+    component: Login,
   },
 ];
 

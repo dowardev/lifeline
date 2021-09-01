@@ -8,7 +8,6 @@ export default function() {
     email: string,
     password: string
   ) {
-    console.log(name, user, email, password);
     return axios.post(
       "http://localhost:8000/api/auth/signup",
       { headers: { Accept: "application/json" } },
@@ -22,8 +21,21 @@ export default function() {
       }
     );
   }
+  function userLogin(email: string, password: string) {
+    return axios.post(
+      "http://localhost:8000/api/auth/login",
+      { headers: { Accept: "application/json" } },
+      {
+        params: {
+          email,
+          password,
+        },
+      }
+    );
+  }
   return {
     userRegister,
+    userLogin,
   };
 }
 </script>

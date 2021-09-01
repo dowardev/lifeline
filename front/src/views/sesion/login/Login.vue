@@ -1,0 +1,298 @@
+<template>
+  <ion-page>
+    <ion-header class="ion-no-border" mode="ios" :translucent="true">
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button v-on:click="$router.go(-1)">
+            <ion-icon :icon="chevronBackOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+        <ion-title>Iniciar sesion</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content :fullscreen="true">
+      <img
+        src="https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg"
+        class="img-fondo"
+        style="opacity: 90%"
+      />
+      <ion-row class="ion-padding">
+        <ion-col size="12">
+          <h1 style="color: white">Hola, es un gusto tenerte de vuelta</h1>
+        </ion-col>
+      </ion-row>
+      <ion-row class="center center-vertical-card-login">
+        <ion-col size="12" size-lg="6" size-xl="4" class="card-form">
+          <ion-card>
+            <div class="center">
+              <img
+                src="../../../../public/assets/otros/key.svg"
+                alt=""
+                class="imagen-usuario"
+              />
+            </div>
+            <ion-card-content>
+              <ion-item>
+                <ion-icon
+                  name="mail-outline"
+                  style="font-size: 20px; margin-top: 24px"
+                  slot="start"
+                ></ion-icon>
+                <ion-label position="floating">Correo electronico</ion-label>
+                <ion-input v-model="mail" type="mail"></ion-input>
+              </ion-item>
+              <div class="error ion-padding" v-if="errorMessageMail.length > 0">
+                <p v-for="error in errorMessageMail" :key="error">
+                  {{ error }}
+                </p>
+              </div>
+
+              <ion-item>
+                <ion-icon
+                  name="key-outline"
+                  style="font-size: 20px; margin-top: 24px"
+                  slot="start"
+                ></ion-icon>
+                <ion-label position="floating">Contraseña</ion-label>
+                <ion-input
+                  v-model="password"
+                  :type="inputTypePassword"
+                ></ion-input>
+                <ion-button
+                  slot="end"
+                  fill="clear"
+                  v-if="inputTypePassword == 'text'"
+                  v-on:click="changeInputTypePassword('password')"
+                  style="margin-top: 20px"
+                >
+                  <ion-icon :icon="eyeOffOutline"></ion-icon>
+                </ion-button>
+                <ion-button
+                  slot="end"
+                  fill="clear"
+                  v-if="inputTypePassword == 'password'"
+                  v-on:click="changeInputTypePassword('text')"
+                  style="margin-top: 20px"
+                >
+                  <ion-icon :icon="eyeOutline"></ion-icon>
+                </ion-button>
+              </ion-item>
+
+              <div v-if="errorMessagePassword.length > 0">
+                <p
+                  class="error ion-padding"
+                  *ngFor="let error of errorMessagePassword"
+                >
+                  {{ error }}
+                </p>
+              </div>
+
+              <ion-row>
+                <ion-col size="12">
+                  <ion-button fill="clear" expand="block" v-on:click="login()">
+                    Iniciar sesion
+                  </ion-button>
+                </ion-col>
+              </ion-row>
+            </ion-card-content>
+          </ion-card>
+          <ion-row>
+            <ion-col size="12" class="center">
+              <small>
+                <ion-text
+                  color="primary"
+                  v-on:click="$router.push('/restablecer')"
+                >
+                  ¿Olvidaste la contraseña?</ion-text
+                >
+              </small>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="12" class="center">
+              <small>
+                <ion-text color="primary" v-on:click="$router.push('/registro')"
+                  >Crear cuenta</ion-text
+                >
+              </small>
+            </ion-col>
+          </ion-row>
+        </ion-col>
+      </ion-row>
+    </ion-content>
+  </ion-page>
+</template>
+
+<script lang="ts">
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  toastController,
+  alertController,
+  IonInput,
+  loadingController,
+} from "@ionic/vue";
+import { defineComponent } from "vue";
+import { chevronBackOutline, eyeOffOutline, eyeOutline } from "ionicons/icons";
+import sesion from "../../../services/sesion.vue";
+import user from "../../../services/user.vue";
+
+export default defineComponent({
+  name: "Login",
+  components: {
+    IonContent,
+    IonHeader,
+    IonPage,
+    IonTitle,
+    IonToolbar,
+    IonInput,
+  },
+  setup() {
+    const { userLogin } = sesion();
+    const { setUserToken, getUserToken } = user();
+    return {
+      chevronBackOutline,
+      userLogin,
+      setUserToken,
+      getUserToken,
+      eyeOffOutline,
+      eyeOutline,
+    };
+  },
+  data() {
+    return {
+      segmentModel: "inicio",
+      password: "",
+      mail: "",
+      errorMessageMail: [],
+      errorMessagePassword: [],
+      inputTypePassword: "password",
+    };
+  },
+  methods: {
+    async presentToast(message: string, color: string) {
+      const toast = await toastController.create({
+        message,
+        duration: 3000,
+        mode: "ios",
+        color,
+      });
+      toast.present();
+    },
+    async login() {
+      const loading = await this.presentLoading();
+      loading.present();
+      this.userLogin(this.mail.replace(/\s+/g, ""), this.password)
+        .then((response) => {
+          loading.dismiss();
+          this.setUserToken(response.data.access_token);
+          this.clearInputs();
+          this.$router.push("/");
+          this.presentToast("Bienvenido", "success");
+        })
+        .catch((e) => {
+          loading.dismiss();
+          if (e.response.data.message == "Unauthorized") {
+            this.presentToast("Credenciales incorrectas", "danger");
+          }
+        });
+    },
+    clearInputs() {
+      this.password = "";
+      this.mail = "";
+    },
+    changeInputTypePassword(type: string) {
+      this.inputTypePassword = type;
+    },
+    async alertConfirmacionEmail() {
+      const alert = await alertController.create({
+        cssClass: "my-custom-class",
+        header: "Alerta",
+        subHeader: "Confirmacion",
+        message:
+          "Hemos enviado un correo electronico a " +
+          this.mail +
+          " con un enlace para verificar tu identidad.",
+        buttons: [
+          {
+            text: "Continuar",
+            // handler: () => {},
+          },
+        ],
+      });
+
+      await alert.present();
+    },
+    async presentLoading() {
+      const loading = await loadingController.create({
+        cssClass: "my-custom-class",
+        message: "Espere por favor",
+      });
+
+      // await loading.present();
+      return loading;
+    },
+  },
+});
+</script>
+
+<style scoped>
+.error {
+  color: red;
+}
+.center {
+  display: flex;
+  justify-content: center;
+}
+.imagen-usuario {
+  border-radius: 50%;
+  width: 90px;
+}
+.center-vertical-card-login {
+  align-items: center;
+  height: 83vh;
+}
+.img-fondo {
+  width: 100%;
+  height: 50%;
+  position: absolute;
+}
+.card-form {
+  margin-bottom: 18vh;
+}
+
+@media only screen and (min-width: 768px) {
+  .img-fondo {
+    width: 100%;
+    height: 40%;
+    position: absolute;
+  }
+  .card-form {
+    margin-top: 0;
+  }
+}
+@media only screen and (min-width: 992px) {
+  .img-fondo {
+    width: 100%;
+    height: auto;
+    position: absolute;
+  }
+  .card-form {
+    margin-top: 12vh;
+  }
+}
+@media only screen and (min-width: 1200px) {
+  .img-fondo {
+    width: 100%;
+    height: 50%;
+    position: absolute;
+  }
+  .card-form {
+    margin-top: 4vh;
+  }
+}
+</style>
