@@ -18,6 +18,8 @@
     "@ionic/storage": "^3.0.6",
     "@ionic/vue": "^5.4.0",
     "@ionic/vue-router": "^5.4.0",
+    "@vuelidate/core": "^2.0.0-alpha.24",
+    "@vuelidate/validators": "^2.0.0-alpha.21",
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
     "vue": "^3.2.1",

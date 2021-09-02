@@ -36,99 +36,111 @@
             </ion-card-header>
 
             <ion-card-content>
-              <ion-item>
-                <ion-label position="floating">Nombre</ion-label>
-                <ion-input v-model="name"></ion-input>
-              </ion-item>
-              <div class="error ion-padding" v-if="errorMessageName.length > 0">
-                <p v-for="error in errorMessageName" :key="error">
-                  {{ error }}
-                </p>
-              </div>
-
-              <ion-item>
-                <ion-label position="floating">Usuario</ion-label>
-                <ion-input v-model="user"></ion-input>
-              </ion-item>
-              <div class="error ion-padding" v-if="errorMessageName.length > 0">
-                <p v-for="error in errorMessageName" :key="error">
-                  {{ error }}
-                </p>
-              </div>
-
-              <ion-item>
-                <ion-label position="floating">Correo electronico</ion-label>
-                <ion-input v-model="email"></ion-input>
-              </ion-item>
-              <div class="error ion-padding" v-if="errorMessageMail.length > 0">
-                <p v-for="error in errorMessageMail" :key="error">
-                  {{ error }}
-                </p>
-              </div>
-
-              <ion-item>
-                <ion-label position="floating">Contraseña</ion-label>
-                <ion-input
-                  v-model="password"
-                  :type="inputTypePassword1"
-                ></ion-input>
-                <ion-button
-                  slot="end"
-                  fill="clear"
-                  v-if="inputTypePassword1 == 'text'"
-                  v-on:click="changeInputTypePassword1('password')"
-                  style="margin-top: 20px"
+              <form @submit.prevent="onSubmit">
+                <ion-item>
+                  <ion-label position="floating">Nombre</ion-label>
+                  <ion-input
+                    v-model="v$.form.name.$model"
+                    autocomplete="name"
+                  ></ion-input>
+                </ion-item>
+                <div
+                  v-for="(error, index) of v$.form.name.$errors"
+                  :key="index"
                 >
-                  <ion-icon :icon="eyeOffOutline"></ion-icon>
-                </ion-button>
-                <ion-button
-                  slot="end"
-                  fill="clear"
-                  v-if="inputTypePassword1 == 'password'"
-                  v-on:click="changeInputTypePassword1('text')"
-                  style="margin-top: 20px"
-                >
-                  <ion-icon :icon="eyeOutline"></ion-icon>
-                </ion-button>
-              </ion-item>
-              <div
-                class="error ion-padding"
-                v-if="errorMessagePassword.length > 0"
-              >
-                <p *ngFor="let error of errorMessagePassword">{{ error }}</p>
-              </div>
+                  <div class="error">{{ error.$message }}</div>
+                </div>
 
-              <ion-item>
-                <ion-label position="floating">Repite contraseña</ion-label>
-                <ion-input
-                  v-model="password2"
-                  :type="inputTypePassword2"
-                ></ion-input>
-                <ion-button
-                  slot="end"
-                  fill="clear"
-                  v-if="inputTypePassword2 == 'text'"
-                  v-on:click="changeInputTypePassword2('password')"
-                  style="margin-top: 20px"
+                <ion-item>
+                  <ion-label position="floating">Usuario</ion-label>
+                  <ion-input v-model="v$.form.user.$model"></ion-input>
+                </ion-item>
+                <div
+                  v-for="(error, index) of v$.form.user.$errors"
+                  :key="index"
                 >
-                  <ion-icon :icon="eyeOffOutline"></ion-icon>
-                </ion-button>
-                <ion-button
-                  slot="end"
-                  fill="clear"
-                  v-if="inputTypePassword2 == 'password'"
-                  v-on:click="changeInputTypePassword2('text')"
-                  style="margin-top: 20px"
+                  <div class="error">{{ error.$message }}</div>
+                </div>
+
+                <ion-item>
+                  <ion-label position="floating">Correo electronico</ion-label>
+                  <ion-input
+                    v-model="v$.form.email.$model"
+                    autocomplete="email"
+                  ></ion-input>
+                </ion-item>
+                <div
+                  v-for="(error, index) of v$.form.email.$errors"
+                  :key="index"
                 >
-                  <ion-icon :icon="eyeOutline"></ion-icon>
-                </ion-button>
-              </ion-item>
-              <div
-                class="error ion-padding"
-                v-if="errorMessagePassword2.length > 0"
-              >
-                <p *ngFor="let error of errorMessagePassword2">{{ error }}</p>
-              </div>
+                  <div class="error">{{ error.$message }}</div>
+                </div>
+
+                <ion-item>
+                  <ion-label position="floating">Contraseña</ion-label>
+                  <ion-input
+                    v-model="v$.form.password.$model"
+                    :type="inputTypePassword1"
+                    autocomplete="password"
+                  ></ion-input>
+                  <ion-button
+                    slot="end"
+                    fill="clear"
+                    v-if="inputTypePassword1 == 'text'"
+                    v-on:click="changeInputTypePassword1('password')"
+                    style="margin-top: 20px"
+                  >
+                    <ion-icon :icon="eyeOffOutline"></ion-icon>
+                  </ion-button>
+                  <ion-button
+                    slot="end"
+                    fill="clear"
+                    v-if="inputTypePassword1 == 'password'"
+                    v-on:click="changeInputTypePassword1('text')"
+                    style="margin-top: 20px"
+                  >
+                    <ion-icon :icon="eyeOutline"></ion-icon>
+                  </ion-button>
+                </ion-item>
+                <div
+                  v-for="(error, index) of v$.form.password.$errors"
+                  :key="index"
+                >
+                  <div class="error">{{ error.$message }}</div>
+                </div>
+
+                <ion-item>
+                  <ion-label position="floating">Repite contraseña</ion-label>
+                  <ion-input
+                    v-model="v$.form.password2.$model"
+                    :type="inputTypePassword2"
+                  ></ion-input>
+                  <ion-button
+                    slot="end"
+                    fill="clear"
+                    v-if="inputTypePassword2 == 'text'"
+                    v-on:click="changeInputTypePassword2('password')"
+                    style="margin-top: 20px"
+                  >
+                    <ion-icon :icon="eyeOffOutline"></ion-icon>
+                  </ion-button>
+                  <ion-button
+                    slot="end"
+                    fill="clear"
+                    v-if="inputTypePassword2 == 'password'"
+                    v-on:click="changeInputTypePassword2('text')"
+                    style="margin-top: 20px"
+                  >
+                    <ion-icon :icon="eyeOutline"></ion-icon>
+                  </ion-button>
+                </ion-item>
+                <div
+                  v-for="(error, index) of v$.form.password2.$errors"
+                  :key="index"
+                >
+                  <div class="error">{{ error.$message }}</div>
+                </div>
+              </form>
 
               <ion-row>
                 <ion-col size="12">
@@ -136,6 +148,7 @@
                     expand="block"
                     fill="clear"
                     v-on:click="register()"
+                    :disabled="v$.form.$invalid"
                   >
                     Registrar
                   </ion-button>
@@ -164,6 +177,9 @@ import {
 import { defineComponent } from "vue";
 import sesion from "../../../services/sesion.vue";
 import { eyeOutline, eyeOffOutline, chevronBackOutline } from "ionicons/icons";
+import useVuelidate from "@vuelidate/core";
+import { required, email, helpers, alpha, sameAs } from "@vuelidate/validators";
+
 export default defineComponent({
   name: "Register",
   components: {
@@ -181,30 +197,65 @@ export default defineComponent({
       eyeOutline,
       eyeOffOutline,
       chevronBackOutline,
+      v$: useVuelidate(),
     };
   },
   data() {
     return {
-      segmentModel: "inicio",
-      user: "",
-      name: "",
-      password: "",
-      password2: "",
-      email: "",
-      errorMessageName: [],
-      errorMessageMail: [],
-      errorMessagePassword: [],
-      errorMessagePassword2: [],
       inputTypePassword1: "password",
       inputTypePassword2: "password",
+      form: {
+        user: "",
+        name: "",
+        email: "",
+        password: "",
+        password2: "",
+      },
+    };
+  },
+  validations() {
+    const messageRequired = "Campo requerido";
+    const messageAlpha = "Solamente puede contener texto";
+    return {
+      form: {
+        name: {
+          required: helpers.withMessage(messageRequired, required),
+          alpha: helpers.withMessage(messageAlpha, alpha),
+        },
+        user: {
+          required: helpers.withMessage(messageRequired, required),
+        },
+        email: {
+          required: helpers.withMessage(messageRequired, required),
+          email: helpers.withMessage("Correo no valido", email),
+        },
+        password: {
+          required: helpers.withMessage(messageRequired, required),
+          minLength: helpers.withMessage(
+            "La contraseña debe tener almenos una mayuscula, un numero y tener un tamaño de 8",
+            helpers.regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+          ),
+        },
+        password2: {
+          same: helpers.withMessage(
+            "Las contraseñas no coinciden",
+            sameAs(this.form.password)
+          ),
+        },
+      },
     };
   },
   methods: {
     async register() {
       const loading = await this.presentLoading();
       loading.present();
-      const email = this.email.replace(/\s+/g, "");
-      this.userRegister(this.name, this.user, email, this.password)
+      const email = this.form.email.replace(/\s+/g, "");
+      this.userRegister(
+        this.form.name,
+        this.form.user,
+        email,
+        this.form.password
+      )
         .then(() => {
           loading.dismiss();
           this.alertConfirmacionEmail();
@@ -230,11 +281,11 @@ export default defineComponent({
       toast.present();
     },
     clearInputs() {
-      this.name = "";
-      this.user = "";
-      this.password = "";
-      this.password2 = "";
-      this.email = "";
+      this.form.name = "";
+      this.form.user = "";
+      this.form.password = "";
+      this.form.password2 = "";
+      this.form.email = "";
     },
     changeInputTypePassword1(type: string) {
       this.inputTypePassword1 = type;
@@ -249,7 +300,7 @@ export default defineComponent({
         subHeader: "Confirmacion",
         message:
           "Hemos enviado un correo electronico a <b>" +
-          this.email +
+          this.form.email +
           "</b> con un enlace para verificar tu identidad.",
         buttons: [
           {

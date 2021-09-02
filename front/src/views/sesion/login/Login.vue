@@ -33,64 +33,73 @@
               />
             </div>
             <ion-card-content>
-              <ion-item>
-                <ion-icon
-                  name="mail-outline"
-                  style="font-size: 20px; margin-top: 24px"
-                  slot="start"
-                ></ion-icon>
-                <ion-label position="floating">Correo electronico</ion-label>
-                <ion-input v-model="mail" type="mail"></ion-input>
-              </ion-item>
-              <div class="error ion-padding" v-if="errorMessageMail.length > 0">
-                <p v-for="error in errorMessageMail" :key="error">
-                  {{ error }}
-                </p>
-              </div>
+              <form @submit.prevent="onSubmit">
+                <ion-item>
+                  <ion-icon
+                    :icon="mailOpenOutline"
+                    style="font-size: 20px; margin-top: 24px"
+                    slot="start"
+                  ></ion-icon>
+                  <ion-label position="floating">Correo electronico</ion-label>
+                  <ion-input
+                    v-model="v$.form.email.$model"
+                    type="mail"
+                  ></ion-input>
+                </ion-item>
+                <div
+                  v-for="(error, index) of v$.form.email.$errors"
+                  :key="index"
+                >
+                  <div class="error">{{ error.$message }}</div>
+                </div>
 
-              <ion-item>
-                <ion-icon
-                  name="key-outline"
-                  style="font-size: 20px; margin-top: 24px"
-                  slot="start"
-                ></ion-icon>
-                <ion-label position="floating">Contraseña</ion-label>
-                <ion-input
-                  v-model="password"
-                  :type="inputTypePassword"
-                ></ion-input>
-                <ion-button
-                  slot="end"
-                  fill="clear"
-                  v-if="inputTypePassword == 'text'"
-                  v-on:click="changeInputTypePassword('password')"
-                  style="margin-top: 20px"
-                >
-                  <ion-icon :icon="eyeOffOutline"></ion-icon>
-                </ion-button>
-                <ion-button
-                  slot="end"
-                  fill="clear"
-                  v-if="inputTypePassword == 'password'"
-                  v-on:click="changeInputTypePassword('text')"
-                  style="margin-top: 20px"
-                >
-                  <ion-icon :icon="eyeOutline"></ion-icon>
-                </ion-button>
-              </ion-item>
+                <ion-item>
+                  <ion-icon
+                    :icon="fingerPrintOutline"
+                    style="font-size: 20px; margin-top: 24px"
+                    slot="start"
+                  ></ion-icon>
+                  <ion-label position="floating">Contraseña</ion-label>
+                  <ion-input
+                    v-model="v$.form.password.$model"
+                    :type="inputTypePassword"
+                  ></ion-input>
+                  <ion-button
+                    slot="end"
+                    fill="clear"
+                    v-if="inputTypePassword == 'text'"
+                    v-on:click="changeInputTypePassword('password')"
+                    style="margin-top: 20px"
+                  >
+                    <ion-icon :icon="eyeOffOutline"></ion-icon>
+                  </ion-button>
+                  <ion-button
+                    slot="end"
+                    fill="clear"
+                    v-if="inputTypePassword == 'password'"
+                    v-on:click="changeInputTypePassword('text')"
+                    style="margin-top: 20px"
+                  >
+                    <ion-icon :icon="eyeOutline"></ion-icon>
+                  </ion-button>
+                </ion-item>
 
-              <div v-if="errorMessagePassword.length > 0">
-                <p
-                  class="error ion-padding"
-                  *ngFor="let error of errorMessagePassword"
+                <div
+                  v-for="(error, index) of v$.form.password.$errors"
+                  :key="index"
                 >
-                  {{ error }}
-                </p>
-              </div>
+                  <div class="error">{{ error.$message }}</div>
+                </div>
+              </form>
 
               <ion-row>
                 <ion-col size="12">
-                  <ion-button fill="clear" expand="block" v-on:click="login()">
+                  <ion-button
+                    fill="clear"
+                    expand="block"
+                    v-on:click="login()"
+                    :disabled="v$.form.$invalid"
+                  >
                     Iniciar sesion
                   </ion-button>
                 </ion-col>
@@ -137,9 +146,17 @@ import {
   loadingController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { chevronBackOutline, eyeOffOutline, eyeOutline } from "ionicons/icons";
+import {
+  chevronBackOutline,
+  eyeOffOutline,
+  eyeOutline,
+  fingerPrintOutline,
+  mailOpenOutline,
+} from "ionicons/icons";
 import sesion from "../../../services/sesion.vue";
 import user from "../../../services/user.vue";
+import useVuelidate from "@vuelidate/core";
+import { required, email, minLength, helpers } from "@vuelidate/validators";
 
 export default defineComponent({
   name: "Login",
@@ -161,16 +178,33 @@ export default defineComponent({
       getUserToken,
       eyeOffOutline,
       eyeOutline,
+      v$: useVuelidate(),
+      fingerPrintOutline,
+      mailOpenOutline,
     };
   },
   data() {
     return {
-      segmentModel: "inicio",
-      password: "",
-      mail: "",
-      errorMessageMail: [],
-      errorMessagePassword: [],
       inputTypePassword: "password",
+      form: {
+        email: "",
+        password: "",
+      },
+    };
+  },
+  validations() {
+    const messageRequired = "Campo requerido";
+    return {
+      form: {
+        email: {
+          required: helpers.withMessage(messageRequired, required),
+          email: helpers.withMessage("Correo no valido", email),
+        },
+        password: {
+          required: helpers.withMessage(messageRequired, required),
+          min: minLength(6),
+        },
+      },
     };
   },
   methods: {
@@ -186,12 +220,12 @@ export default defineComponent({
     async login() {
       const loading = await this.presentLoading();
       loading.present();
-      this.userLogin(this.mail.replace(/\s+/g, ""), this.password)
+      this.userLogin(this.form.email.replace(/\s+/g, ""), this.form.password)
         .then((response) => {
           loading.dismiss();
           this.setUserToken(response.data.access_token);
-          this.clearInputs();
           this.$router.push("/");
+          this.clearInputs();
           this.presentToast("Bienvenido", "success");
         })
         .catch((e) => {
@@ -202,8 +236,8 @@ export default defineComponent({
         });
     },
     clearInputs() {
-      this.password = "";
-      this.mail = "";
+      this.form.password = "";
+      this.form.email = "";
     },
     changeInputTypePassword(type: string) {
       this.inputTypePassword = type;
@@ -215,7 +249,7 @@ export default defineComponent({
         subHeader: "Confirmacion",
         message:
           "Hemos enviado un correo electronico a " +
-          this.mail +
+          this.form.email +
           " con un enlace para verificar tu identidad.",
         buttons: [
           {
