@@ -157,6 +157,7 @@ import sesion from "../../../services/sesion.vue";
 import user from "../../../services/user.vue";
 import useVuelidate from "@vuelidate/core";
 import { required, email, minLength, helpers } from "@vuelidate/validators";
+import eventBus from "../../../EventBus";
 
 export default defineComponent({
   name: "Login",
@@ -222,6 +223,7 @@ export default defineComponent({
       loading.present();
       this.userLogin(this.form.email.replace(/\s+/g, ""), this.form.password)
         .then((response) => {
+          eventBus().emitter.emit("content-refresh");
           loading.dismiss();
           this.setUserToken(response.data.access_token);
           this.$router.push("/");

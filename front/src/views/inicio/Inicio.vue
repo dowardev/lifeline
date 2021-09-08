@@ -115,7 +115,7 @@
                     buttonDaySelected: fechas[date].selected,
                   }"
                   v-if="fechas[date].day != ''"
-                  v-on:click="selectDay()"
+                  v-on:click="selectDay(fechas[date].day)"
                 >
                   {{ fechas[date].day }}
                 </ion-button>
@@ -130,7 +130,7 @@
                     buttonDaySelected: fechas[date].selected,
                   }"
                   v-if="fechas[date].day != ''"
-                  v-on:click="selectDay()"
+                  v-on:click="selectDay(fechas[date].day)"
                 >
                   {{ fechas[date].day }}
                 </ion-button>
@@ -145,7 +145,7 @@
                     buttonDaySelected: fechas[date].selected,
                   }"
                   v-if="fechas[date].day != ''"
-                  v-on:click="selectDay()"
+                  v-on:click="selectDay(fechas[date].day)"
                 >
                   {{ fechas[date].day }}
                 </ion-button>
@@ -160,7 +160,7 @@
                     buttonDaySelected: fechas[date].selected,
                   }"
                   v-if="fechas[date].day != ''"
-                  v-on:click="selectDay()"
+                  v-on:click="selectDay(fechas[date].day)"
                 >
                   {{ fechas[date].day }}
                 </ion-button>
@@ -175,7 +175,7 @@
                     buttonDaySelected: fechas[date].selected,
                   }"
                   v-if="fechas[date].day != ''"
-                  v-on:click="selectDay()"
+                  v-on:click="selectDay(fechas[date].day)"
                 >
                   {{ fechas[date].day }}
                 </ion-button>
@@ -190,7 +190,7 @@
                     buttonDaySelected: fechas[date].selected,
                   }"
                   v-if="fechas[date].day != ''"
-                  v-on:click="selectDay()"
+                  v-on:click="selectDay(fechas[date].day)"
                 >
                   {{ fechas[date].day }}
                 </ion-button>
@@ -307,7 +307,6 @@ export default defineComponent({
       years: [0],
       monthSelected: {} as any,
       yearSelected: 0,
-      daySelected: 0,
       buttonNextDate: true,
       buttonPreviousDate: true,
       currentDay: 0,
@@ -320,10 +319,10 @@ export default defineComponent({
       this.setCurrentDay();
       this.setCurrentMonth();
       this.setCurrentYear();
-      this.generateYears();
-      this.daySelected = this.currentDay;
+      this.currentDay;
       this.monthSelected = this.currentMonth;
       this.yearSelected = this.currentYear;
+      this.generateYears();
       this.createMonth();
     },
     createMonth() {
@@ -334,7 +333,7 @@ export default defineComponent({
         "/" +
         this.currentDay;
 
-      let day = this.daySelected;
+      let day = this.currentDay;
       const month = this.monthSelected.position;
       const year = this.yearSelected;
       const days = ["do", "lu", "ma", "mi", "ju", "vi", "sa"];
@@ -378,7 +377,7 @@ export default defineComponent({
         }
       } else {
         for (let i = 1; i <= daysMonth; i++) {
-          if (i != this.daySelected) {
+          if (i != this.currentDay) {
             dates.push({ day: i, selected: false });
           } else {
             dates.push({ day: i, selected: true });
@@ -406,7 +405,7 @@ export default defineComponent({
     },
     setCurrentDay() {
       const d = new Date();
-      const day = d.getUTCDate();
+      const day = d.getDate();
       this.fechas.forEach((element) => {
         if (element.day == day) {
           element.selected = true;
@@ -459,8 +458,13 @@ export default defineComponent({
       }
       this.createMonth();
     },
-    selectDay() {
-      this.$router.push("/eventos");
+    selectDay(day: string) {
+      const month = this.monthSelected.position;
+      const year = this.yearSelected;
+      this.$router.push({
+        name: "Eventos",
+        params: { date: year + "-" + month + "-" + day },
+      });
     },
   },
 });

@@ -9,7 +9,7 @@
         </ion-buttons>
         <ion-title>{{ titulo }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button>
+          <ion-button @click="createEvent()">
             <ion-icon slot="start" :icon="addOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -39,7 +39,7 @@
         <ion-col size="12">
           <ion-card style="--background:#E6DBFF" v-on:click="openEvent()">
             <ion-card-header>
-              <ion-card-title>Titulo Evento</ion-card-title>
+              <ion-card-title>Titulo Evento2</ion-card-title>
             </ion-card-header>
             <ion-card-content>
               9:00 a.m. - 10:00 a.m.
@@ -99,6 +99,8 @@ import {
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { chevronBackOutline, addOutline } from "ionicons/icons";
+import { useRoute } from "vue-router";
+
 export default defineComponent({
   name: "Eventos",
   components: {
@@ -110,11 +112,17 @@ export default defineComponent({
     IonButton,
   },
   setup() {
-    return { chevronBackOutline, addOutline, titulo: "29/8/2021" };
+    const route = useRoute();
+    const date = route.params.date as string;
+    const titulo = date.replaceAll("-", "/");
+    return { chevronBackOutline, addOutline, titulo };
   },
   methods: {
     openEvent() {
-      this.$router.push("evento");
+      this.$router.push({ name: "Evento", params: { id: 0 } });
+    },
+    createEvent() {
+      this.$router.push({ name: "CreateEvent" });
     },
   },
 });

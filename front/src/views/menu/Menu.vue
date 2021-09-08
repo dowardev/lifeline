@@ -2,17 +2,26 @@
   <ion-page>
     <ion-header class="ion-no-border">
       <ion-toolbar>
-        <ion-item>
+        <ion-item v-if="logged == true">
           <ion-avatar slot="start">
-            <img src="../../../public/assets/otros/user.svg" />
+            <img :src="userData.img" />
           </ion-avatar>
-          <ion-label>Usuario</ion-label>
+          <ion-label>{{ userData.user }}</ion-label>
           <ion-button slot="end" fill="clear">
             <ion-icon :icon="settingsOutline"></ion-icon>
           </ion-button>
         </ion-item>
+        <ion-item v-if="logged == false">
+          <ion-button fill="clear" @click="openRoute('/sesion')">
+            Iniciar sesion
+          </ion-button>
+          <ion-button fill="clear" @click="openRoute('/registro')">
+            Registrarse
+          </ion-button>
+        </ion-item>
       </ion-toolbar>
     </ion-header>
+
     <ion-content>
       <ion-list>
         <ion-item button v-on:click="openRoute('/')">
@@ -67,6 +76,9 @@ import {
   cogOutline,
   cloudDownloadOutline,
 } from "ionicons/icons/";
+import user from "../../services/user.vue";
+import eventBus from "../../EventBus";
+
 export default defineComponent({
   name: "Menu",
   components: {
@@ -76,6 +88,7 @@ export default defineComponent({
     IonToolbar,
   },
   setup() {
+    const { getUserLogged } = user();
     return {
       settingsOutline,
       homeOutline,
@@ -86,43 +99,36 @@ export default defineComponent({
       menuController,
       cogOutline,
       cloudDownloadOutline,
+      getUserLogged,
     };
+  },
+  data() {
+    return {
+      logged: false,
+      userData: {
+        img: require("../../../public/assets/otros/user.svg"),
+        user: "Usuario",
+      },
+    };
+  },
+  mounted() {
+    this.getUser();
+    eventBus().emitter.on("content-refresh", () => {
+      this.getUser();
+      eventBus().emitter.all.clear();
+    });
   },
   methods: {
     openRoute(route: string) {
       this.menuController.close();
       this.$router.push(route);
     },
+    getUser() {
+      this.getUserLogged().then((response) => {
+        this.logged = true;
+        this.userData.user = response.data.user;
+      });
+    },
   },
 });
 </script>
-
-<style scoped>
-#container {
-  text-align: center;
-
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
-}
-
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-
-  color: #8c8c8c;
-
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
-}
-</style>

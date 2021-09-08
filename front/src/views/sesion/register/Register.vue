@@ -156,6 +156,15 @@
               </ion-row>
             </ion-card-content>
           </ion-card>
+          <ion-row>
+            <ion-col size="12" class="center">
+              <small>
+                <ion-text color="primary" v-on:click="$router.push('/sesion')">
+                  ¿Ya tienes cuenta?</ion-text
+                >
+              </small>
+            </ion-col>
+          </ion-row>
         </ion-col>
       </ion-row>
     </ion-content>

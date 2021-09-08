@@ -4,11 +4,12 @@ import Home from "../views/Home.vue";
 import Inicio from "../views/inicio/Inicio.vue";
 import Eventos from "../views/inicio/eventos/Eventos.vue";
 import Evento from "../views/inicio/eventos/evento/Evento.vue";
+import CreateEvent from "../views/inicio/eventos/evento/create/CreateEvent.vue";
 import Horario from "../views/inicio/eventos/evento/horario/Horario.vue";
 import Repetir from "../views/inicio/eventos/evento/repetir/Repetir.vue";
 import Register from "../views/sesion/register/Register.vue";
 import Login from "../views/sesion/login/Login.vue";
-
+import Reminders from "../views/inicio/eventos/evento/reminder/Reminder.vue";
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
@@ -25,12 +26,17 @@ const routes: Array<RouteRecordRaw> = [
     component: Inicio,
   },
   {
-    path: "/eventos",
+    path: "/eventos/:date",
     name: "Eventos",
     component: Eventos,
   },
   {
-    path: "/evento",
+    path: "/evento/agregar",
+    name: "CreateEvent",
+    component: CreateEvent,
+  },
+  {
+    path: "/evento/:id",
     name: "Evento",
     component: Evento,
   },
@@ -38,6 +44,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/horario",
     name: "Horario",
     component: Horario,
+  },
+  {
+    path: "/recordatorios",
+    name: "Reminder",
+    component: Reminders,
   },
   {
     path: "/repetir",
