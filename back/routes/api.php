@@ -16,18 +16,19 @@ use Illuminate\Support\Facades\Route;
 |
  */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware("auth:sanctum")->get("/user", function (Request $request) {
     return $request->user();
 });
 
-Route::group(['prefix' => 'auth'], function () {
-    Route::post('login', [AuthController::class, 'login']);
-    Route::post('signup', [AuthController::class, 'signup']);
+Route::group(["prefix" => "auth"], function () {
+    Route::post("login", [AuthController::class, "login"]);
+    Route::post("signup", [AuthController::class, "signup"]);
 
-    Route::group(['middleware' => 'auth:api'], function () {
-        Route::get('logout', [AuthController::class, 'logout']);
-        Route::get('user', [AuthController::class, 'user']);
+    Route::group(["middleware" => "auth:api"], function () {
+        Route::get("logout", [AuthController::class, "logout"]);
+        Route::get("user", [AuthController::class, "user"]);
 
-        Route::post('create-event', [EventController::class, 'createEvent']);
+        Route::post("create-event", [EventController::class, "createEvent"]);
+        Route::get("get-events", [EventController::class, "getEvents"]);
     });
 });

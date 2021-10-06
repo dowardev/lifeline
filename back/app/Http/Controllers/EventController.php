@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Event;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -28,5 +29,27 @@ class EventController extends Controller
             "notes" => $request->notes,
         ]);
         $event->save();
+    }
+    public function getEvents()
+    {
+        $events = [];
+        $result = DB::table("events")
+            ->select(
+                "id",
+                "title",
+                "time_start",
+                "time_end",
+                "repeats",
+                "reminders",
+                "calendar",
+                "notes"
+            )
+            ->get();
+
+        foreach ($result as $key => $value) {
+            $value->reminders = unserialize($value->reminders);
+            $value->repeats = unserialize($value->repeats);
+        }
+        return $result;
     }
 }
