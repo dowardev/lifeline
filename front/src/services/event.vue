@@ -3,7 +3,7 @@ import axios from "axios";
 import user from "./user.vue";
 const { getUserToken } = user();
 
-export default function() {
+export default function () {
   async function createEvent(
     title: string,
     time: {},
@@ -33,8 +33,21 @@ export default function() {
       }
     );
   }
+  async function getEvents() {
+    const token = await getUserToken().then((response) => {
+      return response;
+    });
+
+    return axios.get("http://localhost:8000/api/auth/get-events", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      },
+    });
+  }
   return {
     createEvent,
+    getEvents,
   };
 }
 </script>

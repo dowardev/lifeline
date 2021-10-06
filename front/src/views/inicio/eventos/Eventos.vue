@@ -17,38 +17,53 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-row style="padding-left:10px">
+      <ion-refresher slot="fixed" @ionRefresh="refreshContent($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
+
+      <ion-row style="padding-left: 10px">
         <ion-col size="12">
-          <ion-button style="--background:#E6DBFF;color:black">
+          <ion-button style="--background: #e6dbff; color: black">
             Citas
           </ion-button>
-          <ion-button style="--background:#C9EAF3;color:black">
+          <ion-button style="--background: #c9eaf3; color: black">
             Tareas
           </ion-button>
 
-          <ion-button style="--background:#FFE6D0;color:black">
+          <ion-button style="--background: #ffe6d0; color: black">
             Personal
           </ion-button>
-          <ion-button style="--background:#EAFFEF;color:black">
+          <ion-button style="--background: #eaffef; color: black">
             Sin recordatorio
           </ion-button>
         </ion-col>
       </ion-row>
 
       <ion-row>
-        <ion-col size="12">
-          <ion-card style="--background:#E6DBFF" v-on:click="openEvent()">
+        <ion-col
+          v-for="event in events"
+          :key="event"
+          size="12"
+          size-md="6"
+          size-lg="4"
+        >
+          <ion-card style="--background: #e6dbff" v-on:click="openEvent()">
             <ion-card-header>
-              <ion-card-title>Titulo Evento2</ion-card-title>
+              <ion-card-title>{{ event.title }}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              9:00 a.m. - 10:00 a.m.
+              <p>
+                <small> {{ event.time_start }} - {{ event.time_end }} </small>
+              </p>
+              <p>
+                <small> {{ event.repeats.frecuency }} </small>
+              </p>
             </ion-card-content>
           </ion-card>
         </ion-col>
       </ion-row>
 
-      <ion-row>
+      <!--  <ion-row>
         <ion-col size="12">
           <ion-card style="--background:#C9EAF3">
             <ion-card-header>
@@ -83,7 +98,7 @@
             <ion-card-content> </ion-card-content>
           </ion-card>
         </ion-col>
-      </ion-row>
+      </ion-row> -->
     </ion-content>
   </ion-page>
 </template>
@@ -96,10 +111,12 @@ import {
   IonTitle,
   IonToolbar,
   IonButton,
+  IonRefresher,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { chevronBackOutline, addOutline } from "ionicons/icons";
 import { useRoute } from "vue-router";
+import events from "../../../services/event.vue";
 
 export default defineComponent({
   name: "Eventos",
@@ -115,7 +132,13 @@ export default defineComponent({
     const route = useRoute();
     const date = route.params.date as string;
     const titulo = date.replaceAll("-", "/");
-    return { chevronBackOutline, addOutline, titulo };
+    return { chevronBackOutline, addOutline, titulo, IonRefresher };
+  },
+  data() {
+    return { events: [] as Array<any> };
+  },
+  mounted() {
+    this.getEvents();
   },
   methods: {
     openEvent() {
@@ -123,6 +146,20 @@ export default defineComponent({
     },
     createEvent() {
       this.$router.push({ name: "CreateEvent" });
+    },
+    async getEvents() {
+      const eventsResponse = await events()
+        .getEvents()
+        .then((response: any) => {
+          return response;
+        });
+      console.log(eventsResponse.data);
+      this.events = eventsResponse.data;
+    },
+    refreshContent(event: any) {
+      setTimeout(async () => {
+        this.getEvents();
+      }, 2000);
     },
   },
 });
@@ -157,3 +194,6 @@ export default defineComponent({
   text-decoration: none;
 }
 </style>
+
+function await(arg0: any) { throw new Error("Function not implemented."); }
+function await(arg0: any) { throw new Error("Function not implemented."); }

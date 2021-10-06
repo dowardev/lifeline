@@ -262,7 +262,7 @@ export default defineComponent({
       buttonEdit: true,
       titulo,
       reminders,
-      title: "yyyyyy",
+      title: "",
       time: {
         start: {
           hourSelected: "12",
@@ -286,7 +286,7 @@ export default defineComponent({
         frecuency: "unique",
         data: {},
       },
-      notes: "jgjghj",
+      notes: "",
       calendar: "personal",
       errors: {
         titleEmpty: { message: "Campo requerido", show: false },
