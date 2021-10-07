@@ -1,12 +1,12 @@
 <template>
   <ion-page>
     <ion-header class="ion-no-border">
-      <ion-toolbar>
-        <ion-item v-if="logged == true">
+      <ion-toolbar class="color-menu">
+        <ion-item lines="none" v-if="logged == true">
           <ion-avatar slot="start">
             <img :src="userData.img" />
           </ion-avatar>
-          <ion-label>{{ userData.user }}</ion-label>
+          <ion-label class="text-menu-color">{{ userData.user }}</ion-label>
           <ion-button slot="end" fill="clear">
             <ion-icon :icon="settingsOutline"></ion-icon>
           </ion-button>
@@ -22,37 +22,98 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content>
-      <ion-list>
-        <ion-item button v-on:click="openRoute('/')">
-          <ion-icon slot="start" :icon="homeOutline"></ion-icon>
-          <ion-label>Inicio</ion-label>
-        </ion-item>
-        <ion-item button v-on:click="openRoute('/')">
-          <ion-icon slot="start" :icon="cloudDownloadOutline"></ion-icon>
-          <ion-label>Modulos</ion-label>
-        </ion-item>
-        <ion-item button v-on:click="openRoute('/')">
-          <ion-icon slot="start" :icon="documentOutline"></ion-icon>
-          <ion-label>Notas</ion-label>
-        </ion-item>
-        <ion-item button v-on:click="openRoute('/')">
-          <ion-icon slot="start" :icon="checkboxOutline"></ion-icon>
-          <ion-label>Tareas</ion-label>
-        </ion-item>
-        <ion-item button v-on:click="openRoute('/')">
-          <ion-icon slot="start" :icon="cogOutline"></ion-icon>
-          <ion-label>Programacion</ion-label>
-        </ion-item>
-        <ion-item button v-on:click="openRoute('/')">
-          <ion-icon slot="start" :icon="briefcaseOutline"></ion-icon>
-          <ion-label>Proyectos</ion-label>
-        </ion-item>
-        <ion-item button v-on:click="openRoute('/')">
-          <ion-icon slot="start" :icon="helpOutline"></ion-icon>
-          <ion-label>Soporte</ion-label>
-        </ion-item>
-      </ion-list>
+    <ion-content class="color-menu">
+      <ion-item
+        lines="none"
+        button
+        v-on:click="openRoute('/')"
+        class="color-menu"
+      >
+        <ion-icon
+          class="icon-menu-color"
+          slot="start"
+          :icon="homeOutline"
+        ></ion-icon>
+        <ion-label class="text-menu-color">Inicio</ion-label>
+      </ion-item>
+      <ion-item
+        lines="none"
+        button
+        v-on:click="openRoute('/')"
+        class="color-menu"
+      >
+        <ion-icon
+          class="icon-menu-color"
+          slot="start"
+          :icon="cloudDownloadOutline"
+        ></ion-icon>
+        <ion-label class="text-menu-color">Modulos</ion-label>
+      </ion-item>
+      <ion-item
+        lines="none"
+        button
+        v-on:click="openRoute('/')"
+        class="color-menu"
+      >
+        <ion-icon
+          class="icon-menu-color"
+          slot="start"
+          :icon="documentOutline"
+        ></ion-icon>
+        <ion-label class="text-menu-color">Notas</ion-label>
+      </ion-item>
+      <ion-item
+        lines="none"
+        button
+        v-on:click="openRoute('/')"
+        class="color-menu"
+      >
+        <ion-icon
+          class="icon-menu-color"
+          slot="start"
+          :icon="checkboxOutline"
+        ></ion-icon>
+        <ion-label class="text-menu-color">Tareas</ion-label>
+      </ion-item>
+      <ion-item
+        lines="none"
+        button
+        v-on:click="openRoute('/')"
+        class="color-menu"
+      >
+        <ion-icon
+          class="icon-menu-color"
+          slot="start"
+          :icon="cogOutline"
+        ></ion-icon>
+        <ion-label class="text-menu-color">Programacion</ion-label>
+      </ion-item>
+      <ion-item
+        lines="none"
+        button
+        v-on:click="openRoute('/')"
+        class="color-menu"
+      >
+        <ion-icon
+          class="icon-menu-color"
+          slot="start"
+          :icon="briefcaseOutline"
+        ></ion-icon>
+        <ion-label class="text-menu-color">Proyectos</ion-label>
+      </ion-item>
+      <ion-item
+        lines="none"
+        button
+        v-on:click="openRoute('/')"
+        class="color-menu"
+      >
+        <ion-icon
+          class="icon-menu-color"
+          slot="start"
+          :icon="helpOutline"
+        ></ion-icon>
+        <ion-label class="text-menu-color">Soporte</ion-label>
+      </ion-item>
     </ion-content>
   </ion-page>
 </template>
@@ -132,3 +193,15 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.color-menu {
+  --background: #252729;
+}
+.text-menu-color {
+  color: white;
+}
+.icon-menu-color {
+  color: white;
+}
+</style>

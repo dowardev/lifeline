@@ -3,8 +3,9 @@ import { Storage } from "@ionic/storage";
 const store = new Storage();
 store.create();
 import axios from "axios";
+import jsonLangSpanish from "../../public/assets/lang/lang-es.json";
 
-export default function() {
+export default function () {
   async function setUserToken(token: string) {
     await store.set("token", token);
   }
@@ -32,10 +33,21 @@ export default function() {
       },
     });
   }
+  function getUserLang() {
+    return localStorage.getItem("lang");
+  }
+  function translate(word: string) {
+    const lang = getUserLang();
+    if (lang == "es") {
+      return (jsonLangSpanish as any)[word];
+    }
+  }
   return {
     setUserToken,
     getUserToken,
     getUserLogged,
+    getUserLang,
+    translate,
   };
 }
 </script>

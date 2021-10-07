@@ -39,29 +39,31 @@
         </ion-col>
       </ion-row>
 
-      <ion-row>
-        <ion-col
-          v-for="event in events"
-          :key="event"
-          size="12"
-          size-md="6"
-          size-lg="4"
-        >
-          <ion-card style="--background: #e6dbff" v-on:click="openEvent()">
-            <ion-card-header>
-              <ion-card-title>{{ event.title }}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <p>
-                <small> {{ event.time_start }} - {{ event.time_end }} </small>
-              </p>
-              <p>
-                <small> {{ event.repeats.frecuency }} </small>
-              </p>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-      </ion-row>
+      <div style="display: flex; justify-content: center">
+        <ion-row>
+          <ion-col
+            v-for="event in events"
+            :key="event"
+            size="12"
+            size-md="6"
+            size-lg="8"
+          >
+            <ion-card style="--background: #e6dbff" v-on:click="openEvent()">
+              <ion-card-header>
+                <ion-card-title>{{ event.title }}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <p>
+                  <small> {{ event.time_start }} - {{ event.time_end }} </small>
+                </p>
+                <p>
+                  <small> {{ event.repeats.frecuency }} </small>
+                </p>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </div>
 
       <!--  <ion-row>
         <ion-col size="12">
@@ -116,7 +118,8 @@ import {
 import { defineComponent } from "vue";
 import { chevronBackOutline, addOutline } from "ionicons/icons";
 import { useRoute } from "vue-router";
-import events from "../../../services/event.vue";
+import eventsService from "../../../services/event.vue";
+import userService from "../../../services/user.vue";
 
 export default defineComponent({
   name: "Eventos",
@@ -132,6 +135,7 @@ export default defineComponent({
     const route = useRoute();
     const date = route.params.date as string;
     const titulo = date.replaceAll("-", "/");
+    //const jsonLang = userService().translate() as any;
     return { chevronBackOutline, addOutline, titulo, IonRefresher };
   },
   data() {
@@ -148,13 +152,19 @@ export default defineComponent({
       this.$router.push({ name: "CreateEvent" });
     },
     async getEvents() {
-      const eventsResponse = await events()
+      const events = await eventsService()
         .getEvents()
         .then((response: any) => {
           return response;
         });
-      console.log(eventsResponse.data);
-      this.events = eventsResponse.data;
+
+      events.data.forEach((element: any) => {
+        element.repeats.frecuency = userService().translate(
+          element.repeats.frecuency
+        );
+      });
+
+      this.events = events.data;
     },
     refreshContent(event: any) {
       setTimeout(async () => {

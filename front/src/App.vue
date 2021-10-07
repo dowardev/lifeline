@@ -1,14 +1,17 @@
 <template>
   <ion-app>
-    <ion-menu
-      contentId="menu-content"
-      menuId="firstMenu"
-      side="start"
-      type="overlay"
-    >
-      <Menu></Menu>
-    </ion-menu>
-    <ion-router-outlet Id="menu-content" />
+    <ion-split-pane when="md" contentId="menu-content">
+      <ion-menu
+        contentId="menu-content"
+        menuId="firstMenu"
+        side="start"
+        type="overlay"
+        style="--side-max-width: 200px"
+      >
+        <Menu></Menu>
+      </ion-menu>
+      <ion-router-outlet Id="menu-content" />
+    </ion-split-pane>
   </ion-app>
 </template>
 
