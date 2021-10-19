@@ -36,6 +36,11 @@ const routes: Array<RouteRecordRaw> = [
     component: CreateEvent,
   },
   {
+    path: "/event/update/:id",
+    name: "UpdateEvent",
+    component: CreateEvent,
+  },
+  {
     path: "/evento/:id",
     name: "Evento",
     component: Evento,

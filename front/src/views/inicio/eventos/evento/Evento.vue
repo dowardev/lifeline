@@ -9,13 +9,8 @@
         </ion-buttons>
         <ion-title>Detalles</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-if="buttonEdit == true" v-on:click="editEvent()">
+          <ion-button v-on:click="editEvent()">
             <ion-icon slot="start" :icon="createOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-        <ion-buttons slot="end">
-          <ion-button v-if="buttonEdit == false" v-on:click="saveEvent()">
-            <ion-icon slot="start" :icon="saveOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -24,95 +19,84 @@
     <ion-content :fullscreen="true">
       <ion-row>
         <ion-col size="12">
-          <ion-item lines="none" v-if="buttonEdit == true">
+          <ion-item lines="none">
             <ion-icon slot="start" :icon="readerOutline"></ion-icon>
-            <ion-label class="ion-text-wrap">{{ title }}</ion-label>
-          </ion-item>
-          <ion-item v-if="buttonEdit == false">
-            <ion-icon slot="start" :icon="readerOutline"></ion-icon>
-            <ion-label position="floating">Titulo</ion-label>
-            <ion-input type="text" v-model="title"></ion-input>
+            <ion-label class="ion-text-wrap"
+              ><h2>Titulo</h2>
+              <p>{{ event.title }}</p>
+            </ion-label>
           </ion-item>
         </ion-col>
       </ion-row>
       <ion-row>
         <ion-col size="12">
-          <ion-item lines="none" v-if="buttonEdit == true">
+          <ion-item lines="none">
             <ion-icon slot="start" :icon="timeOutline"></ion-icon>
-            <ion-label class="ion-text-wrap">{{ time }}</ion-label>
+            <ion-label class="ion-text-wrap"
+              ><h2>Fecha inicial</h2>
+              <p>{{ event.timeStart }}</p>
+            </ion-label>
           </ion-item>
-          <ion-item v-if="buttonEdit == false" button v-on:click="selectTime()">
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col size="12">
+          <ion-item lines="none">
             <ion-icon slot="start" :icon="timeOutline"></ion-icon>
-            <ion-label position="floating">Horario</ion-label>
-            <ion-input type="text" v-model="time"></ion-input>
+            <ion-label class="ion-text-wrap"
+              ><h2>Fecha final</h2>
+              <p>{{ event.timeEnd }}</p>
+            </ion-label>
           </ion-item>
         </ion-col>
       </ion-row>
+
       <ion-row>
         <ion-col size="12">
-          <ion-item lines="none" v-if="buttonEdit == true">
+          <ion-item lines="none">
             <ion-icon slot="start" :icon="alarmOutline"></ion-icon>
-            <ion-label class="ion-text-wrap">{{ reminder }}</ion-label>
-          </ion-item>
-          <ion-item
-            v-if="buttonEdit == false"
-            button
-            v-on:click="presentAlertReminder()"
-          >
-            <ion-icon slot="start" :icon="alarmOutline"></ion-icon>
-            <ion-label position="floating">Recodartorios</ion-label>
-            <ion-input type="text" v-model="reminder"></ion-input>
+            <ion-label class="ion-text-wrap"
+              ><h2>Recodartorio</h2>
+              <ion-chip
+                color="primary"
+                v-for="reminder in event.reminders"
+                :key="reminder"
+                >{{ reminder }}</ion-chip
+              >
+            </ion-label>
           </ion-item>
         </ion-col>
       </ion-row>
       <ion-row>
         <ion-col size="12">
-          <ion-item lines="none" v-if="buttonEdit == true">
+          <ion-item lines="none">
             <ion-icon slot="start" :icon="repeatOutline"></ion-icon>
-            <ion-label>{{ repeat }}</ion-label>
-          </ion-item>
-          <ion-item
-            v-if="buttonEdit == false"
-            button
-            v-on:click="selectRepeat()"
-          >
-            <ion-icon slot="start" :icon="repeatOutline"></ion-icon>
-            <ion-label position="floating">Repetir</ion-label>
-            <ion-input type="text" v-model="repeat"></ion-input>
+            <ion-label
+              ><h2>Repetir</h2>
+              <p>{{ event.repeats.frecuency }}</p>
+            </ion-label>
           </ion-item>
         </ion-col>
       </ion-row>
       <ion-row>
         <ion-col size="12">
-          <ion-item lines="none" v-if="buttonEdit == true">
+          <ion-item lines="none">
             <ion-icon slot="start" :icon="layersOutline"></ion-icon>
-            <ion-label>{{ calendar }}</ion-label>
-          </ion-item>
-          <ion-item
-            v-if="buttonEdit == false"
-            button
-            v-on:click="presentAlertCalendar()"
-          >
-            <ion-icon slot="start" :icon="layersOutline"></ion-icon>
-            <ion-label position="floating">Calendario</ion-label>
-            <ion-input type="text" v-model="calendar"></ion-input>
+            <ion-label
+              ><h2>Calendario</h2>
+              <p>{{ event.calendar }}</p>
+            </ion-label>
           </ion-item>
         </ion-col>
       </ion-row>
       <ion-row>
         <ion-col size="12">
-          <ion-item lines="none" v-if="buttonEdit == true">
-            <ion-label class="ion-text-wrap">{{ notes }}</ion-label>
-          </ion-item>
-          <ion-item v-if="buttonEdit == false">
+          <ion-item lines="none">
             <ion-icon slot="start" :icon="readerOutline"></ion-icon>
-            <ion-label position="floating">Notas</ion-label>
-            <ion-textarea
-              type="text"
-              v-model="notes"
-              autoGrow
-              :rows="4"
-            ></ion-textarea>
+            <ion-label
+              ><h2>Notas</h2>
+              <p>{{ event.notes }}</p>
+            </ion-label>
           </ion-item>
         </ion-col>
       </ion-row>
@@ -128,8 +112,6 @@ import {
   IonTitle,
   IonToolbar,
   IonButton,
-  IonInput,
-  IonTextarea,
   alertController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
@@ -145,6 +127,9 @@ import {
   saveOutline,
   alarmOutline,
 } from "ionicons/icons";
+import eventsService from "../../../../services/event.vue";
+import userService from "../../../../services/user.vue";
+
 export default defineComponent({
   name: "Evento",
   components: {
@@ -154,8 +139,6 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
     IonButton,
-    IonInput,
-    IonTextarea,
   },
   setup() {
     return {
@@ -169,24 +152,29 @@ export default defineComponent({
       createOutline,
       saveOutline,
       alarmOutline,
-      title: "Hacer tarea",
-      time: " 9:00 a.m. - 10:00 a.m.",
-      reminder: "5 mn antes",
-      repeat: "L-M-M-D",
-      notes:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-      calendar: "personal",
     };
   },
   data() {
-    return { buttonEdit: true };
+    const id = parseInt(this.$route.params.id as string);
+    return {
+      id,
+      event: {
+        title: "",
+        timeStart: "",
+        timeEnd: "",
+        reminders: [],
+        repeats: [],
+        calendar: "",
+        notes: "",
+      },
+    };
+  },
+  mounted() {
+    this.getEvent();
   },
   methods: {
     editEvent() {
-      this.buttonEdit = !this.buttonEdit;
-    },
-    saveEvent() {
-      this.buttonEdit = !this.buttonEdit;
+      this.$router.push("/event/update/"+this.id);
     },
     selectTime() {
       this.$router.push("/horario");
@@ -313,6 +301,40 @@ export default defineComponent({
         ],
       });
       return alert.present();
+    },
+    async getEvent() {
+      const event = await eventsService()
+        .getEvent(this.id)
+        .then((response) => {
+          return response;
+        });
+
+      if ([event.data].length) {
+        event.data.forEach((element: any) => {
+          this.event.title = element.title;
+          this.event.timeStart = this.formatDate(element.time_start);
+          this.event.timeEnd = this.formatDate(element.time_end);
+          this.event.reminders = element.reminders;
+          element.repeats.frecuency = userService().translate(
+            element.repeats.frecuency
+          );
+          this.event.repeats = element.repeats;
+          this.event.calendar = element.calendar;
+          this.event.notes = element.notes;
+        });
+      }
+    },
+    formatDate(date: string) {
+      const day = date.split(" ")[0].split("-")[2];
+      const month = date.split(" ")[0].split("-")[1];
+      const year = date.split(" ")[0].split("-")[0];
+
+      const hour = parseInt(date.split(" ")[1].split(":")[0]) % 12 || 12;
+      const minute = date.split(" ")[1].split(":")[1];
+      const am = parseInt(date.split(" ")[1].split(":")[0]) >= 12 ? "pm" : "am";
+      return (
+        day + "-" + month + "-" + year + " " + hour + ":" + minute + " " + am
+      );
     },
   },
 });

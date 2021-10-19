@@ -61,11 +61,64 @@ export default defineComponent({
     return { chevronBackOutline, saveOutline };
   },
   data() {
-    return { reminders: [] as Array<any> };
+    const reminders = [
+      {
+        label: "A tiempo",
+        check: false,
+        value: "tiempo",
+      },
+      {
+        label: "5 minutos antes",
+        check: false,
+        value: "5mn",
+      },
+      {
+        label: "15 minutos antes",
+        check: false,
+        value: "15mn",
+      },
+      {
+        label: "30 minutos antes",
+        check: false,
+        value: "30mn",
+      },
+      {
+        label: "1 hora antes",
+        check: false,
+        value: "1h",
+      },
+      {
+        label: "4 hora antes",
+        check: false,
+        value: "4h",
+      },
+      {
+        label: "1 dia antes",
+        check: false,
+        value: "1d",
+      },
+      {
+        label: "2 dias antes",
+        check: false,
+        value: "2d",
+      },
+      {
+        label: "1 semana ante",
+        check: false,
+        value: "1s",
+      },
+    ];
+    return { reminders };
   },
   mounted() {
     eventBus().emitter.on("get-reminder-event", (response: any) => {
-      this.reminders = response.reminders;
+      this.reminders.forEach((reminder) => {
+        response.reminders.forEach((res: any) => {
+          if (reminder.value == res) {
+            reminder.check = true;
+          }
+        });
+      });
     });
   },
   methods: {
@@ -73,11 +126,11 @@ export default defineComponent({
       const reminders: any[] = [];
       this.reminders.forEach((element) => {
         if (element.check == true) {
-          reminders.push(element.label);
+          reminders.push(element.value);
         }
       });
       eventBus().emitter.emit("set-reminder-event", {
-        reminders: JSON.parse(JSON.stringify(this.reminders)),
+        reminders,
       });
       this.$router.go(-1);
     },

@@ -1,3 +1,9 @@
 {
-  "unique": "unico"
+  "unique": "Unico",
+  "daily": "Diariamente",
+  "weekly": "Semanalmente",
+  "monthly": "Mensualmente",
+  "annually": "Anualmente",
+  "saveEvent": "Evento creado correctamente",
+  "updateEvent": "Evento actualizado correctamente"
 }

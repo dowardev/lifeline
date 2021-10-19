@@ -37,35 +37,12 @@
             <ion-item lines="none" button v-on:click="selectTime()">
               <ion-icon slot="start" :icon="timeOutline"></ion-icon>
               <ion-label>
+                <h2>Horario</h2>
                 <p>
-                  {{
-                    time.start.daySelected +
-                      "/" +
-                      time.start.monthSelected +
-                      "/" +
-                      time.start.yearSelected +
-                      " - " +
-                      time.start.hourSelected +
-                      ":" +
-                      time.start.minuteSelected +
-                      " " +
-                      time.start.amSelected
-                  }}
+                  {{ timeStart.text }}
                 </p>
                 <p>
-                  {{
-                    time.end.daySelected +
-                      "/" +
-                      time.end.monthSelected +
-                      "/" +
-                      time.end.yearSelected +
-                      " - " +
-                      time.end.hourSelected +
-                      ":" +
-                      time.end.minuteSelected +
-                      " " +
-                      time.end.amSelected
-                  }}
+                  {{ timeEnd.text }}
                 </p>
               </ion-label>
 
@@ -76,15 +53,18 @@
 
             <ion-item lines="none" button v-on:click="selectReminders()">
               <ion-icon slot="start" :icon="alarmOutline"></ion-icon>
-              <div
-                v-for="reminder in reminders"
-                :key="reminder"
-                style="display:inline-block"
-              >
-                <ion-chip color="primary" v-if="reminder.check == true">
-                  <ion-label>{{ reminder.label }}</ion-label>
-                </ion-chip>
-              </div>
+              <ion-label>
+                <h2>Horario</h2>
+                <div
+                  v-for="reminder in reminders"
+                  :key="reminder"
+                  style="display: inline-block"
+                >
+                  <ion-chip color="primary">
+                    <ion-label>{{ reminder }}</ion-label>
+                  </ion-chip>
+                </div>
+              </ion-label>
               <ion-button fill="clear" slot="end">
                 <ion-icon :icon="addCircleOutline"></ion-icon>
               </ion-button>
@@ -92,7 +72,10 @@
 
             <ion-item lines="none" button v-on:click="selectRepeat()">
               <ion-icon slot="start" :icon="repeatOutline"></ion-icon>
-              <ion-label>{{ repeats.frecuencyName }}</ion-label>
+              <ion-label
+                ><h2>Repetir</h2>
+                <p>{{ repeats.frecuencyName }}</p></ion-label
+              >
               <ion-button fill="clear" slot="end">
                 <ion-icon :icon="createOutline"></ion-icon>
               </ion-button>
@@ -147,6 +130,7 @@ import {
   IonTextarea,
   IonSelect,
   IonSelectOption,
+  toastController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import {
@@ -164,7 +148,9 @@ import {
   addCircleOutline,
 } from "ionicons/icons";
 import eventBus from "../../../../../EventBus";
-import event from "../../../../../services/event.vue";
+import eventsService from "../../../../../services/event.vue";
+import userService from "../../../../../services/user.vue";
+import { Storage } from "@ionic/storage";
 
 export default defineComponent({
   name: "Evento",
@@ -180,7 +166,6 @@ export default defineComponent({
     IonSelect,
   },
   setup() {
-    const { createEvent } = event();
     const customAlertOptions: any = {
       header: "Calendario",
     };
@@ -200,125 +185,54 @@ export default defineComponent({
       IonInput,
       IonSelectOption,
       customAlertOptions,
-      createEvent,
     };
   },
   data() {
-    let titulo = "Agregar evento";
-    const path = this.$router.currentRoute.value["fullPath"]
-      .split("/")
-      .slice(-1)[0];
-    if (path == "actualizar") {
-      titulo = "Actualizar evento";
-    }
-    const reminders = [
-      {
-        label: "A tiempo",
-        check: false,
-        value: "tiempo",
-      },
-      {
-        label: "5 minutos antes",
-        check: true,
-        value: "5mn",
-      },
-      {
-        label: "15 minutos antes",
-        check: false,
-        value: "15mn",
-      },
-      {
-        label: "30 minutos antes",
-        check: false,
-        value: "30mn",
-      },
-      {
-        label: "1 hora antes",
-        check: false,
-        value: "1h",
-      },
-      {
-        label: "4 hora antes",
-        check: false,
-        value: "4h",
-      },
-      {
-        label: "1 dia antes",
-        check: false,
-        value: "1d",
-      },
-      {
-        label: "2 dias antes",
-        check: false,
-        value: "2d",
-      },
-      {
-        label: "1 semana ante",
-        check: false,
-        value: "1s",
-      },
-    ];
+    const titulo = "Agregar evento";
+    const storage = new Storage();
+    storage.create();
     return {
       buttonEdit: true,
       titulo,
-      reminders,
+      reminders: [],
       title: "",
-      time: {
-        start: {
-          hourSelected: "12",
-          minuteSelected: "00",
-          amSelected: "am",
-          yearSelected: 2021,
-          monthSelected: 9,
-          daySelected: 4,
-        },
-        end: {
-          hourSelected: "12",
-          minuteSelected: "00",
-          amSelected: "am",
-          yearSelected: 2021,
-          monthSelected: 9,
-          daySelected: 4,
-        },
-      },
+      timeStart: { text: "", value: "" },
+      timeEnd: { text: "", value: "" },
       repeats: {
-        frecuencyName: "Unico",
-        frecuency: "unique",
+        frecuencyName: "",
+        frecuency: "",
         data: {},
       },
       notes: "",
-      calendar: "personal",
+      calendar: "",
       errors: {
         titleEmpty: { message: "Campo requerido", show: false },
       },
+      storage,
     };
   },
   mounted() {
-    this.setCurrentYear();
-    this.setCurrentMonth();
-    this.setCurrentDay();
+    this.openToast("Bienvenido", "success");
+    if (this.$route.params.id) {
+      this.titulo = "Actualizar evento";
+      this.getEvent(parseInt(this.$route.params.id as string));
+    }
+    this.setDate();
     eventBus().emitter.on("set-schedule-event", (response: any) => {
-      this.time = response;
+      let date = this.formatDate(response.start);
+      this.timeStart.text = date.dateFormatted;
+      this.timeStart.value = date.dateUnformatted;
+      date = this.formatDate(response.end);
+      this.timeEnd.text = date.dateFormatted;
+      this.timeEnd.value = date.dateUnformatted;
     });
     eventBus().emitter.on("set-reminder-event", (response: any) => {
       this.reminders = response.reminders;
     });
-    eventBus().emitter.on("set-repeat-event", (response: any) => {
-      if (response.frecuency == "unique") {
-        this.repeats.frecuencyName = "Unico";
-      }
-      if (response.frecuency == "daily") {
-        this.repeats.frecuencyName = "Diariamente";
-      }
-      if (response.frecuency == "weekly") {
-        this.repeats.frecuencyName = "Semanalmente";
-      }
-      if (response.frecuency == "monthly") {
-        this.repeats.frecuencyName = "Mensualmente";
-      }
-      if (response.frecuency == "annually") {
-        this.repeats.frecuencyName = "Anualmente";
-      }
+    eventBus().emitter.on("set-repeat-event", async (response: any) => {
+      this.repeats.frecuencyName = await userService().translate(
+        response.frecuency
+      );
       this.repeats.frecuency = response.frecuency;
       this.repeats.data = response.data;
     });
@@ -331,7 +245,8 @@ export default defineComponent({
       this.$router.push("/horario");
       setTimeout(() => {
         eventBus().emitter.emit("get-schedule-event", {
-          schedule: JSON.parse(JSON.stringify(this.time)),
+          timeStart: this.timeStart.value,
+          timeEnd: this.timeEnd.value,
         });
       }, 300);
     },
@@ -351,43 +266,71 @@ export default defineComponent({
         });
       }, 300);
     },
-    setCurrentYear() {
-      const d = new Date();
-      const year = d.getFullYear();
-      this.time.start.yearSelected = this.time.end.yearSelected = year;
-    },
-    setCurrentMonth() {
-      const d = new Date();
-      const month = d.getMonth();
-      this.time.start.monthSelected = this.time.end.monthSelected = month;
-    },
-    setCurrentDay() {
-      const d = new Date();
-      const day = d.getDate();
-      this.time.start.daySelected = this.time.end.daySelected = day;
+    setDate() {
+      const sumDate = (days: number) => {
+        const result = new Date();
+        return result.setDate(result.getDate() + days);
+      };
+
+      let date = this.formatDate(sumDate(0));
+      this.timeStart.text = date.dateFormatted;
+      this.timeStart.value = date.dateUnformatted;
+
+      date = this.formatDate(sumDate(2));
+      this.timeEnd.text = date.dateFormatted;
+      this.timeEnd.value = date.dateUnformatted;
     },
     save() {
-      /*   const error = this.errorsValidation();
-      if (error == false) return; */
-
-      const title = JSON.parse(JSON.stringify(this.title));
-      const time = this.formatTime(
-        JSON.parse(JSON.stringify(this.time)).start,
-        JSON.parse(JSON.stringify(this.time)).end
-      );
-      const reminders = this.formatReminders();
+      /*
+      const error = this.errorsValidation();
+      if (error == false) return;
+*/
+      const title = this.title;
+      const time = {
+        start: this.timeStart.value,
+        end: this.timeEnd.value,
+      };
+      const reminders = this.reminders;
       const repeats = {
         frecuency: JSON.parse(JSON.stringify(this.repeats)).frecuency,
         data: JSON.parse(JSON.stringify(this.repeats)).data,
       };
-      const calendar = JSON.parse(JSON.stringify(this.calendar));
+      const calendar = this.calendar;
       const notes = JSON.parse(JSON.stringify(this.notes));
 
-      this.createEvent(title, time, reminders, repeats, calendar, notes).then(
-        (response) => {
-          console.log(response);
-        }
-      );
+      if (this.$route.params.id) {
+        eventsService()
+          .updateEvent(
+            parseInt(this.$route.params.id as string),
+            title,
+            time,
+            reminders,
+            repeats,
+            calendar,
+            notes
+          )
+          .then(async (response) => {
+            const message = await userService()
+              .translate("updateEvent")
+              .then((response) => {
+                return response;
+              });
+            this.$router.go(-1)
+            this.openToast(message, "success");
+          });
+      } else {
+        eventsService()
+          .createEvent(title, time, reminders, repeats, calendar, notes)
+          .then(async(response) => {
+            const message = await userService()
+              .translate("saveEvent")
+              .then((response) => {
+                return response;
+              });
+            this.$router.go(-1)
+            this.openToast(message, "success");
+          });
+      }
     },
     errorsValidation() {
       let error = true;
@@ -400,82 +343,80 @@ export default defineComponent({
       }
       return error;
     },
-    formatTime(
-      start: {
-        amSelected: string;
-        daySelected: number;
-        hourSelected: string;
-        minuteSelected: string;
-        monthSelected: number;
-        yearSelected: number;
-      },
-      end: {
-        amSelected: string;
-        daySelected: number;
-        hourSelected: string;
-        minuteSelected: string;
-        monthSelected: number;
-        yearSelected: number;
+
+    async getEvent(id: number) {
+      const event = await eventsService()
+        .getEvent(id)
+        .then((response) => {
+          return response;
+        });
+
+      if ([event.data].length) {
+        event.data.forEach(async (element: any) => {
+          this.title = element.title;
+
+          let date = this.formatDate(element.time_start);
+          this.timeStart.text = date.dateFormatted;
+          this.timeStart.value = element.time_start;
+          date = this.formatDate(element.time_end);
+          this.timeEnd.text = date.dateFormatted;
+          this.timeEnd.value = element.time_start;
+
+          this.reminders = element.reminders;
+
+          element.repeats.frecuencyName = await userService().translate(
+            element.repeats.frecuency
+          );
+          this.repeats = element.repeats;
+
+          this.calendar = element.calendar;
+
+          this.notes = element.notes;
+        });
       }
-    ) {
-      let startDate =
-        start.yearSelected +
-        "/" +
-        start.monthSelected +
-        "/" +
-        start.daySelected +
-        " " +
-        start.hourSelected +
-        ":" +
-        start.minuteSelected +
-        " " +
-        start.amSelected;
-      let endDate =
-        end.yearSelected +
-        "/" +
-        end.monthSelected +
-        "/" +
-        end.daySelected +
-        " " +
-        end.hourSelected +
-        ":" +
-        end.minuteSelected +
-        " " +
-        end.amSelected;
-
-      let date = new Date(startDate);
-      startDate =
-        date.getFullYear() +
-        "/" +
-        date.getMonth() +
-        "/" +
-        date.getDate() +
-        " " +
-        date.getHours() +
-        ":" +
-        date.getMinutes();
-
-      date = new Date(endDate);
-      endDate =
-        date.getFullYear() +
-        "/" +
-        date.getMonth() +
-        "/" +
-        date.getDate() +
-        " " +
-        date.getHours() +
-        ":" +
-        date.getMinutes();
-      return { startDate, endDate };
     },
-    formatReminders() {
-      const reminders: string[] = [];
-      this.reminders.forEach((element) => {
-        if (element.check == true) {
-          reminders.push(element.value);
-        }
+    formatDate(date: any) {
+      const d = new Date(date);
+      let hour = d.getHours() % 12 || 12;
+      let minute = d.getMinutes() as any;
+      minute = minute == 0 ? "00" : d.getMinutes();
+      const am = d.getHours() >= 12 ? "pm" : "am";
+      const timeFormatted = hour + ":" + minute + " " + am;
+
+      const dateFormatted =
+        d.getDate() +
+        "-" +
+        d.getMonth() +
+        "-" +
+        d.getFullYear() +
+        " " +
+        timeFormatted;
+
+      hour = d.getHours();
+      minute = d.getMinutes() as any;
+      minute = minute == 0 ? "00" : "0";
+      const timeUnformatted = hour + ":" + minute;
+
+      const dateUnformatted =
+        d.getFullYear() +
+        "-" +
+        d.getMonth() +
+        "-" +
+        d.getDate() +
+        " " +
+        timeUnformatted;
+
+      return { dateFormatted, dateUnformatted };
+    },
+    async openToast(message: string, color: string) {
+      const toast = await toastController.create({
+        message,
+        duration: 2000,
+        mode: "ios",
+        translucent: true,
+        color,
       });
-      return reminders;
+      return toast.present();
     },
   },
 });

@@ -90,7 +90,9 @@
                       v-for="minute in minutes"
                       :key="minute"
                       :value="minute"
-                      >{{ minute }}</ion-select-option
+                    >
+                      <p v-if="minute == 0">00</p>
+                      <p v-if="minute != 0">{{ minute }}</p></ion-select-option
                     >
                   </ion-select>
                 </ion-item>
@@ -181,7 +183,9 @@
                       v-for="minute in minutes"
                       :key="minute"
                       :value="minute"
-                      >{{ minute }}</ion-select-option
+                    >
+                      <p v-if="minute == 0">00</p>
+                      <p v-if="minute != 0">{{ minute }}</p></ion-select-option
                     >
                   </ion-select>
                 </ion-item>
@@ -216,9 +220,7 @@
                 <ion-checkbox slot="start"></ion-checkbox>
                 <ion-label>No volver a mostrar</ion-label>
               </ion-item>
-              <ion-button fill="clear" expand="full">
-                Aceptar
-              </ion-button>
+              <ion-button fill="clear" expand="full"> Aceptar </ion-button>
             </ion-card-content>
           </ion-card>
         </ion-col>
@@ -253,23 +255,10 @@ export default defineComponent({
     IonSelectOption,
   },
   setup() {
-    const hours = [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "11",
-      "12",
-    ];
-    const minutes = ["00"];
+    const hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const minutes = [0];
     for (let i = 1; i <= 60; i++) {
-      minutes.push(i.toString());
+      minutes.push(i);
     }
     const am = ["am", "pm"];
     const monthNames = [
@@ -299,8 +288,8 @@ export default defineComponent({
   data() {
     return {
       start: {
-        hourSelected: "12",
-        minuteSelected: "00",
+        hourSelected: 0,
+        minuteSelected: 0,
         amSelected: "am",
         yearSelected: 0,
         monthSelected: {} as any,
@@ -308,8 +297,8 @@ export default defineComponent({
         days: [0],
       },
       end: {
-        hourSelected: "12",
-        minuteSelected: "00",
+        hourSelected: 0,
+        minuteSelected: 0,
         amSelected: "am",
         yearSelected: 0,
         monthSelected: {} as any,
@@ -320,58 +309,62 @@ export default defineComponent({
   },
   mounted() {
     eventBus().emitter.on("get-schedule-event", (response: any) => {
-      this.start.amSelected = response.schedule.start.amSelected;
-      this.start.daySelected = response.schedule.start.daySelected;
-      this.start.hourSelected = response.schedule.start.hourSelected;
-      this.start.minuteSelected = response.schedule.start.minuteSelected;
-      this.start.monthSelected = response.schedule.start.monthSelected;
-      this.start.yearSelected = response.schedule.start.yearSelected;
-      this.end.amSelected = response.schedule.end.amSelected;
-      this.end.daySelected = response.schedule.end.daySelected;
-      this.end.hourSelected = response.schedule.end.hourSelected;
-      this.end.minuteSelected = response.schedule.end.minuteSelected;
-      this.end.monthSelected = response.schedule.end.monthSelected;
-      this.end.yearSelected = response.schedule.end.yearSelected;
+      let d = new Date(response.timeStart);
+      this.start.amSelected = d.getHours() >= 12 ? "pm" : "am";
+      this.start.daySelected = d.getDate();
+      this.start.hourSelected = d.getHours() % 12 || 12;
+      this.start.minuteSelected = d.getMinutes();
+      this.start.monthSelected = d.getMonth();
+      this.start.yearSelected = d.getFullYear();
+
+      d = new Date(response.timeEnd);
+      this.end.amSelected = d.getHours() >= 12 ? "pm" : "am";
+      this.end.daySelected = d.getDate();
+      this.end.hourSelected = d.getHours() % 12 || 12;
+      this.end.minuteSelected = d.getMinutes();
+      this.end.monthSelected = d.getMonth();
+      this.end.yearSelected = d.getFullYear();
       this.loadDate();
     });
   },
   methods: {
     save() {
-      const start = new Date(
+      const start =
         this.start.yearSelected +
-          "/" +
-          this.start.monthSelected +
-          "/" +
-          this.start.daySelected +
-          " " +
-          this.start.hourSelected +
-          ":" +
-          this.start.minuteSelected +
-          " " +
-          this.start.amSelected
-      ).getTime();
-      const end = new Date(
-        this.end.yearSelected +
-          "/" +
-          this.end.monthSelected +
-          "/" +
-          this.end.daySelected +
-          " " +
-          this.end.hourSelected +
-          ":" +
-          this.end.minuteSelected +
-          " " +
-          this.end.amSelected
-      ).getTime();
+        "/" +
+        this.start.monthSelected +
+        "/" +
+        this.start.daySelected +
+        " " +
+        this.start.hourSelected +
+        ":" +
+        this.start.minuteSelected +
+        " " +
+        this.start.amSelected;
+      const timeStart=new Date(start).getTime()
 
-      if (end >= start) {
+      const end =
+        this.end.yearSelected +
+        "/" +
+        this.end.monthSelected +
+        "/" +
+        this.end.daySelected +
+        " " +
+        this.end.hourSelected +
+        ":" +
+        this.end.minuteSelected +
+        " " +
+        this.end.amSelected;
+      const timeEnd=new Date(end).getTime()
+
+      if (timeStart <= timeEnd) {
         eventBus().emitter.emit("set-schedule-event", {
-          start: JSON.parse(JSON.stringify(this.start)),
-          end: JSON.parse(JSON.stringify(this.end)),
+          start,
+          end,
         });
         this.$router.go(-1);
       } else {
-        this.openToast("Compurbe las fechas seleccionadas", "danger");
+        this.openToast("Compruebe las fechas seleccionadas", "danger");
       }
     },
     generateYears() {
@@ -380,7 +373,6 @@ export default defineComponent({
       for (let i = this.start.yearSelected; i < max; i++) {
         years.push(i);
       }
-      console.log(years);
       this.years = years;
     },
     generateDaysStart() {

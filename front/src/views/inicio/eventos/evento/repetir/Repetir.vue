@@ -409,7 +409,7 @@ export default defineComponent({
       this.currentDay = day;
     },
     save() {
-      let frecuency = "unico";
+      let frecuency = "unique";
       let data = {};
 
       if (this.repeatData.frecuencySelect == "daily") {

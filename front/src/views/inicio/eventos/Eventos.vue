@@ -39,31 +39,39 @@
         </ion-col>
       </ion-row>
 
-      <div style="display: flex; justify-content: center">
-        <ion-row>
-          <ion-col
-            v-for="event in events"
-            :key="event"
-            size="12"
-            size-md="6"
-            size-lg="8"
-          >
-            <ion-card style="--background: #e6dbff" v-on:click="openEvent()">
-              <ion-card-header>
-                <ion-card-title>{{ event.title }}</ion-card-title>
-              </ion-card-header>
-              <ion-card-content>
-                <p>
-                  <small> {{ event.time_start }} - {{ event.time_end }} </small>
-                </p>
-                <p>
-                  <small> {{ event.repeats.frecuency }} </small>
-                </p>
-              </ion-card-content>
-            </ion-card>
-          </ion-col>
-        </ion-row>
-      </div>
+      <ion-row>
+        <ion-col v-for="event in events" :key="event" size="12">
+          <ion-row>
+            <ion-col size="12" size-md="4" size-lg="6">
+              <ion-card
+                :class="{ cardEvent: event.type == 'event' }"
+                v-on:click="openEvent(event.id)"
+              >
+                <ion-card-header>
+                  <ion-card-title
+                    >{{ event.title }}
+                    <ion-icon
+                      v-if="event.reminders.length > 0"
+                      style="float: right"
+                      :icon="notificationsOutline"
+                    ></ion-icon>
+                  </ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                  <p>
+                    <small>
+                      {{ event.time_start }} - {{ event.time_end }}
+                    </small>
+                  </p>
+                  <p>
+                    <small> {{ event.repeats.frecuency }} </small>
+                  </p>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+          </ion-row>
+        </ion-col>
+      </ion-row>
 
       <!--  <ion-row>
         <ion-col size="12">
@@ -116,7 +124,11 @@ import {
   IonRefresher,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { chevronBackOutline, addOutline } from "ionicons/icons";
+import {
+  chevronBackOutline,
+  addOutline,
+  notificationsOutline,
+} from "ionicons/icons";
 import { useRoute } from "vue-router";
 import eventsService from "../../../services/event.vue";
 import userService from "../../../services/user.vue";
@@ -135,8 +147,13 @@ export default defineComponent({
     const route = useRoute();
     const date = route.params.date as string;
     const titulo = date.replaceAll("-", "/");
-    //const jsonLang = userService().translate() as any;
-    return { chevronBackOutline, addOutline, titulo, IonRefresher };
+    return {
+      chevronBackOutline,
+      addOutline,
+      titulo,
+      IonRefresher,
+      notificationsOutline,
+    };
   },
   data() {
     return { events: [] as Array<any> };
@@ -145,8 +162,8 @@ export default defineComponent({
     this.getEvents();
   },
   methods: {
-    openEvent() {
-      this.$router.push({ name: "Evento", params: { id: 0 } });
+    openEvent(id: number) {
+      this.$router.push({ name: "Evento", params: { id } });
     },
     createEvent() {
       this.$router.push({ name: "CreateEvent" });
@@ -162,9 +179,24 @@ export default defineComponent({
         element.repeats.frecuency = userService().translate(
           element.repeats.frecuency
         );
+        element["time_start"] = this.formatDate(element.time_start);
+        element["time_end"] = this.formatDate(element.time_end);
+        element["type"] = "event";
       });
 
       this.events = events.data;
+    },
+    formatDate(date: string) {
+      const day = date.split(" ")[0].split("-")[2];
+      const month = date.split(" ")[0].split("-")[1];
+      const year = date.split(" ")[0].split("-")[0];
+
+      const hour = parseInt(date.split(" ")[1].split(":")[0]) % 12 || 12;
+      const minute = date.split(" ")[1].split(":")[1];
+      const am = parseInt(date.split(" ")[1].split(":")[0]) >= 12 ? "pm" : "am";
+      return (
+        day + "-" + month + "-" + year + " " + hour + ":" + minute + " " + am
+      );
     },
     refreshContent(event: any) {
       setTimeout(async () => {
@@ -203,7 +235,7 @@ export default defineComponent({
 #container a {
   text-decoration: none;
 }
+.cardEvent {
+  --background: #e6dbff;
+}
 </style>
-
-function await(arg0: any) { throw new Error("Function not implemented."); }
-function await(arg0: any) { throw new Error("Function not implemented."); }
