@@ -10,6 +10,7 @@ import Repetir from "../views/inicio/eventos/evento/repetir/Repetir.vue";
 import Register from "../views/sesion/register/Register.vue";
 import Login from "../views/sesion/login/Login.vue";
 import Reminders from "../views/inicio/eventos/evento/reminder/Reminder.vue";
+
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",

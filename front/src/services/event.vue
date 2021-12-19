@@ -1,17 +1,17 @@
 <script lang="ts">
 import axios from "axios";
 import user from "./user.vue";
-const { getUserToken } = user();
-import { Storage } from "@ionic/storage";
+const {getUserToken} = user();
+import {Storage} from "@ionic/storage";
 const storage = new Storage();
 storage.create();
 
 export default function () {
   async function createEvent(
     title: string,
-    time: {},
+    time: Record<string, any>,
     reminders: Array<string>,
-    repeats: {},
+    repeats: Record<string, any>,
     calendar: string,
     notes: string
   ) {
@@ -39,9 +39,9 @@ export default function () {
   async function updateEvent(
     id: number,
     title: string,
-    time: {},
+    time: Record<string, any>,
     reminders: Array<string>,
-    repeats: {},
+    repeats: Record<string, any>,
     calendar: string,
     notes: string
   ) {
@@ -86,7 +86,7 @@ export default function () {
 
     return axios.post(
       "http://localhost:8000/api/auth/get-event",
-      { id },
+      {id},
       {
         headers: {
           "Content-Type": "application/json",
@@ -137,7 +137,7 @@ export default function () {
       " " +
       timeUnformatted;
 
-    return { dateFormatted, dateUnformatted };
+    return {dateFormatted, dateUnformatted};
   }
   return {
     createEvent,
