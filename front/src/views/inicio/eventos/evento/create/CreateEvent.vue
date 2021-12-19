@@ -194,6 +194,19 @@ export default defineComponent({
     return {
       buttonEdit: true,
       titulo,
+      event: {
+        id: 0,
+        title: "",
+        timeStart: "",
+        timeEnd: "",
+        repeats: {
+          frecuency: "",
+          data: [],
+        },
+        reminders: [],
+        calendar: "",
+        notes: "",
+      },
       reminders: [],
       title: "",
       timeStart: { text: "", value: "" },
@@ -212,10 +225,9 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.openToast("Bienvenido", "success");
     if (this.$route.params.id) {
       this.titulo = "Actualizar evento";
-      this.getEvent(parseInt(this.$route.params.id as string));
+      this.getEventLocal(parseInt(this.$route.params.id as string));
     }
     this.setDate();
     eventBus().emitter.on("set-schedule-event", (response: any) => {
@@ -235,6 +247,12 @@ export default defineComponent({
       );
       this.repeats.frecuency = response.frecuency;
       this.repeats.data = response.data;
+    });
+    eventBus().emitter.on("update-event", async (response: any) => {
+      console.log(response.event);
+      this.event = response.event;
+      this.titulo = "Actualizar evento";
+      //  this.getEvent();
     });
   },
   methods: {
@@ -315,19 +333,20 @@ export default defineComponent({
               .then((response) => {
                 return response;
               });
-            this.$router.go(-1)
+            eventBus().emitter.emit("update-event-success");
+            this.$router.go(-1);
             this.openToast(message, "success");
           });
       } else {
         eventsService()
           .createEvent(title, time, reminders, repeats, calendar, notes)
-          .then(async(response) => {
+          .then(async (response) => {
             const message = await userService()
               .translate("saveEvent")
               .then((response) => {
                 return response;
               });
-            this.$router.go(-1)
+            this.$router.go(-1);
             this.openToast(message, "success");
           });
       }
@@ -344,15 +363,15 @@ export default defineComponent({
       return error;
     },
 
-    async getEvent(id: number) {
+    async getEventLocal(id: number) {
       const event = await eventsService()
-        .getEvent(id)
+        .getEventLocal(id)
         .then((response) => {
           return response;
         });
 
-      if ([event.data].length) {
-        event.data.forEach(async (element: any) => {
+      if (event.length) {
+        event.forEach(async (element: any) => {
           this.title = element.title;
 
           let date = this.formatDate(element.time_start);
@@ -376,7 +395,9 @@ export default defineComponent({
       }
     },
     formatDate(date: any) {
+      console.log(date)
       const d = new Date(date);
+      console.log(d)
       let hour = d.getHours() % 12 || 12;
       let minute = d.getMinutes() as any;
       minute = minute == 0 ? "00" : d.getMinutes();

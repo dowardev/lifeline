@@ -34,7 +34,7 @@
             <ion-icon slot="start" :icon="timeOutline"></ion-icon>
             <ion-label class="ion-text-wrap"
               ><h2>Fecha inicial</h2>
-              <p>{{ event.timeStart }}</p>
+              <p>{{ event.timeStart.dateFormatted }}</p>
             </ion-label>
           </ion-item>
         </ion-col>
@@ -45,7 +45,7 @@
             <ion-icon slot="start" :icon="timeOutline"></ion-icon>
             <ion-label class="ion-text-wrap"
               ><h2>Fecha final</h2>
-              <p>{{ event.timeEnd }}</p>
+              <p>{{ event.timeEnd.dateFormatted }}</p>
             </ion-label>
           </ion-item>
         </ion-col>
@@ -129,6 +129,7 @@ import {
 } from "ionicons/icons";
 import eventsService from "../../../../services/event.vue";
 import userService from "../../../../services/user.vue";
+import { Storage } from "@ionic/storage";
 
 export default defineComponent({
   name: "Evento",
@@ -156,6 +157,8 @@ export default defineComponent({
   },
   data() {
     const id = parseInt(this.$route.params.id as string);
+    const storage = new Storage();
+    storage.create();
     return {
       id,
       event: {
@@ -167,14 +170,15 @@ export default defineComponent({
         calendar: "",
         notes: "",
       },
+      storage,
     };
   },
   mounted() {
-    this.getEvent();
+    this.getEventLocal();
   },
   methods: {
     editEvent() {
-      this.$router.push("/event/update/"+this.id);
+      this.$router.push("/event/update/" + this.id);
     },
     selectTime() {
       this.$router.push("/horario");
@@ -302,39 +306,24 @@ export default defineComponent({
       });
       return alert.present();
     },
-    async getEvent() {
+    async getEventLocal() {
       const event = await eventsService()
-        .getEvent(this.id)
+        .getEventLocal(this.id)
         .then((response) => {
           return response;
         });
 
-      if ([event.data].length) {
-        event.data.forEach((element: any) => {
+      if (event.length) {
+        event.forEach(async (element: any) => {
           this.event.title = element.title;
-          this.event.timeStart = this.formatDate(element.time_start);
-          this.event.timeEnd = this.formatDate(element.time_end);
+          this.event.timeStart = element.time_start;
+          this.event.timeEnd = element.time_end;
           this.event.reminders = element.reminders;
-          element.repeats.frecuency = userService().translate(
-            element.repeats.frecuency
-          );
           this.event.repeats = element.repeats;
           this.event.calendar = element.calendar;
           this.event.notes = element.notes;
         });
       }
-    },
-    formatDate(date: string) {
-      const day = date.split(" ")[0].split("-")[2];
-      const month = date.split(" ")[0].split("-")[1];
-      const year = date.split(" ")[0].split("-")[0];
-
-      const hour = parseInt(date.split(" ")[1].split(":")[0]) % 12 || 12;
-      const minute = date.split(" ")[1].split(":")[1];
-      const am = parseInt(date.split(" ")[1].split(":")[0]) >= 12 ? "pm" : "am";
-      return (
-        day + "-" + month + "-" + year + " " + hour + ":" + minute + " " + am
-      );
     },
   },
 });

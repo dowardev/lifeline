@@ -59,9 +59,7 @@
                 </ion-card-header>
                 <ion-card-content>
                   <p>
-                    <small>
-                      {{ event.time_start }} - {{ event.time_end }}
-                    </small>
+                    <small> {{ event.timeStart.dateFormatted }} - {{ event.timeEnd.dateFormatted }} </small>
                   </p>
                   <p>
                     <small> {{ event.repeats.frecuency }} </small>
@@ -132,6 +130,7 @@ import {
 import { useRoute } from "vue-router";
 import eventsService from "../../../services/event.vue";
 import userService from "../../../services/user.vue";
+import { Storage } from "@ionic/storage";
 
 export default defineComponent({
   name: "Eventos",
@@ -156,7 +155,9 @@ export default defineComponent({
     };
   },
   data() {
-    return { events: [] as Array<any> };
+    const storage = new Storage();
+    storage.create();
+    return { events: [] as Array<any>, storage };
   },
   mounted() {
     this.getEvents();
@@ -175,28 +176,20 @@ export default defineComponent({
           return response;
         });
 
-      events.data.forEach((element: any) => {
-        element.repeats.frecuency = userService().translate(
+      events.data.forEach(async (element: any) => {
+        element.timeStart = this.formatDate(element.time_start);
+        element.timeEnd = this.formatDate(element.time_end);
+        element.type = "event";
+        element.repeats.frecuency = await userService().translate(
           element.repeats.frecuency
         );
-        element["time_start"] = this.formatDate(element.time_start);
-        element["time_end"] = this.formatDate(element.time_end);
-        element["type"] = "event";
       });
 
       this.events = events.data;
+      this.storage.set("events", JSON.stringify(events.data));
     },
     formatDate(date: string) {
-      const day = date.split(" ")[0].split("-")[2];
-      const month = date.split(" ")[0].split("-")[1];
-      const year = date.split(" ")[0].split("-")[0];
-
-      const hour = parseInt(date.split(" ")[1].split(":")[0]) % 12 || 12;
-      const minute = date.split(" ")[1].split(":")[1];
-      const am = parseInt(date.split(" ")[1].split(":")[0]) >= 12 ? "pm" : "am";
-      return (
-        day + "-" + month + "-" + year + " " + hour + ":" + minute + " " + am
-      );
+      return eventsService().formatDate(date);
     },
     refreshContent(event: any) {
       setTimeout(async () => {
