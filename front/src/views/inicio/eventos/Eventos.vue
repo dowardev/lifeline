@@ -17,59 +17,88 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-refresher slot="fixed" @ionRefresh="refreshContent($event)">
-        <ion-refresher-content></ion-refresher-content>
-      </ion-refresher>
+      <!-- <ion-refresher slot="fixed" @ionRefresh="refreshContent($event)"> -->
+      <!--   <ion-refresher-content></ion-refresher-content> -->
+      <!-- </ion-refresher> -->
 
-      <ion-row style="padding-left: 10px">
-        <ion-col size="12">
-          <ion-button style="--background: #e6dbff; color: black">
-            Citas
-          </ion-button>
-          <ion-button style="--background: #c9eaf3; color: black">
-            Tareas
-          </ion-button>
+      <!-- <ion-row> -->
+      <!--   <ion-col size="12"> -->
+      <!--     <ion-item button="true" id="open-date-input"> -->
+      <!--       <ion-label>Date</ion-label> -->
+      <!-- <ion-text slot="end">{{ date1 }}</ion-text> -->
+      <!--       <ion-popover trigger="open-date-input" :show-backdrop="false"> -->
+      <!--         <ion-datetime -->
+      <!--           presentation="date" -->
+      <!--           @ionChange="(ev: DatetimeCustomEvent) => date1 = formatDate(ev.detail.value)" -->
+      <!--         /> -->
+      <!--       </ion-popover> -->
+      <!--     </ion-item> -->
 
-          <ion-button style="--background: #ffe6d0; color: black">
-            Personal
-          </ion-button>
-          <ion-button style="--background: #eaffef; color: black">
-            Sin recordatorio
-          </ion-button>
-        </ion-col>
-      </ion-row>
+      <!-- Datetime in popover with input -->
+      <!-- <ion-item> -->
+      <!-- <ion-input :value="date2" /> -->
+      <!-- <ion-button fill="clear" id="open-date-input-2"> -->
+      <!--   <ion-icon icon="calendar" /> -->
+      <!-- </ion-button> -->
+      <!-- <ion-popover trigger="open-date-input-2" :show-backdrop="false"> -->
+      <!--   <ion-datetime -->
+      <!--     presentation="date" -->
+      <!-- @ionChange="(ev: DatetimeCustomEvent) => date2 = formatDate(ev.detail.value)" -->
+      />
+      <!--   </ion-popover> -->
+      <!-- </ion-item> -->
 
-      <ion-row>
-        <ion-col v-for="event in events" :key="event" size="12">
-          <ion-row>
-            <ion-col size="12" size-md="4" size-lg="6">
-              <ion-card
-                :class="{ cardEvent: event.type == 'event' }"
-                v-on:click="openEvent(event.id)"
-              >
-                <ion-card-header>
-                  <ion-card-title
-                    >{{ event.title }}
-                    <ion-icon
-                      v-if="event.reminders.length > 0"
-                      style="float: right"
-                      :icon="notificationsOutline"
-                    ></ion-icon>
-                  </ion-card-title>
-                </ion-card-header>
-                <ion-card-content>
-                  <p>
-                    <small> {{ event.timeStart.dateFormatted }} - {{ event.timeEnd.dateFormatted }} </small>
-                  </p>
-                  <p>
-                    <small> {{ event.repeats.frecuency }} </small>
-                  </p>
-                </ion-card-content>
-              </ion-card>
-            </ion-col>
-          </ion-row>
-        </ion-col>
-      </ion-row>
+      <!--     <ion-item> -->
+      <!--       <ion-label>Tipo de contenido</ion-label> -->
+      <!--       <ion-select -->
+      <!--         multiple="true" -->
+      <!--         cancel-text="Cancelar" -->
+      <!--         ok-text="Confirmar!" -->
+      <!--         @ionChange="prueba($event)" -->
+      <!--       > -->
+      <!--         <ion-select-option value="all">Todo</ion-select-option> -->
+      <!--         <ion-select-option value="events">Eventos</ion-select-option> -->
+      <!--         <ion-select-option value="notes">Notas</ion-select-option> -->
+      <!--         <ion-select-option value="tasks">Tareas</ion-select-option> -->
+      <!--       </ion-select> -->
+      <!--     </ion-item> -->
+      <!--   </ion-col> -->
+      <!-- </ion-row> -->
+
+      <!-- <ion-row> -->
+      <!--   <ion-col v-for="event in events" :key="event" size="12"> -->
+      <!--     <ion-row> -->
+      <!--       <ion-col size="12" size-md="4" size-lg="6"> -->
+      <!--         <ion-card -->
+      <!--           :class="{ cardEvent: event.type == 'event' }" -->
+      <!--           v-on:click="openEvent(event.id)" -->
+      <!--         > -->
+      <!--           <ion-card-header> -->
+      <!--             <ion-card-title> -->
+      <!--               {{ event.title }} -->
+      <!--               <ion-icon -->
+      <!--                 v-if="event.reminders.length > 0" -->
+      <!--                 style="float: right" -->
+      <!--                 :icon="notificationsOutline" -->
+      <!--               ></ion-icon> -->
+      <!--             </ion-card-title> -->
+      <!--           </ion-card-header> -->
+      <!--           <ion-card-content> -->
+      <!--             <p> -->
+      <!--               <small> -->
+      <!--                 {{ event.timeStart.dateFormatted }} - -->
+      <!--                 {{ event.timeEnd.dateFormatted }} -->
+      <!--               </small> -->
+      <!--             </p> -->
+      <!--             <p> -->
+      <!--               <small>{{ event.repeats.frecuency }}</small> -->
+      <!--             </p> -->
+      <!--           </ion-card-content> -->
+      <!--         </ion-card> -->
+      <!--       </ion-col> -->
+      <!--     </ion-row> -->
+      <!--   </ion-col> -->
+      <!-- </ion-row> -->
 
       <!--  <ion-row>
         <ion-col size="12">
@@ -106,7 +135,7 @@
             <ion-card-content> </ion-card-content>
           </ion-card>
         </ion-col>
-      </ion-row> -->
+      </ion-row>-->
     </ion-content>
   </ion-page>
 </template>
@@ -120,15 +149,21 @@ import {
   IonToolbar,
   IonButton,
   IonRefresher,
+  IonSelect,
+  IonPopover,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import {
   chevronBackOutline,
   addOutline,
   notificationsOutline,
+  menuOutline,
+  calendarOutline,
+  documentOutline,
+  checkboxOutline,
 } from "ionicons/icons";
 import { useRoute } from "vue-router";
-import eventsService from "../../../services/event.vue";
+import eventService from "../../../services/event.vue";
 import userService from "../../../services/user.vue";
 import { Storage } from "@ionic/storage";
 
@@ -141,6 +176,8 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
     IonButton,
+    // IonSelect,
+    // IonPopover,
   },
   setup() {
     const route = useRoute();
@@ -152,12 +189,19 @@ export default defineComponent({
       titulo,
       IonRefresher,
       notificationsOutline,
+      menuOutline,
+      calendarOutline,
+      documentOutline,
+      checkboxOutline,
     };
   },
   data() {
     const storage = new Storage();
     storage.create();
-    return { events: [] as Array<any>, storage };
+    return {
+      events: [] as Array<any>,
+      storage,
+    };
   },
   mounted() {
     this.getEvents();
@@ -170,7 +214,7 @@ export default defineComponent({
       this.$router.push({ name: "CreateEvent" });
     },
     async getEvents() {
-      const events = await eventsService()
+      const events = await eventService()
         .getEvents()
         .then((response: any) => {
           return response;
@@ -189,12 +233,15 @@ export default defineComponent({
       this.storage.set("events", JSON.stringify(events.data));
     },
     formatDate(date: string) {
-      return eventsService().formatDate(date);
+      return eventService().formatDateTime(date, "");
     },
     refreshContent(event: any) {
       setTimeout(async () => {
         this.getEvents();
       }, 2000);
+    },
+    prueba(e: any) {
+      console.log(e.detail.value);
     },
   },
 });
@@ -230,5 +277,8 @@ export default defineComponent({
 }
 .cardEvent {
   --background: #e6dbff;
+}
+.optionselected {
+  color: #3880ff;
 }
 </style>

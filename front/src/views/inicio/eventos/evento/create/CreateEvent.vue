@@ -24,9 +24,6 @@
               <ion-icon slot="start" :icon="readerOutline"></ion-icon>
               <ion-label position="floating">Titulo</ion-label>
               <ion-input type="text" v-model="title"></ion-input>
-              <ion-button slot="end" fill="clear">
-                <ion-icon :icon="createOutline"></ion-icon>
-              </ion-button>
             </ion-item>
             <small
               class="error ion-padding"
@@ -39,16 +36,20 @@
               <ion-label>
                 <h2>Horario</h2>
                 <p>
-                  {{ timeStart.text }}
+                  {{
+                    formatDateTime(datetime.start, "P") +
+                    " " +
+                    formatDateTime(datetime.start, "p")
+                  }}
                 </p>
                 <p>
-                  {{ timeEnd.text }}
+                  {{
+                    formatDateTime(datetime.end, "P") +
+                    " " +
+                    formatDateTime(datetime.end, "p")
+                  }}
                 </p>
               </ion-label>
-
-              <ion-button slot="end" fill="clear">
-                <ion-icon :icon="createOutline"></ion-icon>
-              </ion-button>
             </ion-item>
 
             <ion-item lines="none" button v-on:click="selectReminders()">
@@ -65,9 +66,6 @@
                   </ion-chip>
                 </div>
               </ion-label>
-              <ion-button fill="clear" slot="end">
-                <ion-icon :icon="addCircleOutline"></ion-icon>
-              </ion-button>
             </ion-item>
 
             <ion-item lines="none" button v-on:click="selectRepeat()">
@@ -76,9 +74,6 @@
                 ><h2>Repetir</h2>
                 <p>{{ repeats.frecuencyName }}</p></ion-label
               >
-              <ion-button fill="clear" slot="end">
-                <ion-icon :icon="createOutline"></ion-icon>
-              </ion-button>
             </ion-item>
 
             <ion-item lines="none">
@@ -93,9 +88,6 @@
               >
                 <ion-select-option value="personal">Personal</ion-select-option>
               </ion-select>
-              <ion-button slot="end" fill="clear">
-                <ion-icon :icon="createOutline"></ion-icon>
-              </ion-button>
             </ion-item>
 
             <ion-item lines="none">
@@ -107,9 +99,6 @@
                 autoGrow
                 :rows="4"
               ></ion-textarea>
-              <ion-button slot="end" fill="clear">
-                <ion-icon :icon="createOutline"></ion-icon>
-              </ion-button>
             </ion-item>
           </ion-list>
         </ion-col>
@@ -151,6 +140,7 @@ import eventBus from "../../../../../EventBus";
 import eventsService from "../../../../../services/event.vue";
 import userService from "../../../../../services/user.vue";
 import { Storage } from "@ionic/storage";
+import { add, format } from "date-fns";
 
 export default defineComponent({
   name: "Evento",
@@ -191,6 +181,7 @@ export default defineComponent({
     const titulo = "Agregar evento";
     const storage = new Storage();
     storage.create();
+    const today = new Date().toLocaleString("sv").replace(" ", "T");
     return {
       buttonEdit: true,
       titulo,
@@ -209,8 +200,12 @@ export default defineComponent({
       },
       reminders: [],
       title: "",
-      timeStart: { text: "", value: "" },
-      timeEnd: { text: "", value: "" },
+      datetime: {
+        start: today,
+        end: new Date(add(new Date(), { days: 1 }))
+          .toLocaleString("sv")
+          .replace(" ", "T"),
+      },
       repeats: {
         frecuencyName: "",
         frecuency: "",
@@ -231,12 +226,8 @@ export default defineComponent({
     }
     this.setDate();
     eventBus().emitter.on("set-schedule-event", (response: any) => {
-      let date = this.formatDate(response.start);
-      this.timeStart.text = date.dateFormatted;
-      this.timeStart.value = date.dateUnformatted;
-      date = this.formatDate(response.end);
-      this.timeEnd.text = date.dateFormatted;
-      this.timeEnd.value = date.dateUnformatted;
+      this.datetime.start = response.dateTimeStart;
+      this.datetime.end = response.dateTimeEnd;
     });
     eventBus().emitter.on("set-reminder-event", (response: any) => {
       this.reminders = response.reminders;
@@ -263,8 +254,8 @@ export default defineComponent({
       this.$router.push("/horario");
       setTimeout(() => {
         eventBus().emitter.emit("get-schedule-event", {
-          timeStart: this.timeStart.value,
-          timeEnd: this.timeEnd.value,
+          dateTimeStart: this.datetime.start,
+          dateTimeEnd: this.datetime.end,
         });
       }, 300);
     },
@@ -290,13 +281,13 @@ export default defineComponent({
         return result.setDate(result.getDate() + days);
       };
 
-      let date = this.formatDate(sumDate(0));
-      this.timeStart.text = date.dateFormatted;
-      this.timeStart.value = date.dateUnformatted;
+      // let date = this.formatDate(sumDate(0));
+      // this.timeStart.text = date.dateFormatted;
+      // this.timeStart.value = date.dateUnformatted;
 
-      date = this.formatDate(sumDate(2));
-      this.timeEnd.text = date.dateFormatted;
-      this.timeEnd.value = date.dateUnformatted;
+      // date = this.formatDate(sumDate(2));
+      // this.timeEnd.text = date.dateFormatted;
+      // this.timeEnd.value = date.dateUnformatted;
     },
     save() {
       /*
@@ -304,10 +295,10 @@ export default defineComponent({
       if (error == false) return;
 */
       const title = this.title;
-      const time = {
-        start: this.timeStart.value,
-        end: this.timeEnd.value,
-      };
+      // const time = {
+      //   start: this.timeStart.value,
+      //   end: this.timeEnd.value,
+      // };
       const reminders = this.reminders;
       const repeats = {
         frecuency: JSON.parse(JSON.stringify(this.repeats)).frecuency,
@@ -317,38 +308,38 @@ export default defineComponent({
       const notes = JSON.parse(JSON.stringify(this.notes));
 
       if (this.$route.params.id) {
-        eventsService()
-          .updateEvent(
-            parseInt(this.$route.params.id as string),
-            title,
-            time,
-            reminders,
-            repeats,
-            calendar,
-            notes
-          )
-          .then(async (response) => {
-            const message = await userService()
-              .translate("updateEvent")
-              .then((response) => {
-                return response;
-              });
-            eventBus().emitter.emit("update-event-success");
-            this.$router.go(-1);
-            this.openToast(message, "success");
-          });
+        // eventsService()
+        //   .updateEvent(
+        //     parseInt(this.$route.params.id as string),
+        //     title,
+        //     time,
+        //     reminders,
+        //     repeats,
+        //     calendar,
+        //     notes
+        //   )
+        //   .then(async (response) => {
+        //     const message = await userService()
+        //       .translate("updateEvent")
+        //       .then((response) => {
+        //         return response;
+        //       });
+        //     eventBus().emitter.emit("update-event-success");
+        //     this.$router.go(-1);
+        //     this.openToast(message, "success");
+        //   });
       } else {
-        eventsService()
-          .createEvent(title, time, reminders, repeats, calendar, notes)
-          .then(async (response) => {
-            const message = await userService()
-              .translate("saveEvent")
-              .then((response) => {
-                return response;
-              });
-            this.$router.go(-1);
-            this.openToast(message, "success");
-          });
+        // eventsService()
+        //   .createEvent(title, time, reminders, repeats, calendar, notes)
+        //   .then(async (response) => {
+        //     const message = await userService()
+        //       .translate("saveEvent")
+        //       .then((response) => {
+        //         return response;
+        //       });
+        //     this.$router.go(-1);
+        //     this.openToast(message, "success");
+        //   });
       }
     },
     errorsValidation() {
@@ -362,7 +353,6 @@ export default defineComponent({
       }
       return error;
     },
-
     async getEventLocal(id: number) {
       const event = await eventsService()
         .getEventLocal(id)
@@ -374,12 +364,12 @@ export default defineComponent({
         event.forEach(async (element: any) => {
           this.title = element.title;
 
-          let date = this.formatDate(element.time_start);
-          this.timeStart.text = date.dateFormatted;
-          this.timeStart.value = element.time_start;
-          date = this.formatDate(element.time_end);
-          this.timeEnd.text = date.dateFormatted;
-          this.timeEnd.value = element.time_start;
+          // let date = this.formatDate(element.time_start);
+          // this.timeStart.text = date.dateFormatted;
+          // this.timeStart.value = element.time_start;
+          // date = this.formatDate(element.time_end);
+          // this.timeEnd.text = date.dateFormatted;
+          // this.timeEnd.value = element.time_start;
 
           this.reminders = element.reminders;
 
@@ -394,40 +384,8 @@ export default defineComponent({
         });
       }
     },
-    formatDate(date: any) {
-      console.log(date)
-      const d = new Date(date);
-      console.log(d)
-      let hour = d.getHours() % 12 || 12;
-      let minute = d.getMinutes() as any;
-      minute = minute == 0 ? "00" : d.getMinutes();
-      const am = d.getHours() >= 12 ? "pm" : "am";
-      const timeFormatted = hour + ":" + minute + " " + am;
-
-      const dateFormatted =
-        d.getDate() +
-        "-" +
-        d.getMonth() +
-        "-" +
-        d.getFullYear() +
-        " " +
-        timeFormatted;
-
-      hour = d.getHours();
-      minute = d.getMinutes() as any;
-      minute = minute == 0 ? "00" : "0";
-      const timeUnformatted = hour + ":" + minute;
-
-      const dateUnformatted =
-        d.getFullYear() +
-        "-" +
-        d.getMonth() +
-        "-" +
-        d.getDate() +
-        " " +
-        timeUnformatted;
-
-      return { dateFormatted, dateUnformatted };
+    formatDateTime(date: string, typeFormat: string) {
+      return eventsService().formatDateTime(date, typeFormat);
     },
     async openToast(message: string, color: string) {
       const toast = await toastController.create({

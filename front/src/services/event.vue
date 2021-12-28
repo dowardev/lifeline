@@ -1,10 +1,11 @@
 <script lang="ts">
 import axios from "axios";
 import user from "./user.vue";
-const {getUserToken} = user();
-import {Storage} from "@ionic/storage";
+const { getUserToken } = user();
+import { Storage } from "@ionic/storage";
 const storage = new Storage();
 storage.create();
+import { format } from "date-fns";
 
 export default function () {
   async function createEvent(
@@ -86,7 +87,7 @@ export default function () {
 
     return axios.post(
       "http://localhost:8000/api/auth/get-event",
-      {id},
+      { id },
       {
         headers: {
           "Content-Type": "application/json",
@@ -106,38 +107,8 @@ export default function () {
 
     return event;
   }
-  function formatDate(date: any) {
-    const d = new Date(date);
-    let hour = d.getHours() % 12 || 12;
-    let minute = d.getMinutes() as any;
-    minute = minute == 0 ? "00" : d.getMinutes();
-    const am = d.getHours() >= 12 ? "pm" : "am";
-    const timeFormatted = hour + ":" + minute + " " + am;
-
-    const dateFormatted =
-      d.getDate() +
-      "-" +
-      d.getMonth() +
-      "-" +
-      d.getFullYear() +
-      " " +
-      timeFormatted;
-
-    hour = d.getHours();
-    minute = d.getMinutes() as any;
-    minute = minute == 0 ? "00" : "0";
-    const timeUnformatted = hour + ":" + minute;
-
-    const dateUnformatted =
-      d.getFullYear() +
-      "-" +
-      d.getMonth() +
-      "-" +
-      d.getDate() +
-      " " +
-      timeUnformatted;
-
-    return {dateFormatted, dateUnformatted};
+  function formatDateTime(date: string, typeFormat: string) {
+    return format(new Date(date), typeFormat);
   }
   return {
     createEvent,
@@ -145,7 +116,7 @@ export default function () {
     getEvents,
     getEvent,
     getEventLocal,
-    formatDate,
+    formatDateTime,
   };
 }
 </script>

@@ -173,11 +173,11 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.getUser();
-    eventBus().emitter.on("content-refresh", () => {
-      this.getUser();
-      eventBus().emitter.all.clear();
-    });
+    // this.getUser();
+    // eventBus().emitter.on("content-refresh", () => {
+    //   this.getUser();
+    //   eventBus().emitter.all.clear();
+    // });
   },
   methods: {
     openRoute(route: string) {
