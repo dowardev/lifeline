@@ -10,9 +10,9 @@ import { format } from "date-fns";
 export default function () {
   async function createEvent(
     title: string,
-    time: Record<string, any>,
-    reminders: Array<string>,
-    repeats: Record<string, any>,
+    dateTime: string,
+    reminders: string,
+    repeats: string,
     calendar: string,
     notes: string
   ) {
@@ -23,7 +23,7 @@ export default function () {
       "http://localhost:8000/api/auth/create-event",
       {
         title,
-        time,
+        dateTime,
         reminders,
         repeats,
         calendar,
@@ -40,9 +40,9 @@ export default function () {
   async function updateEvent(
     id: number,
     title: string,
-    time: Record<string, any>,
-    reminders: Array<string>,
-    repeats: Record<string, any>,
+    time: string,
+    reminders: string,
+    repeats: string,
     calendar: string,
     notes: string
   ) {

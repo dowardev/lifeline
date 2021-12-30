@@ -7,7 +7,7 @@
             <ion-icon slot="start" :icon="chevronBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>{{ titulo }}</ion-title>
+        <ion-title>{{ pageTitle }}</ion-title>
         <ion-buttons slot="end">
           <ion-button v-on:click="save()">
             <ion-icon slot="start" :icon="saveOutline"></ion-icon>
@@ -17,6 +17,7 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
+
       <ion-row>
         <ion-col size="12">
           <ion-list>
@@ -55,7 +56,7 @@
             <ion-item lines="none" button v-on:click="selectReminders()">
               <ion-icon slot="start" :icon="alarmOutline"></ion-icon>
               <ion-label>
-                <h2>Horario</h2>
+                <h2>Recordatorio(s)</h2>
                 <div
                   v-for="reminder in reminders"
                   :key="reminder"
@@ -124,23 +125,18 @@ import {
 import { defineComponent } from "vue";
 import {
   chevronBackOutline,
-  addOutline,
   readerOutline,
   timeOutline,
   repeatOutline,
   layersOutline,
-  documentOutline,
-  createOutline,
   saveOutline,
   alarmOutline,
-  closeCircleOutline,
-  addCircleOutline,
 } from "ionicons/icons";
 import eventBus from "../../../../../EventBus";
 import eventsService from "../../../../../services/event.vue";
 import userService from "../../../../../services/user.vue";
 import { Storage } from "@ionic/storage";
-import { add, format } from "date-fns";
+import { add } from "date-fns";
 
 export default defineComponent({
   name: "Evento",
@@ -161,35 +157,27 @@ export default defineComponent({
     };
     return {
       chevronBackOutline,
-      addOutline,
       readerOutline,
       timeOutline,
       repeatOutline,
       layersOutline,
-      documentOutline,
-      createOutline,
       saveOutline,
       alarmOutline,
-      closeCircleOutline,
-      addCircleOutline,
       IonInput,
       IonSelectOption,
-      customAlertOptions,
     };
   },
   data() {
-    const titulo = "Agregar evento";
+    const pageTitle = "Agregar evento";
     const storage = new Storage();
     storage.create();
     const today = new Date().toLocaleString("sv").replace(" ", "T");
     return {
       buttonEdit: true,
-      titulo,
+      pageTitle,
       event: {
         id: 0,
         title: "",
-        timeStart: "",
-        timeEnd: "",
         repeats: {
           frecuency: "",
           data: [],
@@ -221,10 +209,9 @@ export default defineComponent({
   },
   mounted() {
     if (this.$route.params.id) {
-      this.titulo = "Actualizar evento";
+      this.pageTitle = "Actualizar evento";
       this.getEventLocal(parseInt(this.$route.params.id as string));
     }
-    this.setDate();
     eventBus().emitter.on("set-schedule-event", (response: any) => {
       this.datetime.start = response.dateTimeStart;
       this.datetime.end = response.dateTimeEnd;
@@ -242,7 +229,7 @@ export default defineComponent({
     eventBus().emitter.on("update-event", async (response: any) => {
       console.log(response.event);
       this.event = response.event;
-      this.titulo = "Actualizar evento";
+      this.pageTitle = "Actualizar evento";
       //  this.getEvent();
     });
   },
@@ -275,71 +262,70 @@ export default defineComponent({
         });
       }, 300);
     },
-    setDate() {
-      const sumDate = (days: number) => {
-        const result = new Date();
-        return result.setDate(result.getDate() + days);
-      };
-
-      // let date = this.formatDate(sumDate(0));
-      // this.timeStart.text = date.dateFormatted;
-      // this.timeStart.value = date.dateUnformatted;
-
-      // date = this.formatDate(sumDate(2));
-      // this.timeEnd.text = date.dateFormatted;
-      // this.timeEnd.value = date.dateUnformatted;
-    },
     save() {
       /*
       const error = this.errorsValidation();
       if (error == false) return;
 */
       const title = this.title;
-      // const time = {
-      //   start: this.timeStart.value,
-      //   end: this.timeEnd.value,
-      // };
+      const dateTime = {
+        start: {
+          date: new Date(this.datetime.start).toISOString().split("T")[0],
+          time: new Date(this.datetime.start).toISOString().split("T")[1],
+        },
+        end: {
+          date: new Date(this.datetime.end).toISOString().split("T")[0],
+          time: new Date(this.datetime.end).toISOString().split("T")[1],
+        },
+      };
       const reminders = this.reminders;
       const repeats = {
-        frecuency: JSON.parse(JSON.stringify(this.repeats)).frecuency,
-        data: JSON.parse(JSON.stringify(this.repeats)).data,
+        frecuency: this.repeats.frecuency,
+        data: this.repeats.data,
       };
       const calendar = this.calendar;
-      const notes = JSON.parse(JSON.stringify(this.notes));
+      const notes = this.notes;
 
       if (this.$route.params.id) {
-        // eventsService()
-        //   .updateEvent(
-        //     parseInt(this.$route.params.id as string),
-        //     title,
-        //     time,
-        //     reminders,
-        //     repeats,
-        //     calendar,
-        //     notes
-        //   )
-        //   .then(async (response) => {
-        //     const message = await userService()
-        //       .translate("updateEvent")
-        //       .then((response) => {
-        //         return response;
-        //       });
-        //     eventBus().emitter.emit("update-event-success");
-        //     this.$router.go(-1);
-        //     this.openToast(message, "success");
-        //   });
+        eventsService()
+          .updateEvent(
+            parseInt(this.$route.params.id as string),
+            title,
+            JSON.stringify(dateTime),
+            JSON.stringify(reminders),
+            JSON.stringify(repeats),
+            calendar,
+            notes
+          )
+          .then(async (response) => {
+            const message = await userService()
+              .translate("updateEvent")
+              .then((response) => {
+                return response;
+              });
+            eventBus().emitter.emit("update-event-success");
+            this.$router.go(-1);
+            this.openToast(message, "success");
+          });
       } else {
-        // eventsService()
-        //   .createEvent(title, time, reminders, repeats, calendar, notes)
-        //   .then(async (response) => {
-        //     const message = await userService()
-        //       .translate("saveEvent")
-        //       .then((response) => {
-        //         return response;
-        //       });
-        //     this.$router.go(-1);
-        //     this.openToast(message, "success");
-        //   });
+        eventsService()
+          .createEvent(
+            title,
+            JSON.stringify(dateTime),
+            JSON.stringify(reminders),
+            JSON.stringify(repeats),
+            calendar,
+            notes
+          )
+          .then(async (response) => {
+            const message = await userService()
+              .translate("saveEvent")
+              .then((response) => {
+                return response;
+              });
+            // this.$router.go(-1);
+            this.openToast(message, "success");
+          });
       }
     },
     errorsValidation() {
