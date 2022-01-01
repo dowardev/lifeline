@@ -27,6 +27,7 @@
           <ion-datetime
             presentation="date"
             v-model="datetime.start.date"
+            max="2030-12-31"
           ></ion-datetime>
           <ion-datetime
             presentation="time"
@@ -45,6 +46,7 @@
           <ion-datetime
             presentation="date"
             v-model="datetime.end.date"
+            max="2030-12-31"
           ></ion-datetime>
           <ion-datetime
             presentation="time"

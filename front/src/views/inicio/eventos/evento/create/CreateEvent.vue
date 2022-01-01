@@ -9,7 +9,7 @@
         </ion-buttons>
         <ion-title>{{ pageTitle }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-on:click="save()">
+          <ion-button v-on:click="save()" :disabled="v$.form.$invalid">
             <ion-icon slot="start" :icon="saveOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -17,20 +17,21 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-
       <ion-row>
         <ion-col size="12">
           <ion-list>
             <ion-item lines="none">
               <ion-icon slot="start" :icon="readerOutline"></ion-icon>
               <ion-label position="floating">Titulo</ion-label>
-              <ion-input type="text" v-model="title"></ion-input>
+              <ion-input type="text" v-model="v$.form.title.$model"></ion-input>
+              <p
+                v-for="(error, index) of v$.form.title.$errors"
+                :key="index"
+                class="error"
+              >
+                {{ error.$message }}
+              </p>
             </ion-item>
-            <small
-              class="error ion-padding"
-              v-if="errors.titleEmpty.show == true"
-              >{{ errors.titleEmpty.message }}</small
-            >
 
             <ion-item lines="none" button v-on:click="selectTime()">
               <ion-icon slot="start" :icon="timeOutline"></ion-icon>
@@ -38,16 +39,16 @@
                 <h2>Horario</h2>
                 <p>
                   {{
-                    formatDateTime(datetime.start, "P") +
+                    formatDateTime(form.datetime.start, "P") +
                     " " +
-                    formatDateTime(datetime.start, "p")
+                    formatDateTime(form.datetime.start, "p")
                   }}
                 </p>
                 <p>
                   {{
-                    formatDateTime(datetime.end, "P") +
+                    formatDateTime(form.datetime.end, "P") +
                     " " +
-                    formatDateTime(datetime.end, "p")
+                    formatDateTime(form.datetime.end, "p")
                   }}
                 </p>
               </ion-label>
@@ -58,7 +59,7 @@
               <ion-label>
                 <h2>Recordatorio(s)</h2>
                 <div
-                  v-for="reminder in reminders"
+                  v-for="reminder in form.reminders"
                   :key="reminder"
                   style="display: inline-block"
                 >
@@ -73,22 +74,29 @@
               <ion-icon slot="start" :icon="repeatOutline"></ion-icon>
               <ion-label
                 ><h2>Repetir</h2>
-                <p>{{ repeats.frecuencyName }}</p></ion-label
+                <p>{{ form.repeats.frecuencyName }}</p></ion-label
               >
             </ion-item>
 
             <ion-item lines="none">
-              <ion-icon slot="start" :icon="layersOutline"></ion-icon>
+              <ion-icon slot="start" :icon="calendarOutline"></ion-icon>
               <ion-label position="floating">Calendario</ion-label>
               <ion-select
                 :interface-options="customAlertOptions"
                 interface="alert"
                 ok-text="Aceptar"
                 cancel-text="Cancelar"
-                v-model="calendar"
+                v-model="v$.form.calendar.$model"
               >
                 <ion-select-option value="personal">Personal</ion-select-option>
               </ion-select>
+              <p
+                v-for="(error, index) of v$.form.calendar.$errors"
+                :key="index"
+                class="error"
+              >
+                {{ error.$message }}
+              </p>
             </ion-item>
 
             <ion-item lines="none">
@@ -96,7 +104,7 @@
               <ion-label position="floating">Notas</ion-label>
               <ion-textarea
                 type="text"
-                v-model="notes"
+                v-model="form.notes"
                 autoGrow
                 :rows="4"
               ></ion-textarea>
@@ -128,15 +136,17 @@ import {
   readerOutline,
   timeOutline,
   repeatOutline,
-  layersOutline,
   saveOutline,
   alarmOutline,
+  calendarOutline,
 } from "ionicons/icons";
 import eventBus from "../../../../../EventBus";
 import eventsService from "../../../../../services/event.vue";
 import userService from "../../../../../services/user.vue";
 import { Storage } from "@ionic/storage";
 import { add } from "date-fns";
+import useVuelidate from "@vuelidate/core";
+import { required, alpha, helpers } from "@vuelidate/validators";
 
 export default defineComponent({
   name: "Evento",
@@ -160,11 +170,12 @@ export default defineComponent({
       readerOutline,
       timeOutline,
       repeatOutline,
-      layersOutline,
       saveOutline,
       alarmOutline,
       IonInput,
       IonSelectOption,
+      v$: useVuelidate(),
+      calendarOutline,
     };
   },
   data() {
@@ -175,36 +186,39 @@ export default defineComponent({
     return {
       buttonEdit: true,
       pageTitle,
-      event: {
-        id: 0,
+      storage,
+      form: {
         title: "",
-        repeats: {
-          frecuency: "",
-          data: [],
+        datetime: {
+          start: today,
+          end: new Date(add(new Date(), { days: 1 }))
+            .toLocaleString("sv")
+            .replace(" ", "T"),
         },
         reminders: [],
+        repeats: {
+          frecuencyName: "",
+          frecuency: "",
+          data: {},
+        },
         calendar: "",
         notes: "",
       },
-      reminders: [],
-      title: "",
-      datetime: {
-        start: today,
-        end: new Date(add(new Date(), { days: 1 }))
-          .toLocaleString("sv")
-          .replace(" ", "T"),
+    };
+  },
+  validations() {
+    const messageRequired = "Campo requerido";
+    const messageAlpha = "Solamente puede contener texto";
+    return {
+      form: {
+        title: {
+          required: helpers.withMessage(messageRequired, required),
+          alpha: helpers.withMessage(messageAlpha, alpha),
+        },
+        calendar: {
+          required: helpers.withMessage(messageRequired, required),
+        },
       },
-      repeats: {
-        frecuencyName: "",
-        frecuency: "",
-        data: {},
-      },
-      notes: "",
-      calendar: "",
-      errors: {
-        titleEmpty: { message: "Campo requerido", show: false },
-      },
-      storage,
     };
   },
   mounted() {
@@ -213,23 +227,23 @@ export default defineComponent({
       this.getEventLocal(parseInt(this.$route.params.id as string));
     }
     eventBus().emitter.on("set-schedule-event", (response: any) => {
-      this.datetime.start = response.dateTimeStart;
-      this.datetime.end = response.dateTimeEnd;
+      this.form.datetime.start = response.dateTimeStart;
+      this.form.datetime.end = response.dateTimeEnd;
     });
     eventBus().emitter.on("set-reminder-event", (response: any) => {
-      this.reminders = response.reminders;
+      this.form.reminders = response.reminders;
     });
     eventBus().emitter.on("set-repeat-event", async (response: any) => {
-      this.repeats.frecuencyName = await userService().translate(
+      this.form.repeats.frecuencyName = await userService().translate(
         response.frecuency
       );
-      this.repeats.frecuency = response.frecuency;
-      this.repeats.data = response.data;
+      this.form.repeats.frecuency = response.frecuency;
+      this.form.repeats.data = response.data;
     });
     eventBus().emitter.on("update-event", async (response: any) => {
-      console.log(response.event);
-      this.event = response.event;
-      this.pageTitle = "Actualizar evento";
+      // console.log(response.event);
+      // this.event = response.event;
+      //this.pageTitle = "Actualizar evento";
       //  this.getEvent();
     });
   },
@@ -241,8 +255,8 @@ export default defineComponent({
       this.$router.push("/horario");
       setTimeout(() => {
         eventBus().emitter.emit("get-schedule-event", {
-          dateTimeStart: this.datetime.start,
-          dateTimeEnd: this.datetime.end,
+          dateTimeStart: this.form.datetime.start,
+          dateTimeEnd: this.form.datetime.end,
         });
       }, 300);
     },
@@ -250,7 +264,7 @@ export default defineComponent({
       this.$router.push("/repetir");
       setTimeout(() => {
         eventBus().emitter.emit("get-repeat-event", {
-          reminders: JSON.parse(JSON.stringify(this.repeats)),
+          reminders: JSON.parse(JSON.stringify(this.form.repeats)),
         });
       }, 300);
     },
@@ -258,33 +272,35 @@ export default defineComponent({
       this.$router.push("/recordatorios");
       setTimeout(() => {
         eventBus().emitter.emit("get-reminder-event", {
-          reminders: JSON.parse(JSON.stringify(this.reminders)),
+          reminders: JSON.parse(JSON.stringify(this.form.reminders)),
         });
       }, 300);
     },
-    save() {
-      /*
-      const error = this.errorsValidation();
-      if (error == false) return;
-*/
-      const title = this.title;
+    async save() {
+      const title = this.form.title;
       const dateTime = {
         start: {
-          date: new Date(this.datetime.start).toISOString().split("T")[0],
-          time: new Date(this.datetime.start).toISOString().split("T")[1],
+          date: new Date(this.form.datetime.start).toISOString().split("T")[0],
+          time: new Date(this.form.datetime.start)
+            .toISOString()
+            .split("T")[1]
+            .replace("Z", ""),
         },
         end: {
-          date: new Date(this.datetime.end).toISOString().split("T")[0],
-          time: new Date(this.datetime.end).toISOString().split("T")[1],
+          date: new Date(this.form.datetime.end).toISOString().split("T")[0],
+          time: new Date(this.form.datetime.end)
+            .toISOString()
+            .split("T")[1]
+            .replace("Z", ""),
         },
       };
-      const reminders = this.reminders;
+      const reminders = this.form.reminders;
       const repeats = {
-        frecuency: this.repeats.frecuency,
-        data: this.repeats.data,
+        frecuency: this.form.repeats.frecuency,
+        data: this.form.repeats.data,
       };
-      const calendar = this.calendar;
-      const notes = this.notes;
+      const calendar = this.form.calendar;
+      const notes = this.form.notes;
 
       if (this.$route.params.id) {
         eventsService()
@@ -328,17 +344,6 @@ export default defineComponent({
           });
       }
     },
-    errorsValidation() {
-      let error = true;
-      if (this.title == "") {
-        this.errors.titleEmpty.show = true;
-        error = false;
-      } else {
-        this.errors.titleEmpty.show = false;
-        error = true;
-      }
-      return error;
-    },
     async getEventLocal(id: number) {
       const event = await eventsService()
         .getEventLocal(id)
@@ -348,7 +353,7 @@ export default defineComponent({
 
       if (event.length) {
         event.forEach(async (element: any) => {
-          this.title = element.title;
+          this.form.title = element.title;
 
           // let date = this.formatDate(element.time_start);
           // this.timeStart.text = date.dateFormatted;
@@ -357,16 +362,16 @@ export default defineComponent({
           // this.timeEnd.text = date.dateFormatted;
           // this.timeEnd.value = element.time_start;
 
-          this.reminders = element.reminders;
+          this.form.reminders = element.reminders;
 
           element.repeats.frecuencyName = await userService().translate(
             element.repeats.frecuency
           );
-          this.repeats = element.repeats;
+          this.form.repeats = element.repeats;
 
-          this.calendar = element.calendar;
+          this.form.calendar = element.calendar;
 
-          this.notes = element.notes;
+          this.form.notes = element.notes;
         });
       }
     },
