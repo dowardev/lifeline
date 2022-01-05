@@ -7,17 +7,10 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <!-- Datetime in popover with cover element -->
-      <ion-item button="true" id="open-date-input">
-        <ion-label>Date</ion-label>
-        <ion-text slot="end">{{date1}}</ion-text>
-        <ion-popover trigger="open-date-input" :show-backdrop="false">
-          <ion-datetime
-            presentation="date-time"
-            @ionChange="(ev: DatetimeCustomEvent) => date1 = formatDate(ev.detail.value)"
-          />
-        </ion-popover>
-      </ion-item>
+      <ion-button id="trigger-button">Click to open popover</ion-button>
+      <ion-popover trigger="trigger-button">
+        <ion-content>Popover Content</ion-content>
+      </ion-popover>
     </ion-content>
   </ion-page>
 </template>
@@ -29,12 +22,10 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  IonDatetime,
-  IonItem,
+  IonToggle,
   IonPopover,
 } from "@ionic/vue";
-import {defineComponent, ref} from "vue";
-import {format, parseISO} from "date-fns";
+import { defineComponent, ref } from "vue";
 
 export default defineComponent({
   components: {
@@ -43,36 +34,29 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
-    IonDatetime,
-    IonItem,
     IonPopover,
   },
-  setup() {
-    const customDatetime = ref();
-    const date1 = "";
-    const date2 = "";
-
-    const confirm = () => {
-      if (customDatetime.value === undefined) return;
-
-      customDatetime.value.$el.confirm();
-    };
-
-    const reset = () => {
-      if (customDatetime.value === undefined) return;
-
-      customDatetime.value.$el.reset();
-    };
-
-    const formatDate = (value: string) => {
-      return format(parseISO(value), "MMM dd yyyy");
-    };
-
-    return {
-      customDatetime,
-      confirm,
-      reset,
-    };
+  data() {
+    // // Use matchMedia to check the user preference
+    // const prefersDark = window.matchMedia("(prefers-color-scheme: light)");
+    //
+    // toggleDarkTheme(prefersDark.matches);
+    //
+    // // Listen for changes to the prefers-color-scheme media query
+    // prefersDark.addListener((mediaQuery) =>
+    //   toggleDarkTheme(mediaQuery.matches)
+    // );
+    //
+    // // Add or remove the "dark" class based on if the media query matches
+    // function toggleDarkTheme(shouldAdd: any) {
+    //   document.body.classList.toggle("dark", shouldAdd);
+    // }
+    return { check: true };
+  },
+  methods: {
+    prueba() {
+      document.body.classList.toggle("dark", this.check);
+    },
   },
 });
 </script>

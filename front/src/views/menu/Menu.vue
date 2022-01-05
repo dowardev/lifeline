@@ -115,6 +115,29 @@
         <ion-label class="text-menu-color">Soporte</ion-label>
       </ion-item>
     </ion-content>
+
+    <ion-footer class="ion-no-border">
+      <ion-toolbar>
+        <ion-item lines="none">
+          <ion-button
+            slot="end"
+            fill="clear"
+            @click="openModalDesktop()"
+            v-if="!androidPlatform && !iosPlatform"
+          >
+            <ion-icon :icon="brushOutline"></ion-icon>
+          </ion-button>
+          <ion-button
+            slot="end"
+            fill="clear"
+            @click="openModalMobile()"
+            v-if="androidPlatform || iosPlatform"
+          >
+            <ion-icon :icon="brushOutline"></ion-icon>
+          </ion-button>
+        </ion-item>
+      </ion-toolbar>
+    </ion-footer>
   </ion-page>
 </template>
 
@@ -125,7 +148,11 @@ import {
   IonPage,
   IonToolbar,
   menuController,
+  isPlatform,
+  modalController,
+  IonFooter,
 } from "@ionic/vue";
+import { brushOutline } from "ionicons/icons";
 import { defineComponent } from "vue";
 import {
   settingsOutline,
@@ -139,6 +166,10 @@ import {
 } from "ionicons/icons/";
 import userService from "../../services/user.vue";
 import eventBus from "../../EventBus";
+import { Storage } from "@ionic/storage";
+const store = new Storage();
+store.create();
+import DarkMode from "./darkmode/DarkMode.vue";
 
 export default defineComponent({
   name: "Menu",
@@ -147,6 +178,7 @@ export default defineComponent({
     IonHeader,
     IonPage,
     IonToolbar,
+    IonFooter,
   },
   setup() {
     return {
@@ -159,6 +191,9 @@ export default defineComponent({
       menuController,
       cogOutline,
       cloudDownloadOutline,
+      brushOutline,
+      androidPlatform: isPlatform("android"),
+      iosPlatform: isPlatform("ios"),
     };
   },
   data() {
@@ -190,12 +225,31 @@ export default defineComponent({
           this.userData.user = response.data.user;
         });
     },
+    async openModalDesktop() {
+      const modal = await modalController.create({
+        component: DarkMode,
+        cssClass: "my-custom-class",
+        componentProps: {
+          title: "New Title",
+        },
+      });
+      return modal.present();
+    },
+    async openModalMobile() {
+      const modal = await modalController.create({
+        component: DarkMode,
+        initialBreakpoint: 0.5,
+        breakpoints: [0, 0.5, 1],
+      });
+      return modal.present();
+    },
   },
 });
 </script>
 
 <style scoped>
-.color-menu {
+.color-menu,
+ion-toolbar {
   --background: #252729;
 }
 .text-menu-color {
@@ -205,6 +259,3 @@ export default defineComponent({
   color: white;
 }
 </style>
-
-.color-menu { --background: #252729; } .text-menu-color { color: white; }
-.icon-menu-color { color: white; }
