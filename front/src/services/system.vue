@@ -2,6 +2,7 @@
 import { Storage } from "@ionic/storage";
 const storage = new Storage();
 storage.create();
+import { toastController } from "@ionic/vue";
 
 export default function () {
   async function getTheme() {
@@ -13,10 +14,20 @@ export default function () {
   function toggleTheme(status: boolean) {
     document.body.classList.toggle("dark", status);
   }
+  async function openToast(message: string, color: string) {
+    const toast = await toastController.create({
+      message,
+      duration: 2000,
+      color,
+      position: "bottom",
+    });
+    return toast.present();
+  }
   return {
     getTheme,
     setTheme,
     toggleTheme,
+    openToast,
   };
 }
 </script>

@@ -135,6 +135,14 @@
           >
             <ion-icon :icon="brushOutline"></ion-icon>
           </ion-button>
+          <ion-button
+            fill="clear"
+            slot="end"
+            @click="logout()"
+            v-if="logged == true"
+          >
+            <ion-icon :icon="exitOutline"></ion-icon>
+          </ion-button>
         </ion-item>
       </ion-toolbar>
     </ion-footer>
@@ -151,8 +159,9 @@ import {
   isPlatform,
   modalController,
   IonFooter,
+  alertController,
 } from "@ionic/vue";
-import { brushOutline } from "ionicons/icons";
+import { brushOutline, exitOutline } from "ionicons/icons";
 import { defineComponent } from "vue";
 import {
   settingsOutline,
@@ -170,6 +179,8 @@ import { Storage } from "@ionic/storage";
 const store = new Storage();
 store.create();
 import DarkMode from "./darkmode/DarkMode.vue";
+import sesionService from "../../services/sesion.vue";
+import systemService from "../../services/system.vue";
 
 export default defineComponent({
   name: "Menu",
@@ -194,6 +205,7 @@ export default defineComponent({
       brushOutline,
       androidPlatform: isPlatform("android"),
       iosPlatform: isPlatform("ios"),
+      exitOutline,
     };
   },
   data() {
@@ -242,6 +254,37 @@ export default defineComponent({
         breakpoints: [0, 0.5, 1],
       });
       return modal.present();
+    },
+    async logout() {
+      const alert = await alertController.create({
+        cssClass: "my-custom-class",
+        header: "Cerrar sesion",
+        message: "¿Continuar?",
+        buttons: [
+          {
+            text: "Si",
+            id: "confirm-button",
+            handler: () => {
+              sesionService()
+                .logout()
+                .then((response) => {
+                  systemService().openToast("Hasta pronto", "success");
+                })
+                .catch((e) => {
+                  systemService().openToast("Ocurrio un error", "danger");
+                });
+            },
+          },
+          {
+            text: "No",
+            role: "cancel",
+            handler: (blah) => {
+              console.log("Confirm Cancel:", blah);
+            },
+          },
+        ],
+      });
+      return alert.present();
     },
   },
 });

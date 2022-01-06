@@ -1,7 +1,6 @@
 <script lang="ts">
 import axios from "axios";
-import user from "./user.vue";
-const { getUserToken } = user();
+import userService from "./user.vue";
 import { Storage } from "@ionic/storage";
 const storage = new Storage();
 storage.create();
@@ -16,9 +15,11 @@ export default function () {
     calendar: string,
     notes: string
   ) {
-    const token = await getUserToken().then((response) => {
-      return response;
-    });
+    const token = await userService()
+      .getUserToken()
+      .then((response) => {
+        return response;
+      });
     return axios.post(
       "http://localhost:8000/api/auth/create-event",
       {
@@ -46,9 +47,11 @@ export default function () {
     calendar: string,
     notes: string
   ) {
-    const token = await getUserToken().then((response) => {
-      return response;
-    });
+    const token = await userService()
+      .getUserToken()
+      .then((response) => {
+        return response;
+      });
     return axios.post(
       "http://localhost:8000/api/auth/update-event",
       {
@@ -69,9 +72,11 @@ export default function () {
     );
   }
   async function getEvents() {
-    const token = await getUserToken().then((response) => {
-      return response;
-    });
+    const token = await userService()
+      .getUserToken()
+      .then((response) => {
+        return response;
+      });
 
     return axios.get("http://localhost:8000/api/auth/get-events", {
       headers: {
@@ -81,9 +86,11 @@ export default function () {
     });
   }
   async function getEvent(id: number) {
-    const token = await getUserToken().then((response) => {
-      return response;
-    });
+    const token = await userService()
+      .getUserToken()
+      .then((response) => {
+        return response;
+      });
 
     return axios.post(
       "http://localhost:8000/api/auth/get-event",

@@ -43,7 +43,7 @@
                   <ion-label position="floating">Correo electronico</ion-label>
                   <ion-input
                     v-model="v$.form.email.$model"
-                    type="mail"
+                    type="email"
                   ></ion-input>
                 </ion-item>
                 <div
