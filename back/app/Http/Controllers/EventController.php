@@ -12,23 +12,27 @@ class EventController extends Controller
     {
         $request->validate([
             "title" => "required|string",
-            "time" => "required|array",
-            "reminders" => "required|array",
-            "repeats" => "required|array",
+            "dateTime" => "required|string",
             "calendar" => "required|string",
-            "notes" => "string",
         ]);
-        //      return $request->repeats;
+
+        $dateTime = json_decode($request->dateTime, true);
+        $dateTimeStart =
+            $dateTime["start"]["date"] . " " . $dateTime["start"]["time"];
+        $dateTimeEnd =
+            $dateTime["end"]["date"] . " " . $dateTime["end"]["time"];
+
         $event = new Event([
             "title" => $request->title,
-            "time_start" => $request->time["startDate"],
-            "time_end" => $request->time["endDate"],
+            "time_start" => $dateTimeStart,
+            "time_end" => $dateTimeEnd,
             "reminders" => serialize($request->reminders),
             "repeats" => serialize($request->repeats),
             "calendar" => $request->calendar,
             "notes" => $request->notes,
         ]);
         $event->save();
+        return response()->json("Success", 200);
     }
     public function getEvents()
     {

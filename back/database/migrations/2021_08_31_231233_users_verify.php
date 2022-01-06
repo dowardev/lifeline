@@ -13,14 +13,10 @@ class UsersVerify extends Migration
      */
     public function up()
     {
-        Schema::create('users_verify', function (Blueprint $table) {
-            $table->integer('user_id');
-            $table->string('token');
+        Schema::create("users_verify", function (Blueprint $table) {
+            $table->integer("user_id");
+            $table->string("token");
             $table->timestamps();
-        });
-
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('is_email_verified')->default(0);
         });
     }
 
