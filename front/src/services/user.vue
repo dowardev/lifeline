@@ -5,7 +5,7 @@ store.create();
 import axios from "axios";
 import jsonLangSpanish from "../../public/assets/lang/lang-es.json";
 
-export default function() {
+export default function () {
   async function setUserToken(token: string) {
     await store.set("token", token);
   }
@@ -40,7 +40,7 @@ export default function() {
     const lang = await getUserLang().then((response) => {
       return response;
     });
-    if (lang == "es" ||lang==null) {
+    if (lang == "es" || lang == null) {
       return (jsonLangSpanish as any)[word];
     }
   }

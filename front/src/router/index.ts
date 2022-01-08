@@ -3,7 +3,6 @@ import { RouteRecordRaw } from "vue-router";
 import Home from "../views/Home.vue";
 import Inicio from "../views/inicio/Inicio.vue";
 import Eventos from "../views/inicio/eventos/Eventos.vue";
-import Evento from "../views/inicio/eventos/evento/Evento.vue";
 import CreateEvent from "../views/inicio/eventos/evento/create/CreateEvent.vue";
 import Horario from "../views/inicio/eventos/evento/horario/Horario.vue";
 import Repetir from "../views/inicio/eventos/evento/repetir/Repetir.vue";
@@ -41,11 +40,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/event/update/:id",
     name: "UpdateEvent",
     component: CreateEvent,
-  },
-  {
-    path: "/evento/:id",
-    name: "Evento",
-    component: Evento,
   },
   {
     path: "/horario",
