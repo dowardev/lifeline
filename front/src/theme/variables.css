@@ -232,13 +232,17 @@ http://ionicframework.com/docs/theming/ */
 
     --ion-card-background: #1e1e1e;
   }
+
+  /* .md body.dark ion-card { */
+  /*   box-shadow: rgba(149, 157, 165, 0) 0px 8px 24px; */
+  /* } */
 }
 ion-item {
   --background: transparent;
 }
-/* ion-card { */
-/*   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 0px; */
-/* } */
+ion-card {
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
+}
 .error {
   color: red;
 }

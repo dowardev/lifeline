@@ -144,7 +144,6 @@ export default defineComponent({
       });
 
       this.events = events.data;
-      console.log(this.events);
       this.storage.set("events", JSON.stringify(events.data));
     },
     formatDate(date: string, format: string) {

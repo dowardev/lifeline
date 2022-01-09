@@ -17,11 +17,10 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-row>
-        <ion-col size="12">
-          <ion-list>
-            <ion-item lines="none">
-              <ion-icon slot="start" :icon="readerOutline"></ion-icon>
+      <section>
+        <ion-row>
+          <ion-col size="12">
+            <ion-item>
               <ion-label position="floating">Titulo</ion-label>
               <ion-input type="text" v-model="v$.form.title.$model"></ion-input>
               <p
@@ -33,85 +32,208 @@
               </p>
             </ion-item>
 
-            <ion-item lines="none" button v-on:click="selectTime()">
-              <ion-icon slot="start" :icon="timeOutline"></ion-icon>
-              <ion-label>
-                <h2>Horario</h2>
-                <p>
-                  {{
-                    formatDateTime(form.datetime.start, "P") +
-                    " " +
-                    formatDateTime(form.datetime.start, "p")
-                  }}
-                </p>
-                <p>
-                  {{
-                    formatDateTime(form.datetime.end, "P") +
-                    " " +
-                    formatDateTime(form.datetime.end, "p")
-                  }}
-                </p>
-              </ion-label>
-            </ion-item>
+            <ion-card v-if="optionsElement[0].dateTime.selected">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Horario</ion-label>
+                  <ion-button
+                    fill="clear"
+                    @click="optionsElement[0].dateTime.selected = false"
+                  >
+                    <ion-icon :icon="closeOutline"></ion-icon
+                  ></ion-button>
+                </ion-list-header>
+                <ion-item button @click="selectTime()" lines="none">
+                  <ion-label>
+                    <p>
+                      {{
+                        formatDateTime(form.datetime.start, "P") +
+                        " " +
+                        formatDateTime(form.datetime.start, "p")
+                      }}
+                    </p>
+                    <p>
+                      {{
+                        formatDateTime(form.datetime.end, "P") +
+                        " " +
+                        formatDateTime(form.datetime.end, "p")
+                      }}
+                    </p>
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+            </ion-card>
 
-            <ion-item lines="none" button v-on:click="selectReminders()">
-              <ion-icon slot="start" :icon="alarmOutline"></ion-icon>
-              <ion-label>
-                <h2>Recordatorio(s)</h2>
-                <div
-                  v-for="reminder in form.reminders"
-                  :key="reminder"
-                  style="display: inline-block"
+            <ion-card v-if="optionsElement[0].reminders.selected">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Recordatorio(s)</ion-label>
+                  <ion-button
+                    fill="clear"
+                    @click="optionsElement[0].reminders.selected = false"
+                  >
+                    <ion-icon :icon="closeOutline"></ion-icon
+                  ></ion-button>
+                </ion-list-header>
+                <ion-item button @click="selectReminders()" lines="none">
+                  <div v-for="reminder in form.reminders" :key="reminder">
+                    <ion-chip color="primary">
+                      <ion-label>{{ reminder }}</ion-label>
+                    </ion-chip>
+                  </div>
+                </ion-item>
+              </ion-list>
+            </ion-card>
+
+            <ion-card v-if="optionsElement[0].repeats.selected">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Repetir</ion-label>
+                  <ion-button
+                    fill="clear"
+                    @click="optionsElement[0].repeats.selected = false"
+                  >
+                    <ion-icon :icon="closeOutline"></ion-icon
+                  ></ion-button>
+                </ion-list-header>
+                <ion-item button @click="selectRepeat()" lines="none">
+                  <ion-label>
+                    <p>
+                      {{ form.repeats.frecuencyName }}
+                    </p>
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+            </ion-card>
+
+            <ion-card v-if="optionsElement[0].calendar.selected">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Calendario</ion-label>
+                  <ion-button
+                    fill="clear"
+                    @click="optionsElement[0].calendar.selected = false"
+                  >
+                    <ion-icon :icon="closeOutline"></ion-icon
+                  ></ion-button>
+                </ion-list-header>
+                <ion-item lines="none">
+                  <ion-select
+                    interface="alert"
+                    ok-text="Aceptar"
+                    cancel-text="Cancelar"
+                    v-model="form.calendar"
+                  >
+                    <ion-select-option value="personal"
+                      >Personal</ion-select-option
+                    >
+                  </ion-select>
+                </ion-item>
+              </ion-list>
+            </ion-card>
+
+            <ion-card v-if="optionsElement[0].notes.selected">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Notas</ion-label>
+                  <ion-button
+                    fill="clear"
+                    @click="optionsElement[0].notes.selected = false"
+                  >
+                    <ion-icon :icon="closeOutline"></ion-icon
+                  ></ion-button>
+                </ion-list-header>
+                <ion-item lines="none">
+                  <ion-textarea
+                    type="text"
+                    v-model="form.notes"
+                    autoGrow
+                    :rows="4"
+                  ></ion-textarea>
+                </ion-item>
+              </ion-list>
+            </ion-card>
+
+            <ion-card v-if="optionsElement[0].tags.selected">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Etiquetas</ion-label>
+                  <ion-button
+                    fill="clear"
+                    @click="optionsElement[0].tags.selected = false"
+                  >
+                    <ion-icon :icon="closeOutline"></ion-icon
+                  ></ion-button>
+                </ion-list-header>
+                <ion-item
+                  v-for="(tag, index) in form.tags"
+                  :key="tag"
+                  lines="inset"
                 >
-                  <ion-chip color="primary">
-                    <ion-label>{{ reminder }}</ion-label>
-                  </ion-chip>
-                </div>
-              </ion-label>
-            </ion-item>
+                  <ion-input
+                    type="text"
+                    @ionBlur="updateTag(index, $event.target.value)"
+                    :value="tag"
+                  ></ion-input>
+                  <ion-button fill="clear" @click="removeTag(index)">
+                    <ion-icon :icon="closeCircleOutline"></ion-icon>
+                  </ion-button>
+                </ion-item>
+                <ion-button fill="clear" expand="full" @click="addTag()"
+                  ><ion-icon :icon="addOutline"></ion-icon
+                ></ion-button>
+              </ion-list>
+            </ion-card>
 
-            <ion-item lines="none" button v-on:click="selectRepeat()">
-              <ion-icon slot="start" :icon="repeatOutline"></ion-icon>
-              <ion-label
-                ><h2>Repetir</h2>
-                <p>{{ form.repeats.frecuencyName }}</p></ion-label
-              >
-            </ion-item>
+            <ion-card v-if="optionsElement[0].task.selected">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Tareas</ion-label>
+                  <ion-button
+                    fill="clear"
+                    @click="optionsElement[0].task.selected = false"
+                  >
+                    <ion-icon :icon="closeOutline"></ion-icon
+                  ></ion-button>
+                </ion-list-header>
+                <ion-item v-for="(task, index) in form.tasks" :key="task">
+                  <ion-input
+                    type="text"
+                    @ionBlur="updateTask(index, $event.target.value)"
+                    :value="task"
+                  ></ion-input>
+                  <ion-button fill="clear" @click="removeTask(index)">
+                    <ion-icon :icon="closeCircleOutline"></ion-icon>
+                  </ion-button>
+                </ion-item>
+                <ion-button fill="clear" expand="full" @click="addTask()"
+                  ><ion-icon :icon="addOutline"></ion-icon
+                ></ion-button>
+              </ion-list>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </section>
 
-            <ion-item lines="none">
-              <ion-icon slot="start" :icon="calendarOutline"></ion-icon>
-              <ion-label position="floating">Calendario</ion-label>
-              <ion-select
-                :interface-options="customAlertOptions"
-                interface="alert"
-                ok-text="Aceptar"
-                cancel-text="Cancelar"
-                v-model="v$.form.calendar.$model"
+      <section>
+        <ion-row>
+          <ion-col size="12">
+            <div
+              v-for="element in optionsElement[0]"
+              :key="element"
+              style="display: inline-block"
+            >
+              <ion-chip
+                @click="element.selected = true"
+                v-if="element.selected == false"
+                color="primary"
               >
-                <ion-select-option value="personal">Personal</ion-select-option>
-              </ion-select>
-              <p
-                v-for="(error, index) of v$.form.calendar.$errors"
-                :key="index"
-                class="error"
-              >
-                {{ error.$message }}
-              </p>
-            </ion-item>
-
-            <ion-item lines="none">
-              <ion-icon slot="start" :icon="readerOutline"></ion-icon>
-              <ion-label position="floating">Notas</ion-label>
-              <ion-textarea
-                type="text"
-                v-model="form.notes"
-                autoGrow
-                :rows="4"
-              ></ion-textarea>
-            </ion-item>
-          </ion-list>
-        </ion-col>
-      </ion-row>
+                <ion-label color="secondary">{{ element.name }}</ion-label>
+              </ion-chip>
+            </div>
+          </ion-col>
+        </ion-row>
+      </section>
     </ion-content>
   </ion-page>
 </template>
@@ -133,12 +255,10 @@ import {
 import { defineComponent } from "vue";
 import {
   chevronBackOutline,
-  readerOutline,
-  timeOutline,
-  repeatOutline,
   saveOutline,
-  alarmOutline,
-  calendarOutline,
+  closeCircleOutline,
+  addOutline,
+  closeOutline,
 } from "ionicons/icons";
 import eventBus from "../../../../../EventBus";
 import eventsService from "../../../../../services/event.vue";
@@ -162,24 +282,19 @@ export default defineComponent({
     IonSelect,
   },
   setup() {
-    const customAlertOptions: any = {
-      header: "Calendario",
-    };
     return {
       chevronBackOutline,
-      readerOutline,
-      timeOutline,
-      repeatOutline,
       saveOutline,
-      alarmOutline,
       IonInput,
       IonSelectOption,
       v$: useVuelidate(),
-      calendarOutline,
+      closeCircleOutline,
+      addOutline,
+      closeOutline,
     };
   },
   data() {
-    const pageTitle = "Agregar evento";
+    const pageTitle = "Agregar elemento";
     const storage = new Storage();
     storage.create();
     const today = new Date().toLocaleString("sv").replace(" ", "T");
@@ -203,7 +318,20 @@ export default defineComponent({
         },
         calendar: "",
         notes: "",
+        tags: [] as Array<string>,
+        tasks: [] as Array<string>,
       },
+      optionsElement: [
+        {
+          dateTime: { name: "Fecha", selected: false },
+          reminders: { name: "Recordatorios", selected: false },
+          repeats: { name: "Repetir", selected: false },
+          calendar: { name: "Calendario", selected: false },
+          notes: { name: "Notas", selected: false },
+          tags: { name: "Etiquetas", selected: false },
+          task: { name: "Tareas", selected: false },
+        },
+      ],
     };
   },
   validations() {
@@ -387,6 +515,24 @@ export default defineComponent({
         color,
       });
       return toast.present();
+    },
+    addTag() {
+      this.form.tags.push("");
+    },
+    removeTag(index: number) {
+      this.form.tags.splice(index, 1);
+    },
+    updateTag(index: number, value: string) {
+      this.form.tags[index] = value;
+    },
+    addTask() {
+      this.form.tasks.push("");
+    },
+    removeTask(index: number) {
+      this.form.tasks.splice(index, 1);
+    },
+    updateTask(index: number, value: string) {
+      this.form.tasks[index] = value;
     },
   },
 });

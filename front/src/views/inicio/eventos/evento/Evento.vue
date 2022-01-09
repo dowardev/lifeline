@@ -51,7 +51,7 @@
         </ion-col>
       </ion-row>
 
-      <ion-row v-if="event.reminders.length > 0">
+      <ion-row v-if="event?.reminders.length > 0">
         <ion-col size="12">
           <ion-item lines="none">
             <ion-icon slot="start" :icon="alarmOutline"></ion-icon>
