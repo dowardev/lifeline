@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border" mode="ios" :translucent="true">
+    <ion-header class="ion-no-border" :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button menu="firstMenu" mode="md"></ion-menu-button>
@@ -68,42 +68,28 @@
 
       <ion-row class="ion-padding">
         <ion-col size="12" class="center">
-          <table style="width:100%">
+          <table style="width: 100%">
             <tr class="days">
               <td>
-                <ion-button fill="clear">
-                  L
-                </ion-button>
+                <ion-button fill="clear"> L </ion-button>
               </td>
               <td>
-                <ion-button fill="clear">
-                  M
-                </ion-button>
+                <ion-button fill="clear"> M </ion-button>
               </td>
               <td>
-                <ion-button fill="clear">
-                  M
-                </ion-button>
+                <ion-button fill="clear"> M </ion-button>
               </td>
               <td>
-                <ion-button fill="clear">
-                  J
-                </ion-button>
+                <ion-button fill="clear"> J </ion-button>
               </td>
               <td>
-                <ion-button fill="clear">
-                  V
-                </ion-button>
+                <ion-button fill="clear"> V </ion-button>
               </td>
               <td>
-                <ion-button fill="clear">
-                  S
-                </ion-button>
+                <ion-button fill="clear"> S </ion-button>
               </td>
               <td>
-                <ion-button fill="clear">
-                  D
-                </ion-button>
+                <ion-button fill="clear"> D </ion-button>
               </td>
             </tr>
 
