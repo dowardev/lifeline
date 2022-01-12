@@ -7,14 +7,7 @@ storage.create();
 import { format } from "date-fns";
 
 export default function () {
-  async function createEvent(
-    title: string,
-    dateTime: string,
-    reminders: string,
-    repeats: string,
-    calendar: string,
-    notes: string
-  ) {
+  async function createEvent(event: Record<string, any>) {
     const token = await userService()
       .getUserToken()
       .then((response) => {
@@ -23,12 +16,7 @@ export default function () {
     return axios.post(
       "http://localhost:8000/api/auth/create-event",
       {
-        title,
-        dateTime,
-        reminders,
-        repeats,
-        calendar,
-        notes,
+        event,
       },
       {
         headers: {
@@ -38,15 +26,7 @@ export default function () {
       }
     );
   }
-  async function updateEvent(
-    id: number,
-    title: string,
-    time: string,
-    reminders: string,
-    repeats: string,
-    calendar: string,
-    notes: string
-  ) {
+  async function updateEvent(event: Record<string, any>) {
     const token = await userService()
       .getUserToken()
       .then((response) => {
@@ -55,13 +35,7 @@ export default function () {
     return axios.post(
       "http://localhost:8000/api/auth/update-event",
       {
-        id,
-        title,
-        time,
-        reminders,
-        repeats,
-        calendar,
-        notes,
+        event,
       },
       {
         headers: {

@@ -9,7 +9,7 @@
         </ion-buttons>
         <ion-title>{{ pageTitle }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-on:click="save()" :disabled="v$.form.$invalid">
+          <ion-button v-on:click="save()">
             <ion-icon slot="start" :icon="saveOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -21,14 +21,7 @@
         <ion-col size="12">
           <ion-item>
             <ion-label position="floating">Titulo</ion-label>
-            <ion-input type="text" v-model="v$.form.title.$model"></ion-input>
-            <p
-              v-for="(error, index) of v$.form.title.$errors"
-              :key="index"
-              class="error"
-            >
-              {{ error.$message }}
-            </p>
+            <ion-input type="text" v-model="form.title"></ion-input>
           </ion-item>
 
           <ion-row>
@@ -212,6 +205,40 @@
                   ></ion-button>
                 </ion-list>
               </ion-card>
+
+              <ion-card v-if="optionsElement[0].khanban.selected">
+                <ion-list>
+                  <ion-list-header>
+                    <ion-label>Khanban</ion-label>
+                    <ion-button
+                      fill="clear"
+                      @click="optionsElement[0].khanban.selected = false"
+                    >
+                      <ion-icon :icon="closeOutline"></ion-icon
+                    ></ion-button>
+                  </ion-list-header>
+                  <ion-item
+                    v-for="(khanban, index) in form.khanban"
+                    :key="khanban"
+                    lines="inset"
+                  >
+                    <ion-input
+                      type="text"
+                      @ionBlur="updateKhanbanCard(index, $event.target.value)"
+                      :value="khanban"
+                    ></ion-input>
+                    <ion-button fill="clear" @click="removeKhanbanCard(index)">
+                      <ion-icon :icon="closeCircleOutline"></ion-icon>
+                    </ion-button>
+                  </ion-item>
+                  <ion-button
+                    fill="clear"
+                    expand="full"
+                    @click="addKhanbanCard()"
+                    ><ion-icon :icon="addOutline"></ion-icon
+                  ></ion-button>
+                </ion-list>
+              </ion-card>
             </ion-col>
 
             <ion-col size="12" size-lg="4" size-xl="6">
@@ -268,8 +295,6 @@ import eventsService from "../../../../../services/event.vue";
 import userService from "../../../../../services/user.vue";
 import { Storage } from "@ionic/storage";
 import { add } from "date-fns";
-import useVuelidate from "@vuelidate/core";
-import { required, alpha, helpers } from "@vuelidate/validators";
 
 export default defineComponent({
   name: "Evento",
@@ -290,7 +315,6 @@ export default defineComponent({
       saveOutline,
       IonInput,
       IonSelectOption,
-      v$: useVuelidate(),
       closeCircleOutline,
       addOutline,
       closeOutline,
@@ -323,6 +347,7 @@ export default defineComponent({
         notes: "",
         tags: [] as Array<string>,
         tasks: [] as Array<string>,
+        khanban: [] as Array<string>,
       },
       optionsElement: [
         {
@@ -333,23 +358,9 @@ export default defineComponent({
           notes: { name: "Notas", selected: false },
           tags: { name: "Etiquetas", selected: false },
           task: { name: "Tareas", selected: false },
+          khanban: { name: "Khanban", selected: false },
         },
       ],
-    };
-  },
-  validations() {
-    const messageRequired = "Campo requerido";
-    const messageAlpha = "Solamente puede contener texto";
-    return {
-      form: {
-        title: {
-          required: helpers.withMessage(messageRequired, required),
-          alpha: helpers.withMessage(messageAlpha, alpha),
-        },
-        calendar: {
-          required: helpers.withMessage(messageRequired, required),
-        },
-      },
     };
   },
   mounted() {
@@ -407,73 +418,122 @@ export default defineComponent({
         });
       }, 300);
     },
+    formValidation() {
+      let validation = false;
+      if (this.form.title != "") {
+        validation = true;
+      }
+      return validation;
+    },
     async save() {
-      const title = this.form.title;
-      const dateTime = {
-        start: {
-          date: new Date(this.form.datetime.start).toISOString().split("T")[0],
-          time: new Date(this.form.datetime.start)
-            .toISOString()
-            .split("T")[1]
-            .replace("Z", ""),
-        },
-        end: {
-          date: new Date(this.form.datetime.end).toISOString().split("T")[0],
-          time: new Date(this.form.datetime.end)
-            .toISOString()
-            .split("T")[1]
-            .replace("Z", ""),
-        },
+      if (this.formValidation() == false) {
+        this.openToast("Completa todo los campos", "danger");
+        return;
+      }
+      const event = {
+        id: 0,
+        title: "",
+        dateTime: {},
+        reminders: [],
+        repeats: {},
+        calendar: "",
+        notes: "",
+        tags: {},
+        task: {},
       };
-      const reminders = this.form.reminders;
-      const repeats = {
-        frecuency: this.form.repeats.frecuency,
-        data: this.form.repeats.data,
-      };
-      const calendar = this.form.calendar;
-      const notes = this.form.notes;
+
+      event.title = this.form.title;
+
+      if (this.optionsElement[0].dateTime.selected) {
+        event.dateTime = {
+          start: {
+            date: new Date(this.form.datetime.start)
+              .toISOString()
+              .split("T")[0],
+            time: new Date(this.form.datetime.start)
+              .toISOString()
+              .split("T")[1]
+              .replace("Z", ""),
+          },
+          end: {
+            date: new Date(this.form.datetime.end).toISOString().split("T")[0],
+            time: new Date(this.form.datetime.end)
+              .toISOString()
+              .split("T")[1]
+              .replace("Z", ""),
+          },
+        };
+      }
+
+      if (this.optionsElement[0].reminders.selected) {
+        event.reminders = this.form.reminders;
+      }
+
+      if (this.optionsElement[0].repeats.selected) {
+        event.repeats = {
+          frecuency: this.form.repeats.frecuency,
+          data: this.form.repeats.data,
+        };
+      }
+
+      if (this.optionsElement[0].calendar.selected) {
+        event.calendar = this.form.calendar;
+      }
+
+      if (this.optionsElement[0].notes.selected) {
+        event.notes = this.form.notes;
+      }
+
+      if (this.optionsElement[0].tags.selected) {
+        event.tags = this.form.tags;
+      }
+
+      if (this.optionsElement[0].task.selected) {
+        event.task = this.form.tasks;
+      }
+
+      for (let i in event) {
+        if (
+          Object.keys((event as any)[i]).length == 0 ||
+          (event as any)[i] == ""
+        ) {
+          delete (event as any)[i];
+        }
+      }
 
       if (this.$route.params.id) {
-        eventsService()
-          .updateEvent(
-            parseInt(this.$route.params.id as string),
-            title,
-            JSON.stringify(dateTime),
-            JSON.stringify(reminders),
-            JSON.stringify(repeats),
-            calendar,
-            notes
-          )
-          .then(async (response) => {
-            const message = await userService()
-              .translate("updateEvent")
-              .then((response) => {
-                return response;
-              });
-            eventBus().emitter.emit("update-event-success");
-            this.$router.go(-1);
-            this.openToast(message, "success");
-          });
+        event.id = parseInt(this.$route.params.id as string);
+        this.updateEvent(event);
       } else {
-        eventsService()
-          .createEvent(
-            title,
-            JSON.stringify(dateTime),
-            JSON.stringify(reminders),
-            JSON.stringify(repeats),
-            calendar,
-            notes
-          )
-          .then(async (response) => {
-            const message = await userService()
-              .translate("saveEvent")
-              .then((response) => {
-                return response;
-              });
-            // this.$router.go(-1);
-            this.openToast(message, "success");
-          });
+        this.createEvent(event);
       }
+    },
+    createEvent(event: Record<string, any>) {
+      eventsService()
+        .createEvent(event)
+        .then(async (response) => {
+          const message = await userService()
+            .translate("saveEvent")
+            .then((response) => {
+              return response;
+            });
+          // this.$router.go(-1);
+          this.openToast(message, "success");
+        });
+    },
+    updateEvent(event: Record<string, any>) {
+      eventsService()
+        .updateEvent(event)
+        .then(async (response) => {
+          const message = await userService()
+            .translate("updateEvent")
+            .then((response) => {
+              return response;
+            });
+          eventBus().emitter.emit("update-event-success");
+          this.$router.go(-1);
+          this.openToast(message, "success");
+        });
     },
     async getEventLocal(id: number) {
       const event = await eventsService()
@@ -536,6 +596,15 @@ export default defineComponent({
     },
     updateTask(index: number, value: string) {
       this.form.tasks[index] = value;
+    },
+    addKhanbanCard() {
+      this.form.khanban.push("");
+    },
+    removeKhanbanCard(index: number) {
+      this.form.khanban.splice(index, 1);
+    },
+    updateKhanbanCard(index: number, value: string) {
+      this.form.khanban[index] = value;
     },
   },
 });
