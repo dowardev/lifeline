@@ -24,24 +24,36 @@
       <ion-row>
         <ion-col size="12" v-for="event in events" v-bind:key="event">
           <ion-card class="cardEvent" @click="openEvent(event)">
-            <ion-card-header>
-              <ion-card-title>{{ event.title }}</ion-card-title>
-            </ion-card-header>
             <ion-card-content>
-              <p style="display: inline-block">{{ event.calendar }}</p>
-              <div style="display: inline-block; margin-left: 10px">
-                <ion-icon
-                  :icon="timerOutline"
-                  v-if="event.reminders.length > 0"
-                ></ion-icon>
-                <ion-icon
-                  :icon="repeatOutline"
-                  style="margin-left: 6px"
-                  v-if="event.repeats.frecuency != null"
-                ></ion-icon>
-              </div>
-              <p>{{ event.timeStart }}</p>
-              <p>{{ event.timeStart }}</p>
+              <ion-card-title>{{ event.title }}</ion-card-title>
+              <ion-card-subtitle>{{ event.calendar }}</ion-card-subtitle>
+              <p v-if="event.timeStart != ''">{{ event.timeStart }}</p>
+              <p v-if="event.timeEnd != ''">{{ event.timeEnd }}</p>
+              <ion-icon
+                :icon="timerOutline"
+                v-if="event.reminders && event.reminders.length > 0"
+                style="margin-right: 6px"
+              ></ion-icon>
+              <ion-icon
+                :icon="repeatOutline"
+                v-if="event.repeats && event.repeats.frecuency != null"
+              ></ion-icon>
+              <ion-icon
+                :icon="pricetagOutline"
+                v-if="event.tags && event.tags.length > 0 != null"
+              ></ion-icon>
+              <ion-icon
+                :icon="checkboxOutline"
+                v-if="event.tasks && event.tasks.length > 0 != null"
+              ></ion-icon>
+              <ion-icon
+                :icon="clipboardOutline"
+                v-if="event.khanban && event.khanban.length > 0 != null"
+              ></ion-icon>
+              <ion-icon
+                :icon="documentTextOutline"
+                v-if="event.notes && event.notes.length > 0 != null"
+              ></ion-icon>
             </ion-card-content>
           </ion-card>
         </ion-col>
@@ -67,12 +79,16 @@ import {
   addOutline,
   timerOutline,
   repeatOutline,
+  pricetagOutline,
+  checkboxOutline,
+  clipboardOutline,
+  documentTextOutline,
 } from "ionicons/icons";
 import { useRoute } from "vue-router";
 import eventService from "../../../services/event.vue";
-import userService from "../../../services/user.vue";
 import { Storage } from "@ionic/storage";
 import Event from "./evento/Evento.vue";
+import eventBus from "../../../EventBus";
 
 export default defineComponent({
   name: "Eventos",
@@ -95,6 +111,10 @@ export default defineComponent({
       IonRefresher,
       timerOutline,
       repeatOutline,
+      pricetagOutline,
+      checkboxOutline,
+      clipboardOutline,
+      documentTextOutline,
     };
   },
   data() {
@@ -107,6 +127,9 @@ export default defineComponent({
   },
   mounted() {
     this.getEvents();
+    eventBus().emitter.on("new-element", (response: any) => {
+      this.getEvents();
+    });
   },
   methods: {
     async openEvent(event: object) {
@@ -138,21 +161,21 @@ export default defineComponent({
           " " +
           this.formatDate(element.time_end, "pp");
         element.type = "event";
-        element.repeats.frecuency = await userService().translate(
-          element.repeats.frecuency
-        );
       });
 
       this.events = events.data;
       this.storage.set("events", JSON.stringify(events.data));
     },
     formatDate(date: string, format: string) {
+      if (date == null) {
+        return "";
+      }
       return eventService().formatDateTime(date, format);
     },
     refreshContent(event: any) {
       setTimeout(async () => {
         this.getEvents();
-      }, 2000);
+      }, 200);
     },
   },
 });

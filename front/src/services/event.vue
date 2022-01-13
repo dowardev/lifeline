@@ -13,18 +13,12 @@ export default function () {
       .then((response) => {
         return response;
       });
-    return axios.post(
-      "http://localhost:8000/api/auth/create-event",
-      {
-        event,
+    return axios.post("http://localhost:8000/api/auth/create-event", event, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
       },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-      }
-    );
+    });
   }
   async function updateEvent(event: Record<string, any>) {
     const token = await userService()
@@ -32,18 +26,12 @@ export default function () {
       .then((response) => {
         return response;
       });
-    return axios.post(
-      "http://localhost:8000/api/auth/update-event",
-      {
-        event,
+    return axios.post("http://localhost:8000/api/auth/update-event", event, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
       },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-      }
-    );
+    });
   }
   async function getEvents() {
     const token = await userService()

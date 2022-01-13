@@ -281,6 +281,7 @@ import {
   IonSelect,
   IonSelectOption,
   toastController,
+  loadingController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import {
@@ -418,16 +419,9 @@ export default defineComponent({
         });
       }, 300);
     },
-    formValidation() {
-      let validation = false;
-      if (this.form.title != "") {
-        validation = true;
-      }
-      return validation;
-    },
     async save() {
-      if (this.formValidation() == false) {
-        this.openToast("Completa todo los campos", "danger");
+      if (this.form.title == "") {
+        this.$router.go(-1);
         return;
       }
       const event = {
@@ -439,7 +433,8 @@ export default defineComponent({
         calendar: "",
         notes: "",
         tags: {},
-        task: {},
+        tasks: {},
+        khanban: {},
       };
 
       event.title = this.form.title;
@@ -489,7 +484,11 @@ export default defineComponent({
       }
 
       if (this.optionsElement[0].task.selected) {
-        event.task = this.form.tasks;
+        event.tasks = this.form.tasks;
+      }
+
+      if (this.optionsElement[0].khanban.selected) {
+        event.khanban = this.form.khanban;
       }
 
       for (let i in event) {
@@ -508,23 +507,32 @@ export default defineComponent({
         this.createEvent(event);
       }
     },
-    createEvent(event: Record<string, any>) {
+    async createEvent(event: Record<string, any>) {
+      const loading = await this.presentLoading();
+      loading.present();
+
       eventsService()
         .createEvent(event)
         .then(async (response) => {
+          loading.dismiss();
           const message = await userService()
             .translate("saveEvent")
             .then((response) => {
               return response;
             });
-          // this.$router.go(-1);
+          eventBus().emitter.emit("new-element");
+          this.$router.go(-1);
           this.openToast(message, "success");
         });
     },
-    updateEvent(event: Record<string, any>) {
+    async updateEvent(event: Record<string, any>) {
+      const loading = await this.presentLoading();
+      loading.present();
+
       eventsService()
         .updateEvent(event)
         .then(async (response) => {
+          loading.dismiss();
           const message = await userService()
             .translate("updateEvent")
             .then((response) => {
@@ -605,6 +613,13 @@ export default defineComponent({
     },
     updateKhanbanCard(index: number, value: string) {
       this.form.khanban[index] = value;
+    },
+    async presentLoading() {
+      const loading = await loadingController.create({
+        cssClass: "my-custom-class",
+        message: "Espera por favor",
+      });
+      return loading;
     },
   },
 });
