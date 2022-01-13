@@ -8,52 +8,66 @@ use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
-    public function createEvent(Request $request)
-    {
-        $request->validate([
-            "title" => "required|string",
-            "dateTime" => "required|string",
-            "calendar" => "required|string",
-        ]);
+  public function createEvent(Request $request)
+  {
+    $request->validate([
+      'title' => 'required|string',
+    ]);
 
-        $dateTime = json_decode($request->dateTime, true);
-        $dateTimeStart =
-            $dateTime["start"]["date"] . " " . $dateTime["start"]["time"];
-        $dateTimeEnd =
-            $dateTime["end"]["date"] . " " . $dateTime["end"]["time"];
-
-        $event = new Event([
-            "title" => $request->title,
-            "time_start" => $dateTimeStart,
-            "time_end" => $dateTimeEnd,
-            "reminders" => serialize($request->reminders),
-            "repeats" => serialize($request->repeats),
-            "calendar" => $request->calendar,
-            "notes" => $request->notes,
-        ]);
-        $event->save();
-        return response()->json("Success", 200);
+    $dateTimeStart = null;
+    $dateTimeEnd = null;
+    if ($request->dateTime) {
+      $dateTimeStart =
+        $request->dateTime['start']['date'] .
+        ' ' .
+        $request->dateTime['start']['time'];
+      $dateTimeEnd =
+        $request->dateTime['end']['date'] .
+        ' ' .
+        $request->dateTime['end']['time'];
     }
-    public function getEvents()
-    {
-        $events = [];
-        $result = DB::table("events")
-            ->select(
-                "id",
-                "title",
-                "time_start",
-                "time_end",
-                "repeats",
-                "reminders",
-                "calendar",
-                "notes"
-            )
-            ->get();
 
-        foreach ($result as $key => $value) {
-            $value->reminders = unserialize($value->reminders);
-            $value->repeats = unserialize($value->repeats);
-        }
-        return $result;
+    $event = new Event([
+      'title' => $request->title,
+      'time_start' => $dateTimeStart,
+      'time_end' => $dateTimeEnd,
+      'reminders' => serialize($request->reminders),
+      'repeats' => serialize($request->repeats),
+      'calendar' => $request->calendar,
+      'notes' => $request->notes,
+      'tags' => serialize($request->tags),
+      'tasks' => serialize($request->tasks),
+      'khanban' => serialize($request->khanban),
+    ]);
+    $event->save();
+    return response()->json('Success', 200);
+  }
+  public function getEvents()
+  {
+    $events = [];
+    $result = DB::table('events')
+      ->select(
+        'id',
+        'title',
+        'time_start',
+        'time_end',
+        'repeats',
+        'reminders',
+        'calendar',
+        'notes',
+        'tags',
+        'tasks',
+        'khanban'
+      )
+      ->get();
+
+    foreach ($result as $key => $value) {
+      $value->reminders = unserialize($value->reminders);
+      $value->repeats = unserialize($value->repeats);
+      $value->tags = unserialize($value->tags);
+      $value->tasks = unserialize($value->tasks);
+      $value->khanban = unserialize($value->khanban);
     }
+    return $result;
+  }
 }
