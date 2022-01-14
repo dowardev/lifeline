@@ -89,7 +89,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { chevronBackOutline, saveOutline } from "ionicons/icons";
-import eventBus from "../../../../../EventBus";
+import eventBus from "../../../../EventBus";
 import { add } from "date-fns";
 
 export default defineComponent({

@@ -282,7 +282,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { chevronBackOutline, saveOutline } from "ionicons/icons";
-import eventBus from "../../../../../EventBus";
+import eventBus from "../../../../EventBus";
 
 export default defineComponent({
   name: "Repetir",

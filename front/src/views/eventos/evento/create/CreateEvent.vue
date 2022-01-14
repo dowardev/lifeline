@@ -291,9 +291,9 @@ import {
   addOutline,
   closeOutline,
 } from "ionicons/icons";
-import eventBus from "../../../../../EventBus";
-import eventsService from "../../../../../services/event.vue";
-import userService from "../../../../../services/user.vue";
+import eventBus from "../../../../EventBus";
+import eventsService from "../../../../services/event.vue";
+import userService from "../../../../services/user.vue";
 import { Storage } from "@ionic/storage";
 import { add } from "date-fns";
 

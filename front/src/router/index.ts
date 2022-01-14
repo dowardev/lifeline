@@ -2,10 +2,10 @@ import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
 import Home from "../views/Home.vue";
 import Inicio from "../views/inicio/Inicio.vue";
-import Eventos from "../views/inicio/eventos/Eventos.vue";
-import CreateEvent from "../views/inicio/eventos/evento/create/CreateEvent.vue";
-import Horario from "../views/inicio/eventos/evento/horario/Horario.vue";
-import Repetir from "../views/inicio/eventos/evento/repetir/Repetir.vue";
+import Eventos from "../views/eventos/Eventos.vue";
+import CreateEvent from "../views/eventos/evento/create/CreateEvent.vue";
+import Horario from "../views/eventos/evento/horario/Horario.vue";
+import Repetir from "../views/eventos/evento/repetir/Repetir.vue";
 import Register from "../views/sesion/register/Register.vue";
 import Login from "../views/sesion/login/Login.vue";
 import Reminders from "../views/inicio/eventos/evento/reminder/Reminder.vue";
@@ -14,7 +14,7 @@ import Prueba from "../views/prueba/Prueba.vue";
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/inicio",
+    redirect: "/schedule",
   },
   {
     path: "/home",
