@@ -42,8 +42,10 @@ class EventController extends Controller
     $event->save();
     return response()->json('Success', 200);
   }
-  public function getEvents()
+  public function getEvents(Request $request)
   {
+    $dateStart = $request->dateStart;
+    $dateEnd = $request->dateEnd;
     $events = [];
     $result = DB::table('events')
       ->select(
@@ -59,6 +61,8 @@ class EventController extends Controller
         'tasks',
         'khanban'
       )
+      ->where('time_start', '>=', $dateStart)
+      ->where('time_start', '<=', $dateEnd)
       ->get();
 
     foreach ($result as $key => $value) {
