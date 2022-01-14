@@ -33,7 +33,7 @@ export default function () {
       },
     });
   }
-  async function getEvents() {
+  async function getEvents(dateStart: string, dateEnd: string) {
     const token = await userService()
       .getUserToken()
       .then((response) => {
@@ -45,6 +45,7 @@ export default function () {
         "Content-Type": "application/json",
         Authorization: "Bearer " + token,
       },
+      params: { dateStart, dateEnd },
     });
   }
   async function getEvent(id: number) {

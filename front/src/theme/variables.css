@@ -249,3 +249,7 @@ ion-card {
 ion-list {
   background: transparent !important;
 }
+.center {
+  display: flex;
+  justify-content: center;
+}

@@ -8,13 +8,13 @@ import Horario from "../views/eventos/evento/horario/Horario.vue";
 import Repetir from "../views/eventos/evento/repetir/Repetir.vue";
 import Register from "../views/sesion/register/Register.vue";
 import Login from "../views/sesion/login/Login.vue";
-import Reminders from "../views/inicio/eventos/evento/reminder/Reminder.vue";
+import Reminders from "../views/eventos/evento/reminder/Reminder.vue";
 import Prueba from "../views/prueba/Prueba.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/schedule",
+    redirect: "/inicio",
   },
   {
     path: "/home",

@@ -7,7 +7,7 @@
         </ion-buttons>
         <ion-title>Inicio</ion-title>
         <ion-buttons slot="end">
-          <ion-button fill="clear" @click="openModalCalendar()">
+          <ion-button fill="clear" id="open-main-calendar">
             <ion-icon :icon="calendarOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -17,11 +17,8 @@
           <ion-segment-button value="calendar">
             <ion-label>Calendario</ion-label>
           </ion-segment-button>
-          <ion-segment-button value="notes" disabled>
-            <ion-label>Otros</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="khanban" disabled>
-            <ion-label>Otros</ion-label>
+          <ion-segment-button value="asigned" disabled>
+            <ion-label>Asignado</ion-label>
           </ion-segment-button>
         </ion-segment>
       </ion-toolbar>
@@ -29,16 +26,27 @@
 
     <ion-content :fullscreen="true">
       <section>
+        <ion-popover trigger="open-main-calendar" :show-backdrop="false">
+          <ion-datetime
+            presentation="date"
+            @ionChange="selectDay($event)"
+            ref="mainCalendar"
+            v-model="date"
+          >
+          </ion-datetime>
+          <ion-item>
+            <ion-button @click="resetCalendar()" slot="end" fill="clear"
+              >Reset</ion-button
+            >
+          </ion-item>
+        </ion-popover>
+      </section>
+
+      <section>
         <Eventos v-if="mainSegment == 'calendar'"></Eventos>
       </section>
 
-      <section v-if="mainSegment == 'notes'">
-        <ion-row>
-          <ion-col size="12"> </ion-col>
-        </ion-row>
-      </section>
-
-      <section v-if="mainSegment == 'khanban'">
+      <section v-if="mainSegment == 'asigned'">
         <ion-row>
           <ion-col size="12"> </ion-col>
         </ion-row>
@@ -58,12 +66,15 @@ import {
   IonMenuButton,
   IonSegment,
   IonSegmentButton,
-  modalController,
+  IonButtons,
+  IonDatetime,
+  IonPopover,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import { calendarOutline, documentTextOutline } from "ionicons/icons";
-import Calendar from "../calendar/Calendar.vue";
 import Eventos from "../eventos/Eventos.vue";
+import eventBus from "../../EventBus";
+import { formatISO } from "date-fns";
 
 export default defineComponent({
   name: "Inicio",
@@ -78,22 +89,33 @@ export default defineComponent({
     IonSegmentButton,
     IonButton,
     Eventos,
+    IonButtons,
+    IonDatetime,
+    IonPopover,
   },
   setup() {
+    const customDatetime = ref();
+    const reset = () => {
+      if (customDatetime.value === undefined) return;
+
+      customDatetime.value.$el.reset();
+    };
     return { calendarOutline, documentTextOutline };
   },
   data() {
-    return { mainSegment: "calendar" };
+    const date = formatISO(new Date());
+    return { mainSegment: "calendar", date };
   },
   methods: {
-    async openModalCalendar() {
-      const modal = await modalController.create({
-        component: Calendar,
-        componentProps: {
-          title: "New Title",
-        },
-      });
-      return modal.present();
+    async resetCalendar() {
+      (
+        this.$refs.mainCalendar as InstanceType<typeof HTMLFormElement>
+      ).$el.reset();
+    },
+    selectDay(e: any) {
+      const date = e.detail.value;
+      this.date = date;
+      eventBus().emitter.emit("select-day", { date });
     },
   },
 });

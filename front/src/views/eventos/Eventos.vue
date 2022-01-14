@@ -53,18 +53,14 @@ import {
   clipboardOutline,
   documentTextOutline,
 } from "ionicons/icons";
-import { useRoute } from "vue-router";
 import eventService from "../../services/event.vue";
 import { Storage } from "@ionic/storage";
 import Event from "./evento/Evento.vue";
 import eventBus from "../../EventBus";
+import { formatISO, add } from "date-fns";
 
 export default defineComponent({
   name: "Eventos",
-
-  props: {
-    date: { type: String, default: "Super Modal" },
-  },
   setup() {
     return {
       IonRefresher,
@@ -77,16 +73,23 @@ export default defineComponent({
     };
   },
   data() {
+    const date = formatISO(new Date()).split("T")[0];
     const storage = new Storage();
+
     storage.create();
     return {
       events: [] as Array<any>,
       storage,
+      date,
     };
   },
   mounted() {
     this.getEvents();
     eventBus().emitter.on("new-element", (response: any) => {
+      this.getEvents();
+    });
+    eventBus().emitter.on("select-day", (response: any) => {
+      this.date = response.date.split("T")[0];
       this.getEvents();
     });
   },
@@ -104,8 +107,15 @@ export default defineComponent({
       this.$router.push({ name: "CreateEvent" });
     },
     async getEvents() {
+      const dateEnd = formatISO(
+        new Date(
+          add(new Date(this.date), {
+            days: 2,
+          })
+        )
+      ).split("T")[0];
       const events = await eventService()
-        .getEvents()
+        .getEvents(this.date, dateEnd)
         .then((response: any) => {
           return response;
         });
