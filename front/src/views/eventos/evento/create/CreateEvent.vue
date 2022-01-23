@@ -18,250 +18,160 @@
 
     <ion-content :fullscreen="true">
       <ion-row>
-        <ion-col size="12">
+        <ion-list-header>
+          <ion-label> {{ fileTranslate["Details"] }}</ion-label>
+        </ion-list-header>
+        <ion-col size="12" size-lg="6">
           <ion-item>
-            <ion-label position="floating">Titulo</ion-label>
+            <ion-icon :icon="documentOutline" slot="start"></ion-icon>
+            <ion-label position="floating">{{
+              fileTranslate["Details"]
+            }}</ion-label>
             <ion-input type="text" v-model="form.title"></ion-input>
           </ion-item>
+        </ion-col>
+        <ion-col size="12" size-lg="6">
+          <ion-item style="top: 7px">
+            <ion-icon :icon="calendarClearOutline" slot="start"></ion-icon>
+            <ion-label>{{ fileTranslate["Calendar"] }}</ion-label>
+            <ion-select
+              interface="alert"
+              ok-text="Aceptar"
+              cancel-text="Cancelar"
+              v-model="form.calendar"
+            >
+              <ion-select-option value="personal">{{
+                fileTranslate["Personal"]
+              }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+      </ion-row>
 
-          <ion-row>
-            <ion-col size="12" size-lg="8" size-xl="6">
-              <ion-card v-if="optionsElement[0].dateTime.selected">
-                <ion-list>
-                  <ion-list-header>
-                    <ion-label>Horario</ion-label>
-                    <ion-button
-                      fill="clear"
-                      @click="optionsElement[0].dateTime.selected = false"
-                    >
-                      <ion-icon :icon="closeOutline"></ion-icon
-                    ></ion-button>
-                  </ion-list-header>
-                  <ion-item button @click="selectTime()" lines="none">
-                    <ion-label>
-                      <p>
-                        {{
-                          formatDateTime(form.datetime.start, "P") +
-                          " " +
-                          formatDateTime(form.datetime.start, "p")
-                        }}
-                      </p>
-                      <p>
-                        {{
-                          formatDateTime(form.datetime.end, "P") +
-                          " " +
-                          formatDateTime(form.datetime.end, "p")
-                        }}
-                      </p>
-                    </ion-label>
-                  </ion-item>
-                </ion-list>
-              </ion-card>
+      <ion-row>
+        <ion-list-header>
+          <ion-label>{{ fileTranslate["Organization"] }}</ion-label>
+        </ion-list-header>
+        <ion-col size="12" size-lg="6">
+          <ion-item button="true" id="open-date1">
+            <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
+            <ion-label
+              >{{ fileTranslate["DateStart"] }}:
+              {{ customDateFormat(form.datetime.start, "Pp") }}</ion-label
+            >
+            <ion-popover trigger="open-date1" :show-backdrop="false">
+              <ion-datetime
+                presentation="date-time"
+                @ionChange="form.datetime.start = $event.detail.value"
+                v-model="form.datetime.start"
+                hour-cycle="h12"
+              />
+            </ion-popover>
+          </ion-item>
+        </ion-col>
+        <ion-col size="12" size-lg="6">
+          <ion-item button="true" id="open-date2">
+            <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
+            <ion-label
+              >{{ fileTranslate["DateEnd"] }}:
+              {{ customDateFormat(form.datetime.end, "Pp") }}</ion-label
+            >
+            <ion-popover trigger="open-date2" :show-backdrop="false">
+              <ion-datetime
+                presentation="date-time"
+                @ionChange="form.datetime.end = $event.detail.value"
+                v-model="form.datetime.end"
+                hour-cycle="h12"
+              />
+            </ion-popover>
+          </ion-item>
+        </ion-col>
+        <ion-col size="12" size-lg="6">
+          <ion-item button @click="openModalReminders()" lines="full">
+            <ion-icon :icon="timeOutline" slot="start"></ion-icon>
+            <ion-label>{{ fileTranslate["Reminders"] }}</ion-label>
+            <div v-for="reminder in form.reminders" :key="reminder">
+              <ion-chip color="primary">
+                <ion-label>{{ reminder }}</ion-label>
+              </ion-chip>
+            </div>
+          </ion-item>
+        </ion-col>
+        <ion-col size="12" size-lg="6">
+          <ion-item button @click="openModalRepeats()" lines="full">
+            <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
+            <ion-label>{{ fileTranslate["Repeat"] }}</ion-label>
+            <ion-label v-if="fileTranslate['repeatsOptions'] != null">
+              <p>
+                {{ fileTranslate["repeatsOptions"][form.repeats.frecuency] }}
+              </p>
+            </ion-label>
+          </ion-item>
+        </ion-col>
+      </ion-row>
 
-              <ion-card v-if="optionsElement[0].reminders.selected">
-                <ion-list>
-                  <ion-list-header>
-                    <ion-label>Recordatorio(s)</ion-label>
-                    <ion-button
-                      fill="clear"
-                      @click="optionsElement[0].reminders.selected = false"
-                    >
-                      <ion-icon :icon="closeOutline"></ion-icon
-                    ></ion-button>
-                  </ion-list-header>
-                  <ion-item button @click="selectReminders()" lines="none">
-                    <div v-for="reminder in form.reminders" :key="reminder">
-                      <ion-chip color="primary">
-                        <ion-label>{{ reminder }}</ion-label>
-                      </ion-chip>
-                    </div>
-                  </ion-item>
-                </ion-list>
-              </ion-card>
+      <ion-row>
+        <ion-list-header>
+          <ion-label>{{ fileTranslate["OtherSettings"] }}</ion-label>
+        </ion-list-header>
+        <ion-col size="12" size-lg="6">
+          <ion-item>
+            <ion-icon :icon="pricetagsOutline" slot="start"></ion-icon>
+            <ion-label position="floating">{{
+              fileTranslate["Tags"]
+            }}</ion-label>
+            <ion-input v-on:keyup.enter="addTag()" ref="inputTag"></ion-input>
+          </ion-item>
+          <ion-chip
+            color="primary"
+            v-for="(tag, index) in form.tags"
+            :key="tag"
+          >
+            <ion-label>{{ tag }}</ion-label>
+            <ion-icon
+              :icon="closeCircleOutline"
+              @click="removeTag(index)"
+            ></ion-icon>
+          </ion-chip>
+        </ion-col>
+        <ion-col size="12" size-lg="6">
+          <ion-item>
+            <ion-icon :icon="mailOutline" slot="start"></ion-icon>
+            <ion-label position="floating">{{
+              fileTranslate["Guests"]
+            }}</ion-label>
+            <ion-input
+              v-on:keyup.enter="addInvited()"
+              ref="inputInvited"
+              placeholder="Direccion de correo electronico"
+            ></ion-input>
+          </ion-item>
+          <ion-chip
+            color="primary"
+            v-for="(mail, index) in form.inviteds"
+            :key="mail"
+          >
+            <ion-label>{{ mail }}</ion-label>
+            <ion-icon
+              :icon="closeCircleOutline"
+              @click="removeInvited(index)"
+            ></ion-icon>
+          </ion-chip>
+        </ion-col>
 
-              <ion-card v-if="optionsElement[0].repeats.selected">
-                <ion-list>
-                  <ion-list-header>
-                    <ion-label>Repetir</ion-label>
-                    <ion-button
-                      fill="clear"
-                      @click="optionsElement[0].repeats.selected = false"
-                    >
-                      <ion-icon :icon="closeOutline"></ion-icon
-                    ></ion-button>
-                  </ion-list-header>
-                  <ion-item button @click="selectRepeat()" lines="none">
-                    <ion-label>
-                      <p>
-                        {{ form.repeats.frecuencyName }}
-                      </p>
-                    </ion-label>
-                  </ion-item>
-                </ion-list>
-              </ion-card>
-
-              <ion-card v-if="optionsElement[0].calendar.selected">
-                <ion-list>
-                  <ion-list-header>
-                    <ion-label>Calendario</ion-label>
-                    <ion-button
-                      fill="clear"
-                      @click="optionsElement[0].calendar.selected = false"
-                    >
-                      <ion-icon :icon="closeOutline"></ion-icon
-                    ></ion-button>
-                  </ion-list-header>
-                  <ion-item lines="none">
-                    <ion-select
-                      interface="alert"
-                      ok-text="Aceptar"
-                      cancel-text="Cancelar"
-                      v-model="form.calendar"
-                    >
-                      <ion-select-option value="personal"
-                        >Personal</ion-select-option
-                      >
-                    </ion-select>
-                  </ion-item>
-                </ion-list>
-              </ion-card>
-
-              <ion-card v-if="optionsElement[0].notes.selected">
-                <ion-list>
-                  <ion-list-header>
-                    <ion-label>Notas</ion-label>
-                    <ion-button
-                      fill="clear"
-                      @click="optionsElement[0].notes.selected = false"
-                    >
-                      <ion-icon :icon="closeOutline"></ion-icon
-                    ></ion-button>
-                  </ion-list-header>
-                  <ion-item lines="none">
-                    <ion-textarea
-                      type="text"
-                      v-model="form.notes"
-                      autoGrow
-                      :rows="4"
-                    ></ion-textarea>
-                  </ion-item>
-                </ion-list>
-              </ion-card>
-
-              <ion-card v-if="optionsElement[0].tags.selected">
-                <ion-list>
-                  <ion-list-header>
-                    <ion-label>Etiquetas</ion-label>
-                    <ion-button
-                      fill="clear"
-                      @click="optionsElement[0].tags.selected = false"
-                    >
-                      <ion-icon :icon="closeOutline"></ion-icon
-                    ></ion-button>
-                  </ion-list-header>
-                  <ion-item
-                    v-for="(tag, index) in form.tags"
-                    :key="tag"
-                    lines="inset"
-                  >
-                    <ion-input
-                      type="text"
-                      @ionBlur="updateTag(index, $event.target.value)"
-                      :value="tag"
-                    ></ion-input>
-                    <ion-button fill="clear" @click="removeTag(index)">
-                      <ion-icon :icon="closeCircleOutline"></ion-icon>
-                    </ion-button>
-                  </ion-item>
-                  <ion-button fill="clear" expand="full" @click="addTag()"
-                    ><ion-icon :icon="addOutline"></ion-icon
-                  ></ion-button>
-                </ion-list>
-              </ion-card>
-
-              <ion-card v-if="optionsElement[0].task.selected">
-                <ion-list>
-                  <ion-list-header>
-                    <ion-label>Tareas</ion-label>
-                    <ion-button
-                      fill="clear"
-                      @click="optionsElement[0].task.selected = false"
-                    >
-                      <ion-icon :icon="closeOutline"></ion-icon
-                    ></ion-button>
-                  </ion-list-header>
-                  <ion-item v-for="(task, index) in form.tasks" :key="task">
-                    <ion-input
-                      type="text"
-                      @ionBlur="updateTask(index, $event.target.value)"
-                      :value="task"
-                    ></ion-input>
-                    <ion-button fill="clear" @click="removeTask(index)">
-                      <ion-icon :icon="closeCircleOutline"></ion-icon>
-                    </ion-button>
-                  </ion-item>
-                  <ion-button fill="clear" expand="full" @click="addTask()"
-                    ><ion-icon :icon="addOutline"></ion-icon
-                  ></ion-button>
-                </ion-list>
-              </ion-card>
-
-              <ion-card v-if="optionsElement[0].khanban.selected">
-                <ion-list>
-                  <ion-list-header>
-                    <ion-label>Khanban</ion-label>
-                    <ion-button
-                      fill="clear"
-                      @click="optionsElement[0].khanban.selected = false"
-                    >
-                      <ion-icon :icon="closeOutline"></ion-icon
-                    ></ion-button>
-                  </ion-list-header>
-                  <ion-item
-                    v-for="(khanban, index) in form.khanban"
-                    :key="khanban"
-                    lines="inset"
-                  >
-                    <ion-input
-                      type="text"
-                      @ionBlur="updateKhanbanCard(index, $event.target.value)"
-                      :value="khanban"
-                    ></ion-input>
-                    <ion-button fill="clear" @click="removeKhanbanCard(index)">
-                      <ion-icon :icon="closeCircleOutline"></ion-icon>
-                    </ion-button>
-                  </ion-item>
-                  <ion-button
-                    fill="clear"
-                    expand="full"
-                    @click="addKhanbanCard()"
-                    ><ion-icon :icon="addOutline"></ion-icon
-                  ></ion-button>
-                </ion-list>
-              </ion-card>
-            </ion-col>
-
-            <ion-col size="12" size-lg="4" size-xl="6">
-              <ion-list>
-                <ion-list-header>
-                  <ion-label>Opciones</ion-label>
-                </ion-list-header>
-                <div
-                  v-for="element in optionsElement[0]"
-                  :key="element"
-                  style="display: inline-block"
-                >
-                  <div v-if="element.selected == false">
-                    <ion-chip @click="element.selected = true" color="primary">
-                      <ion-label color="secondary">{{
-                        element.name
-                      }}</ion-label>
-                    </ion-chip>
-                  </div>
-                </div>
-              </ion-list>
-            </ion-col>
-          </ion-row>
+        <ion-col size="12" size-lg="12">
+          <ion-item>
+            <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
+            <ion-label position="floating">{{
+              fileTranslate["Notes"]
+            }}</ion-label>
+            <ion-textarea
+              type="text"
+              v-model="form.notes"
+              autoGrow
+              :rows="4"
+            ></ion-textarea>
+          </ion-item>
         </ion-col>
       </ion-row>
     </ion-content>
@@ -282,20 +192,31 @@ import {
   IonSelectOption,
   toastController,
   loadingController,
+  IonDatetime,
+  modalController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import {
   chevronBackOutline,
   saveOutline,
   closeCircleOutline,
-  addOutline,
-  closeOutline,
+  documentOutline,
+  calendarNumberOutline,
+  calendarClearOutline,
+  timeOutline,
+  repeatOutline,
+  pricetagsOutline,
+  mailOutline,
+  documentTextOutline,
 } from "ionicons/icons";
 import eventBus from "../../../../EventBus";
 import eventsService from "../../../../services/event.vue";
 import userService from "../../../../services/user.vue";
 import { Storage } from "@ionic/storage";
 import { add } from "date-fns";
+import { format, formatISO } from "date-fns";
+import Reminders from "../reminder/Reminder.vue";
+import Repeats from "../repetir/Repetir.vue";
 
 export default defineComponent({
   name: "Evento",
@@ -309,6 +230,7 @@ export default defineComponent({
     IonInput,
     IonTextarea,
     IonSelect,
+    IonDatetime,
   },
   setup() {
     return {
@@ -317,51 +239,44 @@ export default defineComponent({
       IonInput,
       IonSelectOption,
       closeCircleOutline,
-      addOutline,
-      closeOutline,
+      documentOutline,
+      calendarNumberOutline,
+      calendarClearOutline,
+      timeOutline,
+      repeatOutline,
+      pricetagsOutline,
+      mailOutline,
+      documentTextOutline,
     };
   },
   data() {
-    const pageTitle = "Agregar elemento";
     const storage = new Storage();
     storage.create();
-    const today = new Date().toLocaleString("sv").replace(" ", "T");
     return {
       buttonEdit: true,
-      pageTitle,
+      pageTitle: "",
       storage,
       form: {
-        title: "",
+        title: "Prueba de funcionamiento",
         datetime: {
-          start: today,
-          end: new Date(add(new Date(), { days: 1 }))
-            .toLocaleString("sv")
-            .replace(" ", "T"),
+          start: formatISO(new Date()),
+          end: formatISO(
+            add(new Date(), {
+              hours: 1,
+            })
+          ),
         },
         reminders: [],
         repeats: {
-          frecuencyName: "",
           frecuency: "",
           data: {},
         },
-        calendar: "",
-        notes: "",
-        tags: [] as Array<string>,
-        tasks: [] as Array<string>,
-        khanban: [] as Array<string>,
+        calendar: "personal",
+        notes: "Notas de prueba",
+        tags: ["tag de prueba"] as Array<string>,
+        inviteds: ["contacto@dowar.xyz"] as Array<string>,
       },
-      optionsElement: [
-        {
-          dateTime: { name: "Fecha", selected: false },
-          reminders: { name: "Recordatorios", selected: false },
-          repeats: { name: "Repetir", selected: false },
-          calendar: { name: "Calendario", selected: false },
-          notes: { name: "Notas", selected: false },
-          tags: { name: "Etiquetas", selected: false },
-          task: { name: "Tareas", selected: false },
-          khanban: { name: "Khanban", selected: false },
-        },
-      ],
+      fileTranslate: Object(),
     };
   },
   mounted() {
@@ -369,25 +284,14 @@ export default defineComponent({
       this.pageTitle = "Actualizar evento";
       this.getEventLocal(parseInt(this.$route.params.id as string));
     }
-    eventBus().emitter.on("set-schedule-event", (response: any) => {
-      this.form.datetime.start = response.dateTimeStart;
-      this.form.datetime.end = response.dateTimeEnd;
-    });
-    eventBus().emitter.on("set-reminder-event", (response: any) => {
-      this.form.reminders = response.reminders;
-    });
-    eventBus().emitter.on("set-repeat-event", async (response: any) => {
-      this.form.repeats.frecuencyName = await userService().translate(
-        response.frecuency
-      );
-      this.form.repeats.frecuency = response.frecuency;
-      this.form.repeats.data = response.data;
-    });
     eventBus().emitter.on("update-event", async (response: any) => {
       // console.log(response.event);
       // this.event = response.event;
       //this.pageTitle = "Actualizar evento";
       //  this.getEvent();
+    });
+    this.getFileTranslate().then(() => {
+      this.pageTitle = this.fileTranslate["newEvent"];
     });
   },
   methods: {
@@ -411,101 +315,12 @@ export default defineComponent({
         });
       }, 300);
     },
-    selectReminders() {
-      this.$router.push("/recordatorios");
-      setTimeout(() => {
-        eventBus().emitter.emit("get-reminder-event", {
-          reminders: JSON.parse(JSON.stringify(this.form.reminders)),
-        });
-      }, 300);
-    },
     async save() {
       if (this.form.title == "") {
         this.$router.go(-1);
         return;
       }
-      const event = {
-        id: 0,
-        title: "",
-        dateTime: {},
-        reminders: [],
-        repeats: {},
-        calendar: "",
-        notes: "",
-        tags: {},
-        tasks: {},
-        khanban: {},
-      };
-
-      event.title = this.form.title;
-
-      if (this.optionsElement[0].dateTime.selected) {
-        event.dateTime = {
-          start: {
-            date: new Date(this.form.datetime.start)
-              .toISOString()
-              .split("T")[0],
-            time: new Date(this.form.datetime.start)
-              .toISOString()
-              .split("T")[1]
-              .replace("Z", ""),
-          },
-          end: {
-            date: new Date(this.form.datetime.end).toISOString().split("T")[0],
-            time: new Date(this.form.datetime.end)
-              .toISOString()
-              .split("T")[1]
-              .replace("Z", ""),
-          },
-        };
-      }
-
-      if (this.optionsElement[0].reminders.selected) {
-        event.reminders = this.form.reminders;
-      }
-
-      if (this.optionsElement[0].repeats.selected) {
-        event.repeats = {
-          frecuency: this.form.repeats.frecuency,
-          data: this.form.repeats.data,
-        };
-      }
-
-      if (this.optionsElement[0].calendar.selected) {
-        event.calendar = this.form.calendar;
-      }
-
-      if (this.optionsElement[0].notes.selected) {
-        event.notes = this.form.notes;
-      }
-
-      if (this.optionsElement[0].tags.selected) {
-        event.tags = this.form.tags;
-      }
-
-      if (this.optionsElement[0].task.selected) {
-        event.tasks = this.form.tasks;
-      }
-
-      if (this.optionsElement[0].khanban.selected) {
-        event.khanban = this.form.khanban;
-      }
-
-      for (let i in event) {
-        if (
-          Object.keys((event as any)[i]).length == 0 ||
-          (event as any)[i] == ""
-        ) {
-          delete (event as any)[i];
-        }
-      }
-
-      if (this.$route.params.id) {
-        event.id = parseInt(this.$route.params.id as string);
-        this.updateEvent(event);
-      } else {
-        this.createEvent(event);
-      }
+      console.log(this.form);
     },
     async createEvent(event: Record<string, any>) {
       const loading = await this.presentLoading();
@@ -515,14 +330,13 @@ export default defineComponent({
         .createEvent(event)
         .then(async (response) => {
           loading.dismiss();
-          const message = await userService()
-            .translate("saveEvent")
-            .then((response) => {
-              return response;
-            });
+          // const message = await userService().translate("saveEvent");
+          // .then((response) => {
+          //   return response;
+          // });
           eventBus().emitter.emit("new-element");
           this.$router.go(-1);
-          this.openToast(message, "success");
+          //this.openToast(message, "success");
         });
     },
     async updateEvent(event: Record<string, any>) {
@@ -533,14 +347,13 @@ export default defineComponent({
         .updateEvent(event)
         .then(async (response) => {
           loading.dismiss();
-          const message = await userService()
-            .translate("updateEvent")
-            .then((response) => {
-              return response;
-            });
+          // const message = await userService().translate("updateEvent");
+          // .then((response) => {
+          //   return response;
+          // });
           eventBus().emitter.emit("update-event-success");
           this.$router.go(-1);
-          this.openToast(message, "success");
+          //          this.openToast(message, "success");
         });
     },
     async getEventLocal(id: number) {
@@ -563,9 +376,10 @@ export default defineComponent({
 
           this.form.reminders = element.reminders;
 
-          element.repeats.frecuencyName = await userService().translate(
-            element.repeats.frecuency
-          );
+          element.repeats.frecuencyName = await userService()
+            .translate
+            // element.repeats.frecuency
+            ();
           this.form.repeats = element.repeats;
 
           this.form.calendar = element.calendar;
@@ -588,31 +402,11 @@ export default defineComponent({
       return toast.present();
     },
     addTag() {
-      this.form.tags.push("");
+      this.form.tags.push((this.$refs.inputTag as any).$el.value);
+      (this.$refs.inputTag as any).$el.value = "";
     },
     removeTag(index: number) {
       this.form.tags.splice(index, 1);
-    },
-    updateTag(index: number, value: string) {
-      this.form.tags[index] = value;
-    },
-    addTask() {
-      this.form.tasks.push("");
-    },
-    removeTask(index: number) {
-      this.form.tasks.splice(index, 1);
-    },
-    updateTask(index: number, value: string) {
-      this.form.tasks[index] = value;
-    },
-    addKhanbanCard() {
-      this.form.khanban.push("");
-    },
-    removeKhanbanCard(index: number) {
-      this.form.khanban.splice(index, 1);
-    },
-    updateKhanbanCard(index: number, value: string) {
-      this.form.khanban[index] = value;
     },
     async presentLoading() {
       const loading = await loadingController.create({
@@ -620,6 +414,51 @@ export default defineComponent({
         message: "Espera por favor",
       });
       return loading;
+    },
+    customDateFormat(date: any, styleFormat: string) {
+      return format(new Date(date), styleFormat);
+    },
+    addInvited() {
+      this.form.inviteds.push((this.$refs.inputInvited as any).$el.value);
+      (this.$refs.inputInvited as any).$el.value = "";
+    },
+    removeInvited(index: number) {
+      this.form.inviteds.splice(index, 1);
+    },
+    async openModalReminders() {
+      const modal = await modalController.create({
+        component: Reminders,
+        cssClass: "my-custom-class",
+        componentProps: {
+          remindersProps: Object.assign([], this.form.reminders),
+        },
+      });
+      modal.onDidDismiss().then((response) => {
+        if (response.data) {
+          this.form.reminders = response.data.reminders;
+        }
+      });
+      return modal.present();
+    },
+    async openModalRepeats() {
+      const modal = await modalController.create({
+        component: Repeats,
+        cssClass: "my-custom-class",
+        componentProps: {
+          repeatsProps: Object.assign([], this.form.repeats),
+          day: this.customDateFormat(this.form.datetime.start, "EEEE"),
+        },
+      });
+      modal.onDidDismiss().then((response) => {
+        if (response.data) {
+          this.form.repeats.frecuency = response.data.frecuency;
+          this.form.repeats.data = response.data.data;
+        }
+      });
+      return modal.present();
+    },
+    async getFileTranslate() {
+      this.fileTranslate = await userService().translate();
     },
   },
 });

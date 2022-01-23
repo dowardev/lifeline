@@ -7,7 +7,7 @@
             <ion-icon slot="start" :icon="chevronBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Recodartorios</ion-title>
+        <ion-title>{{ translateFile["Reminders"] }}</ion-title>
         <ion-buttons slot="end">
           <ion-button v-on:click="save()">
             <ion-icon slot="start" :icon="saveOutline"></ion-icon>
@@ -26,7 +26,9 @@
                 @update:modelValue="reminder.check = $event"
                 :modelValue="reminder.check"
               ></ion-checkbox>
-              <ion-label>{{ reminder.label }}</ion-label>
+              <ion-label v-if="translateFile['remindersOptions'] != null">{{
+                translateFile["remindersOptions"][reminder.name]
+              }}</ion-label>
             </ion-item>
           </ion-list>
         </ion-col>
@@ -43,10 +45,12 @@ import {
   IonTitle,
   IonToolbar,
   IonCheckbox,
+  modalController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { chevronBackOutline, saveOutline } from "ionicons/icons";
-import eventBus from "../../../../EventBus";
+import userService from "../../../../services/user.vue";
+
 export default defineComponent({
   name: "Reminders",
   components: {
@@ -57,82 +61,78 @@ export default defineComponent({
     IonToolbar,
     IonCheckbox,
   },
+  props: {
+    remindersProps: { type: Array<any>(), default: [] },
+  },
   setup() {
     return { chevronBackOutline, saveOutline };
   },
   data() {
     const reminders = [
       {
-        label: "A tiempo",
         check: false,
-        value: "tiempo",
+        name: "just",
       },
       {
-        label: "5 minutos antes",
         check: false,
-        value: "5mn",
+        name: "5mn",
       },
       {
-        label: "15 minutos antes",
         check: false,
-        value: "15mn",
+        name: "15mn",
       },
       {
-        label: "30 minutos antes",
         check: false,
-        value: "30mn",
+        name: "30mn",
       },
       {
-        label: "1 hora antes",
         check: false,
-        value: "1h",
+        name: "1hr",
       },
       {
-        label: "4 hora antes",
         check: false,
-        value: "4h",
+        name: "4hr",
       },
       {
-        label: "1 dia antes",
         check: false,
-        value: "1d",
+        name: "1d",
       },
       {
-        label: "2 dias antes",
         check: false,
-        value: "2d",
+        name: "2d",
       },
       {
-        label: "1 semana ante",
         check: false,
-        value: "1s",
+        name: "1s",
       },
     ];
-    return { reminders };
+    return { reminders, translateFile: Object() };
   },
   mounted() {
-    eventBus().emitter.on("get-reminder-event", (response: any) => {
-      this.reminders.forEach((reminder) => {
-        response.reminders.forEach((res: any) => {
-          if (reminder.value == res) {
-            reminder.check = true;
-          }
+    this.translate().then(() => {
+      if (this.remindersProps.length != 0) {
+        this.reminders.forEach((reminder: any) => {
+          this.remindersProps.forEach((res: any) => {
+            if (reminder.name == res) {
+              reminder.check = true;
+            }
+          });
         });
-      });
+      }
     });
   },
   methods: {
     save() {
-      const reminders: any[] = [];
+      const reminders = Array<any>();
       this.reminders.forEach((element) => {
         if (element.check == true) {
-          reminders.push(element.value);
+          reminders.push(element.name);
         }
       });
-      eventBus().emitter.emit("set-reminder-event", {
-        reminders,
-      });
-      this.$router.go(-1);
+      modalController.dismiss({ reminders });
+    },
+    async translate() {
+      this.translateFile = await userService().translate();
     },
   },
 });

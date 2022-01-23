@@ -4,7 +4,6 @@ import Home from "../views/Home.vue";
 import Inicio from "../views/inicio/Inicio.vue";
 import Eventos from "../views/eventos/Eventos.vue";
 import CreateEvent from "../views/eventos/evento/create/CreateEvent.vue";
-import Horario from "../views/eventos/evento/horario/Horario.vue";
 import Repetir from "../views/eventos/evento/repetir/Repetir.vue";
 import Register from "../views/sesion/register/Register.vue";
 import Login from "../views/sesion/login/Login.vue";
@@ -32,7 +31,7 @@ const routes: Array<RouteRecordRaw> = [
     component: Eventos,
   },
   {
-    path: "/evento/agregar",
+    path: "/event/add",
     name: "CreateEvent",
     component: CreateEvent,
   },
@@ -40,11 +39,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/event/update/:id",
     name: "UpdateEvent",
     component: CreateEvent,
-  },
-  {
-    path: "/horario",
-    name: "Horario",
-    component: Horario,
   },
   {
     path: "/recordatorios",

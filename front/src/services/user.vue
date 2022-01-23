@@ -36,12 +36,12 @@ export default function () {
   function getUserLang() {
     return store.get("lang");
   }
-  async function translate(word: string) {
+  async function translate() {
     const lang = await getUserLang().then((response) => {
       return response;
     });
     if (lang == "es" || lang == null) {
-      return (jsonLangSpanish as any)[word];
+      return jsonLangSpanish as any;
     }
   }
   return {

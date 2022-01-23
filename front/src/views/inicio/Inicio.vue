@@ -7,6 +7,9 @@
         </ion-buttons>
         <ion-title>Inicio</ion-title>
         <ion-buttons slot="end">
+          <ion-button fill="clear" @click="$router.push('/event/add')">
+            <ion-icon :icon="addOutline"></ion-icon>
+          </ion-button>
           <ion-button fill="clear" id="open-main-calendar">
             <ion-icon :icon="calendarOutline"></ion-icon>
           </ion-button>
@@ -71,7 +74,11 @@ import {
   IonPopover,
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
-import { calendarOutline, documentTextOutline } from "ionicons/icons";
+import {
+  calendarOutline,
+  documentTextOutline,
+  addOutline,
+} from "ionicons/icons";
 import Eventos from "../eventos/Eventos.vue";
 import eventBus from "../../EventBus";
 import { formatISO } from "date-fns";
@@ -100,7 +107,7 @@ export default defineComponent({
 
       customDatetime.value.$el.reset();
     };
-    return { calendarOutline, documentTextOutline };
+    return { calendarOutline, documentTextOutline, addOutline };
   },
   data() {
     const date = formatISO(new Date());
