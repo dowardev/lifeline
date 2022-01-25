@@ -7,7 +7,7 @@
             <ion-icon slot="start" :icon="chevronBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>{{ translateFile["Reminders"] }}</ion-title>
+        <ion-title>{{ fileTranslate["Reminders"] }}</ion-title>
         <ion-buttons slot="end">
           <ion-button v-on:click="save()">
             <ion-icon slot="start" :icon="saveOutline"></ion-icon>
@@ -16,7 +16,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
+    <ion-content :fullscreen="true" v-if="fileTranslate[0] != null">
       <ion-row>
         <ion-col size="12">
           <ion-list>
@@ -26,9 +26,9 @@
                 @update:modelValue="reminder.check = $event"
                 :modelValue="reminder.check"
               ></ion-checkbox>
-              <ion-label v-if="translateFile['remindersOptions'] != null">{{
-                translateFile["remindersOptions"][reminder.name]
-              }}</ion-label>
+              <ion-label>
+                {{ fileTranslate[0][reminder.name] }}
+              </ion-label>
             </ion-item>
           </ion-list>
         </ion-col>
@@ -75,38 +75,38 @@ export default defineComponent({
       },
       {
         check: false,
-        name: "5mn",
+        name: "5mnb",
       },
       {
         check: false,
-        name: "15mn",
+        name: "15mnb",
       },
       {
         check: false,
-        name: "30mn",
+        name: "30mnb",
       },
       {
         check: false,
-        name: "1hr",
+        name: "1hrb",
       },
       {
         check: false,
-        name: "4hr",
+        name: "4hrb",
       },
       {
         check: false,
-        name: "1d",
+        name: "1db",
       },
       {
         check: false,
-        name: "2d",
+        name: "2db",
       },
       {
         check: false,
-        name: "1s",
+        name: "1sb",
       },
     ];
-    return { reminders, translateFile: Object() };
+    return { reminders, fileTranslate: Object() };
   },
   mounted() {
     this.translate().then(() => {
@@ -132,7 +132,7 @@ export default defineComponent({
       modalController.dismiss({ reminders });
     },
     async translate() {
-      this.translateFile = await userService().translate();
+      this.fileTranslate = [await userService().translate()];
     },
   },
 });

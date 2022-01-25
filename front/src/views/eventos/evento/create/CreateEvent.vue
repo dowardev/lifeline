@@ -16,33 +16,34 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
+    <ion-content :fullscreen="true" v-if="fileTranslate[0] != null">
       <ion-row>
         <ion-list-header>
-          <ion-label> {{ fileTranslate["Details"] }}</ion-label>
+          <ion-label> {{ fileTranslate[0]["details"] }}</ion-label>
         </ion-list-header>
         <ion-col size="12" size-lg="6">
           <ion-item>
             <ion-icon :icon="documentOutline" slot="start"></ion-icon>
-            <ion-label position="floating">{{
-              fileTranslate["Details"]
-            }}</ion-label>
+            <ion-label position="floating">
+              {{ fileTranslate[0]["title"] }}
+            </ion-label>
             <ion-input type="text" v-model="form.title"></ion-input>
           </ion-item>
         </ion-col>
+        <!-- calendar -->
         <ion-col size="12" size-lg="6">
           <ion-item style="top: 7px">
             <ion-icon :icon="calendarClearOutline" slot="start"></ion-icon>
-            <ion-label>{{ fileTranslate["Calendar"] }}</ion-label>
+            <ion-label>{{ fileTranslate[0]["calendar"] }}</ion-label>
             <ion-select
               interface="alert"
               ok-text="Aceptar"
               cancel-text="Cancelar"
               v-model="form.calendar"
             >
-              <ion-select-option value="personal">{{
-                fileTranslate["Personal"]
-              }}</ion-select-option>
+              <ion-select-option value="personal">
+                {{ fileTranslate[0]["personal"] }}
+              </ion-select-option>
             </ion-select>
           </ion-item>
         </ion-col>
@@ -50,13 +51,14 @@
 
       <ion-row>
         <ion-list-header>
-          <ion-label>{{ fileTranslate["Organization"] }}</ion-label>
+          <ion-label>{{ fileTranslate[0]["organization"] }}</ion-label>
         </ion-list-header>
+        <!-- date start-->
         <ion-col size="12" size-lg="6">
           <ion-item button="true" id="open-date1">
             <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
             <ion-label
-              >{{ fileTranslate["DateStart"] }}:
+              >{{ fileTranslate[0]["dateStart"] + "" }}
               {{ customDateFormat(form.datetime.start, "Pp") }}</ion-label
             >
             <ion-popover trigger="open-date1" :show-backdrop="false">
@@ -69,13 +71,14 @@
             </ion-popover>
           </ion-item>
         </ion-col>
+        <!-- date end -->
         <ion-col size="12" size-lg="6">
           <ion-item button="true" id="open-date2">
             <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
-            <ion-label
-              >{{ fileTranslate["DateEnd"] }}:
-              {{ customDateFormat(form.datetime.end, "Pp") }}</ion-label
-            >
+            <ion-label>
+              {{ fileTranslate[0]["dateEnd"] + "" }}
+              {{ customDateFormat(form.datetime.end, "Pp") }}
+            </ion-label>
             <ion-popover trigger="open-date2" :show-backdrop="false">
               <ion-datetime
                 presentation="date-time"
@@ -86,25 +89,25 @@
             </ion-popover>
           </ion-item>
         </ion-col>
+        <!-- reminders -->
         <ion-col size="12" size-lg="6">
           <ion-item button @click="openModalReminders()" lines="full">
             <ion-icon :icon="timeOutline" slot="start"></ion-icon>
-            <ion-label>{{ fileTranslate["Reminders"] }}</ion-label>
+            <ion-label>{{ fileTranslate[0]["reminders"] }}</ion-label>
             <div v-for="reminder in form.reminders" :key="reminder">
               <ion-chip color="primary">
-                <ion-label>{{ reminder }}</ion-label>
+                <ion-label>{{ fileTranslate[0][reminder] }}</ion-label>
               </ion-chip>
             </div>
           </ion-item>
         </ion-col>
+        <!-- repeats -->
         <ion-col size="12" size-lg="6">
           <ion-item button @click="openModalRepeats()" lines="full">
             <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
-            <ion-label>{{ fileTranslate["Repeat"] }}</ion-label>
-            <ion-label v-if="fileTranslate['repeatsOptions'] != null">
-              <p>
-                {{ fileTranslate["repeatsOptions"][form.repeats.frecuency] }}
-              </p>
+            <ion-label>
+              {{ fileTranslate[0]["repeat"] }}
+              {{ fileTranslate[0][form.repeats.frequency] }}
             </ion-label>
           </ion-item>
         </ion-col>
@@ -112,15 +115,20 @@
 
       <ion-row>
         <ion-list-header>
-          <ion-label>{{ fileTranslate["OtherSettings"] }}</ion-label>
+          <ion-label>{{ fileTranslate[0]["otherSettings"] }}</ion-label>
         </ion-list-header>
+        <!-- tags -->
         <ion-col size="12" size-lg="6">
           <ion-item>
             <ion-icon :icon="pricetagsOutline" slot="start"></ion-icon>
-            <ion-label position="floating">{{
-              fileTranslate["Tags"]
-            }}</ion-label>
-            <ion-input v-on:keyup.enter="addTag()" ref="inputTag"></ion-input>
+            <ion-label position="floating">
+              {{ fileTranslate[0]["tags"] }}
+            </ion-label>
+            <ion-input
+              v-on:keyup.enter="addTag()"
+              ref="inputTag"
+              :placeholder="fileTranslate[0]['nameTag']"
+            ></ion-input>
           </ion-item>
           <ion-chip
             color="primary"
@@ -134,21 +142,22 @@
             ></ion-icon>
           </ion-chip>
         </ion-col>
+        <!-- invitados -->
         <ion-col size="12" size-lg="6">
           <ion-item>
             <ion-icon :icon="mailOutline" slot="start"></ion-icon>
-            <ion-label position="floating">{{
-              fileTranslate["Guests"]
-            }}</ion-label>
+            <ion-label position="floating">
+              {{ fileTranslate[0]["guests"] }}
+            </ion-label>
             <ion-input
               v-on:keyup.enter="addInvited()"
               ref="inputInvited"
-              placeholder="Direccion de correo electronico"
+              :placeholder="fileTranslate[0]['email']"
             ></ion-input>
           </ion-item>
           <ion-chip
             color="primary"
-            v-for="(mail, index) in form.inviteds"
+            v-for="(mail, index) in form.guest"
             :key="mail"
           >
             <ion-label>{{ mail }}</ion-label>
@@ -162,9 +171,9 @@
         <ion-col size="12" size-lg="12">
           <ion-item>
             <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
-            <ion-label position="floating">{{
-              fileTranslate["Notes"]
-            }}</ion-label>
+            <ion-label position="floating">
+              {{ fileTranslate[0]["notes"] }}
+            </ion-label>
             <ion-textarea
               type="text"
               v-model="form.notes"
@@ -192,7 +201,6 @@ import {
   IonSelectOption,
   toastController,
   loadingController,
-  IonDatetime,
   modalController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
@@ -230,7 +238,6 @@ export default defineComponent({
     IonInput,
     IonTextarea,
     IonSelect,
-    IonDatetime,
   },
   setup() {
     return {
@@ -266,15 +273,15 @@ export default defineComponent({
             })
           ),
         },
-        reminders: [],
+        reminders: ["just"],
         repeats: {
-          frecuency: "",
+          frequency: "unique",
           data: {},
         },
         calendar: "personal",
         notes: "Notas de prueba",
         tags: ["tag de prueba"] as Array<string>,
-        inviteds: ["contacto@dowar.xyz"] as Array<string>,
+        guest: ["contacto@dowar.xyz"] as Array<string>,
       },
       fileTranslate: Object(),
     };
@@ -376,9 +383,9 @@ export default defineComponent({
 
           this.form.reminders = element.reminders;
 
-          element.repeats.frecuencyName = await userService()
+          element.repeats.frequencyName = await userService()
             .translate
-            // element.repeats.frecuency
+            // element.repeats.frequency
             ();
           this.form.repeats = element.repeats;
 
@@ -419,11 +426,11 @@ export default defineComponent({
       return format(new Date(date), styleFormat);
     },
     addInvited() {
-      this.form.inviteds.push((this.$refs.inputInvited as any).$el.value);
+      this.form.guest.push((this.$refs.inputInvited as any).$el.value);
       (this.$refs.inputInvited as any).$el.value = "";
     },
     removeInvited(index: number) {
-      this.form.inviteds.splice(index, 1);
+      this.form.guest.splice(index, 1);
     },
     async openModalReminders() {
       const modal = await modalController.create({
@@ -451,14 +458,14 @@ export default defineComponent({
       });
       modal.onDidDismiss().then((response) => {
         if (response.data) {
-          this.form.repeats.frecuency = response.data.frecuency;
+          this.form.repeats.frequency = response.data.frequency;
           this.form.repeats.data = response.data.data;
         }
       });
       return modal.present();
     },
     async getFileTranslate() {
-      this.fileTranslate = await userService().translate();
+      this.fileTranslate = [await userService().translate()];
     },
   },
 });
