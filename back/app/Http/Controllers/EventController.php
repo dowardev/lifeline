@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use Illuminate\Support\Facades\DB;
+use App\Models\Tag;
+use App\Models\AdminTag;
 
 class EventController extends Controller
 {
@@ -14,39 +16,48 @@ class EventController extends Controller
       'title' => 'required|string',
     ]);
 
-    $dateTimeStart = null;
-    $dateTimeEnd = null;
-    if ($request->dateTime) {
-      $dateTimeStart =
-        $request->dateTime['start']['date'] .
-        ' ' .
-        $request->dateTime['start']['time'];
-      $dateTimeEnd =
-        $request->dateTime['end']['date'] .
-        ' ' .
-        $request->dateTime['end']['time'];
-    }
+    $dateTimeStart = date(
+      'Y-m-d H:i',
+      strtotime(json_decode($request->dateTime)->start)
+    );
+    $dateTimeEnd = date(
+      'Y-m-d H:i',
+      strtotime(json_decode($request->dateTime)->end)
+    );
 
-    $event = new Event([
+    $eventId = 0;
+    $event = Event::create([
       'title' => $request->title,
       'time_start' => $dateTimeStart,
       'time_end' => $dateTimeEnd,
       'reminders' => serialize($request->reminders),
       'repeats' => serialize($request->repeats),
-      'calendar' => $request->calendar,
+      'guest' => serialize($request->guest),
       'notes' => $request->notes,
-      'tags' => serialize($request->tags),
-      'tasks' => serialize($request->tasks),
-      'khanban' => serialize($request->khanban),
     ]);
-    $event->save();
+    $eventId = $event->id;
+
+    $tagIndex = [];
+    foreach (json_decode($request->tags) as $tag) {
+      $tag = AdminTag::create([
+        'name' => $tag,
+      ]);
+      array_push($tagIndex, $tag->id);
+    }
+
+    foreach ($tagIndex as $key) {
+      Tag::create([
+        'event_id' => $eventId,
+        'tag_id' => $key,
+      ]);
+    }
+
     return response()->json('Success', 200);
   }
   public function getEvents(Request $request)
   {
     $dateStart = $request->dateStart;
     $dateEnd = $request->dateEnd;
-    $events = [];
     $result = DB::table('events')
       ->select(
         'id',
@@ -55,23 +66,23 @@ class EventController extends Controller
         'time_end',
         'repeats',
         'reminders',
-        'calendar',
         'notes',
-        'tags',
-        'tasks',
-        'khanban'
+        'guest'
       )
-      ->where('time_start', '>=', $dateStart)
-      ->where('time_start', '<=', $dateEnd)
+      ->whereDate('time_start', '>=', $dateStart)
+      ->whereDate('time_start', '<=', $dateStart)
       ->get();
 
     foreach ($result as $key => $value) {
       $value->reminders = unserialize($value->reminders);
       $value->repeats = unserialize($value->repeats);
-      $value->tags = unserialize($value->tags);
-      $value->tasks = unserialize($value->tasks);
-      $value->khanban = unserialize($value->khanban);
+      $value->guest = unserialize($value->guest);
     }
-    return $result;
+
+    $events = [];
+    foreach ($result as $key => $value) {
+      $value->tags = Event::find($value->id)->tags;
+    }
+    return response()->json($result, 200);
   }
 }

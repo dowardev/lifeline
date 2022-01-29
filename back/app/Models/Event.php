@@ -11,14 +11,18 @@ class Event extends Model
 
   protected $fillable = [
     'title',
+    'calendar',
     'time_start',
     'time_end',
     'reminders',
     'repeats',
-    'calendar',
     'notes',
     'tags',
-    'tasks',
-    'khanban',
+    'guest',
+    'notes',
   ];
+  public function tags()
+  {
+    return $this->belongsToMany(AdminTag::class, 'tags', 'event_id', 'tag_id');
+  }
 }
