@@ -246,9 +246,6 @@ ion-card {
 .error {
   color: red;
 }
-ion-list {
-  background: transparent !important;
-}
 .center {
   display: flex;
   justify-content: center;

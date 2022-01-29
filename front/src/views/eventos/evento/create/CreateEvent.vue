@@ -22,7 +22,7 @@
           <ion-label> {{ fileTranslate[0]["details"] }}</ion-label>
         </ion-list-header>
         <ion-col size="12" size-lg="6">
-          <ion-item>
+          <ion-item lines="inset">
             <ion-icon :icon="documentOutline" slot="start"></ion-icon>
             <ion-label position="floating">
               {{ fileTranslate[0]["title"] }}
@@ -32,7 +32,7 @@
         </ion-col>
         <!-- calendar -->
         <ion-col size="12" size-lg="6">
-          <ion-item style="top: 7px">
+          <ion-item style="top: 7px" lines="inset">
             <ion-icon :icon="calendarClearOutline" slot="start"></ion-icon>
             <ion-label>{{ fileTranslate[0]["calendar"] }}</ion-label>
             <ion-select
@@ -55,7 +55,7 @@
         </ion-list-header>
         <!-- date start-->
         <ion-col size="12" size-lg="6">
-          <ion-item button="true" id="open-date1">
+          <ion-item button="true" id="open-date1" lines="inset">
             <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
             <ion-label
               >{{ fileTranslate[0]["dateStart"] + "" }}
@@ -73,7 +73,7 @@
         </ion-col>
         <!-- date end -->
         <ion-col size="12" size-lg="6">
-          <ion-item button="true" id="open-date2">
+          <ion-item button="true" id="open-date2" lines="inset">
             <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
             <ion-label>
               {{ fileTranslate[0]["dateEnd"] + "" }}
@@ -91,7 +91,7 @@
         </ion-col>
         <!-- reminders -->
         <ion-col size="12" size-lg="6">
-          <ion-item button @click="openModalReminders()" lines="full">
+          <ion-item button @click="openModalReminders()">
             <ion-icon :icon="timeOutline" slot="start"></ion-icon>
             <ion-label>{{ fileTranslate[0]["reminders"] }}</ion-label>
             <div v-for="reminder in form.reminders" :key="reminder">
@@ -103,7 +103,7 @@
         </ion-col>
         <!-- repeats -->
         <ion-col size="12" size-lg="6">
-          <ion-item button @click="openModalRepeats()" lines="full">
+          <ion-item button @click="openModalRepeats()">
             <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
             <ion-label>
               {{ fileTranslate[0]["repeat"] }}
@@ -119,7 +119,7 @@
         </ion-list-header>
         <!-- tags -->
         <ion-col size="12" size-lg="6">
-          <ion-item>
+          <ion-item lines="inset">
             <ion-icon :icon="pricetagsOutline" slot="start"></ion-icon>
             <ion-label position="floating">
               {{ fileTranslate[0]["tags"] }}
@@ -144,7 +144,7 @@
         </ion-col>
         <!-- invitados -->
         <ion-col size="12" size-lg="6">
-          <ion-item>
+          <ion-item lines="inset">
             <ion-icon :icon="mailOutline" slot="start"></ion-icon>
             <ion-label position="floating">
               {{ fileTranslate[0]["guests"] }}
@@ -169,7 +169,7 @@
         </ion-col>
 
         <ion-col size="12" size-lg="12">
-          <ion-item>
+          <ion-item lines="inset">
             <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
             <ion-label position="floating">
               {{ fileTranslate[0]["notes"] }}
@@ -327,22 +327,33 @@ export default defineComponent({
         this.$router.go(-1);
         return;
       }
-      console.log(this.form);
+      const event = {
+        title: this.form.title,
+        calendar: this.form.calendar,
+        dateTime: JSON.stringify(this.form.datetime),
+        guest: JSON.stringify(this.form.guest),
+        notes: this.form.notes,
+        reminders: JSON.stringify(this.form.reminders),
+        repeats: JSON.stringify(this.form.repeats),
+        tags: JSON.stringify(this.form.tags),
+      };
+      this.createEvent(event);
     },
     async createEvent(event: Record<string, any>) {
       const loading = await this.presentLoading();
-      loading.present();
+      // loading.present();
 
       eventsService()
         .createEvent(event)
         .then(async (response) => {
-          loading.dismiss();
+          // loading.dismiss();
+          console.log(response);
           // const message = await userService().translate("saveEvent");
           // .then((response) => {
           //   return response;
           // });
-          eventBus().emitter.emit("new-element");
-          this.$router.go(-1);
+          //eventBus().emitter.emit("new-element");
+          //this.$router.go(-1);
           //this.openToast(message, "success");
         });
     },

@@ -13,6 +13,13 @@
           <ion-button fill="clear" id="open-main-calendar">
             <ion-icon :icon="calendarOutline"></ion-icon>
           </ion-button>
+          <ion-button
+            fill="clear"
+            id="open-main-calendar"
+            @click="($refs.eventComponent as any).getEvents()"
+          >
+            <ion-icon :icon="refreshOutline"></ion-icon>
+          </ion-button>
         </ion-buttons>
       </ion-toolbar>
       <ion-toolbar class="ion-no-border" :translucent="true">
@@ -46,7 +53,10 @@
       </section>
 
       <section>
-        <Eventos v-if="mainSegment == 'calendar'"></Eventos>
+        <Eventos
+          v-if="mainSegment == 'calendar'"
+          ref="eventComponent"
+        ></Eventos>
       </section>
 
       <section v-if="mainSegment == 'asigned'">
@@ -78,6 +88,7 @@ import {
   calendarOutline,
   documentTextOutline,
   addOutline,
+  refreshOutline,
 } from "ionicons/icons";
 import Eventos from "../eventos/Eventos.vue";
 import eventBus from "../../EventBus";
@@ -107,7 +118,7 @@ export default defineComponent({
 
       customDatetime.value.$el.reset();
     };
-    return { calendarOutline, documentTextOutline, addOutline };
+    return { calendarOutline, documentTextOutline, addOutline, refreshOutline };
   },
   data() {
     const date = formatISO(new Date());

@@ -3,39 +3,14 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <ion-row>
-    <ion-col size="12" v-for="event in events" v-bind:key="event">
+  <ion-row v-for="event in events" v-bind:key="event" class="center">
+    <ion-col size="12" size-lg="6">
       <ion-card class="cardEvent" @click="openEvent(event)">
         <ion-card-content>
           <ion-card-title>{{ event.title }}</ion-card-title>
           <ion-card-subtitle>{{ event.calendar }}</ion-card-subtitle>
           <p v-if="event.timeStart != ''">{{ event.timeStart }}</p>
           <p v-if="event.timeEnd != ''">{{ event.timeEnd }}</p>
-          <ion-icon
-            :icon="timerOutline"
-            v-if="event.reminders && event.reminders.length > 0"
-            style="margin-right: 6px"
-          ></ion-icon>
-          <ion-icon
-            :icon="repeatOutline"
-            v-if="event.repeats && event.repeats.frecuency != null"
-          ></ion-icon>
-          <ion-icon
-            :icon="pricetagOutline"
-            v-if="event.tags && event.tags.length > 0 != null"
-          ></ion-icon>
-          <ion-icon
-            :icon="checkboxOutline"
-            v-if="event.tasks && event.tasks.length > 0 != null"
-          ></ion-icon>
-          <ion-icon
-            :icon="clipboardOutline"
-            v-if="event.khanban && event.khanban.length > 0 != null"
-          ></ion-icon>
-          <ion-icon
-            :icon="documentTextOutline"
-            v-if="event.notes && event.notes.length > 0 != null"
-          ></ion-icon>
         </ion-card-content>
       </ion-card>
     </ion-col>
@@ -45,14 +20,6 @@
 <script lang="ts">
 import { IonRefresher, modalController } from "@ionic/vue";
 import { defineComponent } from "vue";
-import {
-  timerOutline,
-  repeatOutline,
-  pricetagOutline,
-  checkboxOutline,
-  clipboardOutline,
-  documentTextOutline,
-} from "ionicons/icons";
 import eventService from "../../services/event.vue";
 import { Storage } from "@ionic/storage";
 import Event from "./evento/Evento.vue";
@@ -64,12 +31,6 @@ export default defineComponent({
   setup() {
     return {
       IonRefresher,
-      timerOutline,
-      repeatOutline,
-      pricetagOutline,
-      checkboxOutline,
-      clipboardOutline,
-      documentTextOutline,
     };
   },
   data() {
