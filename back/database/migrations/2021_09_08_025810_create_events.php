@@ -16,6 +16,7 @@ class CreateEvents extends Migration
     Schema::create('events', function (Blueprint $table) {
       $table->increments('id');
       $table->string('title');
+      $table->integer('calendar_id')->unsigned();
       $table->datetime('time_start')->nullable();
       $table->datetime('time_end')->nullable();
       $table->string('reminders')->nullable();
@@ -23,6 +24,11 @@ class CreateEvents extends Migration
       $table->string('guest')->nullable();
       $table->string('notes')->nullable();
       $table->timestamps();
+      $table
+        ->foreign('calendar_id')
+        ->references('id')
+        ->on('calendars')
+        ->onDelete('cascade');
     });
   }
 

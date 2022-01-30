@@ -7,6 +7,7 @@ use App\Models\Event;
 use Illuminate\Support\Facades\DB;
 use App\Models\Tag;
 use App\Models\AdminTag;
+use App\Models\Calendar;
 
 class EventController extends Controller
 {
@@ -28,6 +29,7 @@ class EventController extends Controller
     $eventId = 0;
     $event = Event::create([
       'title' => $request->title,
+      'calendar_id' => $request->calendar,
       'time_start' => $dateTimeStart,
       'time_end' => $dateTimeEnd,
       'reminders' => serialize($request->reminders),
@@ -62,6 +64,7 @@ class EventController extends Controller
       ->select(
         'id',
         'title',
+        'calendar_id',
         'time_start',
         'time_end',
         'repeats',
@@ -77,6 +80,7 @@ class EventController extends Controller
       $value->reminders = unserialize($value->reminders);
       $value->repeats = unserialize($value->repeats);
       $value->guest = unserialize($value->guest);
+      $value->calendar = Event::find($result[0]->id)->calendar;
     }
 
     $events = [];

@@ -11,7 +11,7 @@ class Event extends Model
 
   protected $fillable = [
     'title',
-    'calendar',
+    'calendar_id',
     'time_start',
     'time_end',
     'reminders',
@@ -24,5 +24,9 @@ class Event extends Model
   public function tags()
   {
     return $this->belongsToMany(AdminTag::class, 'tags', 'event_id', 'tag_id');
+  }
+  public function calendar()
+  {
+    return $this->belongsTo(Calendar::class);
   }
 }
