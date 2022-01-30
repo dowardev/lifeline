@@ -7,10 +7,14 @@
     <ion-col size="12" size-lg="6">
       <ion-card class="cardEvent" @click="openEvent(event)">
         <ion-card-content>
-          <ion-card-title>{{ event.title }}</ion-card-title>
-          <ion-card-subtitle>{{ event.calendar }}</ion-card-subtitle>
-          <p v-if="event.timeStart != ''">{{ event.timeStart }}</p>
-          <p v-if="event.timeEnd != ''">{{ event.timeEnd }}</p>
+          <ion-card-header>
+            <ion-card-title>{{ event.title }}</ion-card-title>
+            <ion-card-subtitle>{{ event.calendar.name }}</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <p v-if="event.timeStart != ''">{{ event.timeStart }}</p>
+            <p v-if="event.timeEnd != ''">{{ event.timeEnd }}</p>
+          </ion-card-content>
         </ion-card-content>
       </ion-card>
     </ion-col>

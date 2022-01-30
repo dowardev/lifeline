@@ -80,6 +80,19 @@ export default function () {
   function formatDateTime(date: string, typeFormat: string) {
     return format(new Date(date), typeFormat);
   }
+  async function getCalendars() {
+    const token = await userService()
+      .getUserToken()
+      .then((response) => {
+        return response;
+      });
+    return axios.get("http://localhost:8000/api/auth/get-calendars", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      },
+    });
+  }
   return {
     createEvent,
     updateEvent,
@@ -87,6 +100,7 @@ export default function () {
     getEvent,
     getEventLocal,
     formatDateTime,
+    getCalendars,
   };
 }
 </script>

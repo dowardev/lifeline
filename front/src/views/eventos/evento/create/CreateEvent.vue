@@ -41,8 +41,12 @@
               cancel-text="Cancelar"
               v-model="form.calendar"
             >
-              <ion-select-option value="personal">
-                {{ fileTranslate[0]["personal"] }}
+              <ion-select-option
+                v-for="calendar in calendars"
+                :key="calendar"
+                :value="calendar.id"
+              >
+                {{ calendar.name }}
               </ion-select-option>
             </ion-select>
           </ion-item>
@@ -278,18 +282,20 @@ export default defineComponent({
           frequency: "unique",
           data: {},
         },
-        calendar: "personal",
+        calendar: 0,
         notes: "Notas de prueba",
         tags: ["tag de prueba"] as Array<string>,
         guest: ["contacto@dowar.xyz"] as Array<string>,
       },
       fileTranslate: Object(),
+      calendars: Array<any>(),
     };
   },
   mounted() {
+    this.getCalendars();
     if (this.$route.params.id) {
       this.pageTitle = "Actualizar evento";
-      this.getEventLocal(parseInt(this.$route.params.id as string));
+      //this.getEventLocal(parseInt(this.$route.params.id as string));
     }
     eventBus().emitter.on("update-event", async (response: any) => {
       // console.log(response.event);
@@ -374,38 +380,6 @@ export default defineComponent({
           //          this.openToast(message, "success");
         });
     },
-    async getEventLocal(id: number) {
-      const event = await eventsService()
-        .getEventLocal(id)
-        .then((response) => {
-          return response;
-        });
-
-      if (event.length) {
-        event.forEach(async (element: any) => {
-          this.form.title = element.title;
-
-          // let date = this.formatDate(element.time_start);
-          // this.timeStart.text = date.dateFormatted;
-          // this.timeStart.value = element.time_start;
-          // date = this.formatDate(element.time_end);
-          // this.timeEnd.text = date.dateFormatted;
-          // this.timeEnd.value = element.time_start;
-
-          this.form.reminders = element.reminders;
-
-          element.repeats.frequencyName = await userService()
-            .translate
-            // element.repeats.frequency
-            ();
-          this.form.repeats = element.repeats;
-
-          this.form.calendar = element.calendar;
-
-          this.form.notes = element.notes;
-        });
-      }
-    },
     formatDateTime(date: string, typeFormat: string) {
       return eventsService().formatDateTime(date, typeFormat);
     },
@@ -477,6 +451,13 @@ export default defineComponent({
     },
     async getFileTranslate() {
       this.fileTranslate = [await userService().translate()];
+    },
+    getCalendars() {
+      eventsService()
+        .getCalendars()
+        .then((response) => {
+          this.calendars = response.data;
+        });
     },
   },
 });
