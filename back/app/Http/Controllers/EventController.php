@@ -34,7 +34,7 @@ class EventController extends Controller
       'time_end' => $dateTimeEnd,
       'reminders' => serialize($request->reminders),
       'repeats' => serialize($request->repeats),
-      'guest' => serialize($request->guest),
+      'guests' => serialize($request->guests),
       'notes' => $request->notes,
     ]);
     $eventId = $event->id;
@@ -70,7 +70,7 @@ class EventController extends Controller
         'repeats',
         'reminders',
         'notes',
-        'guest'
+        'guests'
       )
       ->whereDate('time_start', '>=', $dateStart)
       ->whereDate('time_start', '<=', $dateStart)
@@ -79,7 +79,7 @@ class EventController extends Controller
     foreach ($result as $key => $value) {
       $value->reminders = unserialize($value->reminders);
       $value->repeats = unserialize($value->repeats);
-      $value->guest = unserialize($value->guest);
+      $value->guests = unserialize($value->guests);
       $value->calendar = Event::find($result[0]->id)->calendar;
     }
 

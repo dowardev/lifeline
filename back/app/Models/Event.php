@@ -18,7 +18,7 @@ class Event extends Model
     'repeats',
     'notes',
     'tags',
-    'guest',
+    'guests',
     'notes',
   ];
   public function tags()
