@@ -3,38 +3,121 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <ion-row v-for="event in events" v-bind:key="event" class="center">
-    <ion-col size="12" size-lg="6">
-      <ion-card class="cardEvent" @click="openEvent(event)">
-        <ion-card-content>
-          <ion-card-header>
-            <ion-card-title>{{ event.title }}</ion-card-title>
-            <ion-card-subtitle>{{ event.calendar.name }}</ion-card-subtitle>
-          </ion-card-header>
-          <ion-card-content>
-            <p v-if="event.timeStart != ''">{{ event.timeStart }}</p>
-            <p v-if="event.timeEnd != ''">{{ event.timeEnd }}</p>
-          </ion-card-content>
-        </ion-card-content>
-      </ion-card>
-    </ion-col>
-  </ion-row>
+  <ion-accordion-group>
+    <ion-row v-for="event in events" v-bind:key="event" class="center">
+      <ion-col size="12" size-md="6">
+        <ion-card>
+          <ion-accordion :value="Math.random()">
+            <ion-card-header slot="header">
+              <ion-card-title>{{ event.title }}</ion-card-title>
+              <ion-card-subtitle>{{ event.calendar.name }}</ion-card-subtitle>
+              <ion-card-subtitle v-if="event.timeStart != ''">
+                {{ event.timeStart }}
+              </ion-card-subtitle>
+              <ion-card-subtitle v-if="event.timeEnd != ''">
+                {{ event.timeEnd }}
+              </ion-card-subtitle>
+            </ion-card-header>
+
+            <ion-list slot="content">
+              <ion-item lines="none">
+                <ion-button fill="clear" slot="end">
+                  <ion-icon :icon="createOutline"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" color="danger" slot="end">
+                  <ion-icon :icon="trashOutline"></ion-icon>
+                </ion-button>
+              </ion-item>
+            </ion-list>
+
+            <ion-list-header slot="content">
+              <ion-label>Recordatorios</ion-label>
+            </ion-list-header>
+            <ion-list slot="content" style="padding-left: 10px">
+              <div>
+                <ion-chip
+                  color="primary"
+                  v-for="reminder in event.reminders"
+                  :key="reminder"
+                >
+                  {{ reminder }}
+                </ion-chip>
+              </div>
+            </ion-list>
+
+            <ion-list-header slot="content">
+              <ion-label>Repetir</ion-label>
+            </ion-list-header>
+            <ion-list slot="content" style="padding-left: 10px">
+              <div>
+                <ion-chip
+                  color="primary"
+                  v-for="repeat in event.repeats"
+                  :key="repeat"
+                >
+                  {{ repeat.frequency }}
+                </ion-chip>
+              </div>
+            </ion-list>
+
+            <ion-list-header slot="content">
+              <ion-label>Invitados</ion-label>
+            </ion-list-header>
+            <ion-list slot="content" style="padding-left: 10px">
+              <div>
+                <ion-chip
+                  color="primary"
+                  v-for="guest in event.guests"
+                  :key="guest"
+                >
+                  {{ guest }}
+                </ion-chip>
+              </div>
+            </ion-list>
+
+            <ion-list-header slot="content">
+              <ion-label>Etiquetas</ion-label>
+            </ion-list-header>
+            <ion-list slot="content">
+              <div style="padding-left: 10px">
+                <ion-chip color="primary" v-for="tag in event.tags" :key="tag">
+                  {{ tag.name }}
+                </ion-chip>
+              </div>
+            </ion-list>
+
+            <ion-list-header slot="content">
+              <ion-label>Notas</ion-label>
+            </ion-list-header>
+            <ion-list slot="content">
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">{{ event.notes }}</ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-accordion>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-accordion-group>
 </template>
 
 <script lang="ts">
-import { IonRefresher, modalController } from "@ionic/vue";
+import { IonRefresher, modalController, loadingController } from "@ionic/vue";
 import { defineComponent } from "vue";
 import eventService from "../../services/event.vue";
 import { Storage } from "@ionic/storage";
 import Event from "./evento/Evento.vue";
 import eventBus from "../../EventBus";
 import { formatISO, add } from "date-fns";
+import { createOutline, trashOutline } from "ionicons/icons";
 
 export default defineComponent({
   name: "Eventos",
   setup() {
     return {
       IonRefresher,
+      createOutline,
+      trashOutline,
     };
   },
   data() {
@@ -72,6 +155,9 @@ export default defineComponent({
       this.$router.push({ name: "CreateEvent" });
     },
     async getEvents() {
+      const loading = await this.presentLoading("Espere por favor");
+      loading.present();
+
       const dateEnd = formatISO(
         new Date(
           add(new Date(this.date), {
@@ -94,11 +180,15 @@ export default defineComponent({
           this.formatDate(element.time_end, "P") +
           " " +
           this.formatDate(element.time_end, "pp");
+        element.guests = JSON.parse(element.guests);
+        element.reminders = JSON.parse(element.reminders);
+        element.repeats = JSON.parse(element.repeats);
         element.type = "event";
       });
 
       this.events = events.data;
       this.storage.set("events", JSON.stringify(events.data));
+      loading.dismiss();
     },
     formatDate(date: string, format: string) {
       if (date == null) {
@@ -110,6 +200,14 @@ export default defineComponent({
       setTimeout(async () => {
         this.getEvents();
       }, 200);
+    },
+    async presentLoading(message: string) {
+      const loading = await loadingController.create({
+        cssClass: "my-custom-class",
+        message,
+      });
+
+      return loading;
     },
   },
 });

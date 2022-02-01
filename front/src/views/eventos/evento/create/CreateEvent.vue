@@ -111,7 +111,7 @@
             <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
             <ion-label>
               {{ fileTranslate[0]["repeat"] }}
-              {{ fileTranslate[0][form.repeats.frequency] }}
+              {{ fileTranslate[0][form.repeats[0].frequency] }}
             </ion-label>
           </ion-item>
         </ion-col>
@@ -161,7 +161,7 @@
           </ion-item>
           <ion-chip
             color="primary"
-            v-for="(mail, index) in form.guest"
+            v-for="(mail, index) in form.guests"
             :key="mail"
           >
             <ion-label>{{ mail }}</ion-label>
@@ -278,14 +278,16 @@ export default defineComponent({
           ),
         },
         reminders: ["just"],
-        repeats: {
-          frequency: "unique",
-          data: {},
-        },
+        repeats: [
+          {
+            frequency: "unique",
+            data: {},
+          },
+        ],
         calendar: 0,
         notes: "Notas de prueba",
         tags: ["tag de prueba"] as Array<string>,
-        guest: ["contacto@dowar.xyz"] as Array<string>,
+        guests: ["contacto@dowar.xyz"] as Array<string>,
       },
       fileTranslate: Object(),
       calendars: Array<any>(),
@@ -337,7 +339,7 @@ export default defineComponent({
         title: this.form.title,
         calendar: this.form.calendar,
         dateTime: JSON.stringify(this.form.datetime),
-        guest: JSON.stringify(this.form.guest),
+        guests: JSON.stringify(this.form.guests),
         notes: this.form.notes,
         reminders: JSON.stringify(this.form.reminders),
         repeats: JSON.stringify(this.form.repeats),
@@ -347,20 +349,16 @@ export default defineComponent({
     },
     async createEvent(event: Record<string, any>) {
       const loading = await this.presentLoading();
-      // loading.present();
+      loading.present();
 
       eventsService()
         .createEvent(event)
         .then(async (response) => {
-          // loading.dismiss();
-          console.log(response);
-          // const message = await userService().translate("saveEvent");
-          // .then((response) => {
-          //   return response;
-          // });
-          //eventBus().emitter.emit("new-element");
-          //this.$router.go(-1);
-          //this.openToast(message, "success");
+          loading.dismiss();
+          const message = this.fileTranslate["saveEvent"];
+          eventBus().emitter.emit("new-element");
+          this.$router.go(-1);
+          this.openToast(message, "success");
         });
     },
     async updateEvent(event: Record<string, any>) {
@@ -411,11 +409,11 @@ export default defineComponent({
       return format(new Date(date), styleFormat);
     },
     addInvited() {
-      this.form.guest.push((this.$refs.inputInvited as any).$el.value);
+      this.form.guests.push((this.$refs.inputInvited as any).$el.value);
       (this.$refs.inputInvited as any).$el.value = "";
     },
     removeInvited(index: number) {
-      this.form.guest.splice(index, 1);
+      this.form.guests.splice(index, 1);
     },
     async openModalReminders() {
       const modal = await modalController.create({
@@ -443,8 +441,8 @@ export default defineComponent({
       });
       modal.onDidDismiss().then((response) => {
         if (response.data) {
-          this.form.repeats.frequency = response.data.frequency;
-          this.form.repeats.data = response.data.data;
+          this.form.repeats[0].frequency = response.data.frequency;
+          this.form.repeats[0].data = response.data.data;
         }
       });
       return modal.present();
@@ -457,6 +455,7 @@ export default defineComponent({
         .getCalendars()
         .then((response) => {
           this.calendars = response.data;
+          this.form.calendar = response.data[0].id;
         });
     },
   },
