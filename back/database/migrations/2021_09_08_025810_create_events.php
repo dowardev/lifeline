@@ -21,7 +21,10 @@ class CreateEvents extends Migration
       $table->datetime('time_end')->nullable();
       $table->string('reminders')->nullable();
       $table->string('repeats')->nullable();
-      $table->string('guests')->nullable();
+      $table
+        ->string('guests')
+        ->nullable()
+        ->unique();
       $table->longText('notes')->nullable();
       $table->timestamps();
       $table

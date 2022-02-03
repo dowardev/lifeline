@@ -31,6 +31,8 @@ Route::group(['prefix' => 'auth'], function () {
 
     Route::post('create-event', [EventController::class, 'createEvent']);
     Route::get('get-events', [EventController::class, 'getEvents']);
+    Route::post('update-event', [EventController::class, 'updateEvent']);
+    Route::post('remove-event', [EventController::class, 'removeEvent']);
 
     Route::get('get-calendars', [CalendarController::class, 'getCalendars']);
   });

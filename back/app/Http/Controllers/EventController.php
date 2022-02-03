@@ -7,7 +7,6 @@ use App\Models\Event;
 use Illuminate\Support\Facades\DB;
 use App\Models\Tag;
 use App\Models\AdminTag;
-use App\Models\Calendar;
 
 class EventController extends Controller
 {
@@ -26,7 +25,6 @@ class EventController extends Controller
       strtotime(json_decode($request->dateTime)->end)
     );
 
-    $eventId = 0;
     $event = Event::create([
       'title' => $request->title,
       'calendar_id' => $request->calendar,
@@ -88,5 +86,50 @@ class EventController extends Controller
       $value->tags = Event::find($value->id)->tags;
     }
     return response()->json($result, 200);
+  }
+  public function updateEvent(Request $request)
+  {
+    $request->validate([
+      'title' => 'required|string',
+    ]);
+
+    $dateTimeStart = date(
+      'Y-m-d H:i',
+      strtotime(json_decode($request->dateTime)->start)
+    );
+    $dateTimeEnd = date(
+      'Y-m-d H:i',
+      strtotime(json_decode($request->dateTime)->end)
+    );
+
+    Event::where('id', $request->id)->update([
+      'title' => $request->title,
+      'calendar_id' => $request->calendar,
+      'time_start' => $dateTimeStart,
+      'time_end' => $dateTimeEnd,
+      'reminders' => serialize($request->reminders),
+      'repeats' => serialize($request->repeats),
+      'guests' => serialize($request->guests),
+      'notes' => $request->notes,
+    ]);
+
+    // $removeTags = [];
+    // $newTags = [];
+    // foreach (Event::find($request->id)->tags as $key => $value1) {
+    //   foreach (json_decode($request->tags) as $key => $value2) {
+    //     if ($value1['name'] == $value2) {
+    //       array_push($newTags, $value2);
+    //     } else {
+    //       array_push($removeTags, $value2);
+    //     }
+    //   }
+    // }
+    // return $removeTags;
+    return response()->json('Success', 200);
+  }
+  public function removeEvent(Request $request)
+  {
+    Event::find($request->id)->delete();
+    return response()->json('Success', 200);
   }
 }
