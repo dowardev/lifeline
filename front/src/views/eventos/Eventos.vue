@@ -21,10 +21,19 @@
 
             <ion-list slot="content">
               <ion-item lines="none">
-                <ion-button fill="clear" slot="end">
+                <ion-button
+                  fill="clear"
+                  slot="end"
+                  @click="updateEvent(event.id)"
+                >
                   <ion-icon :icon="createOutline"></ion-icon>
                 </ion-button>
-                <ion-button fill="clear" color="danger" slot="end">
+                <ion-button
+                  fill="clear"
+                  color="danger"
+                  slot="end"
+                  @click="presentAlertRemoveEvent(event.id)"
+                >
                   <ion-icon :icon="trashOutline"></ion-icon>
                 </ion-button>
               </ion-item>
@@ -49,6 +58,7 @@
               <ion-label>Repetir</ion-label>
             </ion-list-header>
             <ion-list slot="content" style="padding-left: 10px">
+              <!-- TODO: mostrar data -->
               <div>
                 <ion-chip
                   color="primary"
@@ -102,7 +112,13 @@
 </template>
 
 <script lang="ts">
-import { IonRefresher, modalController, loadingController } from "@ionic/vue";
+import {
+  IonRefresher,
+  modalController,
+  loadingController,
+  toastController,
+  alertController,
+} from "@ionic/vue";
 import { defineComponent } from "vue";
 import eventService from "../../services/event.vue";
 import { Storage } from "@ionic/storage";
@@ -110,6 +126,7 @@ import Event from "./evento/Evento.vue";
 import eventBus from "../../EventBus";
 import { formatISO, add } from "date-fns";
 import { createOutline, trashOutline } from "ionicons/icons";
+import userService from "../../services/user.vue";
 
 export default defineComponent({
   name: "Eventos",
@@ -129,11 +146,13 @@ export default defineComponent({
       events: [] as Array<any>,
       storage,
       date,
+      fileTranslate: Array<any>(),
     };
   },
   mounted() {
     this.getEvents();
-    eventBus().emitter.on("new-element", (response: any) => {
+    this.getFileTranslate();
+    eventBus().emitter.on("refresh-events", (response: any) => {
       this.getEvents();
     });
     eventBus().emitter.on("select-day", (response: any) => {
@@ -155,7 +174,7 @@ export default defineComponent({
       this.$router.push({ name: "CreateEvent" });
     },
     async getEvents() {
-      const loading = await this.presentLoading("Espere por favor");
+      const loading = await this.presentLoading();
       loading.present();
 
       const dateEnd = formatISO(
@@ -187,8 +206,8 @@ export default defineComponent({
       });
 
       this.events = events.data;
-      this.storage.set("events", JSON.stringify(events.data));
       loading.dismiss();
+      this.storage.set("events", JSON.stringify(events.data));
     },
     formatDate(date: string, format: string) {
       if (date == null) {
@@ -201,13 +220,69 @@ export default defineComponent({
         this.getEvents();
       }, 200);
     },
-    async presentLoading(message: string) {
+    async presentLoading() {
       const loading = await loadingController.create({
         cssClass: "my-custom-class",
-        message,
+        message: this.fileTranslate[0].pleaseWait,
       });
-
       return loading;
+    },
+    updateEvent(id: number | string) {
+      this.$router.push("/event/update/" + id);
+    },
+    async removeEvent(id: string | number) {
+      const loading = await this.presentLoading();
+      loading.present();
+      eventService()
+        .removeEvent(id)
+        .then((response: any) => {
+          this.getEvents();
+          const message = this.fileTranslate[0].removeEvent;
+          this.openToast(message, "success");
+          loading.dismiss();
+        })
+        .catch((e) => {
+          loading.dismiss();
+        });
+    },
+    async openToast(message: string, color: string) {
+      const toast = await toastController.create({
+        message,
+        duration: 2000,
+        color,
+      });
+      return toast.present();
+    },
+    async presentAlertRemoveEvent(id: string | number) {
+      const alert = await alertController.create({
+        cssClass: "my-custom-class",
+        header: "Borrar evento",
+        message: "¿Continuar con el borrado?",
+
+        buttons: [
+          {
+            text: "Confirmar",
+            id: "confirm-button",
+            handler: () => {
+              this.removeEvent(id);
+            },
+          },
+
+          {
+            text: "Cancelar",
+            role: "cancel",
+            cssClass: "secondary",
+            id: "cancel-button",
+            handler: (blah) => {
+              console.log("Confirm Cancel:", blah);
+            },
+          },
+        ],
+      });
+      return alert.present();
+    },
+    async getFileTranslate() {
+      this.fileTranslate = [await userService().translate()];
     },
   },
 });

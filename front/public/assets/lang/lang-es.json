@@ -17,6 +17,7 @@
   "2db": "2 dias antes",
   "1sb": "1 semana antes",
   "newEvent": "Agregar evento",
+  "UpdateEvent": "Actualizar evento",
   "details": "Detalles",
   "title": "Titulo",
   "calendar": "Calendario",
@@ -62,5 +63,7 @@
   "years": "Años",
   "daysOfMonth": "Dias del mes",
   "nameTag": "Nombre de la etiqueta",
-  "email": "Dirección de correo electrónico"
+  "email": "Dirección de correo electrónico",
+  "removeEvent": "Evento borrado correctamente",
+  "pleaseWait": "Espere por favor"
 }

@@ -36,7 +36,7 @@
             <ion-icon :icon="calendarClearOutline" slot="start"></ion-icon>
             <ion-label>{{ fileTranslate[0]["calendar"] }}</ion-label>
             <ion-select
-              interface="alert"
+              interface="popover"
               ok-text="Aceptar"
               cancel-text="Cancelar"
               v-model="form.calendar"
@@ -122,6 +122,7 @@
           <ion-label>{{ fileTranslate[0]["otherSettings"] }}</ion-label>
         </ion-list-header>
         <!-- tags -->
+        <!-- TODO: avoid duplicates -->
         <ion-col size="12" size-lg="6">
           <ion-item lines="inset">
             <ion-icon :icon="pricetagsOutline" slot="start"></ion-icon>
@@ -206,6 +207,7 @@ import {
   toastController,
   loadingController,
   modalController,
+  IonDatetime,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import {
@@ -242,6 +244,7 @@ export default defineComponent({
     IonInput,
     IonTextarea,
     IonSelect,
+    IonDatetime,
   },
   setup() {
     return {
@@ -268,7 +271,7 @@ export default defineComponent({
       pageTitle: "",
       storage,
       form: {
-        title: "Prueba de funcionamiento",
+        title: "",
         datetime: {
           start: formatISO(new Date()),
           end: formatISO(
@@ -285,29 +288,24 @@ export default defineComponent({
           },
         ],
         calendar: 0,
-        notes: "Notas de prueba",
-        tags: ["tag de prueba"] as Array<string>,
-        guests: ["contacto@dowar.xyz"] as Array<string>,
+        notes: "",
+        tags: [] as Array<any>,
+        guests: Array<string>(),
       },
       fileTranslate: Object(),
       calendars: Array<any>(),
     };
   },
   mounted() {
+    this.getFileTranslate().then(() => {
+      this.pageTitle = this.$route.params.id
+        ? this.fileTranslate[0]["UpdateEvent"]
+        : this.fileTranslate[0]["newEvent"];
+    });
     this.getCalendars();
     if (this.$route.params.id) {
-      this.pageTitle = "Actualizar evento";
-      //this.getEventLocal(parseInt(this.$route.params.id as string));
+      this.getEventLocal(this.$route.params.id as string);
     }
-    eventBus().emitter.on("update-event", async (response: any) => {
-      // console.log(response.event);
-      // this.event = response.event;
-      //this.pageTitle = "Actualizar evento";
-      //  this.getEvent();
-    });
-    this.getFileTranslate().then(() => {
-      this.pageTitle = this.fileTranslate["newEvent"];
-    });
   },
   methods: {
     editEvent() {
@@ -336,6 +334,7 @@ export default defineComponent({
         return;
       }
       const event = {
+        id: this.$route.params.id,
         title: this.form.title,
         calendar: this.form.calendar,
         dateTime: JSON.stringify(this.form.datetime),
@@ -345,7 +344,11 @@ export default defineComponent({
         repeats: JSON.stringify(this.form.repeats),
         tags: JSON.stringify(this.form.tags),
       };
-      this.createEvent(event);
+      if (this.$route.params.id) {
+        this.updateEvent(event);
+      } else {
+        this.createEvent(event);
+      }
     },
     async createEvent(event: Record<string, any>) {
       const loading = await this.presentLoading();
@@ -355,10 +358,13 @@ export default defineComponent({
         .createEvent(event)
         .then(async (response) => {
           loading.dismiss();
-          const message = this.fileTranslate["saveEvent"];
-          eventBus().emitter.emit("new-element");
+          const message = this.fileTranslate[0]["saveEvent"];
+          eventBus().emitter.emit("refresh-events");
           this.$router.go(-1);
           this.openToast(message, "success");
+        })
+        .catch((e) => {
+          loading.dismiss();
         });
     },
     async updateEvent(event: Record<string, any>) {
@@ -369,13 +375,13 @@ export default defineComponent({
         .updateEvent(event)
         .then(async (response) => {
           loading.dismiss();
-          // const message = await userService().translate("updateEvent");
-          // .then((response) => {
-          //   return response;
-          // });
-          eventBus().emitter.emit("update-event-success");
+          const message = this.fileTranslate[0]["updateEvent"];
+          eventBus().emitter.emit("refresh-events");
           this.$router.go(-1);
-          //          this.openToast(message, "success");
+          this.openToast(message, "success");
+        })
+        .catch((e) => {
+          loading.dismiss();
         });
     },
     formatDateTime(date: string, typeFormat: string) {
@@ -401,7 +407,7 @@ export default defineComponent({
     async presentLoading() {
       const loading = await loadingController.create({
         cssClass: "my-custom-class",
-        message: "Espera por favor",
+        message: this.fileTranslate[0].pleaseWait,
       });
       return loading;
     },
@@ -456,6 +462,22 @@ export default defineComponent({
         .then((response) => {
           this.calendars = response.data;
           this.form.calendar = response.data[0].id;
+        });
+    },
+    getEventLocal(id: string) {
+      eventsService()
+        .getEventLocal(parseInt(id))
+        .then((response) => {
+          this.form.title = response[0].title;
+          // TODO: set calendar
+          // //          this.form.calendar = response[0].calendar.id;
+          this.form.guests = response[0].guests;
+          this.form.reminders = response[0].reminders;
+          this.form.repeats = response[0].repeats;
+          this.form.notes = response[0].notes;
+          response[0].tags.forEach((element: any) => {
+            this.form.tags.push(element.name);
+          });
         });
     },
   },

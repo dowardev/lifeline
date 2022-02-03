@@ -67,9 +67,7 @@ export default function () {
     );
   }
   async function getEventLocal(id: number) {
-    const events = await storage.get("events").then((response) => {
-      return response;
-    });
+    const events = await storage.get("events");
 
     const event = (JSON.parse(events) as Array<any>).filter(
       (element) => parseInt(element["id" as any]) == id
@@ -93,6 +91,24 @@ export default function () {
       },
     });
   }
+  async function removeEvent(id: string | number) {
+    const token = await userService()
+      .getUserToken()
+      .then((response) => {
+        return response;
+      });
+    return axios.post(
+      "http://localhost:8000/api/auth/remove-event",
+      { id },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+      }
+    );
+  }
+
   return {
     createEvent,
     updateEvent,
@@ -101,6 +117,7 @@ export default function () {
     getEventLocal,
     formatDateTime,
     getCalendars,
+    removeEvent,
   };
 }
 </script>
