@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border" mode="ios" :translucent="true">
+    <ion-header class="ion-no-border" :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button v-on:click="$router.go(-1)">
@@ -22,7 +22,7 @@
           <ion-label> {{ fileTranslate[0]["details"] }}</ion-label>
         </ion-list-header>
         <ion-col size="12" size-lg="6">
-          <ion-item lines="inset">
+          <ion-item>
             <ion-icon :icon="documentOutline" slot="start"></ion-icon>
             <ion-label position="floating">
               {{ fileTranslate[0]["title"] }}
@@ -32,7 +32,7 @@
         </ion-col>
         <!-- calendar -->
         <ion-col size="12" size-lg="6">
-          <ion-item style="top: 7px" lines="inset">
+          <ion-item style="top: 7px">
             <ion-icon :icon="calendarClearOutline" slot="start"></ion-icon>
             <ion-label>{{ fileTranslate[0]["calendar"] }}</ion-label>
             <ion-select
@@ -59,12 +59,14 @@
         </ion-list-header>
         <!-- date start-->
         <ion-col size="12" size-lg="6">
-          <ion-item button="true" id="open-date1" lines="inset">
+          <ion-item button="true" id="open-date1">
             <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
-            <ion-label
-              >{{ fileTranslate[0]["dateStart"] + "" }}
-              {{ customDateFormat(form.datetime.start, "Pp") }}</ion-label
-            >
+            <ion-label slot="start">
+              {{ fileTranslate[0]["dateStart"] + "" }}
+            </ion-label>
+            <ion-label slot="end">
+              {{ customDateFormat(form.datetime.start, "Pp") }}
+            </ion-label>
             <ion-popover trigger="open-date1" :show-backdrop="false">
               <ion-datetime
                 presentation="date-time"
@@ -77,10 +79,12 @@
         </ion-col>
         <!-- date end -->
         <ion-col size="12" size-lg="6">
-          <ion-item button="true" id="open-date2" lines="inset">
+          <ion-item button="true" id="open-date2">
             <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
-            <ion-label>
+            <ion-label slot="start">
               {{ fileTranslate[0]["dateEnd"] + "" }}
+            </ion-label>
+            <ion-label slot="end">
               {{ customDateFormat(form.datetime.end, "Pp") }}
             </ion-label>
             <ion-popover trigger="open-date2" :show-backdrop="false">
@@ -95,7 +99,7 @@
         </ion-col>
         <!-- reminders -->
         <ion-col size="12" size-lg="6">
-          <ion-item button @click="openModalReminders()">
+          <ion-item button @click="openModalReminders()" lines="full">
             <ion-icon :icon="timeOutline" slot="start"></ion-icon>
             <ion-label>{{ fileTranslate[0]["reminders"] }}</ion-label>
             <div v-for="reminder in form.reminders" :key="reminder">
@@ -107,11 +111,25 @@
         </ion-col>
         <!-- repeats -->
         <ion-col size="12" size-lg="6">
-          <ion-item button @click="openModalRepeats()">
+          <ion-item button @click="openModalRepeats()" lines="full">
             <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
-            <ion-label>
+            <ion-label slot="start">
               {{ fileTranslate[0]["repeat"] }}
+            </ion-label>
+            <ion-label slot="end">
               {{ fileTranslate[0][form.repeats[0].frequency] }}
+            </ion-label>
+          </ion-item>
+        </ion-col>
+        <!-- timezone -->
+        <ion-col size="12" size-lg="6">
+          <ion-item button @click="openModalTimeZone()" lines="full">
+            <ion-icon :icon="globeOutline" slot="start"></ion-icon>
+            <ion-label slot="start">
+              {{ fileTranslate[0]["timeZone"] }}
+            </ion-label>
+            <ion-label slot="end">
+              {{ form.timeZone }}
             </ion-label>
           </ion-item>
         </ion-col>
@@ -122,9 +140,8 @@
           <ion-label>{{ fileTranslate[0]["otherSettings"] }}</ion-label>
         </ion-list-header>
         <!-- tags -->
-        <!-- TODO: avoid duplicates -->
         <ion-col size="12" size-lg="6">
-          <ion-item lines="inset">
+          <ion-item>
             <ion-icon :icon="pricetagsOutline" slot="start"></ion-icon>
             <ion-label position="floating">
               {{ fileTranslate[0]["tags"] }}
@@ -147,16 +164,16 @@
             ></ion-icon>
           </ion-chip>
         </ion-col>
-        <!-- invitados -->
+        <!-- guests -->
         <ion-col size="12" size-lg="6">
-          <ion-item lines="inset">
+          <ion-item>
             <ion-icon :icon="mailOutline" slot="start"></ion-icon>
             <ion-label position="floating">
               {{ fileTranslate[0]["guests"] }}
             </ion-label>
             <ion-input
-              v-on:keyup.enter="addInvited()"
-              ref="inputInvited"
+              v-on:keyup.enter="addGuest()"
+              ref="inputguest"
               :placeholder="fileTranslate[0]['email']"
             ></ion-input>
           </ion-item>
@@ -168,13 +185,13 @@
             <ion-label>{{ mail }}</ion-label>
             <ion-icon
               :icon="closeCircleOutline"
-              @click="removeInvited(index)"
+              @click="removeGuest(index)"
             ></ion-icon>
           </ion-chip>
         </ion-col>
 
         <ion-col size="12" size-lg="12">
-          <ion-item lines="inset">
+          <ion-item>
             <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
             <ion-label position="floating">
               {{ fileTranslate[0]["notes"] }}
@@ -222,6 +239,7 @@ import {
   pricetagsOutline,
   mailOutline,
   documentTextOutline,
+  globeOutline,
 } from "ionicons/icons";
 import eventBus from "../../../../EventBus";
 import eventsService from "../../../../services/event.vue";
@@ -231,6 +249,7 @@ import { add } from "date-fns";
 import { format, formatISO } from "date-fns";
 import Reminders from "../reminder/Reminder.vue";
 import Repeats from "../repetir/Repetir.vue";
+import TimeZoneComponent from "../../../../components/SelectTimeZone.vue";
 
 export default defineComponent({
   name: "Evento",
@@ -261,6 +280,7 @@ export default defineComponent({
       pricetagsOutline,
       mailOutline,
       documentTextOutline,
+      globeOutline,
     };
   },
   data() {
@@ -289,8 +309,9 @@ export default defineComponent({
         ],
         calendar: 0,
         notes: "",
-        tags: [] as Array<any>,
+        tags: Array<string>(),
         guests: Array<string>(),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
       fileTranslate: Object(),
       calendars: Array<any>(),
@@ -330,9 +351,9 @@ export default defineComponent({
     },
     async save() {
       if (this.form.title == "") {
-        this.$router.go(-1);
-        return;
+        this.form.title = this.fileTranslate[0].noTitle;
       }
+
       const event = {
         id: this.$route.params.id,
         title: this.form.title,
@@ -343,6 +364,7 @@ export default defineComponent({
         reminders: JSON.stringify(this.form.reminders),
         repeats: JSON.stringify(this.form.repeats),
         tags: JSON.stringify(this.form.tags),
+        timeZone: this.form.timeZone,
       };
       if (this.$route.params.id) {
         this.updateEvent(event);
@@ -398,8 +420,10 @@ export default defineComponent({
       return toast.present();
     },
     addTag() {
-      this.form.tags.push((this.$refs.inputTag as any).$el.value);
-      (this.$refs.inputTag as any).$el.value = "";
+      if ((this.$refs.inputTag as any).$el.value != "") {
+        this.form.tags.push((this.$refs.inputTag as any).$el.value);
+        (this.$refs.inputTag as any).$el.value = "";
+      }
     },
     removeTag(index: number) {
       this.form.tags.splice(index, 1);
@@ -414,11 +438,15 @@ export default defineComponent({
     customDateFormat(date: any, styleFormat: string) {
       return format(new Date(date), styleFormat);
     },
-    addInvited() {
-      this.form.guests.push((this.$refs.inputInvited as any).$el.value);
-      (this.$refs.inputInvited as any).$el.value = "";
+    addGuest() {
+      const guest = (this.$refs.inputguest as any).$el.value;
+      const re = /^[^\s@]+@[^\s@]+$/;
+      if (guest != "" && re.test(guest)) {
+        this.form.guests.push(guest);
+        (this.$refs.inputguest as any).$el.value = "";
+      }
     },
-    removeInvited(index: number) {
+    removeGuest(index: number) {
       this.form.guests.splice(index, 1);
     },
     async openModalReminders() {
@@ -468,6 +496,7 @@ export default defineComponent({
       eventsService()
         .getEventLocal(parseInt(id))
         .then((response) => {
+          // FIX: pasar las fechas en formatoISO
           this.form.title = response[0].title;
           // TODO: set calendar
           // //          this.form.calendar = response[0].calendar.id;
@@ -478,7 +507,19 @@ export default defineComponent({
           response[0].tags.forEach((element: any) => {
             this.form.tags.push(element.name);
           });
+          this.form.timeZone = response[0].time_zone;
         });
+    },
+    async openModalTimeZone() {
+      const modal = await modalController.create({
+        component: TimeZoneComponent,
+      });
+      modal.onDidDismiss().then((response) => {
+        if (response.data) {
+          this.form.timeZone = response.data.timeZone;
+        }
+      });
+      return modal.present();
     },
   },
 });

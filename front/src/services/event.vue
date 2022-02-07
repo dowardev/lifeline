@@ -75,7 +75,10 @@ export default function () {
 
     return event;
   }
-  function formatDateTime(date: string, typeFormat: string) {
+  function formatDateTime(date: string | Date, typeFormat: string) {
+    if (typeof date == Date()) {
+      return format(date as Date, typeFormat);
+    }
     return format(new Date(date), typeFormat);
   }
   async function getCalendars() {

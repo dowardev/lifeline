@@ -3,6 +3,7 @@ import { Storage } from "@ionic/storage";
 const storage = new Storage();
 storage.create();
 import { toastController } from "@ionic/vue";
+import timeZones from "../../public/assets/files/timezones.json";
 
 export default function () {
   async function getTheme() {
@@ -23,11 +24,15 @@ export default function () {
     });
     return toast.present();
   }
+  function getAllTimeZonesNames() {
+    return timeZones;
+  }
   return {
     getTheme,
     setTheme,
     toggleTheme,
     openToast,
+    getAllTimeZonesNames,
   };
 }
 </script>

@@ -65,5 +65,7 @@
   "nameTag": "Nombre de la etiqueta",
   "email": "Dirección de correo electrónico",
   "removeEvent": "Evento borrado correctamente",
-  "pleaseWait": "Espere por favor"
+  "pleaseWait": "Espere por favor",
+  "timeZone": "Zona horaria",
+  "noTitle": "Sin titulo"
 }

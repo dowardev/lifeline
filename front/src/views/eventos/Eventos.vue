@@ -14,7 +14,7 @@
               <ion-card-subtitle v-if="event.timeStart != ''">
                 {{ event.timeStart }}
               </ion-card-subtitle>
-              <ion-card-subtitle v-if="event.timeEnd != ''">
+              <ion-card-subtitle v-if="event.timeStart != ''">
                 {{ event.timeEnd }}
               </ion-card-subtitle>
             </ion-card-header>
@@ -40,6 +40,14 @@
             </ion-list>
 
             <ion-list-header slot="content">
+              <ion-label>Zona horaria</ion-label>
+            </ion-list-header>
+            <ion-list slot="content" style="padding-left: 16px">
+              <ion-label>{{ event.time_zone }}</ion-label>
+            </ion-list>
+
+            <!-- TODO: translate -->
+            <ion-list-header slot="content">
               <ion-label>Recordatorios</ion-label>
             </ion-list-header>
             <ion-list slot="content" style="padding-left: 10px">
@@ -54,6 +62,7 @@
               </div>
             </ion-list>
 
+            <!-- TODO: translate -->
             <ion-list-header slot="content">
               <ion-label>Repetir</ion-label>
             </ion-list-header>
@@ -70,40 +79,53 @@
               </div>
             </ion-list>
 
-            <ion-list-header slot="content">
-              <ion-label>Invitados</ion-label>
-            </ion-list-header>
-            <ion-list slot="content" style="padding-left: 10px">
-              <div>
-                <ion-chip
-                  color="primary"
-                  v-for="guest in event.guests"
-                  :key="guest"
-                >
-                  {{ guest }}
-                </ion-chip>
-              </div>
-            </ion-list>
+            <section slot="content" v-if="event.guests.length > 0">
+              <ion-list-header slot="content">
+                <ion-label>Invitados</ion-label>
+              </ion-list-header>
+              <ion-list slot="content" style="padding-left: 16px">
+                <div>
+                  <ion-chip
+                    color="primary"
+                    v-for="guest in event.guests"
+                    :key="guest"
+                  >
+                    {{ guest }}
+                  </ion-chip>
+                </div>
+              </ion-list>
+            </section>
 
-            <ion-list-header slot="content">
-              <ion-label>Etiquetas</ion-label>
-            </ion-list-header>
-            <ion-list slot="content">
-              <div style="padding-left: 10px">
-                <ion-chip color="primary" v-for="tag in event.tags" :key="tag">
-                  {{ tag.name }}
-                </ion-chip>
-              </div>
-            </ion-list>
+            <section slot="content" v-if="event.tags.length > 0">
+              <ion-list-header slot="content">
+                <ion-label>Etiquetas</ion-label>
+              </ion-list-header>
+              <ion-list slot="content">
+                <div style="padding-left: 16px">
+                  <ion-chip
+                    color="primary"
+                    v-for="tag in event.tags"
+                    :key="tag"
+                  >
+                    {{ tag.name }}
+                  </ion-chip>
+                </div>
+              </ion-list>
+            </section>
 
-            <ion-list-header slot="content">
-              <ion-label>Notas</ion-label>
-            </ion-list-header>
-            <ion-list slot="content">
-              <ion-item lines="none">
-                <ion-label class="ion-text-wrap">{{ event.notes }}</ion-label>
-              </ion-item>
-            </ion-list>
+            <section
+              slot="content"
+              v-if="event.notes && event.notes.length > 0"
+            >
+              <ion-list-header slot="content">
+                <ion-label>Notas</ion-label>
+              </ion-list-header>
+              <ion-list slot="content">
+                <ion-label class="ion-text-wrap" style="padding-left: 16px">{{
+                  event.notes
+                }}</ion-label>
+              </ion-list>
+            </section>
           </ion-accordion>
         </ion-card>
       </ion-col>
@@ -127,6 +149,7 @@ import eventBus from "../../EventBus";
 import { formatISO, add } from "date-fns";
 import { createOutline, trashOutline } from "ionicons/icons";
 import userService from "../../services/user.vue";
+import { zonedTimeToUtc, utcToZonedTime, format } from "date-fns-tz";
 
 export default defineComponent({
   name: "Eventos",
@@ -150,8 +173,9 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.getEvents();
-    this.getFileTranslate();
+    this.getFileTranslate().then((response) => {
+      this.getEvents();
+    });
     eventBus().emitter.on("refresh-events", (response: any) => {
       this.getEvents();
     });
@@ -191,14 +215,36 @@ export default defineComponent({
         });
 
       events.data.forEach(async (element: any) => {
-        element.timeStart =
-          this.formatDate(element.time_start, "P") +
-          " " +
-          this.formatDate(element.time_start, "pp");
-        element.timeEnd =
-          this.formatDate(element.time_end, "P") +
-          " " +
-          this.formatDate(element.time_end, "pp");
+        if (
+          Intl.DateTimeFormat().resolvedOptions().timeZone == element.time_zone
+        ) {
+          element.timeStart =
+            this.formatDate(element.time_start, "P") +
+            " " +
+            this.formatDate(element.time_start + "Z", "pp");
+          element.timeEnd =
+            this.formatDate(element.time_end, "P") +
+            " " +
+            this.formatDate(element.time_end + "Z", "pp");
+        } else {
+          const formatStart = utcToZonedTime(
+            new Date(element.time_start + "Z"),
+            element.time_zone
+          );
+          element.timeStart =
+            this.formatDate(formatStart, "P") +
+            " " +
+            this.formatDate(formatStart, "pp");
+          const formatEnd = utcToZonedTime(
+            new Date(element.time_end + "Z"),
+            element.time_zone
+          );
+          element.timeEnd =
+            this.formatDate(formatEnd, "P") +
+            " " +
+            this.formatDate(formatEnd, "pp");
+        }
+
         element.guests = JSON.parse(element.guests);
         element.reminders = JSON.parse(element.reminders);
         element.repeats = JSON.parse(element.repeats);
@@ -206,10 +252,11 @@ export default defineComponent({
       });
 
       this.events = events.data;
+      console.log(events.data);
       loading.dismiss();
       this.storage.set("events", JSON.stringify(events.data));
     },
-    formatDate(date: string, format: string) {
+    formatDate(date: string | Date, format: string) {
       if (date == null) {
         return "";
       }
