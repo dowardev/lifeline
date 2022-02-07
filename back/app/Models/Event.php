@@ -10,6 +10,7 @@ class Event extends Model
   use HasFactory;
 
   protected $fillable = [
+    'user_id',
     'title',
     'calendar_id',
     'time_start',
@@ -20,6 +21,7 @@ class Event extends Model
     'tags',
     'guests',
     'notes',
+    'time_zone',
   ];
   public function tags()
   {

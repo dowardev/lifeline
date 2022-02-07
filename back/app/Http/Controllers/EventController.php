@@ -7,6 +7,7 @@ use App\Models\Event;
 use Illuminate\Support\Facades\DB;
 use App\Models\Tag;
 use App\Models\AdminTag;
+use Illuminate\Support\Facades\Auth;
 
 class EventController extends Controller
 {
@@ -16,14 +17,8 @@ class EventController extends Controller
       'title' => 'required|string',
     ]);
 
-    $dateTimeStart = date(
-      'Y-m-d H:i',
-      strtotime(json_decode($request->dateTime)->start)
-    );
-    $dateTimeEnd = date(
-      'Y-m-d H:i',
-      strtotime(json_decode($request->dateTime)->end)
-    );
+    $dateTimeStart = $this->formatDate(json_decode($request->dateTime)->start);
+    $dateTimeEnd = $this->formatDate(json_decode($request->dateTime)->end);
 
     $event = Event::create([
       'title' => $request->title,
@@ -34,44 +29,72 @@ class EventController extends Controller
       'repeats' => serialize($request->repeats),
       'guests' => serialize($request->guests),
       'notes' => $request->notes,
+      'time_zone' => $request->timeZone,
+      'user_id' => Auth::user()->id,
     ]);
     $eventId = $event->id;
-
-    $tagIndex = [];
-    foreach (json_decode($request->tags) as $tag) {
-      $tag = AdminTag::create([
-        'name' => $tag,
-      ]);
-      array_push($tagIndex, $tag->id);
+    if (json_decode($request->tags)) {
+      $tags = json_decode($request->tags);
+      $this->createTagsEvent($tags, $eventId);
     }
 
+    return response()->json('Success', 200);
+  }
+  function createTagsEvent($tags, $eventId)
+  {
+    $tagsDB = Event::join('tags', 'events.id', '=', 'event_id')
+      ->join('admin_tags', 'admin_tags.id', '=', 'tag_id')
+      ->join('users', 'users.id', '=', 'events.user_id')
+      ->groupBy('admin_tags.id', 'admin_tags.name')
+      ->get(['admin_tags.id', 'admin_tags.name']);
+
+    $tagIndex = [];
+    if (count($tagsDB) > 0) {
+      foreach ($tags as $key => $value) {
+        $result = $this->searchExistsTag($value, $tagsDB);
+        if ($result[0]) {
+          array_push($tagIndex, $result[1]);
+        } else {
+          $tag = AdminTag::create([
+            'name' => $value,
+          ]);
+          array_push($tagIndex, $tag->id);
+        }
+      }
+    } else {
+      foreach ($tags as $key1 => $value1) {
+        $tag = AdminTag::create([
+          'name' => $value1,
+        ]);
+        array_push($tagIndex, $tag->id);
+      }
+    }
     foreach ($tagIndex as $key) {
       Tag::create([
         'event_id' => $eventId,
         'tag_id' => $key,
       ]);
     }
-
-    return response()->json('Success', 200);
+  }
+  public function searchExistsTag($element, $array)
+  {
+    foreach ($array as $key => $value) {
+      if ($value->name == $element) {
+        return [true, $value->id];
+      }
+    }
+    return [false, 0];
+  }
+  public function formatDate($date)
+  {
+    return date('Y-m-d H:i', strtotime($date));
   }
   public function getEvents(Request $request)
   {
     $dateStart = $request->dateStart;
     $dateEnd = $request->dateEnd;
-    $result = DB::table('events')
-      ->select(
-        'id',
-        'title',
-        'calendar_id',
-        'time_start',
-        'time_end',
-        'repeats',
-        'reminders',
-        'notes',
-        'guests'
-      )
-      ->whereDate('time_start', '>=', $dateStart)
-      ->whereDate('time_start', '<=', $dateStart)
+    $result = Event::whereDate('time_start', '>=', $dateStart)
+      ->whereDate('time_start', '<=', $dateEnd)
       ->get();
 
     foreach ($result as $key => $value) {
@@ -111,6 +134,7 @@ class EventController extends Controller
       'repeats' => serialize($request->repeats),
       'guests' => serialize($request->guests),
       'notes' => $request->notes,
+      'time_zone' => $request->timeZone,
     ]);
 
     // $removeTags = [];

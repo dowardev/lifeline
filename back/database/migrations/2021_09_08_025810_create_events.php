@@ -15,18 +15,23 @@ class CreateEvents extends Migration
   {
     Schema::create('events', function (Blueprint $table) {
       $table->increments('id');
+      $table->integer('user_id')->unsigned();
       $table->string('title');
       $table->integer('calendar_id')->unsigned();
       $table->datetime('time_start')->nullable();
       $table->datetime('time_end')->nullable();
       $table->string('reminders')->nullable();
       $table->string('repeats')->nullable();
-      $table
-        ->string('guests')
-        ->nullable()
-        ->unique();
+      $table->string('time_zone')->nullable();
+      $table->string('guests')->nullable();
       $table->longText('notes')->nullable();
       $table->timestamps();
+      $table
+        ->foreign('user_id')
+        ->references('id')
+        ->on('users')
+        ->onDelete('cascade');
+
       $table
         ->foreign('calendar_id')
         ->references('id')
