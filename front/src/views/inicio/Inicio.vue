@@ -95,7 +95,7 @@ import eventBus from "../../EventBus";
 import { formatISO } from "date-fns";
 
 export default defineComponent({
-  name: "Inicio",
+  name: "InicioPage",
   components: {
     IonContent,
     IonHeader,

@@ -28,6 +28,7 @@ import {
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
+  name: "PruebaPage",
   components: {
     IonContent,
     IonHeader,

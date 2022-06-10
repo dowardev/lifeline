@@ -52,7 +52,7 @@ import { chevronBackOutline, saveOutline } from "ionicons/icons";
 import userService from "../../../../services/user.vue";
 
 export default defineComponent({
-  name: "Reminders",
+  name: "RemindersPage",
   components: {
     IonContent,
     IonHeader,

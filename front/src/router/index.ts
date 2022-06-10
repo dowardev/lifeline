@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
-import Home from "../views/Home.vue";
-import Inicio from "../views/inicio/Inicio.vue";
-import Eventos from "../views/eventos/Eventos.vue";
-import CreateEvent from "../views/eventos/evento/create/CreateEvent.vue";
-import Repetir from "../views/eventos/evento/repetir/Repetir.vue";
-import Register from "../views/sesion/register/Register.vue";
-import Login from "../views/sesion/login/Login.vue";
-import Reminders from "../views/eventos/evento/reminder/Reminder.vue";
-import Prueba from "../views/prueba/Prueba.vue";
+// import HomePage from '../views/HomePage.vue'
+import InicioPage from "../views/inicio/Inicio.vue";
+import EventosPage from "../views/eventos/Eventos.vue";
+import CreateEventPage from "../views/eventos/evento/create/CreateEvent.vue";
+import RepetirPage from "../views/eventos/evento/repetir/Repetir.vue";
+import RegisterPage from "../views/sesion/register/Register.vue";
+import LoginPage from "../views/sesion/login/Login.vue";
+import RemindersPage from "../views/eventos/evento/reminder/Reminder.vue";
+import PruebaPage from "../views/prueba/Prueba.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -16,54 +16,49 @@ const routes: Array<RouteRecordRaw> = [
     redirect: "/inicio",
   },
   {
-    path: "/home",
-    name: "Home",
-    component: Home,
-  },
-  {
     path: "/inicio",
     name: "Inicio",
-    component: Inicio,
+    component: InicioPage,
   },
   {
     path: "/eventos/:date",
     name: "Eventos",
-    component: Eventos,
+    component: EventosPage,
   },
   {
     path: "/event/add",
     name: "CreateEvent",
-    component: CreateEvent,
+    component: CreateEventPage,
   },
   {
     path: "/event/update/:id",
     name: "UpdateEvent",
-    component: CreateEvent,
+    component: CreateEventPage,
   },
   {
     path: "/recordatorios",
     name: "Reminder",
-    component: Reminders,
+    component: RemindersPage,
   },
   {
     path: "/repetir",
     name: "Repetir",
-    component: Repetir,
+    component: RepetirPage,
   },
   {
     path: "/registro",
     name: "Register",
-    component: Register,
+    component: RegisterPage,
   },
   {
     path: "/sesion",
     name: "Login",
-    component: Login,
+    component: LoginPage,
   },
   {
     path: "/prueba",
     name: "Prueba",
-    component: Prueba,
+    component: PruebaPage,
   },
 ];
 

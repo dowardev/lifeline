@@ -229,7 +229,7 @@ import eventBus from "../../../../EventBus";
 import userService from "../../../../services/user.vue";
 
 export default defineComponent({
-  name: "Repetir",
+  name: "RepetirPage",
   components: {
     IonContent,
     IonHeader,

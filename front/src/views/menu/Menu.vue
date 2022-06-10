@@ -183,7 +183,7 @@ import sesionService from "../../services/sesion.vue";
 import systemService from "../../services/system.vue";
 
 export default defineComponent({
-  name: "Menu",
+  name: "MenuPage",
   components: {
     IonContent,
     IonHeader,

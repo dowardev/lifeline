@@ -160,7 +160,7 @@ import { required, email, minLength, helpers } from "@vuelidate/validators";
 import eventBus from "../../../EventBus";
 
 export default defineComponent({
-  name: "Login",
+  name: "LoginPage",
   components: {
     IonContent,
     IonHeader,

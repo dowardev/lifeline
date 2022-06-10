@@ -152,7 +152,7 @@ import userService from "../../services/user.vue";
 import { zonedTimeToUtc, utcToZonedTime, format } from "date-fns-tz";
 
 export default defineComponent({
-  name: "Eventos",
+  name: "EventosPage",
   setup() {
     return {
       IonRefresher,

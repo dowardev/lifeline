@@ -190,7 +190,7 @@ import useVuelidate from "@vuelidate/core";
 import { required, email, helpers, alpha, sameAs } from "@vuelidate/validators";
 
 export default defineComponent({
-  name: "Register",
+  name: "RegisterPage",
   components: {
     IonContent,
     IonHeader,

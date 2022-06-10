@@ -252,7 +252,7 @@ import Repeats from "../repetir/Repetir.vue";
 import TimeZoneComponent from "../../../../components/SelectTimeZone.vue";
 
 export default defineComponent({
-  name: "Evento",
+  name: "EventPage",
   components: {
     IonContent,
     IonHeader,

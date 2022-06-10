@@ -126,7 +126,7 @@ import {
 } from "ionicons/icons";
 
 export default defineComponent({
-  name: "Evento",
+  name: "EventoPage",
   components: {
     IonContent,
     IonHeader,
