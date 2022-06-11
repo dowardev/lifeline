@@ -173,16 +173,16 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.getFileTranslate().then((response) => {
-      this.getEvents();
-    });
-    eventBus().emitter.on("refresh-events", (response: any) => {
-      this.getEvents();
-    });
-    eventBus().emitter.on("select-day", (response: any) => {
-      this.date = response.date.split("T")[0];
-      this.getEvents();
-    });
+    // this.getFileTranslate().then((response) => {
+    //   this.getEvents();
+    // });
+    // eventBus().emitter.on("refresh-events", (response: any) => {
+    //   this.getEvents();
+    // });
+    // eventBus().emitter.on("select-day", (response: any) => {
+    //   this.date = response.date.split("T")[0];
+    //   this.getEvents();
+    // });
   },
   methods: {
     async openEvent(event: object) {

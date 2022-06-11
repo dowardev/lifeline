@@ -218,11 +218,11 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.getUser();
-    eventBus().emitter.on("content-refresh", () => {
-      this.getUser();
-      eventBus().emitter.all.clear();
-    });
+    // this.getUser();
+    // eventBus().emitter.on("content-refresh", () => {
+    //   this.getUser();
+    //   eventBus().emitter.all.clear();
+    // });
   },
   methods: {
     openRoute(route: string) {
@@ -230,12 +230,12 @@ export default defineComponent({
       this.$router.push(route);
     },
     getUser() {
-      userService()
-        .getUserLogged()
-        .then((response) => {
-          this.logged = true;
-          this.userData.user = response.data.user;
-        });
+      // userService()
+      //   .getUserLogged()
+      //   .then((response) => {
+      //     this.logged = true;
+      //     this.userData.user = response.data.user;
+      //   });
     },
     async openModalDesktop() {
       const modal = await modalController.create({

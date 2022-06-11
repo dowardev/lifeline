@@ -36,16 +36,16 @@
             </ion-card-header>
 
             <ion-card-content>
-              <form @submit.prevent="onSubmit">
+              <form>
                 <ion-item>
                   <ion-label position="floating">Nombre</ion-label>
                   <ion-input
-                    v-model="v$.form.name.$model"
+                    v-model="(v$.form as any).name.$model"
                     autocomplete="name"
                   ></ion-input>
                 </ion-item>
                 <div
-                  v-for="(error, index) of v$.form.name.$errors"
+                  v-for="(error, index) of (v$.form as any).name.$errors"
                   :key="index"
                 >
                   <div class="error">{{ error.$message }}</div>
@@ -53,10 +53,10 @@
 
                 <ion-item>
                   <ion-label position="floating">Usuario</ion-label>
-                  <ion-input v-model="v$.form.user.$model"></ion-input>
+                  <ion-input v-model="(v$.form as any).user.$model"></ion-input>
                 </ion-item>
                 <div
-                  v-for="(error, index) of v$.form.user.$errors"
+                  v-for="(error, index) of (v$.form as any).user.$errors"
                   :key="index"
                 >
                   <div class="error">{{ error.$message }}</div>
@@ -65,12 +65,12 @@
                 <ion-item>
                   <ion-label position="floating">Correo electronico</ion-label>
                   <ion-input
-                    v-model="v$.form.email.$model"
+                    v-model="(v$.form as any).email.$model"
                     autocomplete="email"
                   ></ion-input>
                 </ion-item>
                 <div
-                  v-for="(error, index) of v$.form.email.$errors"
+                  v-for="(error, index) of (v$.form as any).email.$errors"
                   :key="index"
                 >
                   <div class="error">{{ error.$message }}</div>
@@ -79,7 +79,7 @@
                 <ion-item>
                   <ion-label position="floating">Contraseña</ion-label>
                   <ion-input
-                    v-model="v$.form.password.$model"
+                    v-model="(v$.form as any).password.$model"
                     :type="inputTypePassword1"
                     autocomplete="password"
                   ></ion-input>
@@ -103,7 +103,7 @@
                   </ion-button>
                 </ion-item>
                 <div
-                  v-for="(error, index) of v$.form.password.$errors"
+                  v-for="(error, index) of (v$.form as any).password.$errors"
                   :key="index"
                 >
                   <div class="error">{{ error.$message }}</div>
@@ -112,7 +112,7 @@
                 <ion-item>
                   <ion-label position="floating">Repite contraseña</ion-label>
                   <ion-input
-                    v-model="v$.form.password2.$model"
+                    v-model="(v$.form as any).password2.$model"
                     :type="inputTypePassword2"
                   ></ion-input>
                   <ion-button
@@ -135,7 +135,7 @@
                   </ion-button>
                 </ion-item>
                 <div
-                  v-for="(error, index) of v$.form.password2.$errors"
+                  v-for="(error, index) of (v$.form as any).password2.$errors"
                   :key="index"
                 >
                   <div class="error">{{ error.$message }}</div>
@@ -184,7 +184,7 @@ import {
   loadingController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import sesion from "../../../services/sesion.vue";
+import sessionService from "../../../services/sesion.vue";
 import { eyeOutline, eyeOffOutline, chevronBackOutline } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
 import { required, email, helpers, alpha, sameAs } from "@vuelidate/validators";
@@ -200,9 +200,7 @@ export default defineComponent({
     IonInput,
   },
   setup() {
-    const { userRegister } = sesion();
     return {
-      userRegister,
       eyeOutline,
       eyeOffOutline,
       chevronBackOutline,
@@ -214,11 +212,11 @@ export default defineComponent({
       inputTypePassword1: "password",
       inputTypePassword2: "password",
       form: {
-        user: "",
-        name: "",
-        email: "",
-        password: "",
-        password2: "",
+        user: "dowar",
+        name: "Gonzalo",
+        email: "dowar@disroot.org",
+        password: "PNt9qCU7wQdj28",
+        password2: "PNt9qCU7wQdj28",
       },
     };
   },
@@ -254,32 +252,70 @@ export default defineComponent({
       },
     };
   },
+
   methods: {
     async register() {
-      const loading = await this.presentLoading();
-      loading.present();
+      // const loading = await this.presentLoading();
+      // loading.present();
+      // const email = this.form.email.replace(/\s+/g, "");
+      // this.userRegister(
+      //   this.form.name,
+      //   this.form.user,
+      //   email,
+      //   this.form.password
+      // )
+      //   .then(() => {
+      //     loading.dismiss();
+      //     this.alertConfirmacionEmail();
+      //     this.clearInputs();
+      //     this.presentToast("Registrado correctamente", "success");
+      //   })
+      //   .catch((e) => {
+      //     loading.dismiss();
+      //     if (
+      //       e.response.data.errors.email == "The email has already been taken."
+      //     ) {
+      //       this.presentToast("Correo ya en uso", "danger");
+      //     }
+      //   });
+      // this.spinners.buttonSignup = true;
+
+      const name = this.form.name;
+      const user = this.form.user;
       const email = this.form.email.replace(/\s+/g, "");
-      this.userRegister(
-        this.form.name,
-        this.form.user,
-        email,
-        this.form.password
-      )
-        .then(() => {
-          loading.dismiss();
-          this.alertConfirmacionEmail();
-          this.clearInputs();
-          this.presentToast("Registrado correctamente", "success");
-        })
-        .catch((e) => {
-          loading.dismiss();
-          if (
-            e.response.data.errors.email == "The email has already been taken."
-          ) {
-            this.presentToast("Correo ya en uso", "danger");
-          }
+      const password = this.form.password;
+      try {
+        await sessionService().userRegister({
+          name,
+          user,
+          email,
+          password,
         });
+        // this.spinners.buttonSignup = false;
+        // this.alertConfirmaciónEmail();
+        this.$router.push("/login");
+        // this.clearInputs();
+      } catch (e: any) {
+        // this.spinners.buttonSignup = false;
+        // if (e.message == "The email has already been selected") {
+        //   systemService().openToast({
+        //     message: "Correo ya en uso",
+        //     color: "warning",
+        //   });
+        //   return;
+        // }
+        // if (e.message == "The user has already been selected") {
+        //   systemService().openToast({
+        //     message: "Usuario ya en uso",
+        //     color: "warning",
+        //   return;
+        //   });
+        // }
+        console.error(e);
+        // systemService().openToastErrror(e);
+      }
     },
+
     async presentToast(message: string, color: string) {
       const toast = await toastController.create({
         message,

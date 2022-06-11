@@ -2,36 +2,47 @@
 import { Storage } from "@ionic/storage";
 const store = new Storage();
 store.create();
-import axios from "axios";
+
 import jsonLangSpanish from "../../public/assets/lang/lang-es.json";
+
+import gql from "graphql-tag";
+import apolloClient from "../Apollo";
+const apollo = apolloClient;
+
+import { GetUser } from "./interfaces.vue";
 
 export default function () {
   async function setUserToken(token: string) {
-    await store.set("token", token);
+    document.cookie = "token=" + token;
   }
   function getUserToken() {
-    let token = null;
-    return new Promise((resolve) => {
-      setTimeout(async () => {
-        token = await store.get("token");
-        if (token != null) {
-          resolve(token);
-        } else {
-          resolve(null);
-        }
-      }, 300);
+    const name = "token=";
+    const cDecoded = decodeURIComponent(document.cookie);
+    const cArr = cDecoded.split("; ");
+    let token = "";
+    cArr.forEach((val) => {
+      if (val.indexOf(name) === 0) token = val.substring(name.length);
     });
+    return token;
   }
-  async function getUserLogged() {
-    const token = await getUserToken().then((response) => {
-      return response;
-    });
-    return axios.get("http://localhost:8000/api/auth/user", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
-      },
-    });
+
+  async function getUserLogged(params: GetUser) {
+    try {
+      const response = await apollo.defaultClient.mutate({
+        mutation: gql`
+        query {
+          getUserAuth {
+            ${params.query}
+          }
+        }
+      `,
+      });
+
+      return response.data.getUserAuth.user;
+    } catch (e: any) {
+      if (e.graphQLErrors) throw Error(e.graphQLErrors[0].debugMessage);
+      throw Error(e.message);
+    }
   }
   function getUserLang() {
     return store.get("lang");

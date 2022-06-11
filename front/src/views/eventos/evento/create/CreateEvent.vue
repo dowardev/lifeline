@@ -485,12 +485,12 @@ export default defineComponent({
       this.fileTranslate = [await userService().translate()];
     },
     getCalendars() {
-      eventsService()
-        .getCalendars()
-        .then((response) => {
-          this.calendars = response.data;
-          this.form.calendar = response.data[0].id;
-        });
+      // eventsService()
+      //   .getCalendars()
+      //   .then((response) => {
+      //     this.calendars = response.data;
+      //     this.form.calendar = response.data[0].id;
+      //   });
     },
     getEventLocal(id: string) {
       eventsService()
