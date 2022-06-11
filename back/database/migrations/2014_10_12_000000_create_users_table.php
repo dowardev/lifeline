@@ -19,21 +19,13 @@ class CreateUsersTable extends Migration
       $table->string('name');
       $table->string('user');
       $table->string('email')->unique();
-      $table->string('image_profile');
+      $table->string('image_profile')->nullable();
       $table->boolean('is_email_verified')->default(0);
       $table->timestamp('email_verified_at')->nullable();
       $table->string('password');
       $table->rememberToken();
       $table->timestamps();
     });
-    DB::table('users')->insert([
-      'name' => 'Gonzalo',
-      'user' => 'dowar',
-      'password' => bcrypt('3qKhQDNPQYgC5p'),
-      'email' => 'dowar@disroot.org',
-      'image_profile' => 'usuario.webp',
-      'is_email_verified' => 1,
-    ]);
   }
 
   /**
