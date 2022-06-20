@@ -12,10 +12,10 @@
           </ion-button>
         </ion-item>
         <ion-item v-if="logged == false">
-          <ion-button fill="clear" @click="openRoute('/sesion')"
+          <ion-button fill="clear" @click="openRoute('/login')"
             >Iniciar sesion</ion-button
           >
-          <ion-button fill="clear" @click="openRoute('/registro')"
+          <ion-button fill="clear" @click="openRoute('/signup')"
             >Registrarse</ion-button
           >
         </ion-item>
@@ -183,7 +183,7 @@ import sesionService from "../../services/sesion.vue";
 import systemService from "../../services/system.vue";
 
 export default defineComponent({
-  name: "MenuPage",
+  name: "MenuComponent",
   components: {
     IonContent,
     IonHeader,
@@ -212,13 +212,13 @@ export default defineComponent({
     return {
       logged: false,
       userData: {
-        img: require("../../../public/assets/otros/user.svg"),
+        img: require("../../../public/assets/otros/user.png"),
         user: "Usuario",
       },
     };
   },
   mounted() {
-    // this.getUser();
+    this.getUser();
     // eventBus().emitter.on("content-refresh", () => {
     //   this.getUser();
     //   eventBus().emitter.all.clear();
@@ -229,14 +229,22 @@ export default defineComponent({
       this.menuController.close();
       this.$router.push(route);
     },
+
     getUser() {
-      // userService()
-      //   .getUserLogged()
-      //   .then((response) => {
-      //     this.logged = true;
-      //     this.userData.user = response.data.user;
-      //   });
+      const query = `
+            user {
+              id
+              user
+        }
+      `;
+      userService()
+        .getUserLogged({ query })
+        .then((response) => {
+          this.logged = true;
+          this.userData.user = response.user;
+        });
     },
+
     async openModalDesktop() {
       const modal = await modalController.create({
         component: DarkMode,
@@ -256,35 +264,35 @@ export default defineComponent({
       return modal.present();
     },
     async logout() {
-      const alert = await alertController.create({
-        cssClass: "my-custom-class",
-        header: "Cerrar sesion",
-        message: "¿Continuar?",
-        buttons: [
-          {
-            text: "Si",
-            id: "confirm-button",
-            handler: () => {
-              sesionService()
-                .logout()
-                .then((response) => {
-                  systemService().openToast("Hasta pronto", "success");
-                })
-                .catch((e) => {
-                  systemService().openToast("Ocurrio un error", "danger");
-                });
-            },
-          },
-          {
-            text: "No",
-            role: "cancel",
-            handler: (blah) => {
-              console.log("Confirm Cancel:", blah);
-            },
-          },
-        ],
-      });
-      return alert.present();
+      // const alert = await alertController.create({
+      //   cssClass: "my-custom-class",
+      //   header: "Cerrar sesion",
+      //   message: "¿Continuar?",
+      //   buttons: [
+      //     {
+      //       text: "Si",
+      //       id: "confirm-button",
+      //       handler: () => {
+      //         sesionService()
+      //           .logout()
+      //           .then((response) => {
+      //             systemService().openToast("Hasta pronto", "success");
+      //           })
+      //           .catch((e) => {
+      //             systemService().openToast("Ocurrio un error", "danger");
+      //           });
+      //       },
+      //     },
+      //     {
+      //       text: "No",
+      //       role: "cancel",
+      //       handler: (blah) => {
+      //         console.log("Confirm Cancel:", blah);
+      //       },
+      //     },
+      //   ],
+      // });
+      // return alert.present();
     },
   },
 });

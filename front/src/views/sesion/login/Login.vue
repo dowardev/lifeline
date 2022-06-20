@@ -33,7 +33,7 @@
               />
             </div>
             <ion-card-content>
-              <form @submit.prevent="onSubmit">
+              <form>
                 <ion-item>
                   <ion-icon
                     :icon="mailOpenOutline"
@@ -42,12 +42,12 @@
                   ></ion-icon>
                   <ion-label position="floating">Correo electronico</ion-label>
                   <ion-input
-                    v-model="v$.form.email.$model"
+                    v-model="(v$ as any).form.email.$model"
                     type="email"
                   ></ion-input>
                 </ion-item>
                 <div
-                  v-for="(error, index) of v$.form.email.$errors"
+                  v-for="(error, index) of (v$ as any).form.email.$errors"
                   :key="index"
                 >
                   <div class="error">{{ error.$message }}</div>
@@ -61,7 +61,7 @@
                   ></ion-icon>
                   <ion-label position="floating">Contraseña</ion-label>
                   <ion-input
-                    v-model="v$.form.password.$model"
+                    v-model="(v$ as any).form.password.$model"
                     :type="inputTypePassword"
                   ></ion-input>
                   <ion-button
@@ -85,7 +85,7 @@
                 </ion-item>
 
                 <div
-                  v-for="(error, index) of v$.form.password.$errors"
+                  v-for="(error, index) of (v$ as any).form.password.$errors"
                   :key="index"
                 >
                   <div class="error">{{ error.$message }}</div>
@@ -98,9 +98,15 @@
                     fill="clear"
                     expand="block"
                     v-on:click="login()"
-                    :disabled="v$.form.$invalid"
+                    :disabled="(v$ as any).form.$invalid || spinners.buttonLogin == true"
                   >
-                    Iniciar sesion
+                    <ion-label v-if="spinners.buttonLogin == false">
+                      Iniciar sesion</ion-label
+                    >
+                    <ion-spinner
+                      name="crescent"
+                      v-if="spinners.buttonLogin == true"
+                    ></ion-spinner>
                   </ion-button>
                 </ion-col>
               </ion-row>
@@ -153,11 +159,10 @@ import {
   fingerPrintOutline,
   mailOpenOutline,
 } from "ionicons/icons";
-import sesion from "../../../services/sesion.vue";
-import user from "../../../services/user.vue";
+import userService from "../../../services/user.vue";
 import useVuelidate from "@vuelidate/core";
 import { required, email, minLength, helpers } from "@vuelidate/validators";
-import eventBus from "../../../EventBus";
+import sessionService from "../../../services/session.vue";
 
 export default defineComponent({
   name: "LoginPage",
@@ -169,14 +174,10 @@ export default defineComponent({
     IonToolbar,
     IonInput,
   },
+
   setup() {
-    const { userLogin } = sesion();
-    const { setUserToken, getUserToken } = user();
     return {
       chevronBackOutline,
-      userLogin,
-      setUserToken,
-      getUserToken,
       eyeOffOutline,
       eyeOutline,
       v$: useVuelidate(),
@@ -184,15 +185,18 @@ export default defineComponent({
       mailOpenOutline,
     };
   },
+
   data() {
     return {
-      inputTypePassword: "password",
+      inputTypePassword: "password" as "text" | "password",
       form: {
         email: "",
         password: "",
       },
+      spinners: { buttonLogin: false },
     };
   },
+
   validations() {
     const messageRequired = "Campo requerido";
     return {
@@ -208,6 +212,23 @@ export default defineComponent({
       },
     };
   },
+
+  beforeRouteEnter(to, from, next) {
+    const query = `
+            user {
+              id
+        }
+      `;
+    userService()
+      .getUserLogged({ query })
+      .then(() => {
+        next("/");
+      })
+      .catch(() => {
+        next();
+      });
+  },
+
   methods: {
     async presentToast(message: string, color: string) {
       const toast = await toastController.create({
@@ -218,51 +239,78 @@ export default defineComponent({
       });
       toast.present();
     },
+
     async login() {
-      const loading = await this.presentLoading();
-      loading.present();
-      this.userLogin(this.form.email.replace(/\s+/g, ""), this.form.password)
-        .then((response) => {
-          eventBus().emitter.emit("content-refresh");
-          loading.dismiss();
-          this.setUserToken(response.data.access_token);
-          this.$router.push("/");
-          this.clearInputs();
-          this.presentToast("Bienvenido", "success");
-        })
-        .catch((e) => {
-          loading.dismiss();
-          if (e.response.data.message == "Unauthorized") {
-            this.presentToast("Credenciales incorrectas", "danger");
-          }
+      this.spinners.buttonLogin = true;
+
+      const user = this.form.email.replace(/\s+/g, "");
+      const password = this.form.password;
+      const query = `
+            auth {
+              access_token
+        }
+      `;
+      try {
+        const response = await sessionService().userLogin({
+          query,
+          user,
+          password,
         });
+
+        const token = "Bearer " + response.auth.access_token;
+        userService().setUserToken({ token });
+
+        this.spinners.buttonLogin = false;
+        location.reload();
+      } catch (e: any) {
+        this.spinners.buttonLogin = false;
+        if (e.message == "Unauthorized" || e.message == "Not found") {
+          this.presentToast("Usuario y/o contraseña incorrectos", "danger");
+          return;
+        }
+        if (e.message == "Unverified email") {
+          this.alertConfirmationEmail();
+          return;
+        }
+        if (e.message == "Disabled user") {
+          this.presentToast(
+            "Cuenta de usuario deshabilitada, para mas informacion contacte a soporte.",
+            "danger"
+          );
+          return;
+        }
+
+        // systemService().openToastErrror(e);
+        console.error(e.message);
+      }
     },
-    clearInputs() {
-      this.form.password = "";
-      this.form.email = "";
-    },
-    changeInputTypePassword(type: string) {
+
+    changeInputTypePassword(type: "text" | "password") {
       this.inputTypePassword = type;
     },
-    async alertConfirmacionEmail() {
+
+    async alertConfirmationEmail() {
       const alert = await alertController.create({
         cssClass: "my-custom-class",
         header: "Alerta",
-        subHeader: "Confirmacion",
+        subHeader: "Confirmación",
         message:
-          "Hemos enviado un correo electronico a " +
+          "Hemos enviado un correo electrónico a " +
           this.form.email +
           " con un enlace para verificar tu identidad.",
         buttons: [
           {
             text: "Continuar",
-            // handler: () => {},
+            handler: () => {
+              userService().resendEmailConfirmation({ email: this.form.email });
+            },
           },
         ],
       });
 
       await alert.present();
     },
+
     async presentLoading() {
       const loading = await loadingController.create({
         cssClass: "my-custom-class",

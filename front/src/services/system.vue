@@ -4,6 +4,7 @@ const storage = new Storage();
 storage.create();
 import { toastController } from "@ionic/vue";
 import timeZones from "../../public/assets/files/timezones.json";
+import { SystemMessage } from "./interfaces.vue";
 
 export default function () {
   async function getTheme() {
@@ -15,15 +16,18 @@ export default function () {
   function toggleTheme(status: boolean) {
     document.body.classList.toggle("dark", status);
   }
-  async function openToast(message: string, color: string) {
+  async function openToast(params: SystemMessage) {
+    const color = params.color != undefined ? params.color : "dark";
+
     const toast = await toastController.create({
-      message,
+      message: params.message,
       duration: 2000,
       color,
       position: "bottom",
     });
     return toast.present();
   }
+
   function getAllTimeZonesNames() {
     return timeZones;
   }

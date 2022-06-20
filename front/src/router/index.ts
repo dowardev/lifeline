@@ -5,7 +5,7 @@ import InicioPage from "../views/inicio/Inicio.vue";
 import EventosPage from "../views/eventos/Eventos.vue";
 import CreateEventPage from "../views/eventos/evento/create/CreateEvent.vue";
 import RepetirPage from "../views/eventos/evento/repetir/Repetir.vue";
-import RegisterPage from "../views/sesion/register/Register.vue";
+import SignUpPage from "../views/sesion/signup/SignUpPage.vue";
 import LoginPage from "../views/sesion/login/Login.vue";
 import RemindersPage from "../views/eventos/evento/reminder/Reminder.vue";
 import PruebaPage from "../views/prueba/Prueba.vue";
@@ -46,12 +46,12 @@ const routes: Array<RouteRecordRaw> = [
     component: RepetirPage,
   },
   {
-    path: "/registro",
-    name: "Register",
-    component: RegisterPage,
+    path: "/signup",
+    name: "SignUp",
+    component: SignUpPage,
   },
   {
-    path: "/sesion",
+    path: "/login",
     name: "Login",
     component: LoginPage,
   },

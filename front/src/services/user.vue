@@ -5,16 +5,24 @@ store.create();
 
 import jsonLangSpanish from "../../public/assets/lang/lang-es.json";
 
-import gql from "graphql-tag";
 import apolloClient from "../Apollo";
-const apollo = apolloClient;
+import gql from "graphql-tag";
+import { useQuery, useMutation } from "@vue/apollo-composable";
+import { provideApolloClient } from "@vue/apollo-composable";
+provideApolloClient(apolloClient);
 
-import { GetUser } from "./interfaces.vue";
+import {
+  GetUserAuth,
+  GetUserAuthResponse,
+  SetUserToken,
+  ResendEmailConfirmation,
+} from "./interfaces.vue";
 
 export default function () {
-  async function setUserToken(token: string) {
-    document.cookie = "token=" + token;
+  async function setUserToken(params: SetUserToken) {
+    document.cookie = "token=" + params.token;
   }
+
   function getUserToken() {
     const name = "token=";
     const cDecoded = decodeURIComponent(document.cookie);
@@ -26,27 +34,36 @@ export default function () {
     return token;
   }
 
-  async function getUserLogged(params: GetUser) {
-    try {
-      const response = await apollo.defaultClient.mutate({
-        mutation: gql`
-        query {
-          getUserAuth {
-            ${params.query}
-          }
+  async function getUserLogged(
+    params: GetUserAuth
+  ): Promise<GetUserAuthResponse> {
+    const { onError, onResult } = useQuery(gql`
+      query getUsers {
+        getUserAuth {
+          ${params.query}
         }
-      `,
+      }
+    `);
+
+    return new Promise((resolve, reject) => {
+      onResult((response) => {
+        resolve({
+          id: response.data.getUserAuth.user.id,
+          name: response.data.getUserAuth.user.name,
+          user: response.data.getUserAuth.user.user,
+        });
       });
 
-      return response.data.getUserAuth.user;
-    } catch (e: any) {
-      if (e.graphQLErrors) throw Error(e.graphQLErrors[0].debugMessage);
-      throw Error(e.message);
-    }
+      onError((error) => {
+        reject(error);
+      });
+    });
   }
+
   function getUserLang() {
     return store.get("lang");
   }
+
   async function translate() {
     const lang = await getUserLang().then((response) => {
       return response;
@@ -55,12 +72,41 @@ export default function () {
       return jsonLangSpanish as any;
     }
   }
+
+  async function resendEmailConfirmation(
+    params: ResendEmailConfirmation
+  ): Promise<void> {
+    const { onError, onDone } = useMutation(
+      gql`
+        mutation resendEmailConfirmation($email: String!) {
+          resendEmailConfirmation(input: { email: $email })
+        }
+      `,
+      {
+        variables: {
+          email: params.email,
+        },
+      }
+    );
+
+    onError((error) => {
+      throw new Error(error.message);
+    });
+
+    return new Promise((resolve) => {
+      onDone((response) => {
+        resolve(response.data);
+      });
+    });
+  }
+
   return {
     setUserToken,
     getUserToken,
     getUserLogged,
     getUserLang,
     translate,
+    resendEmailConfirmation,
   };
 }
 </script>
