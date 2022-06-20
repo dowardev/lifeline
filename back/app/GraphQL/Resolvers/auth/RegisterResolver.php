@@ -9,9 +9,12 @@ use Illuminate\Support\Str;
 use App\Models\UserVerify;
 use Illuminate\Support\Facades\Mail;
 use Exception;
+use App\Http\Traits\user\UserTrait;
 
 class RegisterResolver
 {
+  use UserTrait;
+
   public function resolve(
     $rootValue,
     array $args,
@@ -50,17 +53,6 @@ class RegisterResolver
     ]);
     $newUser->save();
 
-    $token = Str::random(64);
-    UserVerify::create([
-      'user_id' => $newUser->id,
-      'token' => $token,
-    ]);
-
-    Mail::send('emails.emailVerificationEmail', ['token' => $token], function (
-      $message
-    ) use ($args) {
-      $message->to($args['email']);
-      $message->subject('Verificacion de correo electrónico');
-    });
+    $this->sendVerificationEmail(user_id: $newUser->id, email: $email);
   }
 }
