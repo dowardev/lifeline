@@ -242,8 +242,13 @@ import {
   globeOutline,
 } from "ionicons/icons";
 import eventBus from "../../../../EventBus";
-import eventsService from "../../../../services/event.vue";
-import userService from "../../../../services/user.vue";
+import {
+  createEvent as createEventService,
+  updateEvent as updateEventService,
+  formatDateTime as formatDateTimeService,
+  getEventLocal as getEventLocalService,
+} from "../../../../services/event";
+// import userService from "../../../../services/user";
 import { Storage } from "@ionic/storage";
 import { add } from "date-fns";
 import { format, formatISO } from "date-fns";
@@ -318,11 +323,11 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.getFileTranslate().then(() => {
-      this.pageTitle = this.$route.params.id
-        ? this.fileTranslate[0]["UpdateEvent"]
-        : this.fileTranslate[0]["newEvent"];
-    });
+    // this.getFileTranslate().then(() => {
+    //   this.pageTitle = this.$route.params.id
+    //     ? this.fileTranslate[0]["UpdateEvent"]
+    //     : this.fileTranslate[0]["newEvent"];
+    // });
     this.getCalendars();
     if (this.$route.params.id) {
       this.getEventLocal(this.$route.params.id as string);
@@ -376,8 +381,7 @@ export default defineComponent({
       const loading = await this.presentLoading();
       loading.present();
 
-      eventsService()
-        .createEvent(event)
+      createEventService(event)
         .then(async (response) => {
           loading.dismiss();
           const message = this.fileTranslate[0]["saveEvent"];
@@ -393,8 +397,7 @@ export default defineComponent({
       const loading = await this.presentLoading();
       loading.present();
 
-      eventsService()
-        .updateEvent(event)
+      updateEventService(event)
         .then(async (response) => {
           loading.dismiss();
           const message = this.fileTranslate[0]["updateEvent"];
@@ -406,9 +409,11 @@ export default defineComponent({
           loading.dismiss();
         });
     },
+
     formatDateTime(date: string, typeFormat: string) {
-      return eventsService().formatDateTime(date, typeFormat);
+      return formatDateTimeService(date, typeFormat);
     },
+
     async openToast(message: string, color: string) {
       const toast = await toastController.create({
         message,
@@ -481,9 +486,11 @@ export default defineComponent({
       });
       return modal.present();
     },
-    async getFileTranslate() {
-      this.fileTranslate = [await userService().translate()];
-    },
+
+    // async getFileTranslate() {
+    //   this.fileTranslate = [await userService().translate()];
+    // },
+
     getCalendars() {
       // eventsService()
       //   .getCalendars()
@@ -492,23 +499,22 @@ export default defineComponent({
       //     this.form.calendar = response.data[0].id;
       //   });
     },
+
     getEventLocal(id: string) {
-      eventsService()
-        .getEventLocal(parseInt(id))
-        .then((response) => {
-          // FIX: pasar las fechas en formatoISO
-          this.form.title = response[0].title;
-          // TODO: set calendar
-          // //          this.form.calendar = response[0].calendar.id;
-          this.form.guests = response[0].guests;
-          this.form.reminders = response[0].reminders;
-          this.form.repeats = response[0].repeats;
-          this.form.notes = response[0].notes;
-          response[0].tags.forEach((element: any) => {
-            this.form.tags.push(element.name);
-          });
-          this.form.timeZone = response[0].time_zone;
+      getEventLocalService(parseInt(id)).then((response) => {
+        // FIX: pasar las fechas en formatoISO
+        this.form.title = response[0].title;
+        // TODO: set calendar
+        // //          this.form.calendar = response[0].calendar.id;
+        this.form.guests = response[0].guests;
+        this.form.reminders = response[0].reminders;
+        this.form.repeats = response[0].repeats;
+        this.form.notes = response[0].notes;
+        response[0].tags.forEach((element: any) => {
+          this.form.tags.push(element.name);
         });
+        this.form.timeZone = response[0].time_zone;
+      });
     },
     async openModalTimeZone() {
       const modal = await modalController.create({

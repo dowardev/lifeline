@@ -38,7 +38,11 @@ import {
   IonRadioGroup,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import systemService from "../../../services/system.vue";
+import {
+  getTheme as getThemeService,
+  setTheme as setThemeService,
+  toggleTheme as toggleThemeService,
+} from "../../../services/system";
 
 export default defineComponent({
   components: {
@@ -58,7 +62,7 @@ export default defineComponent({
   },
   methods: {
     async getTheme() {
-      const isDarkEnabled = await systemService().getTheme();
+      const isDarkEnabled = await getThemeService();
       if (isDarkEnabled) {
         this.darkOptions.status = "enabled";
       }
@@ -81,11 +85,11 @@ export default defineComponent({
         darkMode = "automatic";
       }
 
-      systemService().setTheme(darkMode);
+      setThemeService(darkMode);
       if (darkMode == "automatic") {
         darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
       }
-      systemService().toggleTheme(darkMode as boolean);
+      toggleThemeService(darkMode as boolean);
     },
   },
 });

@@ -201,12 +201,13 @@ import {
   loadingController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import sessionService from "../../../services/session.vue";
+import { userRegister as userRegisterService } from "../../../services/session";
 import { eyeOutline, eyeOffOutline, chevronBackOutline } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
 import { required, email, helpers, sameAs } from "@vuelidate/validators";
-import systemService from "../../../services/system.vue";
-import userService from "../../../services/user.vue";
+import { openToast as openToastService } from "../../../services/system";
+import { getUser as getUserService } from "../../../services/user";
+import { USER_NAME } from "../../../services/graphql";
 
 export default defineComponent({
   name: "RegisterPage",
@@ -282,13 +283,7 @@ export default defineComponent({
   },
 
   beforeRouteEnter(to, from, next) {
-    const query = `
-            user {
-              id
-        }
-      `;
-    userService()
-      .getUserLogged({ query })
+    getUserService({ graphql: { name: USER_NAME, fragment: "UserName" } })
       .then(() => {
         next("/");
       })
@@ -306,7 +301,7 @@ export default defineComponent({
       const email = this.form.email.replace(/\s+/g, "");
       const password = this.form.password;
       try {
-        await sessionService().userRegister({
+        await userRegisterService({
           name,
           user,
           email,
@@ -318,14 +313,14 @@ export default defineComponent({
       } catch (e: any) {
         this.spinners.buttonSignup = false;
         if (e.message == "The email has already been selected") {
-          systemService().openToast({
+          openToastService({
             message: "Correo ya en uso",
             color: "warning",
           });
           return;
         }
         if (e.message == "The user has already been selected") {
-          systemService().openToast({
+          openToastService({
             message: "Usuario ya en uso",
             color: "warning",
           });

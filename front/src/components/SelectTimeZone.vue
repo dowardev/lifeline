@@ -50,7 +50,7 @@ import {
   modalController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import systemService from "../services/system.vue";
+import { getAllTimeZonesNames as getAllTimeZonesNamesService } from "../services/system";
 
 export default defineComponent({
   components: {
@@ -63,7 +63,7 @@ export default defineComponent({
   },
   data() {
     return {
-      timeZones: systemService().getAllTimeZonesNames(),
+      timeZones: getAllTimeZonesNamesService(),
       searchResult: [] as Array<string>,
     };
   },

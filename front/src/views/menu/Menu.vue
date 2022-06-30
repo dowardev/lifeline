@@ -173,14 +173,15 @@ import {
   cogOutline,
   cloudDownloadOutline,
 } from "ionicons/icons/";
-import userService from "../../services/user.vue";
-import eventBus from "../../EventBus";
+import { getUser as getUserService } from "../../services/user";
+// import eventBus from "../../EventBus";
 import { Storage } from "@ionic/storage";
 const store = new Storage();
 store.create();
 import DarkMode from "./darkmode/DarkMode.vue";
-import sesionService from "../../services/sesion.vue";
-import systemService from "../../services/system.vue";
+// import sesionService from "../../services/sesion";
+// import systemService from "../../services/system";
+import { USER_MENU } from "../../services/graphql";
 
 export default defineComponent({
   name: "MenuComponent",
@@ -208,6 +209,7 @@ export default defineComponent({
       exitOutline,
     };
   },
+
   data() {
     return {
       logged: false,
@@ -217,6 +219,7 @@ export default defineComponent({
       },
     };
   },
+
   mounted() {
     this.getUser();
     // eventBus().emitter.on("content-refresh", () => {
@@ -224,25 +227,25 @@ export default defineComponent({
     //   eventBus().emitter.all.clear();
     // });
   },
+
   methods: {
     openRoute(route: string) {
       this.menuController.close();
       this.$router.push(route);
     },
 
-    getUser() {
-      const query = `
-            user {
-              id
-              user
-        }
-      `;
-      userService()
-        .getUserLogged({ query })
-        .then((response) => {
-          this.logged = true;
-          this.userData.user = response.user;
+    async getUser() {
+      try {
+        const { user } = await getUserService({
+          graphql: { name: USER_MENU, fragment: "UserMenu" },
         });
+        this.logged = true;
+        this.userData.user = user;
+      } catch (e: any) {
+        if (e.message == "Unauthorized") return;
+        // openToastErrror(e);
+        console.error(e);
+      }
     },
 
     async openModalDesktop() {

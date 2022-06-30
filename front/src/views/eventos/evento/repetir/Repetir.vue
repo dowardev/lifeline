@@ -226,7 +226,7 @@ import {
 import { defineComponent } from "vue";
 import { chevronBackOutline, saveOutline } from "ionicons/icons";
 import eventBus from "../../../../EventBus";
-import userService from "../../../../services/user.vue";
+// import userService from "../../../../services/user";
 
 export default defineComponent({
   name: "RepetirPage",
@@ -360,26 +360,26 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.getFileTranslate().then(() => {
-      if (this.repeatsProps.frequency != "") {
-        this.repeatData.frequencySelect = "unique";
-        if (this.repeatsProps.frequency != "unique") {
-          this.repeatData.frequencySelect = this.repeatsProps.frequency;
-          if (this.repeatsProps.frequency == "daily") {
-            this.repeatData.daily = this.repeatsProps.data;
-          }
-          if (this.repeatsProps.frequency == "weekly") {
-            this.repeatData.weekly = this.repeatsProps.data;
-          }
-          if (this.repeatsProps.frequency == "monthly") {
-            this.repeatData.monthly = this.repeatsProps.data;
-          }
-          if (this.repeatsProps.frequency == "annually") {
-            this.repeatData.annually = this.repeatsProps.data;
-          }
-        }
-      }
-    });
+    // this.getFileTranslate().then(() => {
+    //   if (this.repeatsProps.frequency != "") {
+    //     this.repeatData.frequencySelect = "unique";
+    //     if (this.repeatsProps.frequency != "unique") {
+    //       this.repeatData.frequencySelect = this.repeatsProps.frequency;
+    //       if (this.repeatsProps.frequency == "daily") {
+    //         this.repeatData.daily = this.repeatsProps.data;
+    //       }
+    //       if (this.repeatsProps.frequency == "weekly") {
+    //         this.repeatData.weekly = this.repeatsProps.data;
+    //       }
+    //       if (this.repeatsProps.frequency == "monthly") {
+    //         this.repeatData.monthly = this.repeatsProps.data;
+    //       }
+    //       if (this.repeatsProps.frequency == "annually") {
+    //         this.repeatData.annually = this.repeatsProps.data;
+    //       }
+    //     }
+    //   }
+    // });
 
     this.setCurrentDay();
     eventBus().emitter.on("get-repeat-event", (response: any) => {
@@ -429,9 +429,9 @@ export default defineComponent({
       }
       modalController.dismiss({ frequency, data });
     },
-    async getFileTranslate() {
-      this.fileTranslate = [await userService().translate()];
-    },
+    // async getFileTranslate() {
+    //   this.fileTranslate = [await userService().translate()];
+    // },
     convertFirstLetterLowercase(word: string) {
       return word.charAt(0).toLowerCase() + word.slice(1);
     },

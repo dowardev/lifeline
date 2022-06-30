@@ -142,13 +142,17 @@ import {
   alertController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import eventService from "../../services/event.vue";
+import {
+  getEvents as getEventsService,
+  removeEvent as removeEventService,
+  formatDateTime as formatDateTimeService,
+} from "../../services/event";
 import { Storage } from "@ionic/storage";
-import Event from "./evento/Evento.vue";
+import EventComponent from "./evento/Evento.vue";
 import eventBus from "../../EventBus";
 import { formatISO, add } from "date-fns";
 import { createOutline, trashOutline } from "ionicons/icons";
-import userService from "../../services/user.vue";
+// import userService from "../../services/user";
 import { zonedTimeToUtc, utcToZonedTime, format } from "date-fns-tz";
 
 export default defineComponent({
@@ -187,7 +191,7 @@ export default defineComponent({
   methods: {
     async openEvent(event: object) {
       const modal = await modalController.create({
-        component: Event,
+        component: EventComponent,
         componentProps: {
           event,
         },
@@ -208,11 +212,11 @@ export default defineComponent({
           })
         )
       ).split("T")[0];
-      const events = await eventService()
-        .getEvents(this.date, dateEnd)
-        .then((response: any) => {
+      const events = await getEventsService(this.date, dateEnd).then(
+        (response: any) => {
           return response;
-        });
+        }
+      );
 
       events.data.forEach(async (element: any) => {
         if (
@@ -260,7 +264,7 @@ export default defineComponent({
       if (date == null) {
         return "";
       }
-      return eventService().formatDateTime(date, format);
+      return formatDateTimeService(date, format);
     },
     refreshContent(event: any) {
       setTimeout(async () => {
@@ -280,8 +284,7 @@ export default defineComponent({
     async removeEvent(id: string | number) {
       const loading = await this.presentLoading();
       loading.present();
-      eventService()
-        .removeEvent(id)
+      removeEventService(id)
         .then((response: any) => {
           this.getEvents();
           const message = this.fileTranslate[0].removeEvent;
@@ -328,9 +331,9 @@ export default defineComponent({
       });
       return alert.present();
     },
-    async getFileTranslate() {
-      this.fileTranslate = [await userService().translate()];
-    },
+    // async getFileTranslate() {
+    //   this.fileTranslate = [await userService().translate()];
+    // },
   },
 });
 </script>

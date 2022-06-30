@@ -159,10 +159,15 @@ import {
   fingerPrintOutline,
   mailOpenOutline,
 } from "ionicons/icons";
-import userService from "../../../services/user.vue";
+import {
+  getUser as getUserService,
+  resendEmailConfirmation as resendEmailConfirmationService,
+  setUserToken as setUserTokenService,
+} from "../../../services/user";
 import useVuelidate from "@vuelidate/core";
 import { required, email, minLength, helpers } from "@vuelidate/validators";
-import sessionService from "../../../services/session.vue";
+import { userLogin as userLoginService } from "../../../services/session";
+import { USER_NAME } from "../../../services/graphql";
 
 export default defineComponent({
   name: "LoginPage",
@@ -214,13 +219,7 @@ export default defineComponent({
   },
 
   beforeRouteEnter(to, from, next) {
-    const query = `
-            user {
-              id
-        }
-      `;
-    userService()
-      .getUserLogged({ query })
+    getUserService({ graphql: { name: USER_NAME, fragment: "UserName" } })
       .then(() => {
         next("/");
       })
@@ -251,14 +250,14 @@ export default defineComponent({
         }
       `;
       try {
-        const response = await sessionService().userLogin({
+        const response = await userLoginService({
           query,
           user,
           password,
         });
 
         const token = "Bearer " + response.auth.access_token;
-        userService().setUserToken({ token });
+        setUserTokenService({ token });
 
         this.spinners.buttonLogin = false;
         location.reload();
@@ -302,7 +301,7 @@ export default defineComponent({
           {
             text: "Continuar",
             handler: () => {
-              userService().resendEmailConfirmation({ email: this.form.email });
+              resendEmailConfirmationService({ email: this.form.email });
             },
           },
         ],

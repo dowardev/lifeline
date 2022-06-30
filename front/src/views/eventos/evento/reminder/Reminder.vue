@@ -109,17 +109,17 @@ export default defineComponent({
     return { reminders, fileTranslate: Object() };
   },
   mounted() {
-    this.translate().then(() => {
-      if (this.remindersProps.length != 0) {
-        this.reminders.forEach((reminder: any) => {
-          this.remindersProps.forEach((res: any) => {
-            if (reminder.name == res) {
-              reminder.check = true;
-            }
-          });
-        });
-      }
-    });
+    // this.translate().then(() => {
+    //   if (this.remindersProps.length != 0) {
+    //     this.reminders.forEach((reminder: any) => {
+    //       this.remindersProps.forEach((res: any) => {
+    //         if (reminder.name == res) {
+    //           reminder.check = true;
+    //         }
+    //       });
+    //     });
+    //   }
+    // });
   },
   methods: {
     save() {
@@ -131,9 +131,9 @@ export default defineComponent({
       });
       modalController.dismiss({ reminders });
     },
-    async translate() {
-      this.fileTranslate = [await userService().translate()];
-    },
+    // async translate() {
+    //   this.fileTranslate = [await userService().translate()];
+    // },
   },
 });
 </script>
