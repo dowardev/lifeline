@@ -2,9 +2,14 @@ scalar DateTime
   @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
 
 type Query {
-  getUserAuth: GetUserAuthPayload
+  userAuth: UserAuthPayload
     @field(
       resolver: "App\\GraphQL\\Resolvers\\auth\\GetUserAuthResolver@resolve"
+    )
+
+  calendars: CalendarsPayload
+    @field(
+      resolver: "App\\GraphQL\\Resolvers\\events\\GetCalendarsResolver@resolve"
     )
 }
 
@@ -28,6 +33,10 @@ type UserAuth {
   access_token: String!
   token_type: String!
 }
+type Calendar {
+  id: String!
+  name: String!
+}
 
 # inputs
 input RegisterInput {
@@ -45,6 +54,9 @@ input LoginInput {
 type LoginPayload {
   auth: UserAuth!
 }
-type GetUserAuthPayload {
+type UserAuthPayload {
   user: User!
+}
+type CalendarsPayload {
+  calendars: [Calendar]
 }
