@@ -16,193 +16,242 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true" v-if="fileTranslate[0] != null">
+    <ion-content :fullscreen="true">
       <ion-row>
         <ion-list-header>
-          <ion-label> {{ fileTranslate[0]["details"] }}</ion-label>
+          <ion-label> Detalles</ion-label>
         </ion-list-header>
-        <ion-col size="12" size-lg="6">
-          <ion-item>
-            <ion-icon :icon="documentOutline" slot="start"></ion-icon>
-            <ion-label position="floating">
-              {{ fileTranslate[0]["title"] }}
-            </ion-label>
-            <ion-input type="text" v-model="form.title"></ion-input>
-          </ion-item>
-        </ion-col>
-        <!-- calendar -->
-        <ion-col size="12" size-lg="6">
-          <ion-item style="top: 7px">
-            <ion-icon :icon="calendarClearOutline" slot="start"></ion-icon>
-            <ion-label>{{ fileTranslate[0]["calendar"] }}</ion-label>
-            <ion-select
-              interface="popover"
-              ok-text="Aceptar"
-              cancel-text="Cancelar"
-              v-model="form.calendar"
-            >
-              <ion-select-option
-                v-for="calendar in calendars"
-                :key="calendar"
-                :value="calendar.id"
-              >
-                {{ calendar.name }}
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
+        <ion-col>
+          <ion-card>
+            <ion-card-content>
+              <ion-row>
+                <ion-col size="12" size-lg="6">
+                  <ion-item>
+                    <ion-icon :icon="documentOutline" slot="start"></ion-icon>
+                    <ion-label position="floating"> Titulo </ion-label>
+                    <ion-input type="text" v-model="form.title"></ion-input>
+                  </ion-item>
+                </ion-col>
+
+                <!-- calendar -->
+                <ion-col size="12" size-lg="6">
+                  <ion-item style="top: 16px">
+                    <ion-icon
+                      :icon="calendarClearOutline"
+                      slot="start"
+                    ></ion-icon>
+                    <ion-label>Calendario</ion-label>
+                    <ion-select
+                      interface="popover"
+                      ok-text="Aceptar"
+                      cancel-text="Cancelar"
+                      v-model="form.calendar"
+                    >
+                      <ion-select-option
+                        v-for="calendar in calendars"
+                        :key="calendar.id"
+                        :value="calendar.id"
+                      >
+                        <ion-label>{{ calendar.name }}</ion-label>
+                      </ion-select-option>
+                    </ion-select>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            </ion-card-content>
+          </ion-card>
         </ion-col>
       </ion-row>
 
       <ion-row>
         <ion-list-header>
-          <ion-label>{{ fileTranslate[0]["organization"] }}</ion-label>
+          <ion-label>Organizacion</ion-label>
         </ion-list-header>
-        <!-- date start-->
-        <ion-col size="12" size-lg="6">
-          <ion-item button="true" id="open-date1">
-            <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
-            <ion-label slot="start">
-              {{ fileTranslate[0]["dateStart"] + "" }}
-            </ion-label>
-            <ion-label slot="end">
-              {{ customDateFormat(form.datetime.start, "Pp") }}
-            </ion-label>
-            <ion-popover trigger="open-date1" :show-backdrop="false">
-              <ion-datetime
-                presentation="date-time"
-                @ionChange="form.datetime.start = $event.detail.value"
-                v-model="form.datetime.start"
-                hour-cycle="h12"
-              />
-            </ion-popover>
-          </ion-item>
-        </ion-col>
-        <!-- date end -->
-        <ion-col size="12" size-lg="6">
-          <ion-item button="true" id="open-date2">
-            <ion-icon :icon="calendarNumberOutline" slot="start"></ion-icon>
-            <ion-label slot="start">
-              {{ fileTranslate[0]["dateEnd"] + "" }}
-            </ion-label>
-            <ion-label slot="end">
-              {{ customDateFormat(form.datetime.end, "Pp") }}
-            </ion-label>
-            <ion-popover trigger="open-date2" :show-backdrop="false">
-              <ion-datetime
-                presentation="date-time"
-                @ionChange="form.datetime.end = $event.detail.value"
-                v-model="form.datetime.end"
-                hour-cycle="h12"
-              />
-            </ion-popover>
-          </ion-item>
-        </ion-col>
-        <!-- reminders -->
-        <ion-col size="12" size-lg="6">
-          <ion-item button @click="openModalReminders()" lines="full">
-            <ion-icon :icon="timeOutline" slot="start"></ion-icon>
-            <ion-label>{{ fileTranslate[0]["reminders"] }}</ion-label>
-            <div v-for="reminder in form.reminders" :key="reminder">
-              <ion-chip color="primary">
-                <ion-label>{{ fileTranslate[0][reminder] }}</ion-label>
-              </ion-chip>
-            </div>
-          </ion-item>
-        </ion-col>
-        <!-- repeats -->
-        <ion-col size="12" size-lg="6">
-          <ion-item button @click="openModalRepeats()" lines="full">
-            <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
-            <ion-label slot="start">
-              {{ fileTranslate[0]["repeat"] }}
-            </ion-label>
-            <ion-label slot="end">
-              {{ fileTranslate[0][form.repeats[0].frequency] }}
-            </ion-label>
-          </ion-item>
-        </ion-col>
-        <!-- timezone -->
-        <ion-col size="12" size-lg="6">
-          <ion-item button @click="openModalTimeZone()" lines="full">
-            <ion-icon :icon="globeOutline" slot="start"></ion-icon>
-            <ion-label slot="start">
-              {{ fileTranslate[0]["timeZone"] }}
-            </ion-label>
-            <ion-label slot="end">
-              {{ form.timeZone }}
-            </ion-label>
-          </ion-item>
+        <ion-col>
+          <ion-card>
+            <ion-card-content>
+              <ion-row>
+                <!-- date start-->
+                <ion-col size="12" size-lg="6">
+                  <ion-item button="true" id="open-date1">
+                    <ion-icon
+                      :icon="calendarNumberOutline"
+                      slot="start"
+                    ></ion-icon>
+                    <ion-label slot="start" class="ion-text-wrap">
+                      Fecha inicial
+                    </ion-label>
+                    <ion-label slot="end" class="text-overflow">
+                      {{ customDateFormat(form.datetime.start, "Pp") }}
+                    </ion-label>
+                    <ion-popover trigger="open-date1" :show-backdrop="false">
+                      <ion-datetime
+                        presentation="date-time"
+                        @ionChange="form.datetime.start = $event.detail.value!"
+                        v-model="form.datetime.start"
+                        hour-cycle="h12"
+                      />
+                    </ion-popover>
+                  </ion-item>
+                </ion-col>
+
+                <!-- date end -->
+                <ion-col size="12" size-lg="6">
+                  <ion-item button="true" id="open-date2">
+                    <ion-icon
+                      :icon="calendarNumberOutline"
+                      slot="start"
+                    ></ion-icon>
+                    <ion-label slot="start" class="ion-text-wrap">
+                      Fecha final
+                    </ion-label>
+                    <ion-label class="text-overflow" slot="end">
+                      {{ customDateFormat(form.datetime.end, "Pp") }}
+                    </ion-label>
+                    <ion-popover trigger="open-date2" :show-backdrop="false">
+                      <ion-datetime
+                        presentation="date-time"
+                        @ionChange="form.datetime.end = $event.detail.value!"
+                        v-model="form.datetime.end"
+                        hour-cycle="h12"
+                      />
+                    </ion-popover>
+                  </ion-item>
+                </ion-col>
+
+                <!-- reminders -->
+                <ion-col size="12" size-lg="6">
+                  <ion-item>
+                    <ion-icon :icon="timeOutline" slot="start"></ion-icon>
+                    <ion-label>Recordatorio</ion-label>
+                    <ion-select
+                      :multiple="true"
+                      interface="popover"
+                      v-model="form.reminders"
+                    >
+                      <ion-select-option
+                        v-for="reminder in reminders"
+                        :key="reminder.name"
+                        :value="reminder.name"
+                        >{{ reminder.value }}</ion-select-option
+                      >
+                    </ion-select>
+                  </ion-item>
+                </ion-col>
+
+                <!-- repeats -->
+                <ion-col size="12" size-lg="6">
+                  <ion-item button @click="openModalRepeats()" lines="full">
+                    <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
+                    <ion-label class="ion-text-wrap"> Repetir </ion-label>
+                    <ion-label slot="end" class="text-overflow">
+                      Frecuencia
+                    </ion-label>
+                  </ion-item>
+                </ion-col>
+
+                <!-- timezone -->
+                <ion-col size="12" size-lg="6">
+                  <ion-item button @click="openModalTimeZone()" lines="full">
+                    <ion-icon :icon="globeOutline" slot="start"></ion-icon>
+                    <ion-label slot="start" class="ion-text-wrap">
+                      Zona horaria
+                    </ion-label>
+                    <ion-label slot="end" class="text-overflow">
+                      {{ form.timeZone }}
+                    </ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            </ion-card-content>
+          </ion-card>
         </ion-col>
       </ion-row>
 
       <ion-row>
         <ion-list-header>
-          <ion-label>{{ fileTranslate[0]["otherSettings"] }}</ion-label>
+          <ion-label>Otros ajustes</ion-label>
         </ion-list-header>
-        <!-- tags -->
-        <ion-col size="12" size-lg="6">
-          <ion-item>
-            <ion-icon :icon="pricetagsOutline" slot="start"></ion-icon>
-            <ion-label position="floating">
-              {{ fileTranslate[0]["tags"] }}
-            </ion-label>
-            <ion-input
-              v-on:keyup.enter="addTag()"
-              ref="inputTag"
-              :placeholder="fileTranslate[0]['nameTag']"
-            ></ion-input>
-          </ion-item>
-          <ion-chip
-            color="primary"
-            v-for="(tag, index) in form.tags"
-            :key="tag"
-          >
-            <ion-label>{{ tag }}</ion-label>
-            <ion-icon
-              :icon="closeCircleOutline"
-              @click="removeTag(index)"
-            ></ion-icon>
-          </ion-chip>
-        </ion-col>
-        <!-- guests -->
-        <ion-col size="12" size-lg="6">
-          <ion-item>
-            <ion-icon :icon="mailOutline" slot="start"></ion-icon>
-            <ion-label position="floating">
-              {{ fileTranslate[0]["guests"] }}
-            </ion-label>
-            <ion-input
-              v-on:keyup.enter="addGuest()"
-              ref="inputguest"
-              :placeholder="fileTranslate[0]['email']"
-            ></ion-input>
-          </ion-item>
-          <ion-chip
-            color="primary"
-            v-for="(mail, index) in form.guests"
-            :key="mail"
-          >
-            <ion-label>{{ mail }}</ion-label>
-            <ion-icon
-              :icon="closeCircleOutline"
-              @click="removeGuest(index)"
-            ></ion-icon>
-          </ion-chip>
-        </ion-col>
+        <ion-col>
+          <ion-card>
+            <ion-card-content>
+              <ion-row>
+                <!-- tags -->
+                <ion-col size="12" size-lg="6">
+                  <ion-item>
+                    <ion-icon
+                      :icon="pricetagsOutline"
+                      slot="start"
+                      class="icon-item"
+                    ></ion-icon>
+                    <ion-label position="floating"> Etiquetas </ion-label>
+                    <ion-input
+                      v-on:keyup.enter="addTag()"
+                      ref="inputTag"
+                      placeholder="Nombre de la etiqueta"
+                    ></ion-input>
+                  </ion-item>
+                  <ion-chip
+                    color="primary"
+                    v-for="(tag, index) in form.tags"
+                    :key="tag"
+                  >
+                    <ion-label>{{ tag }}</ion-label>
+                    <ion-icon
+                      :icon="closeCircleOutline"
+                      @click="removeTag(index)"
+                    ></ion-icon>
+                  </ion-chip>
+                </ion-col>
 
-        <ion-col size="12" size-lg="12">
-          <ion-item>
-            <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
-            <ion-label position="floating">
-              {{ fileTranslate[0]["notes"] }}
-            </ion-label>
-            <ion-textarea
-              type="text"
-              v-model="form.notes"
-              autoGrow
-              :rows="4"
-            ></ion-textarea>
-          </ion-item>
+                <!-- guests -->
+                <ion-col size="12" size-lg="6">
+                  <ion-item>
+                    <ion-icon
+                      :icon="mailOutline"
+                      slot="start"
+                      class="icon-item"
+                    ></ion-icon>
+                    <ion-label position="floating"> Invitados </ion-label>
+                    <ion-input
+                      v-on:keyup.enter="addGuest()"
+                      ref="inputguest"
+                      placeholder="correo electronico"
+                    ></ion-input>
+                  </ion-item>
+                  <ion-chip
+                    color="primary"
+                    v-for="(mail, index) in form.guests"
+                    :key="mail"
+                  >
+                    <ion-label>{{ mail }}</ion-label>
+                    <ion-icon
+                      :icon="closeCircleOutline"
+                      @click="removeGuest(index)"
+                    ></ion-icon>
+                  </ion-chip>
+                </ion-col>
+
+                <!-- notes -->
+                <ion-col size="12" size-lg="12">
+                  <ion-item>
+                    <ion-icon
+                      :icon="documentTextOutline"
+                      slot="start"
+                      class="icon-item"
+                    ></ion-icon>
+                    <ion-label position="floating"> notas </ion-label>
+                    <ion-textarea
+                      type="text"
+                      v-model="form.notes"
+                      autoGrow
+                      :rows="4"
+                    ></ion-textarea>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            </ion-card-content>
+          </ion-card>
         </ion-col>
       </ion-row>
     </ion-content>
@@ -247,14 +296,15 @@ import {
   updateEvent as updateEventService,
   formatDateTime as formatDateTimeService,
   getEventLocal as getEventLocalService,
+  getCalendars as getCalendarsService,
 } from "../../../../services/event";
 // import userService from "../../../../services/user";
 import { Storage } from "@ionic/storage";
 import { add } from "date-fns";
 import { format, formatISO } from "date-fns";
-import Reminders from "../reminder/Reminder.vue";
 import Repeats from "../repetir/Repetir.vue";
 import TimeZoneComponent from "../../../../components/SelectTimeZone.vue";
+import { CALENDARS } from "../../../../services/graphql";
 
 export default defineComponent({
   name: "EventPage",
@@ -270,7 +320,46 @@ export default defineComponent({
     IonSelect,
     IonDatetime,
   },
+
   setup() {
+    const reminders = [
+      {
+        name: "just",
+        value: "A tiempo",
+      },
+      {
+        name: "5mnb",
+        value: "5 minutos antes",
+      },
+      {
+        name: "15mnb",
+        value: "15 minutos antes",
+      },
+      {
+        name: "30mnb",
+        value: "30 minutos antes",
+      },
+      {
+        name: "1hrb",
+        value: "30 hora antes",
+      },
+      {
+        name: "4hrb",
+        value: "4 horas antes",
+      },
+      {
+        name: "1db",
+        value: "1 dia antes",
+      },
+      {
+        name: "2db",
+        value: "2 dia antes",
+      },
+      {
+        name: "1sb",
+        value: "1 semana antes",
+      },
+    ];
     return {
       chevronBackOutline,
       saveOutline,
@@ -286,8 +375,10 @@ export default defineComponent({
       mailOutline,
       documentTextOutline,
       globeOutline,
+      reminders,
     };
   },
+
   data() {
     const storage = new Storage();
     storage.create();
@@ -312,31 +403,28 @@ export default defineComponent({
             data: {},
           },
         ],
-        calendar: 0,
+        calendar: "0",
         notes: "",
         tags: Array<string>(),
         guests: Array<string>(),
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
-      fileTranslate: Object(),
-      calendars: Array<any>(),
+      calendars: Array<{ id: string; name: string }>(),
     };
   },
+
   mounted() {
-    // this.getFileTranslate().then(() => {
-    //   this.pageTitle = this.$route.params.id
-    //     ? this.fileTranslate[0]["UpdateEvent"]
-    //     : this.fileTranslate[0]["newEvent"];
-    // });
     this.getCalendars();
     if (this.$route.params.id) {
       this.getEventLocal(this.$route.params.id as string);
     }
   },
+
   methods: {
     editEvent() {
       this.buttonEdit = !this.buttonEdit;
     },
+
     selectTime() {
       this.$router.push("/horario");
       setTimeout(() => {
@@ -346,6 +434,7 @@ export default defineComponent({
         });
       }, 300);
     },
+
     selectRepeat() {
       this.$router.push("/repetir");
       setTimeout(() => {
@@ -354,9 +443,10 @@ export default defineComponent({
         });
       }, 300);
     },
+
     async save() {
       if (this.form.title == "") {
-        this.form.title = this.fileTranslate[0].noTitle;
+        this.form.title = "Sin titulo";
       }
 
       const event = {
@@ -377,19 +467,20 @@ export default defineComponent({
         this.createEvent(event);
       }
     },
+
     async createEvent(event: Record<string, any>) {
       const loading = await this.presentLoading();
       loading.present();
 
       createEventService(event)
-        .then(async (response) => {
+        .then(async () => {
           loading.dismiss();
-          const message = this.fileTranslate[0]["saveEvent"];
+          const message = "Evento creado correctamente";
           eventBus().emitter.emit("refresh-events");
           this.$router.go(-1);
           this.openToast(message, "success");
         })
-        .catch((e) => {
+        .catch(() => {
           loading.dismiss();
         });
     },
@@ -398,14 +489,14 @@ export default defineComponent({
       loading.present();
 
       updateEventService(event)
-        .then(async (response) => {
+        .then(async () => {
           loading.dismiss();
-          const message = this.fileTranslate[0]["updateEvent"];
+          const message = "Evento actualizado correctamente";
           eventBus().emitter.emit("refresh-events");
           this.$router.go(-1);
           this.openToast(message, "success");
         })
-        .catch((e) => {
+        .catch(() => {
           loading.dismiss();
         });
     },
@@ -424,25 +515,29 @@ export default defineComponent({
       });
       return toast.present();
     },
+
     addTag() {
       if ((this.$refs.inputTag as any).$el.value != "") {
         this.form.tags.push((this.$refs.inputTag as any).$el.value);
         (this.$refs.inputTag as any).$el.value = "";
       }
     },
+
     removeTag(index: number) {
       this.form.tags.splice(index, 1);
     },
     async presentLoading() {
       const loading = await loadingController.create({
         cssClass: "my-custom-class",
-        message: this.fileTranslate[0].pleaseWait,
+        message: "Espere por favor",
       });
       return loading;
     },
+
     customDateFormat(date: any, styleFormat: string) {
       return format(new Date(date), styleFormat);
     },
+
     addGuest() {
       const guest = (this.$refs.inputguest as any).$el.value;
       const re = /^[^\s@]+@[^\s@]+$/;
@@ -451,24 +546,11 @@ export default defineComponent({
         (this.$refs.inputguest as any).$el.value = "";
       }
     },
+
     removeGuest(index: number) {
       this.form.guests.splice(index, 1);
     },
-    async openModalReminders() {
-      const modal = await modalController.create({
-        component: Reminders,
-        cssClass: "my-custom-class",
-        componentProps: {
-          remindersProps: Object.assign([], this.form.reminders),
-        },
-      });
-      modal.onDidDismiss().then((response) => {
-        if (response.data) {
-          this.form.reminders = response.data.reminders;
-        }
-      });
-      return modal.present();
-    },
+
     async openModalRepeats() {
       const modal = await modalController.create({
         component: Repeats,
@@ -491,13 +573,15 @@ export default defineComponent({
     //   this.fileTranslate = [await userService().translate()];
     // },
 
-    getCalendars() {
-      // eventsService()
-      //   .getCalendars()
-      //   .then((response) => {
-      //     this.calendars = response.data;
-      //     this.form.calendar = response.data[0].id;
-      //   });
+    async getCalendars() {
+      const response = await getCalendarsService({
+        graphql: {
+          name: CALENDARS,
+          fragment: "Calendars",
+        },
+      });
+
+      this.calendars = response;
     },
 
     getEventLocal(id: string) {
@@ -527,6 +611,20 @@ export default defineComponent({
       });
       return modal.present();
     },
+    prueba(e: any) {
+      console.log(e);
+    },
   },
 });
 </script>
+
+<style>
+.hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+.text-overflow {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>

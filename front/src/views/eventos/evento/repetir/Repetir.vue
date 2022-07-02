@@ -15,43 +15,39 @@
         </ion-buttons>
       </ion-toolbar>
 
-      <ion-toolbar v-if="fileTranslate[0] != null">
+      <ion-toolbar>
         <ion-item>
-          <ion-label>{{ fileTranslate[0]["frequency"] }}</ion-label>
-          <ion-select v-model="repeatData.frequencySelect">
+          <ion-label>Frecuencia</ion-label>
+          <ion-select v-model="repeatData.frequencySelect" interface="popover">
             <ion-select-option
               v-for="option in frequencyOptions"
-              :key="option"
-              :value="option"
+              :key="option.name"
+              :value="option.name"
             >
-              {{ fileTranslate[0][option] }}
+              {{ option.value }}
             </ion-select-option>
           </ion-select>
         </ion-item>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true" v-if="fileTranslate[0] != null">
+    <ion-content :fullscreen="true">
       <section v-if="repeatData.frequencySelect == 'unique'"></section>
 
       <section v-if="repeatData.frequencySelect == 'daily'">
         <ion-row>
           <ion-col size="12">
             <ion-item>
-              <ion-label>{{ fileTranslate[0]["every"] }}</ion-label>
-              <ion-select v-model="repeatData.daily.every">
+              <ion-label>Cada</ion-label>
+              <ion-select v-model="repeatData.daily.every" interface="popover">
                 <ion-select-option
                   v-for="item in frequency"
                   :key="item"
                   :value="item"
                 >
                   {{ item }}
-                  <div v-if="item == 1">
-                    {{ convertFirstLetterLowercase(fileTranslate[0]["day"]) }}
-                  </div>
-                  <div v-if="item > 1">
-                    {{ convertFirstLetterLowercase(fileTranslate[0]["days"]) }}
-                  </div>
+                  <div v-if="parseInt(item) == 1">dia</div>
+                  <div v-if="parseInt(item) > 1">dias</div>
                 </ion-select-option>
               </ion-select>
             </ion-item>
@@ -64,27 +60,27 @@
           <ion-col size="12">
             <ion-item>
               <ion-label>Cada</ion-label>
-              <ion-select v-model="repeatData.weekly.every">
+              <ion-select v-model="repeatData.weekly.every" interface="popover">
                 <ion-select-option
                   v-for="item in frequency"
                   :key="item"
                   :value="item"
                 >
                   {{ item }}
-                  <div v-if="item == 1">
-                    {{ convertFirstLetterLowercase(fileTranslate[0]["week"]) }}
-                  </div>
-                  <div v-if="item > 1">
-                    {{ convertFirstLetterLowercase(fileTranslate[0]["weeks"]) }}
-                  </div>
+                  <div v-if="parseInt(item) == 1">semana</div>
+                  <div v-if="parseInt(item) > 1">semanas</div>
                 </ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-label>{{ fileTranslate[0]["day(s)"] }}</ion-label>
-              <ion-select multiple="true" v-model="repeatData.weekly.days">
-                <ion-select-option v-for="day in days" :key="day" :value="day">
-                  {{ fileTranslate[0][day] }}
+              <ion-label>Dia(s)</ion-label>
+              <ion-select :multiple="true" v-model="repeatData.weekly.days">
+                <ion-select-option
+                  v-for="day in days"
+                  :key="day.name"
+                  :value="day.name"
+                >
+                  {{ day.value }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
@@ -96,7 +92,7 @@
         <ion-row>
           <ion-col size="12">
             <ion-item>
-              <ion-label>{{ fileTranslate[0]["every"] }}</ion-label>
+              <ion-label>Cada</ion-label>
               <ion-select value="1" v-model="repeatData.monthly.every">
                 <ion-select-option
                   v-for="item in frequency"
@@ -104,35 +100,23 @@
                   :value="item"
                 >
                   {{ item }}
-                  <div v-if="item == 1">
-                    {{ convertFirstLetterLowercase(fileTranslate[0]["month"]) }}
-                  </div>
-                  <div v-if="item > 1">
-                    {{
-                      convertFirstLetterLowercase(fileTranslate[0]["months"])
-                    }}
-                  </div>
+                  <div v-if="parseInt(item) == 1">mes</div>
+                  <div v-if="parseInt(item) > 1">meses</div>
                 </ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-label>{{ fileTranslate[0]["type"] }}</ion-label>
+              <ion-label>Tipo</ion-label>
               <ion-select v-model="repeatData.monthly.tipoMonth">
-                <ion-select-option value="day">
-                  {{ fileTranslate[0]["day"] }}
-                </ion-select-option>
-                <ion-select-option value="week">
-                  {{ fileTranslate[0]["week"] }}
-                </ion-select-option>
+                <ion-select-option value="day"> dia </ion-select-option>
+                <ion-select-option value="week"> semana </ion-select-option>
               </ion-select>
             </ion-item>
             <div v-if="repeatData.monthly.tipoMonth == 'day'">
               <ion-item>
-                <ion-label>
-                  {{ fileTranslate[0]["daysOfMonth"] }}
-                </ion-label>
+                <ion-label> Dias del mes </ion-label>
                 <ion-select
-                  multiple="true"
+                  :multiple="true"
                   v-model="repeatData.monthly.day.dayMonth"
                 >
                   <ion-select-option
@@ -146,25 +130,25 @@
             </div>
             <div v-if="repeatData.monthly.tipoMonth == 'week'">
               <ion-item>
-                <ion-label>{{ fileTranslate[0]["week"] }}</ion-label>
+                <ion-label>Semana</ion-label>
                 <ion-select v-model="repeatData.monthly.weekly.week">
                   <ion-select-option
                     v-for="week in weeksMonthSelect"
-                    :key="week"
-                    :value="week"
+                    :key="week.name"
+                    :value="week.name"
                   >
-                    {{ fileTranslate[0]["weekRepeats"][week] }}
+                    {{ week.value }}
                   </ion-select-option>
                 </ion-select>
               </ion-item>
               <ion-item>
-                <ion-label>{{ fileTranslate[0]["day"] }}</ion-label>
+                <ion-label>Dia</ion-label>
                 <ion-select v-model="repeatData.monthly.weekly.dayMonth">
                   <ion-select-option
                     v-for="day in dayMonthSelect"
-                    :key="day"
-                    :value="day"
-                    >{{ fileTranslate[0][day] }}</ion-select-option
+                    :key="day.name"
+                    :value="day.name"
+                    >{{ day.value }}</ion-select-option
                   >
                 </ion-select>
               </ion-item>
@@ -177,7 +161,7 @@
         <ion-row>
           <ion-col size="12">
             <ion-item>
-              <ion-label>{{ fileTranslate[0]["every"] }}</ion-label>
+              <ion-label>Cada</ion-label>
               <ion-select value="1" v-model="repeatData.annually.every">
                 <ion-select-option
                   v-for="item in frequency"
@@ -185,23 +169,19 @@
                   :value="item"
                 >
                   {{ item }}
-                  <div v-if="item == 1">
-                    {{ convertFirstLetterLowercase(fileTranslate[0]["year"]) }}
-                  </div>
-                  <div v-if="item > 1">
-                    {{ convertFirstLetterLowercase(fileTranslate[0]["years"]) }}
-                  </div>
+                  <div v-if="parseInt(item) == 1">año</div>
+                  <div v-if="parseInt(item) > 1">años</div>
                 </ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-label>{{ fileTranslate[0]["month"] }}</ion-label>
+              <ion-label>Mes</ion-label>
               <ion-select v-model="repeatData.annually.month">
                 <ion-select-option
                   v-for="month in monthNames"
-                  :key="month"
+                  :key="month.position"
                   :value="month.position"
-                  >{{ month.name }}</ion-select-option
+                  >{{ month.value }}</ion-select-option
                 >
               </ion-select>
             </ion-item>
@@ -246,47 +226,52 @@ export default defineComponent({
   setup() {
     const frequency = [];
     for (let i = 1; i <= 50; i++) {
-      frequency.push(i);
+      frequency.push(i.toString());
     }
     const daysMonth = [];
     for (let i = 1; i <= 31; i++) {
       daysMonth.push(i);
     }
-    const weeksMonthSelect = ["first", "second", "third", "fourth", "last"];
+    const weeksMonthSelect = [
+      { name: "first", value: "primera" },
+      { name: "second", value: "segunda" },
+      { name: "third", value: "tercera" },
+      { name: "fourth", value: "cuarta" },
+      { name: "last", value: "ultima" },
+    ];
     const dayMonthSelect = [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-      "l-v",
-      "weekend",
-      "allWeek",
+      { name: "monday", value: "Lunes" },
+      { name: "tuesday", value: "Martes" },
+      { name: "wednesday", value: "Miercoles" },
+      { name: "thursday", value: "Jueves" },
+      { name: "friday", value: "Friday" },
+      { name: "saturday", value: "Sabado" },
+      { name: "sunday", value: "Domingo" },
+      { name: "l-v", value: "Dias habiles" },
+      { name: "weekend", value: "Fin de semana" },
     ];
     const monthNames = [
-      { position: 1, name: "January", value: "january" },
-      { position: 2, name: "February", value: "february" },
-      { position: 3, name: "March", value: "march" },
-      { position: 4, name: "April", value: "april" },
-      { position: 5, name: "May", value: "may" },
-      { position: 6, name: "June", value: "june" },
-      { position: 7, name: "July", value: "july" },
-      { position: 8, name: "August", value: "august" },
-      { position: 9, name: "September", value: "september" },
-      { position: 10, name: "October", value: "october" },
-      { position: 11, name: "November", value: "november" },
-      { position: 12, name: "December", value: "december" },
+      { position: "1", name: "January", value: "Enero" },
+      { position: "2", name: "February", value: "Febrero" },
+      { position: "3", name: "March", value: "Marzo" },
+      { position: "4", name: "April", value: "Abril" },
+      { position: "5", name: "May", value: "Mayo" },
+      { position: "6", name: "June", value: "Junio" },
+      { position: "7", name: "July", value: "Julio" },
+      { position: "8", name: "August", value: "Agosto" },
+      { position: "9", name: "September", value: "Septiembre" },
+      { position: "10", name: "October", value: "Octubre" },
+      { position: "11", name: "November", value: "Noviembre" },
+      { position: "12", name: "December", value: "Diciembre" },
     ];
     const days = [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
+      { name: "monday", value: "Lunes" },
+      { name: "tuesday", value: "Martes" },
+      { name: "wednesday", value: "Miercoles" },
+      { name: "thursday", value: "Jueves" },
+      { name: "friday", value: "Viernes" },
+      { name: "saturday", value: "Sabado" },
+      { name: "sunday", value: "Domingo" },
     ];
     return {
       chevronBackOutline,
@@ -299,47 +284,48 @@ export default defineComponent({
       days,
     };
   },
+
   data() {
     const frequencyOptions = [
-      "unique",
-      "daily",
-      "weekly",
-      "monthly",
-      "annually",
+      { name: "unique", value: "Unico" },
+      { name: "daily", value: "Diario" },
+      { name: "weekly", value: "Semanal" },
+      { name: "monthly", value: "Mensual" },
+      { name: "annually", value: "Anual" },
     ];
     return {
       currentDay: 0,
       repeatData: {
         frequencySelect: "unique",
         daily: {
-          every: 1,
+          every: "1",
         },
         weekly: {
-          every: 1,
+          every: "1",
           days: ["monday"],
         },
         monthly: {
-          every: 1,
+          every: "1",
           tipoMonth: "day",
           day: {
             dayMonth: [1],
           },
           weekly: {
-            every: 1,
+            every: "1",
             week: "first",
             dayMonth: "allWeek",
           },
         },
         annually: {
-          every: 1,
+          every: "1",
           checkAnnually: false,
-          month: 1,
+          month: "1",
         },
       },
-      fileTranslate: Object(),
       frequencyOptions,
     };
   },
+
   computed: {
     validate() {
       let p = false;
@@ -359,28 +345,8 @@ export default defineComponent({
       return p;
     },
   },
-  mounted() {
-    // this.getFileTranslate().then(() => {
-    //   if (this.repeatsProps.frequency != "") {
-    //     this.repeatData.frequencySelect = "unique";
-    //     if (this.repeatsProps.frequency != "unique") {
-    //       this.repeatData.frequencySelect = this.repeatsProps.frequency;
-    //       if (this.repeatsProps.frequency == "daily") {
-    //         this.repeatData.daily = this.repeatsProps.data;
-    //       }
-    //       if (this.repeatsProps.frequency == "weekly") {
-    //         this.repeatData.weekly = this.repeatsProps.data;
-    //       }
-    //       if (this.repeatsProps.frequency == "monthly") {
-    //         this.repeatData.monthly = this.repeatsProps.data;
-    //       }
-    //       if (this.repeatsProps.frequency == "annually") {
-    //         this.repeatData.annually = this.repeatsProps.data;
-    //       }
-    //     }
-    //   }
-    // });
 
+  mounted() {
     this.setCurrentDay();
     eventBus().emitter.on("get-repeat-event", (response: any) => {
       this.repeatData.frequencySelect = "unique";

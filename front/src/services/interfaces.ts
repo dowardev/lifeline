@@ -45,3 +45,12 @@ export interface SystemMessage {
   message: string;
   color?: string;
 }
+
+// events
+export interface GetCalendars {
+  graphql: Graphql;
+}
+export interface GetCalendarsResponse {
+  id: string;
+  name: string;
+}

@@ -16,3 +16,13 @@ export const USER_NAME = gql`
     }
   }
 `;
+
+// events
+export const CALENDARS = gql`
+  fragment Calendars on CalendarsPayload {
+    calendars {
+      id
+      name
+    }
+  }
+`;

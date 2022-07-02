@@ -5,6 +5,14 @@ const storage = new Storage();
 storage.create();
 import { format } from "date-fns";
 
+import apolloClient from "../Apollo";
+import gql from "graphql-tag";
+import { useQuery, useMutation } from "@vue/apollo-composable";
+import { provideApolloClient } from "@vue/apollo-composable";
+provideApolloClient(apolloClient);
+
+import { GetCalendars, GetCalendarsResponse } from "./interfaces";
+
 export async function createEvent(event: Record<string, any>) {
   // const token = await userService()
   //   .getUserToken()
@@ -78,18 +86,32 @@ export function formatDateTime(date: string | Date, typeFormat: string) {
   }
   return format(new Date(date), typeFormat);
 }
-export async function getCalendars() {
-  // const token = await userService()
-  //   .getUserToken()
-  //   .then((response) => {
-  //     return response;
-  //   });
-  // return axios.get("http://localhost:8000/api/auth/get-calendars", {
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //     Authorization: "Bearer " + token,
-  //   },
-  // });
+
+export async function getCalendars(
+  params: GetCalendars
+): Promise<Array<GetCalendarsResponse>> {
+  const { onError, onResult, result } = useQuery(
+    gql`
+      query calendars {
+        calendars {
+         ...${params.graphql.fragment}
+        }
+      }
+      ${params.graphql.name}
+    `
+  );
+
+  return new Promise((resolve, reject) => {
+    if (result.value && result.value.calendars.user != undefined)
+      resolve([result.value.calendars.calendars]);
+    else {
+      onResult((response) => resolve(response.data.calendars.calendars));
+    }
+
+    onError((error) => {
+      reject(error);
+    });
+  });
 }
 export async function removeEvent(id: string | number) {
   // const token = await userService()

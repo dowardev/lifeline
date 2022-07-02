@@ -246,3 +246,6 @@ ion-card {
   display: flex;
   justify-content: center;
 }
+.icon-item {
+  margin-top: 22px;
+}

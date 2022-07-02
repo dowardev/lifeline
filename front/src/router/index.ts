@@ -7,7 +7,6 @@ import CreateEventPage from "../views/eventos/evento/create/CreateEvent.vue";
 import RepetirPage from "../views/eventos/evento/repetir/Repetir.vue";
 import SignUpPage from "../views/sesion/signup/SignUpPage.vue";
 import LoginPage from "../views/sesion/login/Login.vue";
-import RemindersPage from "../views/eventos/evento/reminder/Reminder.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -33,11 +32,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/event/update/:id",
     name: "UpdateEvent",
     component: CreateEventPage,
-  },
-  {
-    path: "/recordatorios",
-    name: "Reminder",
-    component: RemindersPage,
   },
   {
     path: "/repetir",
