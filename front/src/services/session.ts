@@ -48,16 +48,17 @@ export async function userRegister(params: UserRegister) {
 
 export async function userLogin(params: UserLogin): Promise<UserLoginResponse> {
   const {
-    onError,
-    onDone,
     mutate: login,
+    onDone,
+    onError,
   } = useMutation(
     gql`
-        mutation login($user: String!, $password: String!) {
+        mutation UserLogin($user: String!, $password: String!) {
           login(input: { user: $user, password: $password }) {
-            ${params.query}
+            ...${params.graphql.fragment}
           }
         }
+        ${params.graphql.name}
       `,
     {
       variables: {
@@ -71,13 +72,15 @@ export async function userLogin(params: UserLogin): Promise<UserLoginResponse> {
   return new Promise((resolve, reject) => {
     onDone((response) => {
       resolve({
-        auth: { access_token: response.data.login.auth.access_token },
+        user: response.data.login.user,
+        auth: {
+          access_token: response.data.login.auth.access_token,
+          token_type: response.data.login.auth.token_type,
+        },
       });
     });
 
-    onError((error) => {
-      reject(error);
-    });
+    onError((error) => reject(error));
   });
 }
 

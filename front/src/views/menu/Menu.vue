@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border">
+    <ion-header class="ion-no-border" mode="ios">
       <ion-toolbar class="color-menu">
         <ion-item lines="none" v-if="logged == true">
           <ion-avatar slot="start">
@@ -11,7 +11,7 @@
             <ion-icon :icon="settingsOutline"></ion-icon>
           </ion-button>
         </ion-item>
-        <ion-item v-if="logged == false">
+        <ion-item v-if="logged == false" class="transparent" lines="none">
           <ion-button fill="clear" @click="openRoute('/login')"
             >Iniciar sesion</ion-button
           >
@@ -118,7 +118,7 @@
 
     <ion-footer class="ion-no-border">
       <ion-toolbar>
-        <ion-item lines="none">
+        <ion-item lines="none" class="transparent">
           <ion-button
             slot="end"
             fill="clear"
@@ -311,5 +311,12 @@ ion-toolbar {
 }
 .icon-menu-color {
   color: white;
+}
+ion-title[size="large"] {
+  font-size: 34px;
+}
+
+ion-app.md .header-collapse-condense {
+  display: block;
 }
 </style>

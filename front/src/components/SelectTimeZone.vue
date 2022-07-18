@@ -1,14 +1,18 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true" class="ion-no-border">
+    <ion-header :translucent="true" class="ion-no-border" mode="ios">
       <ion-toolbar>
-        <ion-title>Blank</ion-title>
+        <ion-buttons slot="start">
+          <ion-button @click="save()">
+            <ion-icon :icon="closeOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+        <ion-title>Zona horaria</ion-title>
       </ion-toolbar>
       <ion-toolbar>
         <ion-searchbar
-          debounce="500"
-          @ionChange="search($event.detail.value)"
-          style="--box-shadow: white"
+          :debounce="500"
+          @ionChange="search($event.detail.value!)"
         >
         </ion-searchbar>
       </ion-toolbar>
@@ -20,7 +24,7 @@
           v-for="result in searchResult"
           :key="result"
           button
-          @click="closeModal(result)"
+          @click="save({ timeZone: result })"
         >
           <ion-label>{{ result }}</ion-label>
         </ion-item>
@@ -30,7 +34,7 @@
           v-for="result in [timeZones][0].names"
           :key="result"
           button
-          @click="closeModal(result)"
+          @click="save({ timeZone: result })"
         >
           <ion-label>{{ result }}</ion-label>
         </ion-item>
@@ -40,6 +44,7 @@
 </template>
 
 <script lang="ts">
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   IonContent,
   IonHeader,
@@ -51,6 +56,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { getAllTimeZonesNames as getAllTimeZonesNamesService } from "../services/system";
+import { closeOutline } from "ionicons/icons";
 
 export default defineComponent({
   components: {
@@ -61,12 +67,19 @@ export default defineComponent({
     IonToolbar,
     IonSearchbar,
   },
+
+  setup() {
+    return { closeOutline };
+  },
+
   data() {
     return {
       timeZones: getAllTimeZonesNamesService(),
       searchResult: [] as Array<string>,
+      timeZone: "",
     };
   },
+
   methods: {
     search(word: string) {
       this.searchResult.length = 0;
@@ -76,8 +89,19 @@ export default defineComponent({
         }
       });
     },
-    closeModal(timeZone: string) {
-      modalController.dismiss({ timeZone });
+
+    save(params?: { timeZone: string }) {
+      let timeZone = "";
+      try {
+        timeZone = params!.timeZone;
+      } catch (e) {
+        //
+      }
+      this.closeModal({ timeZone });
+    },
+
+    closeModal(params: { timeZone: string }) {
+      modalController.dismiss({ timeZone: params.timeZone });
     },
   },
 });

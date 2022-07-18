@@ -1,6 +1,11 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border" :translucent="true">
+    <ion-header
+      class="ion-no-border"
+      :translucent="true"
+      collapse="fade"
+      mode="ios"
+    >
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button v-on:click="$router.go(-1)">
@@ -17,6 +22,12 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
+      <ion-header collapse="condense" mode="ios">
+        <ion-toolbar>
+          <ion-title size="large">{{ pageTitle }}</ion-title>
+        </ion-toolbar>
+      </ion-header>
+
       <ion-row>
         <ion-list-header>
           <ion-label> Detalles</ion-label>
@@ -28,14 +39,14 @@
                 <ion-col size="12" size-lg="6">
                   <ion-item>
                     <ion-icon :icon="documentOutline" slot="start"></ion-icon>
-                    <ion-label position="floating"> Titulo </ion-label>
-                    <ion-input type="text" v-model="form.title"></ion-input>
+                    <ion-label> Titulo </ion-label>
+                    <ion-input type="text" v-model="title"></ion-input>
                   </ion-item>
                 </ion-col>
 
                 <!-- calendar -->
                 <ion-col size="12" size-lg="6">
-                  <ion-item style="top: 16px">
+                  <ion-item>
                     <ion-icon
                       :icon="calendarClearOutline"
                       slot="start"
@@ -45,7 +56,7 @@
                       interface="popover"
                       ok-text="Aceptar"
                       cancel-text="Cancelar"
-                      v-model="form.calendar"
+                      v-model="calendar"
                     >
                       <ion-select-option
                         v-for="calendar in calendars"
@@ -82,13 +93,13 @@
                       Fecha inicial
                     </ion-label>
                     <ion-label slot="end" class="text-overflow">
-                      {{ customDateFormat(form.datetime.start, "Pp") }}
+                      {{ customDateFormat(datetime.start, "Pp") }}
                     </ion-label>
                     <ion-popover trigger="open-date1" :show-backdrop="false">
                       <ion-datetime
                         presentation="date-time"
-                        @ionChange="form.datetime.start = $event.detail.value!"
-                        v-model="form.datetime.start"
+                        @ionChange="datetime.start = $event.detail.value!"
+                        v-model="datetime.start"
                         hour-cycle="h12"
                       />
                     </ion-popover>
@@ -106,13 +117,13 @@
                       Fecha final
                     </ion-label>
                     <ion-label class="text-overflow" slot="end">
-                      {{ customDateFormat(form.datetime.end, "Pp") }}
+                      {{ customDateFormat(datetime.end, "Pp") }}
                     </ion-label>
                     <ion-popover trigger="open-date2" :show-backdrop="false">
                       <ion-datetime
                         presentation="date-time"
-                        @ionChange="form.datetime.end = $event.detail.value!"
-                        v-model="form.datetime.end"
+                        @ionChange="datetime.end = $event.detail.value!"
+                        v-model="datetime.end"
                         hour-cycle="h12"
                       />
                     </ion-popover>
@@ -127,10 +138,10 @@
                     <ion-select
                       :multiple="true"
                       interface="popover"
-                      v-model="form.reminders"
+                      v-model="reminders"
                     >
                       <ion-select-option
-                        v-for="reminder in reminders"
+                        v-for="reminder in remindersData"
                         :key="reminder.name"
                         :value="reminder.name"
                         >{{ reminder.value }}</ion-select-option
@@ -145,7 +156,7 @@
                     <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
                     <ion-label class="ion-text-wrap"> Repetir </ion-label>
                     <ion-label slot="end" class="text-overflow">
-                      Frecuencia
+                      {{ repeats.name }}
                     </ion-label>
                   </ion-item>
                 </ion-col>
@@ -158,7 +169,7 @@
                       Zona horaria
                     </ion-label>
                     <ion-label slot="end" class="text-overflow">
-                      {{ form.timeZone }}
+                      {{ timeZone }}
                     </ion-label>
                   </ion-item>
                 </ion-col>
@@ -179,57 +190,57 @@
                 <!-- tags -->
                 <ion-col size="12" size-lg="6">
                   <ion-item>
-                    <ion-icon
-                      :icon="pricetagsOutline"
-                      slot="start"
-                      class="icon-item"
-                    ></ion-icon>
-                    <ion-label position="floating"> Etiquetas </ion-label>
+                    <ion-icon :icon="pricetagsOutline" slot="start"></ion-icon>
+                    <ion-label> Etiquetas </ion-label>
                     <ion-input
                       v-on:keyup.enter="addTag()"
                       ref="inputTag"
                       placeholder="Nombre de la etiqueta"
                     ></ion-input>
                   </ion-item>
-                  <ion-chip
-                    color="primary"
-                    v-for="(tag, index) in form.tags"
-                    :key="tag"
-                  >
-                    <ion-label>{{ tag }}</ion-label>
-                    <ion-icon
-                      :icon="closeCircleOutline"
-                      @click="removeTag(index)"
-                    ></ion-icon>
-                  </ion-chip>
+                  <div style="overflow-x: scroll">
+                    <div style="display: inline-flex">
+                      <ion-chip
+                        color="primary"
+                        v-for="(tag, index) in tags"
+                        :key="tag"
+                      >
+                        <ion-label>{{ tag }}</ion-label>
+                        <ion-icon
+                          :icon="closeCircleOutline"
+                          @click="removeTag(index)"
+                        ></ion-icon>
+                      </ion-chip>
+                    </div>
+                  </div>
                 </ion-col>
 
                 <!-- guests -->
                 <ion-col size="12" size-lg="6">
                   <ion-item>
-                    <ion-icon
-                      :icon="mailOutline"
-                      slot="start"
-                      class="icon-item"
-                    ></ion-icon>
-                    <ion-label position="floating"> Invitados </ion-label>
+                    <ion-icon :icon="mailOutline" slot="start"></ion-icon>
+                    <ion-label> Invitados </ion-label>
                     <ion-input
                       v-on:keyup.enter="addGuest()"
                       ref="inputguest"
                       placeholder="correo electronico"
                     ></ion-input>
                   </ion-item>
-                  <ion-chip
-                    color="primary"
-                    v-for="(mail, index) in form.guests"
-                    :key="mail"
-                  >
-                    <ion-label>{{ mail }}</ion-label>
-                    <ion-icon
-                      :icon="closeCircleOutline"
-                      @click="removeGuest(index)"
-                    ></ion-icon>
-                  </ion-chip>
+                  <div style="overflow-x: scroll">
+                    <div style="display: inline-flex">
+                      <ion-chip
+                        color="primary"
+                        v-for="(mail, index) in guests"
+                        :key="mail"
+                      >
+                        <ion-label>{{ mail }}</ion-label>
+                        <ion-icon
+                          :icon="closeCircleOutline"
+                          @click="removeGuest(index)"
+                        ></ion-icon>
+                      </ion-chip>
+                    </div>
+                  </div>
                 </ion-col>
 
                 <!-- notes -->
@@ -238,12 +249,12 @@
                     <ion-icon
                       :icon="documentTextOutline"
                       slot="start"
-                      class="icon-item"
+                      class="item-icon"
                     ></ion-icon>
                     <ion-label position="floating"> notas </ion-label>
                     <ion-textarea
                       type="text"
-                      v-model="form.notes"
+                      v-model="notes"
                       autoGrow
                       :rows="4"
                     ></ion-textarea>
@@ -322,7 +333,7 @@ export default defineComponent({
   },
 
   setup() {
-    const reminders = [
+    const remindersData = [
       {
         name: "just",
         value: "A tiempo",
@@ -375,7 +386,7 @@ export default defineComponent({
       mailOutline,
       documentTextOutline,
       globeOutline,
-      reminders,
+      remindersData,
     };
   },
 
@@ -384,31 +395,28 @@ export default defineComponent({
     storage.create();
     return {
       buttonEdit: true,
-      pageTitle: "",
+      pageTitle: "Crear evento",
       storage,
-      form: {
-        title: "",
-        datetime: {
-          start: formatISO(new Date()),
-          end: formatISO(
-            add(new Date(), {
-              hours: 1,
-            })
-          ),
-        },
-        reminders: ["just"],
-        repeats: [
-          {
-            frequency: "unique",
-            data: {},
-          },
-        ],
-        calendar: "0",
-        notes: "",
-        tags: Array<string>(),
-        guests: Array<string>(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      title: "",
+      datetime: {
+        start: formatISO(new Date()),
+        end: formatISO(
+          add(new Date(), {
+            hours: 1,
+          })
+        ),
       },
+      reminders: ["just"],
+      repeats: {
+        frequency: "unique",
+        name: "Unico",
+        data: {},
+      },
+      calendar: "0",
+      notes: "",
+      tags: Array<string>(),
+      guests: Array<string>(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       calendars: Array<{ id: string; name: string }>(),
     };
   },
@@ -429,8 +437,8 @@ export default defineComponent({
       this.$router.push("/horario");
       setTimeout(() => {
         eventBus().emitter.emit("get-schedule-event", {
-          dateTimeStart: this.form.datetime.start,
-          dateTimeEnd: this.form.datetime.end,
+          dateTimeStart: this.datetime.start,
+          dateTimeEnd: this.datetime.end,
         });
       }, 300);
     },
@@ -439,27 +447,27 @@ export default defineComponent({
       this.$router.push("/repetir");
       setTimeout(() => {
         eventBus().emitter.emit("get-repeat-event", {
-          reminders: JSON.parse(JSON.stringify(this.form.repeats)),
+          reminders: JSON.parse(JSON.stringify(this.repeats)),
         });
       }, 300);
     },
 
     async save() {
-      if (this.form.title == "") {
-        this.form.title = "Sin titulo";
+      if (this.title == "") {
+        this.title = "Sin titulo";
       }
 
       const event = {
         id: this.$route.params.id,
-        title: this.form.title,
-        calendar: this.form.calendar,
-        dateTime: JSON.stringify(this.form.datetime),
-        guests: JSON.stringify(this.form.guests),
-        notes: this.form.notes,
-        reminders: JSON.stringify(this.form.reminders),
-        repeats: JSON.stringify(this.form.repeats),
-        tags: JSON.stringify(this.form.tags),
-        timeZone: this.form.timeZone,
+        title: this.title,
+        calendar: this.calendar,
+        dateTime: JSON.stringify(this.datetime),
+        guests: JSON.stringify(this.guests),
+        notes: this.notes,
+        reminders: JSON.stringify(this.reminders),
+        repeats: JSON.stringify(this.repeats),
+        tags: JSON.stringify(this.tags),
+        timeZone: this.timeZone,
       };
       if (this.$route.params.id) {
         this.updateEvent(event);
@@ -518,14 +526,15 @@ export default defineComponent({
 
     addTag() {
       if ((this.$refs.inputTag as any).$el.value != "") {
-        this.form.tags.push((this.$refs.inputTag as any).$el.value);
+        this.tags.push((this.$refs.inputTag as any).$el.value);
         (this.$refs.inputTag as any).$el.value = "";
       }
     },
 
     removeTag(index: number) {
-      this.form.tags.splice(index, 1);
+      this.tags.splice(index, 1);
     },
+
     async presentLoading() {
       const loading = await loadingController.create({
         cssClass: "my-custom-class",
@@ -541,14 +550,19 @@ export default defineComponent({
     addGuest() {
       const guest = (this.$refs.inputguest as any).$el.value;
       const re = /^[^\s@]+@[^\s@]+$/;
-      if (guest != "" && re.test(guest)) {
-        this.form.guests.push(guest);
+
+      const repeated = this.guests.filter((item) => {
+        if (item == guest) return item;
+      });
+
+      if (guest != "" && re.test(guest) && repeated.length == 0) {
+        this.guests.push(guest);
         (this.$refs.inputguest as any).$el.value = "";
       }
     },
 
     removeGuest(index: number) {
-      this.form.guests.splice(index, 1);
+      this.guests.splice(index, 1);
     },
 
     async openModalRepeats() {
@@ -556,14 +570,14 @@ export default defineComponent({
         component: Repeats,
         cssClass: "my-custom-class",
         componentProps: {
-          repeatsProps: Object.assign([], this.form.repeats),
-          day: this.customDateFormat(this.form.datetime.start, "EEEE"),
+          repeatsProps: Object.assign({}, this.repeats),
         },
       });
       modal.onDidDismiss().then((response) => {
         if (response.data) {
-          this.form.repeats[0].frequency = response.data.frequency;
-          this.form.repeats[0].data = response.data.data;
+          this.repeats.frequency = response.data.frequency;
+          this.repeats.name = response.data.frequencyName;
+          this.repeats.data = response.data.data;
         }
       });
       return modal.present();
@@ -587,26 +601,27 @@ export default defineComponent({
     getEventLocal(id: string) {
       getEventLocalService(parseInt(id)).then((response) => {
         // FIX: pasar las fechas en formatoISO
-        this.form.title = response[0].title;
+        this.title = response[0].title;
         // TODO: set calendar
-        // //          this.form.calendar = response[0].calendar.id;
-        this.form.guests = response[0].guests;
-        this.form.reminders = response[0].reminders;
-        this.form.repeats = response[0].repeats;
-        this.form.notes = response[0].notes;
+        // //          this.calendar = response[0].calendar.id;
+        this.guests = response[0].guests;
+        this.reminders = response[0].reminders;
+        this.repeats = response[0].repeats;
+        this.notes = response[0].notes;
         response[0].tags.forEach((element: any) => {
-          this.form.tags.push(element.name);
+          this.tags.push(element.name);
         });
-        this.form.timeZone = response[0].time_zone;
+        this.timeZone = response[0].time_zone;
       });
     },
+
     async openModalTimeZone() {
       const modal = await modalController.create({
         component: TimeZoneComponent,
       });
       modal.onDidDismiss().then((response) => {
-        if (response.data) {
-          this.form.timeZone = response.data.timeZone;
+        if (response.data && response.data.timeZone != "") {
+          this.timeZone = response.data.timeZone;
         }
       });
       return modal.present();
@@ -626,5 +641,12 @@ export default defineComponent({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.input-label {
+  margin-top: 30px;
+}
+.input {
+  margin-top: 20px;
+  text-align: right;
 }
 </style>

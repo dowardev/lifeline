@@ -1,13 +1,14 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border" mode="ios" :translucent="true">
+    <ion-header :translucent="true" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button v-on:click="$router.go(-1)">
-            <ion-icon :icon="chevronBackOutline"></ion-icon>
-          </ion-button>
+          <ion-menu-button
+            menu="mainMenu"
+            :smode="modeDesingElements"
+          ></ion-menu-button>
         </ion-buttons>
-        <ion-title>Iniciar sesion</ion-title>
+        <ion-title>Iniciar sesión</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -19,56 +20,65 @@
       />
       <ion-row class="ion-padding">
         <ion-col size="12">
-          <h1 style="color: white">Hola, es un gusto tenerte de vuelta</h1>
+          <h1 style="color: white !important">
+            Hola, es un gusto tenerte de vuelta
+          </h1>
         </ion-col>
       </ion-row>
+
       <ion-row class="center center-vertical-card-login">
         <ion-col size="12" size-lg="6" size-xl="4" class="card-form">
           <ion-card>
-            <div class="center">
-              <img
-                src="../../../../public/assets/otros/key.svg"
-                alt=""
-                class="imagen-usuario"
-              />
-            </div>
             <ion-card-content>
+              <div class="center">
+                <img
+                  src="../../../../public/assets/otros/key.svg"
+                  alt=""
+                  class="imagen-usuario"
+                />
+              </div>
               <form>
-                <ion-item>
+                <ion-item lines="inset" class="transparent">
                   <ion-icon
                     :icon="mailOpenOutline"
-                    style="font-size: 20px; margin-top: 24px"
+                    class="item-icon"
                     slot="start"
-                  ></ion-icon>
-                  <ion-label position="floating">Correo electronico</ion-label>
+                  >
+                  </ion-icon>
+                  <ion-label position="floating">
+                    Usuario o correo electrónico
+                  </ion-label>
                   <ion-input
                     v-model="(v$ as any).form.email.$model"
                     type="email"
-                  ></ion-input>
+                  >
+                  </ion-input>
                 </ion-item>
                 <div
-                  v-for="(error, index) of (v$ as any).form.email.$errors"
+                  v-for="(error, index) of (v$ as any).form['email'].$errors"
                   :key="index"
                 >
                   <div class="error">{{ error.$message }}</div>
                 </div>
 
-                <ion-item>
+                <ion-item lines="inset" class="transparent">
                   <ion-icon
                     :icon="fingerPrintOutline"
-                    style="font-size: 20px; margin-top: 24px"
+                    class="item-icon"
                     slot="start"
-                  ></ion-icon>
+                  >
+                  </ion-icon>
                   <ion-label position="floating">Contraseña</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.password.$model"
                     :type="inputTypePassword"
-                  ></ion-input>
+                  >
+                  </ion-input>
                   <ion-button
                     slot="end"
                     fill="clear"
                     v-if="inputTypePassword == 'text'"
-                    v-on:click="changeInputTypePassword('password')"
+                    v-on:click="inputTypePassword = 'password'"
                     style="margin-top: 20px"
                   >
                     <ion-icon :icon="eyeOffOutline"></ion-icon>
@@ -77,7 +87,7 @@
                     slot="end"
                     fill="clear"
                     v-if="inputTypePassword == 'password'"
-                    v-on:click="changeInputTypePassword('text')"
+                    v-on:click="inputTypePassword = 'text'"
                     style="margin-top: 20px"
                   >
                     <ion-icon :icon="eyeOutline"></ion-icon>
@@ -92,47 +102,64 @@
                 </div>
               </form>
 
-              <ion-row>
-                <ion-col size="12">
-                  <ion-button
-                    fill="clear"
-                    expand="block"
-                    v-on:click="login()"
-                    :disabled="(v$ as any).form.$invalid || spinners.buttonLogin == true"
-                  >
-                    <ion-label v-if="spinners.buttonLogin == false">
-                      Iniciar sesion</ion-label
-                    >
-                    <ion-spinner
-                      name="crescent"
-                      v-if="spinners.buttonLogin == true"
-                    ></ion-spinner>
-                  </ion-button>
-                </ion-col>
-              </ion-row>
+              <ion-button
+                fill="clear"
+                v-on:click="login()"
+                :disabled="(v$ as any).form.$invalid || spinners.buttonLogin"
+                expand="full"
+              >
+                <ion-label v-if="spinners.buttonLogin == false">
+                  Iniciar sesión</ion-label
+                >
+                <ion-spinner
+                  name="crescent"
+                  v-if="spinners.buttonLogin"
+                ></ion-spinner>
+              </ion-button>
             </ion-card-content>
           </ion-card>
-          <ion-row>
-            <ion-col size="12" class="center">
-              <small>
-                <ion-text
-                  color="primary"
-                  v-on:click="$router.push('/restablecer')"
+
+          <section>
+            <div class="center">
+              <ion-item lines="none" class="transparent">
+                <ion-button
+                  @click="forgotPassword()"
+                  class="options"
+                  fill="clear"
+                  :disabled="spinners.buttonForgotPassword"
                 >
-                  ¿Olvidaste la contraseña?</ion-text
+                  <ion-label v-if="spinners.buttonForgotPassword == false"
+                    >¿Olvidaste la contraseña?</ion-label
+                  >
+                  <ion-spinner
+                    name="crescent"
+                    v-if="spinners.buttonForgotPassword"
+                  ></ion-spinner>
+                </ion-button>
+              </ion-item>
+            </div>
+
+            <div class="center">
+              <ion-item lines="none" class="transparent">
+                <ion-button
+                  @click="createAccount()"
+                  class="options"
+                  fill="clear"
+                  :disabled="spinners.buttonCreateAccount"
+                  expand="full"
                 >
-              </small>
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="12" class="center">
-              <small>
-                <ion-text color="primary" v-on:click="$router.push('/registro')"
-                  >Crear cuenta</ion-text
-                >
-              </small>
-            </ion-col>
-          </ion-row>
+                  <ion-label v-if="spinners.buttonCreateAccount == false"
+                    >Crear cuenta</ion-label
+                  >
+                  <ion-spinner
+                    name="crescent"
+                    v-if="spinners.buttonCreateAccount"
+                    color="primary"
+                  ></ion-spinner>
+                </ion-button>
+              </ion-item>
+            </div>
+          </section>
         </ion-col>
       </ion-row>
     </ion-content>
@@ -150,24 +177,34 @@ import {
   alertController,
   IonInput,
   loadingController,
+  IonCard,
+  IonRow,
+  IonCol,
+  IonButtons,
+  IonMenuButton,
+  IonItem,
+  IonIcon,
+  IonLabel,
+  IonButton,
+  isPlatform,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import {
-  chevronBackOutline,
   eyeOffOutline,
   eyeOutline,
   fingerPrintOutline,
   mailOpenOutline,
 } from "ionicons/icons";
+import { userLogin } from "../../../services/session";
 import {
-  getUser as getUserService,
-  resendEmailConfirmation as resendEmailConfirmationService,
-  setUserToken as setUserTokenService,
+  getUser,
+  setUserToken,
+  resendEmailConfirmation,
 } from "../../../services/user";
 import useVuelidate from "@vuelidate/core";
-import { required, email, minLength, helpers } from "@vuelidate/validators";
-import { userLogin as userLoginService } from "../../../services/session";
-import { USER_NAME } from "../../../services/graphql";
+import { required, helpers } from "@vuelidate/validators";
+// import { openToastErrror } from "../../../services/system";
+import { USER_LOGIN, USER_NAME } from "../../../services/graphql";
 
 export default defineComponent({
   name: "LoginPage",
@@ -178,16 +215,26 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
     IonInput,
+    IonCard,
+    IonRow,
+    IonCol,
+    IonButtons,
+    IonMenuButton,
+    IonItem,
+    IonIcon,
+    IonLabel,
+    IonButton,
   },
 
   setup() {
+    const modeDesingElements = isPlatform("ios") ? "ios" : "md";
     return {
-      chevronBackOutline,
       eyeOffOutline,
       eyeOutline,
       v$: useVuelidate(),
       fingerPrintOutline,
       mailOpenOutline,
+      modeDesingElements,
     };
   },
 
@@ -198,7 +245,11 @@ export default defineComponent({
         email: "",
         password: "",
       },
-      spinners: { buttonLogin: false },
+      spinners: {
+        buttonLogin: false,
+        buttonForgotPassword: false,
+        buttonCreateAccount: false,
+      },
     };
   },
 
@@ -208,18 +259,16 @@ export default defineComponent({
       form: {
         email: {
           required: helpers.withMessage(messageRequired, required),
-          email: helpers.withMessage("Correo no valido", email),
         },
         password: {
           required: helpers.withMessage(messageRequired, required),
-          min: minLength(6),
         },
       },
     };
   },
 
   beforeRouteEnter(to, from, next) {
-    getUserService({ graphql: { name: USER_NAME, fragment: "UserName" } })
+    getUser({ graphql: { name: USER_NAME, fragment: "UserName" } })
       .then(() => {
         next("/");
       })
@@ -244,22 +293,19 @@ export default defineComponent({
 
       const user = this.form.email.replace(/\s+/g, "");
       const password = this.form.password;
-      const query = `
-            auth {
-              access_token
-        }
-      `;
+
       try {
-        const response = await userLoginService({
-          query,
+        const response = await userLogin({
           user,
           password,
+          graphql: { name: USER_LOGIN, fragment: "UserLogin" },
         });
 
         const token = "Bearer " + response.auth.access_token;
-        setUserTokenService({ token });
+        setUserToken({ token });
 
         this.spinners.buttonLogin = false;
+        this.clearInputs();
         location.reload();
       } catch (e: any) {
         this.spinners.buttonLogin = false;
@@ -279,19 +325,21 @@ export default defineComponent({
           return;
         }
 
-        // systemService().openToastErrror(e);
+        // openToastErrror(e);
         console.error(e.message);
       }
     },
 
-    changeInputTypePassword(type: "text" | "password") {
-      this.inputTypePassword = type;
+    clearInputs() {
+      this.form.password = "";
+      this.form.email = "";
     },
 
     async alertConfirmationEmail() {
       const alert = await alertController.create({
         cssClass: "my-custom-class",
         header: "Alerta",
+
         subHeader: "Confirmación",
         message:
           "Hemos enviado un correo electrónico a " +
@@ -301,7 +349,7 @@ export default defineComponent({
           {
             text: "Continuar",
             handler: () => {
-              resendEmailConfirmationService({ email: this.form.email });
+              resendEmailConfirmation({ email: this.form.email });
             },
           },
         ],
@@ -310,27 +358,85 @@ export default defineComponent({
       await alert.present();
     },
 
-    async presentLoading() {
+    async presentLoading(message: string) {
       const loading = await loadingController.create({
+        message,
+      });
+      return loading;
+    },
+
+    async forgotPassword() {
+      this.spinners.buttonForgotPassword = true;
+
+      const alertResponse = await this.presentAlertRestorePassword();
+      if (alertResponse.role == "cancel") {
+        this.spinners.buttonForgotPassword = false;
+        return;
+      }
+
+      // try {
+      //   await sendMailResetPassword({
+      //     email: alertResponse.email,
+      //   });
+      // } catch (e: any) {
+      //   console.error(e);
+      //   openToastErrror(e);
+      // }
+
+      this.spinners.buttonForgotPassword = false;
+    },
+
+    async createAccount() {
+      this.spinners.buttonCreateAccount = true;
+      await this.$router.push("/signup");
+      this.spinners.buttonCreateAccount = false;
+    },
+
+    async presentAlertRestorePassword(): Promise<{
+      email: string;
+      role: string;
+    }> {
+      const alert = await alertController.create({
         cssClass: "my-custom-class",
-        message: "Espere por favor",
+        header: "Restauracion de contraseña",
+        message:
+          "Te enviaremos un correo electronico con las intrucciones para restablecer tu contraseña.",
+        inputs: [
+          {
+            name: "email",
+            id: "email",
+            placeholder: "Correo electronico",
+            type: "email",
+          },
+        ],
+        buttons: [
+          {
+            text: "Cancelar",
+            role: "cancel",
+            cssClass: "secondary",
+            handler: () => {
+              // console.log("Confirm Cancel");
+            },
+          },
+          {
+            text: "Confirmar",
+            handler: () => {
+              // console.log(e);
+            },
+          },
+        ],
       });
 
-      // await loading.present();
-      return loading;
+      await alert.present();
+      const response = await alert.onDidDismiss();
+      // eslint-disable-next-line
+      return { email: response.data.values.email, role: response.role! };
     },
   },
 });
 </script>
 
 <style scoped>
-.error {
-  color: red;
-}
-.center {
-  display: flex;
-  justify-content: center;
-}
 .imagen-usuario {
   border-radius: 50%;
   width: 90px;

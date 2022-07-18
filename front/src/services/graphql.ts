@@ -26,3 +26,12 @@ export const CALENDARS = gql`
     }
   }
 `;
+
+// auth
+export const USER_LOGIN = gql`
+  fragment UserLogin on LoginPayload {
+    auth {
+      access_token
+    }
+  }
+`;

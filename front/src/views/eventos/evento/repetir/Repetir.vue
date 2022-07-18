@@ -1,37 +1,35 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border" :translucent="true">
+    <ion-header class="ion-no-border" :translucent="true" mode="ios">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button v-on:click="$router.go(-1)">
-            <ion-icon slot="start" :icon="chevronBackOutline"></ion-icon>
+          <ion-button @click="closeModal()">
+            <ion-icon :icon="closeOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-title>Repetir</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-on:click="save()" :disabled="validate">
+          <ion-button @click="save()" :disabled="validate">
             <ion-icon slot="start" :icon="saveOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
-
-      <ion-toolbar>
-        <ion-item>
-          <ion-label>Frecuencia</ion-label>
-          <ion-select v-model="repeatData.frequencySelect" interface="popover">
-            <ion-select-option
-              v-for="option in frequencyOptions"
-              :key="option.name"
-              :value="option.name"
-            >
-              {{ option.value }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-      </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
+      <ion-item>
+        <ion-label>Frecuencia</ion-label>
+        <ion-select v-model="repeatData.frequencySelect" interface="popover">
+          <ion-select-option
+            v-for="option in frequencyOptions"
+            :key="option.name"
+            :value="option.name"
+          >
+            {{ option.value }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
       <section v-if="repeatData.frequencySelect == 'unique'"></section>
 
       <section v-if="repeatData.frequencySelect == 'daily'">
@@ -204,9 +202,7 @@ import {
   modalController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { chevronBackOutline, saveOutline } from "ionicons/icons";
-import eventBus from "../../../../EventBus";
-// import userService from "../../../../services/user";
+import { closeOutline, saveOutline } from "ionicons/icons";
 
 export default defineComponent({
   name: "RepetirPage",
@@ -219,10 +215,14 @@ export default defineComponent({
     IonSelect,
     IonSelectOption,
   },
+
   props: {
-    repeatsProps: { type: Array<any>(), default: [] },
-    day: { type: String, default: "" },
+    repeatsProps: {
+      type: Array<any>(),
+      default: { frequency: "unique", name: "Unico", data: {} },
+    },
   },
+
   setup() {
     const frequency = [];
     for (let i = 1; i <= 50; i++) {
@@ -274,7 +274,7 @@ export default defineComponent({
       { name: "sunday", value: "Domingo" },
     ];
     return {
-      chevronBackOutline,
+      closeOutline,
       frequency,
       daysMonth,
       weeksMonthSelect,
@@ -347,59 +347,39 @@ export default defineComponent({
   },
 
   mounted() {
-    this.setCurrentDay();
-    eventBus().emitter.on("get-repeat-event", (response: any) => {
-      this.repeatData.frequencySelect = "unique";
-      if (response.reminders.frequency != "unique") {
-        this.repeatData.frequencySelect = response.reminders.frequency;
-        if (response.reminders.frequency == "daily") {
-          this.repeatData.daily = response.reminders.data;
-        }
-        if (response.reminders.frequency == "weekly") {
-          this.repeatData.weekly = response.reminders.data;
-        }
-        if (response.reminders.frequency == "monthly") {
-          this.repeatData.monthly = response.reminders.data;
-        }
-        if (response.reminders.frequency == "annually") {
-          this.repeatData.annually = response.reminders.data;
-        }
-      }
-    });
+    this.setData();
   },
+
   methods: {
-    setCurrentDay() {
-      const d = new Date();
-      const day = d.getDate();
-      this.currentDay = day;
+    setData() {
+      this.repeatData.frequencySelect = this.repeatsProps.frequency;
+      (this.repeatData as any)[this.repeatsProps.frequency] =
+        this.repeatsProps.data;
     },
+
     save() {
-      let frequency = "unique";
+      const frequency = this.repeatData.frequencySelect;
+      let frequencyName = "";
       let data = {};
 
-      if (this.repeatData.frequencySelect == "daily") {
-        frequency = "daily";
-        data = JSON.parse(JSON.stringify(this.repeatData.daily));
-      }
-      if (this.repeatData.frequencySelect == "weekly") {
-        frequency = "weekly";
-        data = JSON.parse(JSON.stringify(this.repeatData.weekly));
-      }
-      if (this.repeatData.frequencySelect == "monthly") {
-        frequency = "monthly";
-        data = JSON.parse(JSON.stringify(this.repeatData.monthly));
-      }
-      if (this.repeatData.frequencySelect == "annually") {
-        frequency = "annually";
-        data = JSON.parse(JSON.stringify(this.repeatData.annually));
-      }
-      modalController.dismiss({ frequency, data });
+      this.frequencyOptions.forEach((element) => {
+        if (element.name == frequency) {
+          frequencyName = element.value;
+          data = (this.repeatData as any)[element.name];
+        }
+      });
+
+      modalController.dismiss({ frequency, frequencyName, data });
     },
     // async getFileTranslate() {
     //   this.fileTranslate = [await userService().translate()];
     // },
     convertFirstLetterLowercase(word: string) {
       return word.charAt(0).toLowerCase() + word.slice(1);
+    },
+
+    closeModal() {
+      modalController.dismiss();
     },
   },
 });
