@@ -22,6 +22,11 @@ type Mutation {
 
   # prueba(input: RegisterInput @spread): String
   #   @field(resolver: "App\\GraphQL\\Resolvers\\others\\TestResolver@resolve")
+
+  createEvent(input: CreateEvent @spread): Boolean
+    @field(
+      resolver: "App\\GraphQL\\Resolvers\\events\\CreateEventResolver@resolve"
+    )
 }
 
 type User {
@@ -48,6 +53,17 @@ input RegisterInput {
 input LoginInput {
   user: String!
   password: String!
+}
+input CreateEvent {
+  title: String
+  calendar: String
+  dateTime: String
+  guests: String
+  notes: String
+  reminders: String
+  repeats: String
+  tags: String
+  timeZone: String
 }
 
 # payloads

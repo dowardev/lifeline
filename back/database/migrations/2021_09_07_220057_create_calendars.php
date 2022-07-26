@@ -17,10 +17,13 @@ class CreateCalendars extends Migration
     Schema::create('calendars', function (Blueprint $table) {
       $table->increments('id');
       $table->string('name');
+      $table->boolean('default')->default(false);
       $table->timestamps();
     });
+
     DB::table('calendars')->insert([
       'name' => 'Personal',
+      'default' => true,
     ]);
   }
 
