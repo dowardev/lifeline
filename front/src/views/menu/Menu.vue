@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header class="ion-no-border" mode="ios">
       <ion-toolbar class="color-menu">
-        <ion-item lines="none" v-if="logged == true">
+        <ion-item lines="none" v-if="logged == true" class="transparent">
           <ion-avatar slot="start">
             <img :src="userData.img" />
           </ion-avatar>
@@ -11,6 +11,7 @@
             <ion-icon :icon="settingsOutline"></ion-icon>
           </ion-button>
         </ion-item>
+
         <ion-item v-if="logged == false" class="transparent" lines="none">
           <ion-button fill="clear" @click="openRoute('/login')"
             >Iniciar sesion</ion-button

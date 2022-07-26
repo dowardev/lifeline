@@ -11,20 +11,61 @@ import { useQuery, useMutation } from "@vue/apollo-composable";
 import { provideApolloClient } from "@vue/apollo-composable";
 provideApolloClient(apolloClient);
 
-import { GetCalendars, GetCalendarsResponse } from "./interfaces";
+import { GetCalendars, GetCalendarsResponse, CreateEvent } from "./interfaces";
 
-export async function createEvent(event: Record<string, any>) {
-  // const token = await userService()
-  //   .getUserToken()
-  //   .then((response) => {
-  //     return response;
-  //   });
-  // return axios.post("http://localhost:8000/api/auth/create-event", event, {
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //     Authorization: "Bearer " + token,
-  //   },
-  // });
+export async function createEvent(params: CreateEvent): Promise<void> {
+  const {
+    onError,
+    onDone,
+    mutate: createEvent,
+  } = useMutation(
+    gql`
+      mutation createEvent(
+        $title: String
+        $calendar: String
+        $dateTime: String
+        $guests: String
+        $notes: String
+        $reminders: String
+        $repeats: String
+        $tags: String
+        $timeZone: String
+      ) {
+        createEvent(
+          input: {
+            title: $title
+            calendar: $calendar
+            dateTime: $dateTime
+            guests: $guests
+            notes: $notes
+            reminders: $reminders
+            repeats: $repeats
+            tags: $tags
+            timeZone: $timeZone
+          }
+        )
+      }
+    `,
+    {
+      variables: {
+        title: params.title,
+        calendar: params.calendar,
+        dateTime: params.dateTime,
+        guests: params.guests,
+        notes: params.notes,
+        reminders: params.reminders,
+        repeats: params.repeats,
+        tags: params.tags,
+        timeZone: params.timeZone,
+      },
+    }
+  );
+  createEvent();
+
+  return new Promise((resolve, reject) => {
+    onDone(() => resolve());
+    onError((error) => reject(error));
+  });
 }
 export async function updateEvent(event: Record<string, any>) {
   // const token = await userService()

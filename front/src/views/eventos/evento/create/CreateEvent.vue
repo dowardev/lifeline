@@ -14,8 +14,16 @@
         </ion-buttons>
         <ion-title>{{ pageTitle }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-on:click="save()">
-            <ion-icon slot="start" :icon="saveOutline"></ion-icon>
+          <ion-button v-on:click="save()" :disabled="spinners.save == true">
+            <ion-icon
+              slot="start"
+              :icon="saveOutline"
+              v-if="spinners.save == false"
+            ></ion-icon>
+            <ion-spinner
+              name="crescent"
+              v-if="spinners.save == true"
+            ></ion-spinner>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -135,10 +143,14 @@
                   <ion-item>
                     <ion-icon :icon="timeOutline" slot="start"></ion-icon>
                     <ion-label>Recordatorio</ion-label>
+                    <!-- <ion-label v-if="reminders.length == 0" -->
+                    <!--   >Sin recordatorio</ion-label -->
+                    <!-- > -->
                     <ion-select
                       :multiple="true"
                       interface="popover"
                       v-model="reminders"
+                      placeholder="No establecido"
                     >
                       <ion-select-option
                         v-for="reminder in remindersData"
@@ -198,7 +210,7 @@
                       placeholder="Nombre de la etiqueta"
                     ></ion-input>
                   </ion-item>
-                  <div style="overflow-x: scroll">
+                  <div style="overflow-x: scroll" v-if="tags.length > 0">
                     <div style="display: inline-flex">
                       <ion-chip
                         color="primary"
@@ -226,7 +238,7 @@
                       placeholder="correo electronico"
                     ></ion-input>
                   </ion-item>
-                  <div style="overflow-x: scroll">
+                  <div style="overflow-x: scroll" v-if="guests.length > 0">
                     <div style="display: inline-flex">
                       <ion-chip
                         color="primary"
@@ -316,6 +328,7 @@ import { format, formatISO } from "date-fns";
 import Repeats from "../repetir/Repetir.vue";
 import TimeZoneComponent from "../../../../components/SelectTimeZone.vue";
 import { CALENDARS } from "../../../../services/graphql";
+import { CreateEvent } from "../../../../services/interfaces";
 
 export default defineComponent({
   name: "EventPage",
@@ -406,7 +419,7 @@ export default defineComponent({
           })
         ),
       },
-      reminders: ["just"],
+      reminders: [],
       repeats: {
         frequency: "unique",
         name: "Unico",
@@ -418,11 +431,14 @@ export default defineComponent({
       guests: Array<string>(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       calendars: Array<{ id: string; name: string }>(),
+      spinners: {
+        save: false,
+      },
     };
   },
 
   mounted() {
-    this.getCalendars();
+    this.getDefultCalendar();
     if (this.$route.params.id) {
       this.getEventLocal(this.$route.params.id as string);
     }
@@ -453,10 +469,6 @@ export default defineComponent({
     },
 
     async save() {
-      if (this.title == "") {
-        this.title = "Sin titulo";
-      }
-
       const event = {
         id: this.$route.params.id,
         title: this.title,
@@ -476,36 +488,31 @@ export default defineComponent({
       }
     },
 
-    async createEvent(event: Record<string, any>) {
-      const loading = await this.presentLoading();
-      loading.present();
-
-      createEventService(event)
-        .then(async () => {
-          loading.dismiss();
-          const message = "Evento creado correctamente";
-          eventBus().emitter.emit("refresh-events");
-          this.$router.go(-1);
-          this.openToast(message, "success");
-        })
-        .catch(() => {
-          loading.dismiss();
-        });
+    async createEvent(event: CreateEvent) {
+      this.spinners.save = true;
+      try {
+        await createEventService(event);
+        const message = "Evento creado correctamente";
+        eventBus().emitter.emit("refresh-events");
+        this.$router.go(-1);
+        this.openToast({ message, color: "dark" });
+      } catch (e: any) {
+        console.error(e);
+      } finally {
+        this.spinners.save = false;
+      }
     },
-    async updateEvent(event: Record<string, any>) {
-      const loading = await this.presentLoading();
-      loading.present();
 
+    async updateEvent(event: Record<string, any>) {
       updateEventService(event)
         .then(async () => {
-          loading.dismiss();
           const message = "Evento actualizado correctamente";
           eventBus().emitter.emit("refresh-events");
           this.$router.go(-1);
-          this.openToast(message, "success");
+          this.openToast({ message, color: "success" });
         })
         .catch(() => {
-          loading.dismiss();
+          // loading.dismiss();
         });
     },
 
@@ -513,13 +520,11 @@ export default defineComponent({
       return formatDateTimeService(date, typeFormat);
     },
 
-    async openToast(message: string, color: string) {
+    async openToast(params: { message: string; color: string }) {
       const toast = await toastController.create({
-        message,
+        message: params.message,
         duration: 2000,
-        mode: "ios",
-        translucent: true,
-        color,
+        color: params.color,
       });
       return toast.present();
     },
@@ -533,14 +538,6 @@ export default defineComponent({
 
     removeTag(index: number) {
       this.tags.splice(index, 1);
-    },
-
-    async presentLoading() {
-      const loading = await loadingController.create({
-        cssClass: "my-custom-class",
-        message: "Espere por favor",
-      });
-      return loading;
     },
 
     customDateFormat(date: any, styleFormat: string) {
@@ -626,8 +623,10 @@ export default defineComponent({
       });
       return modal.present();
     },
-    prueba(e: any) {
-      console.log(e);
+
+    async getDefultCalendar() {
+      await this.getCalendars();
+      this.calendar = this.calendars[0].id;
     },
   },
 });

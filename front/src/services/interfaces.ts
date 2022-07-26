@@ -7,7 +7,6 @@ interface Graphql {
 }
 
 // user
-// user
 export interface User {
   id?: string;
   name?: string;
@@ -67,4 +66,15 @@ export interface GetCalendars {
 export interface GetCalendarsResponse {
   id: string;
   name: string;
+}
+export interface CreateEvent {
+  title?: string;
+  calendar?: string;
+  dateTime?: string;
+  guests?: string;
+  notes?: string;
+  reminders?: string;
+  repeats?: string;
+  tags?: string;
+  timeZone?: string;
 }
