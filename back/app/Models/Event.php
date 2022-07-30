@@ -23,10 +23,12 @@ class Event extends Model
     'notes',
     'time_zone',
   ];
+
   public function tags()
   {
     return $this->belongsToMany(AdminTag::class, 'tags', 'event_id', 'tag_id');
   }
+
   public function calendar()
   {
     return $this->belongsTo(Calendar::class);

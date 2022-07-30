@@ -16,13 +16,21 @@ class CreateCalendars extends Migration
   {
     Schema::create('calendars', function (Blueprint $table) {
       $table->increments('id');
+      $table->integer('user_id')->unsigned();
       $table->string('name');
       $table->boolean('default')->default(false);
       $table->timestamps();
+
+      $table
+        ->foreign('user_id')
+        ->references('id')
+        ->on('users')
+        ->onDelete('cascade');
     });
 
     DB::table('calendars')->insert([
       'name' => 'Personal',
+      'user_id' => 1,
       'default' => true,
     ]);
   }

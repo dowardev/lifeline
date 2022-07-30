@@ -7,6 +7,7 @@ use GraphQL\Type\Definition\ResolveInfo;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 use App\Models\Images;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use GraphQL\Error\Error;
 
@@ -33,16 +34,21 @@ class GetUserAuthResolver
       //   );
       // }
 
+      $user_id = Auth::user()->id;
+
+      $calendars = User::find($user_id)->calendars;
+      $events = User::find($user_id)->events;
+
       $user = [
         'id' => $response->id,
         'name' => $response->name,
         'user' => $response->user,
         // 'image_source' => $image_source,
+        'calendars' => $calendars,
+        'events' => $events,
       ];
 
-      return [
-        'user' => $user,
-      ];
+      return $user;
     } catch (Exception $e) {
       throw new Exception($e->getMessage());
     }

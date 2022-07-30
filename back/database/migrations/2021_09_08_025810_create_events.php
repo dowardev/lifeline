@@ -26,6 +26,7 @@ class CreateEvents extends Migration
       $table->string('guests')->nullable();
       $table->longText('notes')->nullable();
       $table->timestamps();
+
       $table
         ->foreign('user_id')
         ->references('id')
