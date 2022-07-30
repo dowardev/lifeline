@@ -193,6 +193,7 @@ export default defineComponent({
     IonToolbar,
     IonFooter,
   },
+
   setup() {
     return {
       settingsOutline,

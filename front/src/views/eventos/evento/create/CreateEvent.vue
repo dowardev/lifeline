@@ -319,7 +319,7 @@ import {
   updateEvent as updateEventService,
   formatDateTime as formatDateTimeService,
   getEventLocal as getEventLocalService,
-  getCalendars as getCalendarsService,
+  getUserCalendars as getCalendarsService,
 } from "../../../../services/event";
 // import userService from "../../../../services/user";
 import { Storage } from "@ionic/storage";
@@ -327,7 +327,7 @@ import { add } from "date-fns";
 import { format, formatISO } from "date-fns";
 import Repeats from "../repetir/Repetir.vue";
 import TimeZoneComponent from "../../../../components/SelectTimeZone.vue";
-import { CALENDARS } from "../../../../services/graphql";
+import { USER_CALENDARS } from "../../../../services/graphql";
 import { CreateEvent } from "../../../../services/interfaces";
 
 export default defineComponent({
@@ -430,7 +430,7 @@ export default defineComponent({
       tags: Array<string>(),
       guests: Array<string>(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      calendars: Array<{ id: string; name: string }>(),
+      calendars: Array<{ id: string; name: string; default: boolean }>(),
       spinners: {
         save: false,
       },
@@ -587,11 +587,10 @@ export default defineComponent({
     async getCalendars() {
       const response = await getCalendarsService({
         graphql: {
-          name: CALENDARS,
+          name: USER_CALENDARS,
           fragment: "Calendars",
         },
       });
-
       this.calendars = response;
     },
 
@@ -626,7 +625,9 @@ export default defineComponent({
 
     async getDefultCalendar() {
       await this.getCalendars();
-      this.calendar = this.calendars[0].id;
+      this.calendar = this.calendars.filter((item) => {
+        if (item.default) return item;
+      })[0].id;
     },
   },
 });

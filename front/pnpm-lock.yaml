@@ -10,8 +10,8 @@ specifiers:
   '@capacitor/keyboard': ^1.2.3
   '@capacitor/status-bar': 1.0.8
   '@ionic/storage': ^3.0.6
-  '@ionic/vue': ^6.1.11
-  '@ionic/vue-router': ^6.1.11
+  '@ionic/vue': '6.2'
+  '@ionic/vue-router': '6.2'
   '@kangc/v-md-editor': ^2.3.15
   '@types/jest': ^27.0.2
   '@types/node': ^18.0.0
@@ -57,8 +57,8 @@ dependencies:
   '@capacitor/keyboard': 1.2.3_@capacitor+core@3.6.0
   '@capacitor/status-bar': 1.0.8_@capacitor+core@3.6.0
   '@ionic/storage': 3.0.6
-  '@ionic/vue': 6.1.14
-  '@ionic/vue-router': 6.1.14
+  '@ionic/vue': 6.2.0
+  '@ionic/vue-router': 6.2.0
   '@kangc/v-md-editor': 2.3.15_2yymnzrok6eda47acnj2yjm3ae
   '@types/node': 18.0.5
   '@vue/apollo-composable': 4.0.0-alpha.18_ga3iooe4t6afr6kongbdyporqi
@@ -1540,8 +1540,8 @@ packages:
       - supports-color
     dev: true
 
-  /@ionic/core/6.1.14:
-    resolution: {integrity: sha512-tmhumOD7VM7QV3boh8rwMNYOgqBskOtGJPSEaySEmCUy+Y0nXwb0gBqxZ/M6c0JcGwT17gIB2KiQDvZ4O/J8iA==}
+  /@ionic/core/6.2.0:
+    resolution: {integrity: sha512-3qUNsVcSAdrjhIhPr5M2RRnh+1xuc9RFaxoeUgI9xQ0YjTmn2FWiH4urDCXuE/rZAwnvHF4X17P0L2EqCPSfWA==}
     dependencies:
       '@stencil/core': 2.17.1
       ionicons: 6.0.2
@@ -1643,16 +1643,16 @@ packages:
       - supports-color
     dev: true
 
-  /@ionic/vue-router/6.1.14:
-    resolution: {integrity: sha512-RSUSZrl7hCP8grR6NxbV++aY8GndHRuc9ASZbYU2hUJcolOxfuKeRfeSZ7W61MGu0Z3M/8GIxz3KumFvPNujsA==}
+  /@ionic/vue-router/6.2.0:
+    resolution: {integrity: sha512-jwoUupg3tlQrR+nxWAaz4HOI41YIRVsG0c6wMoH4vEHkaeYXzEPXyukVLOas8MeWcZyjUhinAKAgH3xhP7r7BQ==}
     dependencies:
-      '@ionic/vue': 6.1.14
+      '@ionic/vue': 6.2.0
     dev: false
 
-  /@ionic/vue/6.1.14:
-    resolution: {integrity: sha512-DuLqKeLlYgCl8GVNtTxhT5NWYF5yqYVti/yAnwi//rwNNQjFLvUmqsS5K//FsrRX1nEUGqlnwLcbEvLNm/ZzUA==}
+  /@ionic/vue/6.2.0:
+    resolution: {integrity: sha512-tF+922bNLBTrN204CRUBDDRc6E+ygkMExxH2RX/QlXyRaVbSbmVlYXFe56nCu8caZgFlX711lHhHL1D+FsnOng==}
     dependencies:
-      '@ionic/core': 6.1.14
+      '@ionic/core': 6.2.0
       ionicons: 6.0.2
     dev: false
 

@@ -53,16 +53,16 @@ export async function getUser(
   return new Promise((resolve, reject) => {
     if (result.value && result.value.userAuth.user != undefined)
       resolve({
-        id: result.value.userAuth.user.id,
-        name: result.value.userAuth.user.name,
-        user: result.value.userAuth.user.user,
+        id: result.value.userAuth.id,
+        name: result.value.userAuth.name,
+        user: result.value.userAuth.user,
       });
     else {
       onResult((response) =>
         resolve({
-          id: response.data.userAuth.user.id,
-          name: response.data.userAuth.user.name,
-          user: response.data.userAuth.user.user,
+          id: response.data.userAuth.id,
+          name: response.data.userAuth.name,
+          user: response.data.userAuth.user,
         })
       );
     }

@@ -19,71 +19,84 @@
               </ion-card-subtitle>
             </ion-card-header>
 
-            <ion-list slot="content">
-              <ion-item lines="none">
-                <ion-button
-                  fill="clear"
-                  slot="end"
-                  @click="updateEvent(event.id)"
-                >
-                  <ion-icon :icon="createOutline"></ion-icon>
-                </ion-button>
-                <ion-button
-                  fill="clear"
-                  color="danger"
-                  slot="end"
-                  @click="presentAlertRemoveEvent(event.id)"
-                >
-                  <ion-icon :icon="trashOutline"></ion-icon>
-                </ion-button>
-              </ion-item>
-            </ion-list>
+            <!-- action buttons -->
+            <section slot="content">
+              <ion-list>
+                <ion-item lines="none">
+                  <ion-button
+                    fill="clear"
+                    slot="end"
+                    @click="updateEvent(event.id)"
+                  >
+                    <ion-icon :icon="createOutline"></ion-icon>
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    color="danger"
+                    slot="end"
+                    @click="presentAlertRemoveEvent(event.id)"
+                  >
+                    <ion-icon :icon="trashOutline"></ion-icon>
+                  </ion-button>
+                </ion-item>
+              </ion-list>
+            </section>
 
-            <ion-list-header slot="content">
-              <ion-label>Zona horaria</ion-label>
-            </ion-list-header>
-            <ion-list slot="content" style="padding-left: 16px">
-              <ion-label>{{ event.time_zone }}</ion-label>
-            </ion-list>
+            <!-- time zone -->
+            <section slot="content">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Zona horaria</ion-label>
+                </ion-list-header>
+                <ion-item lines="full">
+                  <ion-label>{{ event.timeZone }}</ion-label>
+                </ion-item>
+              </ion-list>
+            </section>
 
-            <!-- TODO: translate -->
-            <ion-list-header slot="content">
-              <ion-label>Recordatorios</ion-label>
-            </ion-list-header>
-            <ion-list slot="content" style="padding-left: 10px">
-              <div>
-                <ion-chip
-                  color="primary"
-                  v-for="reminder in event.reminders"
-                  :key="reminder"
+            <!-- Reminders -->
+            <section slot="content" v-if="event.reminders.length > 0">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Recordatorios</ion-label>
+                </ion-list-header>
+
+                <div
+                  style="overflow-x: scroll"
+                  class="ion-padding-start ion-padding-end"
                 >
-                  {{ reminder }}
-                </ion-chip>
-              </div>
-            </ion-list>
+                  <div style="display: inline-flex">
+                    <ion-chip
+                      color="primary"
+                      v-for="reminder in event.reminders"
+                      :key="reminder"
+                    >
+                      {{ reminder }}
+                    </ion-chip>
+                  </div>
+                </div>
+              </ion-list>
+              <hr style="border-top: 1px solid rgb(222 222 222)" />
+            </section>
 
-            <!-- TODO: translate -->
-            <ion-list-header slot="content">
-              <ion-label>Repetir</ion-label>
-            </ion-list-header>
-            <ion-list slot="content" style="padding-left: 10px">
-              <!-- TODO: mostrar data -->
-              <div>
-                <ion-chip
-                  color="primary"
-                  v-for="repeat in event.repeats"
-                  :key="repeat"
-                >
-                  {{ repeat.frequency }}
-                </ion-chip>
-              </div>
-            </ion-list>
+            <!-- Repeats -->
+            <section slot="content">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Repetir</ion-label>
+                </ion-list-header>
+                <ion-item lines="full">
+                  <ion-label>{{ event.repeats.name }}</ion-label>
+                </ion-item>
+              </ion-list>
+            </section>
 
+            <!-- guests -->
             <section slot="content" v-if="event.guests.length > 0">
-              <ion-list-header slot="content">
-                <ion-label>Invitados</ion-label>
-              </ion-list-header>
-              <ion-list slot="content" style="padding-left: 16px">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Invitados</ion-label>
+                </ion-list-header>
                 <div>
                   <ion-chip
                     color="primary"
@@ -96,34 +109,42 @@
               </ion-list>
             </section>
 
+            <!-- tags -->
             <section slot="content" v-if="event.tags.length > 0">
-              <ion-list-header slot="content">
-                <ion-label>Etiquetas</ion-label>
-              </ion-list-header>
-              <ion-list slot="content">
-                <div style="padding-left: 16px">
-                  <ion-chip
-                    color="primary"
-                    v-for="tag in event.tags"
-                    :key="tag"
-                  >
-                    {{ tag.name }}
-                  </ion-chip>
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Etiquetas</ion-label>
+                </ion-list-header>
+                <div
+                  style="overflow-x: scroll"
+                  class="ion-padding-start ion-padding-end"
+                >
+                  <div style="display: inline-flex">
+                    <ion-chip
+                      color="primary"
+                      v-for="tag in event.tags"
+                      :key="tag"
+                    >
+                      {{ tag.name }}
+                    </ion-chip>
+                  </div>
                 </div>
               </ion-list>
+              <hr style="border-top: 1px solid rgb(222 222 222)" />
             </section>
 
+            <!-- notes -->
             <section
               slot="content"
               v-if="event.notes && event.notes.length > 0"
             >
-              <ion-list-header slot="content">
-                <ion-label>Notas</ion-label>
-              </ion-list-header>
-              <ion-list slot="content">
-                <ion-label class="ion-text-wrap" style="padding-left: 16px">{{
-                  event.notes
-                }}</ion-label>
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Notas</ion-label>
+                </ion-list-header>
+                <div class="ion-padding-start ion-padding-end">
+                  <ion-label class="ion-text-wrap">{{ event.notes }}</ion-label>
+                </div>
               </ion-list>
             </section>
           </ion-accordion>
@@ -140,6 +161,8 @@ import {
   loadingController,
   toastController,
   alertController,
+  IonList,
+  IonListHeader,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import {
@@ -149,11 +172,17 @@ import {
 } from "../../services/event";
 import { Storage } from "@ionic/storage";
 import EventComponent from "./evento/Evento.vue";
-import eventBus from "../../EventBus";
+// import eventBus from "../../EventBus";
 import { formatISO, add } from "date-fns";
 import { createOutline, trashOutline } from "ionicons/icons";
 // import userService from "../../services/user";
-import { zonedTimeToUtc, utcToZonedTime, format } from "date-fns-tz";
+import {
+  zonedTimeToUtc,
+  utcToZonedTime,
+  format,
+  formatInTimeZone,
+} from "date-fns-tz";
+import { USER_EVENTS } from "../../services/graphql";
 
 export default defineComponent({
   name: "EventosPage",
@@ -162,8 +191,11 @@ export default defineComponent({
       IonRefresher,
       createOutline,
       trashOutline,
+      IonList,
+      IonListHeader,
     };
   },
+
   data() {
     const date = formatISO(new Date()).split("T")[0];
     const storage = new Storage();
@@ -176,7 +208,9 @@ export default defineComponent({
       fileTranslate: Array<any>(),
     };
   },
+
   mounted() {
+    this.getEvents();
     // this.getFileTranslate().then((response) => {
     //   this.getEvents();
     // });
@@ -188,6 +222,7 @@ export default defineComponent({
     //   this.getEvents();
     // });
   },
+
   methods: {
     async openEvent(event: object) {
       const modal = await modalController.create({
@@ -198,13 +233,16 @@ export default defineComponent({
       });
       return modal.present();
     },
+
     createEvent() {
       this.$router.push({ name: "CreateEvent" });
     },
-    async getEvents() {
-      const loading = await this.presentLoading();
-      loading.present();
 
+    async getEvents() {
+      // const loading = await this.presentLoading();
+      // loading.present();
+
+      const dateStart = this.date;
       const dateEnd = formatISO(
         new Date(
           add(new Date(this.date), {
@@ -212,60 +250,93 @@ export default defineComponent({
           })
         )
       ).split("T")[0];
-      const events = await getEventsService(this.date, dateEnd).then(
-        (response: any) => {
-          return response;
-        }
-      );
 
-      events.data.forEach(async (element: any) => {
-        if (
-          Intl.DateTimeFormat().resolvedOptions().timeZone == element.time_zone
-        ) {
-          element.timeStart =
-            this.formatDate(element.time_start, "P") +
-            " " +
-            this.formatDate(element.time_start + "Z", "pp");
-          element.timeEnd =
-            this.formatDate(element.time_end, "P") +
-            " " +
-            this.formatDate(element.time_end + "Z", "pp");
-        } else {
-          const formatStart = utcToZonedTime(
-            new Date(element.time_start + "Z"),
-            element.time_zone
-          );
-          element.timeStart =
-            this.formatDate(formatStart, "P") +
-            " " +
-            this.formatDate(formatStart, "pp");
-          const formatEnd = utcToZonedTime(
-            new Date(element.time_end + "Z"),
-            element.time_zone
-          );
-          element.timeEnd =
-            this.formatDate(formatEnd, "P") +
-            " " +
-            this.formatDate(formatEnd, "pp");
-        }
+      let events = [] as any;
+      try {
+        events = await getEventsService({
+          dateStart,
+          dateEnd,
+          graphql: {
+            name: USER_EVENTS,
+            fragment: "Events",
+          },
+        });
+      } catch (error) {
+        console.error(error);
+      }
+
+      events = JSON.parse(JSON.stringify(events));
+      events.forEach((item: any) => {
+        item.timeStart = item.time_start;
+        delete item.time_start;
+        item.timeEnd = item.time_end;
+        delete item.time_end;
+        item.timeZone = item.time_zone;
+        delete item.time_zone;
+      });
+      console.log(events);
+
+      events.forEach(async (element: any) => {
+        const timeStart = formatISO(new Date(element.timeStart + "Z"));
+        element.timeStart = format(
+          utcToZonedTime(timeStart, element.timeZone),
+          "Pp"
+        );
+
+        const timeEnd = formatISO(new Date(element.timeEnd + "Z"));
+        element.timeEnd = format(
+          utcToZonedTime(timeEnd, element.timeZone),
+          "Pp"
+        );
+
+        // if (
+        //   Intl.DateTimeFormat().resolvedOptions().timeZone == element.time_zone
+        // ) {
+        //   element.timeStart =
+        //     this.formatDate(element.time_start, "P") +
+        //     " " +
+        //     this.formatDate(element.time_start + "Z", "pp");
+        //   element.timeEnd =
+        //     this.formatDate(element.time_end, "P") +
+        //     " " +
+        //     this.formatDate(element.time_end + "Z", "pp");
+        // } else {
+        //   const formatStart = utcToZonedTime(
+        //     new Date(element.time_start + "Z"),
+        //     element.time_zone
+        //   );
+        //   element.timeStart =
+        //     this.formatDate(formatStart, "P") +
+        //     " " +
+        //     this.formatDate(formatStart, "pp");
+        //   const formatEnd = utcToZonedTime(
+        //     new Date(element.time_end + "Z"),
+        //     element.time_zone
+        //   );
+        //   element.timeEnd =
+        //     this.formatDate(formatEnd, "P") +
+        //     " " +
+        //     this.formatDate(formatEnd, "pp");
+        // }
 
         element.guests = JSON.parse(element.guests);
         element.reminders = JSON.parse(element.reminders);
         element.repeats = JSON.parse(element.repeats);
-        element.type = "event";
+        element.tags = JSON.parse(element.tags);
+        // element.type = "event";
       });
 
-      this.events = events.data;
-      console.log(events.data);
-      loading.dismiss();
-      this.storage.set("events", JSON.stringify(events.data));
+      this.events = events;
+      this.storage.set("events", JSON.stringify(events));
     },
+
     formatDate(date: string | Date, format: string) {
       if (date == null) {
         return "";
       }
       return formatDateTimeService(date, format);
     },
+
     refreshContent(event: any) {
       setTimeout(async () => {
         this.getEvents();

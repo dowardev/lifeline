@@ -11,7 +11,13 @@ import { useQuery, useMutation } from "@vue/apollo-composable";
 import { provideApolloClient } from "@vue/apollo-composable";
 provideApolloClient(apolloClient);
 
-import { GetCalendars, GetCalendarsResponse, CreateEvent } from "./interfaces";
+import {
+  GetCalendars,
+  GetCalendarsResponse,
+  CreateEvent,
+  GetEvents,
+  GetEventsResponse,
+} from "./interfaces";
 
 export async function createEvent(params: CreateEvent): Promise<void> {
   const {
@@ -80,20 +86,38 @@ export async function updateEvent(event: Record<string, any>) {
   //   },
   // });
 }
-export async function getEvents(dateStart: string, dateEnd: string) {
-  // const token = await userService()
-  //   .getUserToken()
-  //   .then((response) => {
-  //     return response;
-  //   });
-  // return axios.get("http://localhost:8000/api/auth/get-events", {
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //     Authorization: "Bearer " + token,
-  //   },
-  //   params: { dateStart, dateEnd },
-  // });
+
+export async function getEvents(
+  params: GetEvents
+): Promise<Array<GetEventsResponse>> {
+  const { onResult, onError, result, refetch } = useQuery(
+    gql`
+        query events($dateStart: String!,$dateEnd:String!) {
+          events(input:{dateStart:$dateStart,dateEnd:$dateEnd}) {
+            ...${params.graphql.fragment}
+          }
+        }
+        ${params.graphql.name}
+      `,
+    { dateStart: params.dateStart, dateEnd: params.dateEnd }
+  );
+
+  return new Promise((resolve, reject) => {
+    if (result.value != undefined && params.graphql.refetch == false)
+      resolve(result.value.events.events);
+
+    if (params.graphql.refetch) {
+      refetch()?.then((response) => resolve(response.data.events.events));
+    }
+
+    onResult((response) => resolve(response.data.events.events));
+
+    onError((error) => {
+      reject(error);
+    });
+  });
 }
+
 export async function getEvent(id: number) {
   // const token = await userService()
   //   .getUserToken()
@@ -128,13 +152,13 @@ export function formatDateTime(date: string | Date, typeFormat: string) {
   return format(new Date(date), typeFormat);
 }
 
-export async function getCalendars(
+export async function getUserCalendars(
   params: GetCalendars
 ): Promise<Array<GetCalendarsResponse>> {
   const { onError, onResult, result } = useQuery(
     gql`
       query calendars {
-        calendars {
+        userAuth{
          ...${params.graphql.fragment}
         }
       }
@@ -146,7 +170,7 @@ export async function getCalendars(
     if (result.value && result.value.calendars.user != undefined)
       resolve([result.value.calendars.calendars]);
     else {
-      onResult((response) => resolve(response.data.calendars.calendars));
+      onResult((response) => resolve(response.data.userAuth.calendars));
     }
 
     onError((error) => {

@@ -2,10 +2,8 @@ import gql from "graphql-tag";
 
 // user
 export const USER_MENU = gql`
-  fragment UserMenu on UserAuthPayload {
-    user {
-      user
-    }
+  fragment UserMenu on User {
+    user
   }
 `;
 
@@ -18,11 +16,31 @@ export const USER_NAME = gql`
 `;
 
 // events
-export const CALENDARS = gql`
-  fragment Calendars on CalendarsPayload {
+export const USER_CALENDARS = gql`
+  fragment Calendars on User {
     calendars {
       id
       name
+      default
+    }
+  }
+`;
+export const USER_EVENTS = gql`
+  fragment Events on EventsPayload {
+    events {
+      id
+      title
+      time_start
+      time_end
+      calendar {
+        name
+      }
+      guests
+      tags
+      notes
+      time_zone
+      reminders
+      repeats
     }
   }
 `;

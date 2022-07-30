@@ -66,6 +66,7 @@ export interface GetCalendars {
 export interface GetCalendarsResponse {
   id: string;
   name: string;
+  default: boolean;
 }
 export interface CreateEvent {
   title?: string;
@@ -77,4 +78,22 @@ export interface CreateEvent {
   repeats?: string;
   tags?: string;
   timeZone?: string;
+}
+export interface GetEvents {
+  dateStart: string;
+  dateEnd: string;
+  graphql: Graphql;
+}
+export interface GetEventsResponse {
+  id: string;
+  title: string;
+  timeStart: string;
+  timeEnd: string;
+  calendar: {
+    name: string;
+  };
+  guests: [string];
+  tags: [string];
+  notes: string;
+  time_zone: string;
 }
