@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button menu="firstMenu" mode="md"></ion-menu-button>
         </ion-buttons>
-        <ion-title>Inicio</ion-title>
+        <ion-title>{{ $t("message.Start") }}</ion-title>
         <ion-buttons slot="end">
           <ion-button fill="clear" @click="$router.push('/event/add')">
             <ion-icon :icon="addOutline"></ion-icon>

@@ -119,32 +119,52 @@
 
     <ion-footer class="ion-no-border">
       <ion-toolbar>
-        <ion-item lines="none" class="transparent">
+        <ion-buttons slot="end">
           <ion-button
-            slot="end"
             fill="clear"
             @click="openModalDesktop()"
             v-if="!androidPlatform && !iosPlatform"
+            color="primary"
           >
             <ion-icon :icon="brushOutline"></ion-icon>
           </ion-button>
+
           <ion-button
-            slot="end"
             fill="clear"
             @click="openModalMobile()"
             v-if="androidPlatform || iosPlatform"
+            color="primary"
           >
             <ion-icon :icon="brushOutline"></ion-icon>
           </ion-button>
+
+          <ion-button id="click-trigger" color="primary">
+            <ion-icon :icon="languageOutline"></ion-icon>
+          </ion-button>
+          <ion-popover
+            trigger="click-trigger"
+            trigger-action="click"
+            :dismiss-on-select="true"
+          >
+            <ion-content>
+              <ion-item button @click="$i18n.locale = 'es'">
+                <ion-label>Español</ion-label>
+              </ion-item>
+              <ion-item button @click="$i18n.locale = 'en'">
+                <ion-label>English</ion-label>
+              </ion-item>
+            </ion-content>
+          </ion-popover>
+
           <ion-button
             fill="clear"
-            slot="end"
             @click="logout()"
             v-if="logged == true"
+            color="primary"
           >
             <ion-icon :icon="exitOutline"></ion-icon>
           </ion-button>
-        </ion-item>
+        </ion-buttons>
       </ion-toolbar>
     </ion-footer>
   </ion-page>
@@ -162,7 +182,7 @@ import {
   IonFooter,
   alertController,
 } from "@ionic/vue";
-import { brushOutline, exitOutline } from "ionicons/icons";
+import { brushOutline, exitOutline, languageOutline } from "ionicons/icons";
 import { defineComponent } from "vue";
 import {
   settingsOutline,
@@ -209,6 +229,7 @@ export default defineComponent({
       androidPlatform: isPlatform("android"),
       iosPlatform: isPlatform("ios"),
       exitOutline,
+      languageOutline,
     };
   },
 

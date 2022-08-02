@@ -12,7 +12,7 @@
             <ion-icon slot="start" :icon="chevronBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>{{ pageTitle }}</ion-title>
+        <ion-title>{{ setPageTitle }}</ion-title>
         <ion-buttons slot="end">
           <ion-button v-on:click="save()" :disabled="spinners.save == true">
             <ion-icon
@@ -32,13 +32,15 @@
     <ion-content :fullscreen="true">
       <ion-header collapse="condense" mode="ios">
         <ion-toolbar>
-          <ion-title size="large">{{ pageTitle }}</ion-title>
+          <ion-title size="large">{{ setPageTitle }}</ion-title>
         </ion-toolbar>
       </ion-header>
 
       <ion-row>
         <ion-list-header>
-          <ion-label> Detalles</ion-label>
+          <ion-label>
+            {{ capitalizeFirstLetter($tc("message.detail", 2)) }}</ion-label
+          >
         </ion-list-header>
         <ion-col>
           <ion-card>
@@ -47,7 +49,9 @@
                 <ion-col size="12" size-lg="6">
                   <ion-item>
                     <ion-icon :icon="documentOutline" slot="start"></ion-icon>
-                    <ion-label> Titulo </ion-label>
+                    <ion-label>
+                      {{ capitalizeFirstLetter($t("message.title")) }}
+                    </ion-label>
                     <ion-input type="text" v-model="title"></ion-input>
                   </ion-item>
                 </ion-col>
@@ -59,7 +63,9 @@
                       :icon="calendarClearOutline"
                       slot="start"
                     ></ion-icon>
-                    <ion-label>Calendario</ion-label>
+                    <ion-label>{{
+                      capitalizeFirstLetter($t("message.calendar"))
+                    }}</ion-label>
                     <ion-select
                       interface="popover"
                       ok-text="Aceptar"
@@ -84,7 +90,9 @@
 
       <ion-row>
         <ion-list-header>
-          <ion-label>Organizacion</ion-label>
+          <ion-label>{{
+            capitalizeFirstLetter($t("message.organization"))
+          }}</ion-label>
         </ion-list-header>
         <ion-col>
           <ion-card>
@@ -98,7 +106,7 @@
                       slot="start"
                     ></ion-icon>
                     <ion-label slot="start" class="ion-text-wrap">
-                      Fecha inicial
+                      {{ capitalizeFirstLetter($t("message.dateStart")) }}
                     </ion-label>
                     <ion-label slot="end" class="text-overflow">
                       {{ customDateFormat(datetime.start, "Pp") }}
@@ -122,7 +130,7 @@
                       slot="start"
                     ></ion-icon>
                     <ion-label slot="start" class="ion-text-wrap">
-                      Fecha final
+                      {{ capitalizeFirstLetter($t("message.dateEnd")) }}
                     </ion-label>
                     <ion-label class="text-overflow" slot="end">
                       {{ customDateFormat(datetime.end, "Pp") }}
@@ -142,18 +150,19 @@
                 <ion-col size="12" size-lg="6">
                   <ion-item>
                     <ion-icon :icon="timeOutline" slot="start"></ion-icon>
-                    <ion-label>Recordatorio</ion-label>
-                    <!-- <ion-label v-if="reminders.length == 0" -->
-                    <!--   >Sin recordatorio</ion-label -->
-                    <!-- > -->
+                    <ion-label>{{
+                      capitalizeFirstLetter($tc("message.reminder", 2))
+                    }}</ion-label>
                     <ion-select
                       :multiple="true"
                       interface="popover"
                       v-model="reminders"
-                      placeholder="No establecido"
+                      :placeholder="
+                        capitalizeFirstLetter($t('message.notEstablished'))
+                      "
                     >
                       <ion-select-option
-                        v-for="reminder in remindersData"
+                        v-for="reminder in setDaraReminders"
                         :key="reminder.name"
                         :value="reminder.name"
                         >{{ reminder.value }}</ion-select-option
@@ -166,7 +175,9 @@
                 <ion-col size="12" size-lg="6">
                   <ion-item button @click="openModalRepeats()" lines="full">
                     <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
-                    <ion-label class="ion-text-wrap"> Repetir </ion-label>
+                    <ion-label class="ion-text-wrap">
+                      {{ capitalizeFirstLetter($t("message.repeat")) }}
+                    </ion-label>
                     <ion-label slot="end" class="text-overflow">
                       {{ repeats.name }}
                     </ion-label>
@@ -178,7 +189,7 @@
                   <ion-item button @click="openModalTimeZone()" lines="full">
                     <ion-icon :icon="globeOutline" slot="start"></ion-icon>
                     <ion-label slot="start" class="ion-text-wrap">
-                      Zona horaria
+                      {{ capitalizeFirstLetter($t("message.timeZone")) }}
                     </ion-label>
                     <ion-label slot="end" class="text-overflow">
                       {{ timeZone }}
@@ -193,7 +204,9 @@
 
       <ion-row>
         <ion-list-header>
-          <ion-label>Otros ajustes</ion-label>
+          <ion-label>{{
+            capitalizeFirstLetter($tc("message.otherSetting", 2))
+          }}</ion-label>
         </ion-list-header>
         <ion-col>
           <ion-card>
@@ -203,11 +216,15 @@
                 <ion-col size="12" size-lg="6">
                   <ion-item>
                     <ion-icon :icon="pricetagsOutline" slot="start"></ion-icon>
-                    <ion-label> Etiquetas </ion-label>
+                    <ion-label>
+                      {{ capitalizeFirstLetter($tc("message.tag", 2)) }}
+                    </ion-label>
                     <ion-input
                       v-on:keyup.enter="addTag()"
                       ref="inputTag"
-                      placeholder="Nombre de la etiqueta"
+                      :placeholder="
+                        capitalizeFirstLetter($t('message.tagName'))
+                      "
                     ></ion-input>
                   </ion-item>
                   <div style="overflow-x: scroll" v-if="tags.length > 0">
@@ -231,11 +248,13 @@
                 <ion-col size="12" size-lg="6">
                   <ion-item>
                     <ion-icon :icon="mailOutline" slot="start"></ion-icon>
-                    <ion-label> Invitados </ion-label>
+                    <ion-label>
+                      {{ capitalizeFirstLetter($tc("message.guest", 2)) }}
+                    </ion-label>
                     <ion-input
                       v-on:keyup.enter="addGuest()"
                       ref="inputguest"
-                      placeholder="correo electronico"
+                      :placeholder="capitalizeFirstLetter($t('message.email'))"
                     ></ion-input>
                   </ion-item>
                   <div style="overflow-x: scroll" v-if="guests.length > 0">
@@ -263,7 +282,9 @@
                       slot="start"
                       class="item-icon"
                     ></ion-icon>
-                    <ion-label position="floating"> notas </ion-label>
+                    <ion-label position="floating">
+                      {{ capitalizeFirstLetter($tc("message.note", 2)) }}
+                    </ion-label>
                     <ion-textarea
                       type="text"
                       v-model="notes"
@@ -329,6 +350,7 @@ import Repeats from "../repetir/Repetir.vue";
 import TimeZoneComponent from "../../../../components/SelectTimeZone.vue";
 import { USER_CALENDARS } from "../../../../services/graphql";
 import { CreateEvent } from "../../../../services/interfaces";
+import { capitalizeFirstLetter as capitalizeFirstLetterService } from "../../../../services/system";
 
 export default defineComponent({
   name: "EventPage",
@@ -346,44 +368,6 @@ export default defineComponent({
   },
 
   setup() {
-    const remindersData = [
-      {
-        name: "just",
-        value: "A tiempo",
-      },
-      {
-        name: "5mnb",
-        value: "5 minutos antes",
-      },
-      {
-        name: "15mnb",
-        value: "15 minutos antes",
-      },
-      {
-        name: "30mnb",
-        value: "30 minutos antes",
-      },
-      {
-        name: "1hrb",
-        value: "30 hora antes",
-      },
-      {
-        name: "4hrb",
-        value: "4 horas antes",
-      },
-      {
-        name: "1db",
-        value: "1 dia antes",
-      },
-      {
-        name: "2db",
-        value: "2 dia antes",
-      },
-      {
-        name: "1sb",
-        value: "1 semana antes",
-      },
-    ];
     return {
       chevronBackOutline,
       saveOutline,
@@ -399,8 +383,56 @@ export default defineComponent({
       mailOutline,
       documentTextOutline,
       globeOutline,
-      remindersData,
+      capitalizeFirstLetter: capitalizeFirstLetterService,
     };
+  },
+
+  computed: {
+    setPageTitle() {
+      if (this.$route.params.id == undefined)
+        return this.capitalizeFirstLetter(this.$t("message.createEvent"));
+      else return this.capitalizeFirstLetter(this.$t("message.updateEvent"));
+    },
+    setDaraReminders() {
+      return [
+        {
+          name: "just",
+          value: this.capitalizeFirstLetter(this.$t("message.inTime")),
+        },
+        {
+          name: "5mnb",
+          value: "5 " + this.$tc("message.minuteBefore", 2),
+        },
+        {
+          name: "15mnb",
+          value: "15 " + this.$tc("message.minuteBefore", 2),
+        },
+        {
+          name: "30mnb",
+          value: "30 " + this.$tc("message.minuteBefore", 2),
+        },
+        {
+          name: "1hrb",
+          value: "1 " + this.$tc("message.hourBefore", 2),
+        },
+        {
+          name: "4hrb",
+          value: "4 " + this.$tc("message.hourBefore", 2),
+        },
+        {
+          name: "1db",
+          value: "1 " + this.$tc("message.dayBefore", 2),
+        },
+        {
+          name: "2db",
+          value: "2 " + this.$tc("message.dayBefore", 2),
+        },
+        {
+          name: "1sb",
+          value: "1 " + this.$tc("message.weekBefore", 2),
+        },
+      ];
+    },
   },
 
   data() {
@@ -408,7 +440,6 @@ export default defineComponent({
     storage.create();
     return {
       buttonEdit: true,
-      pageTitle: "Crear evento",
       storage,
       title: "",
       datetime: {

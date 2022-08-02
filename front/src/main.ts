@@ -23,18 +23,22 @@ import "@ionic/vue/css/display.css";
 /* Theme variables */
 import "./theme/variables.css";
 
+// apollo
 import apolloClient from "./Apollo";
 import { provide, h } from "vue";
 import { DefaultApolloClient } from "@vue/apollo-composable";
+
+// i18n
+import i18n from "./plugins/i18n/i18n";
 
 const app = createApp({
   setup() {
     provide(DefaultApolloClient, apolloClient);
   },
-
   render: () => h(App),
 })
   .use(IonicVue)
+  .use(i18n)
   .use(router);
 
 router.isReady().then(() => {
