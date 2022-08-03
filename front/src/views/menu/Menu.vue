@@ -203,6 +203,7 @@ import DarkMode from "./darkmode/DarkMode.vue";
 // import sesionService from "../../services/sesion";
 // import systemService from "../../services/system";
 import { USER_MENU } from "../../services/graphql";
+import userAvatar from "../../assets/otros/user.png";
 
 export default defineComponent({
   name: "MenuComponent",
@@ -237,7 +238,7 @@ export default defineComponent({
     return {
       logged: false,
       userData: {
-        img: require("../../../public/assets/otros/user.png"),
+        img: userAvatar,
         user: "Usuario",
       },
     };

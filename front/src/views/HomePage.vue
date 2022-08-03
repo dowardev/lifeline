@@ -31,6 +31,7 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
+  IonCard,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 
@@ -42,6 +43,7 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
+    IonCard,
   },
 
   setup() {

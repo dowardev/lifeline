@@ -2,8 +2,6 @@ import { Storage } from "@ionic/storage";
 const store = new Storage();
 store.create();
 
-import jsonLangSpanish from "../../public/assets/lang/lang-es.json";
-
 import apolloClient from "../Apollo";
 import gql from "graphql-tag";
 import { useQuery, useMutation } from "@vue/apollo-composable";
@@ -75,15 +73,6 @@ export async function getUser(
 
 export function getUserLang() {
   return store.get("lang");
-}
-
-export async function translate() {
-  const lang = await getUserLang().then((response) => {
-    return response;
-  });
-  if (lang == "es" || lang == null) {
-    return jsonLangSpanish as any;
-  }
 }
 
 export async function resendEmailConfirmation(

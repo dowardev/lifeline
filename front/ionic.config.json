@@ -1,7 +1,0 @@
-{
-  "name": "LifeLine",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "vue"
-}

@@ -2,7 +2,7 @@ import { Storage } from "@ionic/storage";
 const storage = new Storage();
 storage.create();
 import { toastController } from "@ionic/vue";
-import timeZones from "../../public/assets/files/timezones.json";
+import timeZones from "../assets/files/timezones.json";
 import { SystemMessage } from "./interfaces";
 import { alertCircleOutline } from "ionicons/icons";
 
