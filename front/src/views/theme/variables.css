@@ -1,0 +1,169 @@
+/** Ionic CSS Variables **/
+:root {
+  /** primary **/
+  --ion-color-primary: #81a1c1;
+  --ion-color-primary-rgb: 56, 128, 255;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #3171e0;
+  --ion-color-primary-tint: #4c8dff;
+
+  /** secondary **/
+  --ion-color-secondary: #3dc2ff;
+  --ion-color-secondary-rgb: 61, 194, 255;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #36abe0;
+  --ion-color-secondary-tint: #50c8ff;
+
+  /** tertiary **/
+  --ion-color-tertiary: #5260ff;
+  --ion-color-tertiary-rgb: 82, 96, 255;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #4854e0;
+  --ion-color-tertiary-tint: #6370ff;
+
+  /** success **/
+  --ion-color-success: #2dd36f;
+  --ion-color-success-rgb: 45, 211, 111;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #28ba62;
+  --ion-color-success-tint: #42d77d;
+
+  /** warning **/
+  --ion-color-warning: #ffc409;
+  --ion-color-warning-rgb: 255, 196, 9;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-warning-contrast-rgb: 0, 0, 0;
+  --ion-color-warning-shade: #e0ac08;
+  --ion-color-warning-tint: #ffca22;
+
+  /** danger **/
+  --ion-color-danger: #d23e52;
+  --ion-color-danger-rgb: 235, 68, 90;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #cf3c4f;
+  --ion-color-danger-tint: #ed576b;
+
+  /** dark **/
+  --ion-color-dark: #222428;
+  --ion-color-dark-rgb: 34, 36, 40;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-contrast-rgb: 255, 255, 255;
+  --ion-color-dark-shade: #1e2023;
+  --ion-color-dark-tint: #383a3e;
+
+  /** medium **/
+  --ion-color-medium: #92949c;
+  --ion-color-medium-rgb: 146, 148, 156;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-contrast-rgb: 255, 255, 255;
+  --ion-color-medium-shade: #808289;
+  --ion-color-medium-tint: #9d9fa6;
+
+  /** light **/
+  --ion-color-light: #f4f5f8;
+  --ion-color-light-rgb: 244, 245, 248;
+  --ion-color-light-contrast: #000000;
+  --ion-color-light-contrast-rgb: 0, 0, 0;
+  --ion-color-light-shade: #d7d8da;
+  --ion-color-light-tint: #f5f6f9;
+
+  /* others */
+  --ion-toolbar-background: #ffffff;
+}
+
+*.dark {
+  --ion-background-color: #2e3440;
+  --ion-background-color-rgb: 46, 52, 64;
+
+  --ion-text-color: #eeeeee;
+  --ion-text-color-rgb: 238, 238, 238;
+
+  --ion-color-step-50: #383d49;
+  --ion-color-step-100: #414751;
+  --ion-color-step-150: #4b505a;
+  --ion-color-step-200: #545963;
+  --ion-color-step-250: #5e636c;
+  --ion-color-step-300: #686c74;
+  --ion-color-step-350: #71757d;
+  --ion-color-step-400: #7b7e86;
+  --ion-color-step-450: #84888e;
+  --ion-color-step-500: #8e9197;
+  --ion-color-step-550: #989aa0;
+  --ion-color-step-600: #a1a4a8;
+  --ion-color-step-650: #abadb1;
+  --ion-color-step-700: #b4b6ba;
+  --ion-color-step-750: #bec0c3;
+  --ion-color-step-800: #c8c9cb;
+  --ion-color-step-850: #d1d2d4;
+  --ion-color-step-900: #dbdbdd;
+  --ion-color-step-950: #e4e5e5;
+
+  --ion-item-background: var(--ion-background-color);
+
+  --ion-toolbar-background: var(--ion-background-color);
+
+  --ion-tab-bar-background: #1f1f1f;
+
+  --ion-card-background: #282c34;
+
+  /* others */
+  --text-opacity: 0.7;
+}
+
+@font-face {
+  font-family: "OpenSans-Regular";
+  src: url("../../public/assets/fonts/open_sans/static/OpenSans/OpenSans-Regular.ttf");
+}
+@font-face {
+  font-family: "OpenSans-Medium";
+  src: url("../../public/assets/fonts/open_sans/static/OpenSans/OpenSans-Medium.ttf");
+}
+@font-face {
+  font-family: "Comfortaa-Bold";
+  src: url("../../public/assets/fonts/comfortaa/Comfortaa-Bold.ttf");
+}
+@font-face {
+  font-family: "Comfortaa-Light";
+  src: url("../../public/assets/fonts/comfortaa/Comfortaa-Light.ttf");
+}
+
+/* text */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+ion-title {
+  font-family: Comfortaa-Bold;
+  opacity: var(--text-opacity);
+}
+p,
+ion-text,
+ol,
+ul {
+  font-family: OpenSans-Regular;
+  opacity: var(--text-opacity);
+  font-size: 1.2rem;
+  line-height: 2em;
+}
+
+.transparent {
+  --background: transparent;
+  background: transparent;
+}
+.center {
+  display: flex;
+  justify-content: center;
+}
+.error {
+  color: var(--ion-color-danger);
+}
+.item-icon {
+  margin-top: 28px;
+}

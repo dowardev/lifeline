@@ -8,21 +8,21 @@
     >
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button v-on:click="$router.go(-1)">
+          <ion-button @click="$router.go(-1)">
             <ion-icon slot="start" :icon="chevronBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-title>{{ setPageTitle }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-on:click="save()" :disabled="spinners.save == true">
+          <ion-button :disabled="spinners.save == true" @click="save()">
             <ion-icon
+              v-if="spinners.save == false"
               slot="start"
               :icon="saveOutline"
-              v-if="spinners.save == false"
             ></ion-icon>
             <ion-spinner
-              name="crescent"
               v-if="spinners.save == true"
+              name="crescent"
             ></ion-spinner>
           </ion-button>
         </ion-buttons>
@@ -48,11 +48,11 @@
               <ion-row>
                 <ion-col size="12" size-lg="6">
                   <ion-item>
-                    <ion-icon :icon="documentOutline" slot="start"></ion-icon>
+                    <ion-icon slot="start" :icon="documentOutline"></ion-icon>
                     <ion-label>
                       {{ capitalizeFirstLetter($t("message.title")) }}
                     </ion-label>
-                    <ion-input type="text" v-model="title"></ion-input>
+                    <ion-input v-model="title" type="text"></ion-input>
                   </ion-item>
                 </ion-col>
 
@@ -60,24 +60,24 @@
                 <ion-col size="12" size-lg="6">
                   <ion-item>
                     <ion-icon
-                      :icon="calendarClearOutline"
                       slot="start"
+                      :icon="calendarClearOutline"
                     ></ion-icon>
                     <ion-label>{{
                       capitalizeFirstLetter($t("message.calendar"))
                     }}</ion-label>
                     <ion-select
+                      v-model="calendar"
                       interface="popover"
                       ok-text="Aceptar"
                       cancel-text="Cancelar"
-                      v-model="calendar"
                     >
                       <ion-select-option
-                        v-for="calendar in calendars"
-                        :key="calendar.id"
-                        :value="calendar.id"
+                        v-for="item in calendars"
+                        :key="item.id"
+                        :value="item.id"
                       >
-                        <ion-label>{{ calendar.name }}</ion-label>
+                        <ion-label>{{ item.name }}</ion-label>
                       </ion-select-option>
                     </ion-select>
                   </ion-item>
@@ -100,10 +100,10 @@
               <ion-row>
                 <!-- date start-->
                 <ion-col size="12" size-lg="6">
-                  <ion-item button="true" id="open-date1">
+                  <ion-item id="open-date1" button="true">
                     <ion-icon
-                      :icon="calendarNumberOutline"
                       slot="start"
+                      :icon="calendarNumberOutline"
                     ></ion-icon>
                     <ion-label slot="start" class="ion-text-wrap">
                       {{ capitalizeFirstLetter($t("message.dateStart")) }}
@@ -113,10 +113,12 @@
                     </ion-label>
                     <ion-popover trigger="open-date1" :show-backdrop="false">
                       <ion-datetime
-                        presentation="date-time"
-                        @ionChange="datetime.start = $event.detail.value!"
                         v-model="datetime.start"
+                        presentation="date-time"
                         hour-cycle="h12"
+                        @ion-change="
+                          datetime.start = $event.detail.value as string
+                        "
                       />
                     </ion-popover>
                   </ion-item>
@@ -124,23 +126,25 @@
 
                 <!-- date end -->
                 <ion-col size="12" size-lg="6">
-                  <ion-item button="true" id="open-date2">
+                  <ion-item id="open-date2" button="true">
                     <ion-icon
-                      :icon="calendarNumberOutline"
                       slot="start"
+                      :icon="calendarNumberOutline"
                     ></ion-icon>
                     <ion-label slot="start" class="ion-text-wrap">
                       {{ capitalizeFirstLetter($t("message.dateEnd")) }}
                     </ion-label>
-                    <ion-label class="text-overflow" slot="end">
+                    <ion-label slot="end" class="text-overflow">
                       {{ customDateFormat(datetime.end, "Pp") }}
                     </ion-label>
                     <ion-popover trigger="open-date2" :show-backdrop="false">
                       <ion-datetime
-                        presentation="date-time"
-                        @ionChange="datetime.end = $event.detail.value!"
                         v-model="datetime.end"
+                        presentation="date-time"
                         hour-cycle="h12"
+                        @ion-change="
+                          datetime.end = $event.detail.value as string
+                        "
                       />
                     </ion-popover>
                   </ion-item>
@@ -149,17 +153,17 @@
                 <!-- reminders -->
                 <ion-col size="12" size-lg="6">
                   <ion-item>
-                    <ion-icon :icon="timeOutline" slot="start"></ion-icon>
+                    <ion-icon slot="start" :icon="timeOutline"></ion-icon>
                     <ion-label>{{
                       capitalizeFirstLetter($tc("message.reminder", 2))
                     }}</ion-label>
                     <ion-select
                       :multiple="true"
                       interface="popover"
-                      v-model="reminders"
                       :placeholder="
                         capitalizeFirstLetter($t('message.notEstablished'))
                       "
+                      @ion-change="reminders = $event.detail.value"
                     >
                       <ion-select-option
                         v-for="reminder in setDaraReminders"
@@ -173,21 +177,21 @@
 
                 <!-- repeats -->
                 <ion-col size="12" size-lg="6">
-                  <ion-item button @click="openModalRepeats()" lines="full">
-                    <ion-icon :icon="repeatOutline" slot="start"></ion-icon>
+                  <ion-item button lines="full" @click="openModalRepeats()">
+                    <ion-icon slot="start" :icon="repeatOutline"></ion-icon>
                     <ion-label class="ion-text-wrap">
                       {{ capitalizeFirstLetter($t("message.repeat")) }}
                     </ion-label>
                     <ion-label slot="end" class="text-overflow">
-                      {{ repeats.name }}
+                      {{ capitalizeFirstLetter(repeats.name) }}
                     </ion-label>
                   </ion-item>
                 </ion-col>
 
                 <!-- timezone -->
                 <ion-col size="12" size-lg="6">
-                  <ion-item button @click="openModalTimeZone()" lines="full">
-                    <ion-icon :icon="globeOutline" slot="start"></ion-icon>
+                  <ion-item button lines="full" @click="openModalTimeZone()">
+                    <ion-icon slot="start" :icon="globeOutline"></ion-icon>
                     <ion-label slot="start" class="ion-text-wrap">
                       {{ capitalizeFirstLetter($t("message.timeZone")) }}
                     </ion-label>
@@ -215,24 +219,24 @@
                 <!-- tags -->
                 <ion-col size="12" size-lg="6">
                   <ion-item>
-                    <ion-icon :icon="pricetagsOutline" slot="start"></ion-icon>
+                    <ion-icon slot="start" :icon="pricetagsOutline"></ion-icon>
                     <ion-label>
                       {{ capitalizeFirstLetter($tc("message.tag", 2)) }}
                     </ion-label>
                     <ion-input
-                      v-on:keyup.enter="addTag()"
                       ref="inputTag"
                       :placeholder="
                         capitalizeFirstLetter($t('message.tagName'))
                       "
+                      @keyup.enter="addTag()"
                     ></ion-input>
                   </ion-item>
-                  <div style="overflow-x: scroll" v-if="tags.length > 0">
+                  <div v-if="tags.length > 0" style="overflow-x: scroll">
                     <div style="display: inline-flex">
                       <ion-chip
-                        color="primary"
                         v-for="(tag, index) in tags"
                         :key="tag"
+                        color="primary"
                       >
                         <ion-label>{{ tag }}</ion-label>
                         <ion-icon
@@ -247,22 +251,22 @@
                 <!-- guests -->
                 <ion-col size="12" size-lg="6">
                   <ion-item>
-                    <ion-icon :icon="mailOutline" slot="start"></ion-icon>
+                    <ion-icon slot="start" :icon="mailOutline"></ion-icon>
                     <ion-label>
                       {{ capitalizeFirstLetter($tc("message.guest", 2)) }}
                     </ion-label>
                     <ion-input
-                      v-on:keyup.enter="addGuest()"
                       ref="inputguest"
                       :placeholder="capitalizeFirstLetter($t('message.email'))"
+                      @keyup.enter="addGuest()"
                     ></ion-input>
                   </ion-item>
-                  <div style="overflow-x: scroll" v-if="guests.length > 0">
+                  <div v-if="guests.length > 0" style="overflow-x: scroll">
                     <div style="display: inline-flex">
                       <ion-chip
-                        color="primary"
                         v-for="(mail, index) in guests"
                         :key="mail"
+                        color="primary"
                       >
                         <ion-label>{{ mail }}</ion-label>
                         <ion-icon
@@ -278,17 +282,17 @@
                 <ion-col size="12" size-lg="12">
                   <ion-item>
                     <ion-icon
-                      :icon="documentTextOutline"
                       slot="start"
+                      :icon="documentTextOutline"
                       class="item-icon"
                     ></ion-icon>
                     <ion-label position="floating">
                       {{ capitalizeFirstLetter($tc("message.note", 2)) }}
                     </ion-label>
                     <ion-textarea
-                      type="text"
                       v-model="notes"
-                      autoGrow
+                      type="text"
+                      auto-grow
                       :rows="4"
                     ></ion-textarea>
                   </ion-item>
@@ -315,7 +319,6 @@ import {
   IonSelect,
   IonSelectOption,
   toastController,
-  loadingController,
   modalController,
   IonDatetime,
 } from "@ionic/vue";
@@ -387,6 +390,39 @@ export default defineComponent({
     };
   },
 
+  data() {
+    const storage = new Storage();
+    storage.create();
+    return {
+      buttonEdit: true,
+      storage,
+      title: "",
+      datetime: {
+        start: formatISO(new Date()),
+        end: formatISO(
+          add(new Date(), {
+            hours: 1,
+          })
+        ),
+      },
+      reminders: [],
+      repeats: {
+        frequency: "unique",
+        name: "unico",
+        data: {},
+      },
+      calendar: "0",
+      notes: "",
+      tags: Array<string>(),
+      guests: Array<string>(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      calendars: Array<{ id: string; name: string; default: boolean }>(),
+      spinners: {
+        save: false,
+      },
+    };
+  },
+
   computed: {
     setPageTitle() {
       if (this.$route.params.id == undefined)
@@ -433,39 +469,6 @@ export default defineComponent({
         },
       ];
     },
-  },
-
-  data() {
-    const storage = new Storage();
-    storage.create();
-    return {
-      buttonEdit: true,
-      storage,
-      title: "",
-      datetime: {
-        start: formatISO(new Date()),
-        end: formatISO(
-          add(new Date(), {
-            hours: 1,
-          })
-        ),
-      },
-      reminders: [],
-      repeats: {
-        frequency: "unique",
-        name: "Unico",
-        data: {},
-      },
-      calendar: "0",
-      notes: "",
-      tags: Array<string>(),
-      guests: Array<string>(),
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      calendars: Array<{ id: string; name: string; default: boolean }>(),
-      spinners: {
-        save: false,
-      },
-    };
   },
 
   mounted() {

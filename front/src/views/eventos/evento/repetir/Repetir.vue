@@ -9,7 +9,7 @@
         </ion-buttons>
         <ion-title>{{ capitalizeFirstLetter($t("message.repeat")) }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="save()" :disabled="validate">
+          <ion-button :disabled="validate" @click="save()">
             <ion-icon slot="start" :icon="saveOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -25,12 +25,12 @@
             :key="option.name"
             :value="option.name"
           >
-            {{ option.value }}
+            {{ capitalizeFirstLetter(option.value) }}
           </ion-select-option>
         </ion-select>
       </ion-item>
 
-      <section v-if="repeatData.frequencySelect == 'unique'"></section>
+      <!-- <section v-if="repeatData.frequencySelect == 'unique'"></section> -->
 
       <section v-if="repeatData.frequencySelect == 'daily'">
         <ion-row>
@@ -86,7 +86,10 @@
               <ion-label>{{
                 capitalizeFirstLetter($tc("message.day", 2))
               }}</ion-label>
-              <ion-select :multiple="true" v-model="repeatData.weekly.days">
+              <ion-select
+                :multiple="true"
+                @ion-change="repeatData.weekly.days = $event.detail.value"
+              >
                 <ion-select-option
                   v-for="day in setDaysNames"
                   :key="day.name"
@@ -107,7 +110,7 @@
               <ion-label>{{
                 capitalizeFirstLetter($t("message.every"))
               }}</ion-label>
-              <ion-select value="1" v-model="repeatData.monthly.every">
+              <ion-select v-model="repeatData.monthly.every" value="1">
                 <ion-select-option
                   v-for="item in frequency"
                   :key="item"
@@ -142,8 +145,8 @@
                   {{ capitalizeFirstLetter($tc("message.dayOfTheMonth", 2)) }}
                 </ion-label>
                 <ion-select
+                  ion-change="repeatData.monthly.day.dayMonth=$event.detail.value"
                   :multiple="true"
-                  v-model="repeatData.monthly.day.dayMonth"
                 >
                   <ion-select-option
                     v-for="day in daysMonth"
@@ -195,7 +198,7 @@
               <ion-label>{{
                 capitalizeFirstLetter($t("message.every"))
               }}</ion-label>
-              <ion-select value="1" v-model="repeatData.annually.every">
+              <ion-select v-model="repeatData.annually.every" value="1">
                 <ion-select-option
                   v-for="item in frequency"
                   :key="item"
@@ -338,23 +341,23 @@ export default defineComponent({
       return [
         {
           name: "unique",
-          value: this.capitalizeFirstLetter(this.$t("message.unique")),
+          value: this.$t("message.unique"),
         },
         {
           name: "daily",
-          value: this.capitalizeFirstLetter(this.$t("message.daily")),
+          value: this.$t("message.daily"),
         },
         {
           name: "weekly",
-          value: this.capitalizeFirstLetter(this.$t("message.weekly")),
+          value: this.$t("message.weekly"),
         },
         {
           name: "monthly",
-          value: this.capitalizeFirstLetter(this.$t("message.monthly")),
+          value: this.$t("message.monthly"),
         },
         {
           name: "annually",
-          value: this.capitalizeFirstLetter(this.$t("message.annually")),
+          value: this.$t("message.annually"),
         },
       ];
     },
@@ -362,23 +365,23 @@ export default defineComponent({
       return [
         {
           name: "first",
-          value: this.capitalizeFirstLetter(this.$t("message.first")),
+          value: this.$t("message.first"),
         },
         {
           name: "second",
-          value: this.capitalizeFirstLetter(this.$t("message.second")),
+          value: this.$t("message.second"),
         },
         {
           name: "third",
-          value: this.capitalizeFirstLetter(this.$t("message.third")),
+          value: this.$t("message.third"),
         },
         {
           name: "fourth",
-          value: this.capitalizeFirstLetter(this.$t("message.fourth")),
+          value: this.$t("message.fourth"),
         },
         {
           name: "last",
-          value: this.capitalizeFirstLetter(this.$t("message.last")),
+          value: this.$t("message.last"),
         },
       ];
     },
@@ -386,31 +389,31 @@ export default defineComponent({
       return [
         {
           name: "monday",
-          value: this.capitalizeFirstLetter(this.$t("message.monday")),
+          value: this.$t("message.monday"),
         },
         {
           name: "tuesday",
-          value: this.capitalizeFirstLetter(this.$t("message.tuesday")),
+          value: this.$t("message.tuesday"),
         },
         {
           name: "wednesday",
-          value: this.capitalizeFirstLetter(this.$t("message.wednesday")),
+          value: this.$t("message.wednesday"),
         },
         {
           name: "thursday",
-          value: this.capitalizeFirstLetter(this.$t("message.thursday")),
+          value: this.$t("message.thursday"),
         },
         {
           name: "friday",
-          value: this.capitalizeFirstLetter(this.$t("message.friday")),
+          value: this.$t("message.friday"),
         },
         {
           name: "saturday",
-          value: this.capitalizeFirstLetter(this.$t("message.saturday")),
+          value: this.$t("message.saturday"),
         },
         {
           name: "sunday",
-          value: this.capitalizeFirstLetter(this.$t("message.sunday")),
+          value: this.$t("message.sunday"),
         },
       ];
     },
@@ -419,62 +422,62 @@ export default defineComponent({
         {
           position: "1",
           name: "January",
-          value: this.capitalizeFirstLetter(this.$t("message.january")),
+          value: this.$t("message.january"),
         },
         {
           position: "2",
           name: "February",
-          value: this.capitalizeFirstLetter(this.$t("message.february")),
+          value: this.$t("message.february"),
         },
         {
           position: "3",
           name: "March",
-          value: this.capitalizeFirstLetter(this.$t("message.march")),
+          value: this.$t("message.march"),
         },
         {
           position: "4",
           name: "April",
-          value: this.capitalizeFirstLetter(this.$t("message.april")),
+          value: this.$t("message.april"),
         },
         {
           position: "5",
           name: "May",
-          value: this.capitalizeFirstLetter(this.$t("message.may")),
+          value: this.$t("message.may"),
         },
         {
           position: "6",
           name: "June",
-          value: this.capitalizeFirstLetter(this.$t("message.june")),
+          value: this.$t("message.june"),
         },
         {
           position: "7",
           name: "July",
-          value: this.capitalizeFirstLetter(this.$t("message.july")),
+          value: this.$t("message.july"),
         },
         {
           position: "8",
           name: "August",
-          value: this.capitalizeFirstLetter(this.$t("message.august")),
+          value: this.$t("message.august"),
         },
         {
           position: "9",
           name: "September",
-          value: this.capitalizeFirstLetter(this.$t("message.september")),
+          value: this.$t("message.september"),
         },
         {
           position: "10",
           name: "October",
-          value: this.capitalizeFirstLetter(this.$t("message.october")),
+          value: this.$t("message.october"),
         },
         {
           position: "11",
           name: "November",
-          value: this.capitalizeFirstLetter(this.$t("message.november")),
+          value: this.$t("message.november"),
         },
         {
           position: "12",
           name: "December",
-          value: this.capitalizeFirstLetter(this.$t("message.december")),
+          value: this.$t("message.december"),
         },
       ];
     },
@@ -482,39 +485,39 @@ export default defineComponent({
       return [
         {
           name: "monday",
-          value: this.capitalizeFirstLetter(this.$t("message.monday")),
+          value: this.$t("message.monday"),
         },
         {
           name: "tuesday",
-          value: this.capitalizeFirstLetter(this.$t("message.tuesday")),
+          value: this.$t("message.tuesday"),
         },
         {
           name: "wednesday",
-          value: this.capitalizeFirstLetter(this.$t("message.wednesday")),
+          value: this.$t("message.wednesday"),
         },
         {
           name: "thursday",
-          value: this.capitalizeFirstLetter(this.$t("message.thursday")),
+          value: this.$t("message.thursday"),
         },
         {
           name: "friday",
-          value: this.capitalizeFirstLetter(this.$t("message.friday")),
+          value: this.$t("message.friday"),
         },
         {
           name: "saturday",
-          value: this.capitalizeFirstLetter(this.$t("message.saturday")),
+          value: this.$t("message.saturday"),
         },
         {
           name: "sunday",
-          value: this.capitalizeFirstLetter(this.$t("message.sunday")),
+          value: this.$t("message.sunday"),
         },
         {
           name: "l-v",
-          value: this.capitalizeFirstLetter(this.$t("message.businessDay")),
+          value: this.$t("message.businessDay"),
         },
         {
           name: "weekend",
-          value: this.capitalizeFirstLetter(this.$t("message.weekend")),
+          value: this.$t("message.weekend"),
         },
       ];
     },
