@@ -2,7 +2,7 @@ export default {
   message: {
     start: "start",
     title: "title",
-    calendar: "calendar",
+    calendar: "calendar|calendars",
     dateStart: "initial date",
     dateEnd: "final date",
     reminders: "reminders",
@@ -64,5 +64,7 @@ export default {
     every: "every",
     type: "type",
     year: "year|years",
+    noTitle: "no title",
+    assignment: "assignment|assignments",
   },
 };

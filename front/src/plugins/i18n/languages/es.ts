@@ -2,7 +2,7 @@ export default {
   message: {
     start: "inicio",
     title: "titulo",
-    calendar: "calendario",
+    calendar: "calendario|calendarios",
     dateStart: "fecha inicial",
     dateEnd: "fecha final",
     repeat: "repetir",
@@ -63,5 +63,7 @@ export default {
     every: "cada",
     type: "tipo",
     year: "año|años",
+    noTitle: "sin titulo",
+    assignment: "asignado|asignaciones",
   },
 };

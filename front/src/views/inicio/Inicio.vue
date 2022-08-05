@@ -5,17 +5,17 @@
         <ion-buttons slot="start">
           <ion-menu-button menu="firstMenu" mode="md"></ion-menu-button>
         </ion-buttons>
-        <ion-title>{{ $t("message.start") }}</ion-title>
+        <ion-title>{{ capitalizeFirstLetter($t("message.start")) }}</ion-title>
         <ion-buttons slot="end">
           <ion-button fill="clear" @click="$router.push('/event/add')">
             <ion-icon :icon="addOutline"></ion-icon>
           </ion-button>
-          <ion-button fill="clear" id="open-main-calendar">
+          <ion-button id="open-main-calendar" fill="clear">
             <ion-icon :icon="calendarOutline"></ion-icon>
           </ion-button>
           <ion-button
-            fill="clear"
             id="open-main-calendar"
+            fill="clear"
             @click="($refs.eventComponent as any).getEvents()"
           >
             <ion-icon :icon="refreshOutline"></ion-icon>
@@ -25,10 +25,14 @@
       <ion-toolbar class="ion-no-border" :translucent="true">
         <ion-segment v-model="mainSegment">
           <ion-segment-button value="calendar">
-            <ion-label>Calendario</ion-label>
+            <ion-label>{{
+              capitalizeFirstLetter($tc("message.calendar", 1))
+            }}</ion-label>
           </ion-segment-button>
           <ion-segment-button value="asigned" disabled>
-            <ion-label>Asignado</ion-label>
+            <ion-label>{{
+              capitalizeFirstLetter($tc("message.assignment", 1))
+            }}</ion-label>
           </ion-segment-button>
         </ion-segment>
       </ion-toolbar>
@@ -38,14 +42,14 @@
       <section>
         <ion-popover trigger="open-main-calendar" :show-backdrop="false">
           <ion-datetime
-            presentation="date"
-            @ionChange="selectDay($event)"
             ref="mainCalendar"
             v-model="date"
+            presentation="date"
+            @ion-change="selectDay($event)"
           >
           </ion-datetime>
           <ion-item>
-            <ion-button @click="resetCalendar()" slot="end" fill="clear"
+            <ion-button slot="end" fill="clear" @click="resetCalendar()"
               >Reset</ion-button
             >
           </ion-item>
@@ -93,6 +97,7 @@ import {
 import Eventos from "../eventos/Eventos.vue";
 import eventBus from "../../EventBus";
 import { formatISO } from "date-fns";
+import { capitalizeFirstLetter } from "../../services/system";
 
 export default defineComponent({
   name: "InicioPage",
@@ -118,7 +123,13 @@ export default defineComponent({
 
       customDatetime.value.$el.reset();
     };
-    return { calendarOutline, documentTextOutline, addOutline, refreshOutline };
+    return {
+      calendarOutline,
+      documentTextOutline,
+      addOutline,
+      refreshOutline,
+      capitalizeFirstLetter: capitalizeFirstLetter,
+    };
   },
   data() {
     const date = formatISO(new Date());

@@ -183,7 +183,7 @@
                       {{ capitalizeFirstLetter($t("message.repeat")) }}
                     </ion-label>
                     <ion-label slot="end" class="text-overflow">
-                      {{ capitalizeFirstLetter(repeats.name) }}
+                      {{ capitalizeFirstLetter($t(`message.${repeats.name}`)) }}
                     </ion-label>
                   </ion-item>
                 </ion-col>
@@ -408,7 +408,7 @@ export default defineComponent({
       reminders: [],
       repeats: {
         frequency: "unique",
-        name: "unico",
+        name: "unique",
         data: {},
       },
       calendar: "0",

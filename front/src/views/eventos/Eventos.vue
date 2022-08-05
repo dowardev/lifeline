@@ -1,15 +1,20 @@
 <template>
-  <ion-refresher slot="fixed" @ionRefresh="refreshContent($event)">
+  <ion-refresher slot="fixed" @ion-refresh="refreshContent($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
   <ion-accordion-group>
-    <ion-row v-for="event in events" v-bind:key="event" class="center">
-      <ion-col size="12" size-md="6">
+    <ion-row v-for="event in events" :key="event" class="center">
+      <ion-col size="12" size-md="10" size-lg="6">
         <ion-card>
           <ion-accordion :value="Math.random()">
             <ion-card-header slot="header">
-              <ion-card-title>{{ event.title }}</ion-card-title>
+              <ion-card-title v-if="event.title == 'no title'">{{
+                capitalizeFirstLetter($t("message.noTitle"))
+              }}</ion-card-title>
+              <ion-card-title v-if="event.title != 'no title'">{{
+                event.title
+              }}</ion-card-title>
               <ion-card-subtitle>{{ event.calendar.name }}</ion-card-subtitle>
               <ion-card-subtitle v-if="event.timeStart != ''">
                 {{ event.timeStart }}
@@ -24,16 +29,16 @@
               <ion-list>
                 <ion-item lines="none">
                   <ion-button
-                    fill="clear"
                     slot="end"
+                    fill="clear"
                     @click="updateEvent(event.id)"
                   >
                     <ion-icon :icon="createOutline"></ion-icon>
                   </ion-button>
                   <ion-button
+                    slot="end"
                     fill="clear"
                     color="danger"
-                    slot="end"
                     @click="presentAlertRemoveEvent(event.id)"
                   >
                     <ion-icon :icon="trashOutline"></ion-icon>
@@ -46,7 +51,9 @@
             <section slot="content">
               <ion-list>
                 <ion-list-header>
-                  <ion-label>Zona horaria</ion-label>
+                  <ion-label>{{
+                    capitalizeFirstLetter($t("message.timeZone"))
+                  }}</ion-label>
                 </ion-list-header>
                 <ion-item lines="full">
                   <ion-label>{{ event.timeZone }}</ion-label>
@@ -55,10 +62,12 @@
             </section>
 
             <!-- Reminders -->
-            <section slot="content" v-if="event.reminders.length > 0">
+            <section v-if="event.reminders.length > 0" slot="content">
               <ion-list>
                 <ion-list-header>
-                  <ion-label>Recordatorios</ion-label>
+                  <ion-label>{{
+                    capitalizeFirstLetter($tc("message.reminder", 2))
+                  }}</ion-label>
                 </ion-list-header>
 
                 <div
@@ -67,9 +76,9 @@
                 >
                   <div style="display: inline-flex">
                     <ion-chip
-                      color="primary"
                       v-for="reminder in event.reminders"
                       :key="reminder"
+                      color="primary"
                     >
                       {{ reminder }}
                     </ion-chip>
@@ -83,37 +92,27 @@
             <section slot="content">
               <ion-list>
                 <ion-list-header>
-                  <ion-label>Repetir</ion-label>
+                  <ion-label>{{
+                    capitalizeFirstLetter($t("message.repeat"))
+                  }}</ion-label>
                 </ion-list-header>
                 <ion-item lines="full">
-                  <ion-label>{{ event.repeats.name }}</ion-label>
+                  <ion-label>{{
+                    capitalizeFirstLetter(
+                      $t(`message.${event.repeats.frequency}`)
+                    )
+                  }}</ion-label>
                 </ion-item>
               </ion-list>
             </section>
 
             <!-- guests -->
-            <section slot="content" v-if="event.guests.length > 0">
+            <section v-if="event.guests.length > 0" slot="content">
               <ion-list>
                 <ion-list-header>
-                  <ion-label>Invitados</ion-label>
-                </ion-list-header>
-                <div>
-                  <ion-chip
-                    color="primary"
-                    v-for="guest in event.guests"
-                    :key="guest"
-                  >
-                    {{ guest }}
-                  </ion-chip>
-                </div>
-              </ion-list>
-            </section>
-
-            <!-- tags -->
-            <section slot="content" v-if="event.tags.length > 0">
-              <ion-list>
-                <ion-list-header>
-                  <ion-label>Etiquetas</ion-label>
+                  <ion-label>{{
+                    capitalizeFirstLetter($tc("message.guest", 2))
+                  }}</ion-label>
                 </ion-list-header>
                 <div
                   style="overflow-x: scroll"
@@ -121,9 +120,34 @@
                 >
                   <div style="display: inline-flex">
                     <ion-chip
+                      v-for="guest in event.guests"
+                      :key="guest"
                       color="primary"
+                    >
+                      {{ guest }}
+                    </ion-chip>
+                  </div>
+                </div>
+              </ion-list>
+            </section>
+
+            <!-- tags -->
+            <section v-if="event.tags.length > 0" slot="content">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>{{
+                    capitalizeFirstLetter($tc("message.tag", 2))
+                  }}</ion-label>
+                </ion-list-header>
+                <div
+                  style="overflow-x: scroll"
+                  class="ion-padding-start ion-padding-end"
+                >
+                  <div style="display: inline-flex">
+                    <ion-chip
                       v-for="tag in event.tags"
                       :key="tag"
+                      color="primary"
                     >
                       {{ tag.name }}
                     </ion-chip>
@@ -135,12 +159,14 @@
 
             <!-- notes -->
             <section
-              slot="content"
               v-if="event.notes && event.notes.length > 0"
+              slot="content"
             >
               <ion-list>
                 <ion-list-header>
-                  <ion-label>Notas</ion-label>
+                  <ion-label>{{
+                    capitalizeFirstLetter($tc("message.note", 2))
+                  }}</ion-label>
                 </ion-list-header>
                 <div class="ion-padding-start ion-padding-end">
                   <ion-label class="ion-text-wrap">{{ event.notes }}</ion-label>
@@ -183,6 +209,7 @@ import {
   formatInTimeZone,
 } from "date-fns-tz";
 import { USER_EVENTS } from "../../services/graphql";
+import { capitalizeFirstLetter } from "../../services/system";
 
 export default defineComponent({
   name: "EventosPage",
@@ -193,6 +220,7 @@ export default defineComponent({
       trashOutline,
       IonList,
       IonListHeader,
+      capitalizeFirstLetter: capitalizeFirstLetter,
     };
   },
 
@@ -274,7 +302,6 @@ export default defineComponent({
         item.timeZone = item.time_zone;
         delete item.time_zone;
       });
-      console.log(events);
 
       events.forEach(async (element: any) => {
         const timeStart = formatISO(new Date(element.timeStart + "Z"));

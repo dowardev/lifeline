@@ -3,13 +3,13 @@
     <ion-header class="ion-no-border" mode="ios" :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button v-on:click="closeModal()">
+          <ion-button @click="closeModal()">
             <ion-icon slot="start" :icon="chevronBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-title>Detalles</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-on:click="editEvent()">
+          <ion-button @click="editEvent()">
             <ion-icon slot="start" :icon="createOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -58,9 +58,9 @@
             <ion-label class="ion-text-wrap"
               ><h2>Recodartorio</h2>
               <ion-chip
-                color="primary"
                 v-for="reminder in event?.reminders"
                 :key="reminder"
+                color="primary"
                 >{{ reminder }}</ion-chip
               >
             </ion-label>
@@ -136,7 +136,12 @@ export default defineComponent({
     IonButton,
   },
   props: {
-    event: { type: Object },
+    event: {
+      type: Object,
+      default: () => {
+        return Array<any>;
+      },
+    },
   },
   setup() {
     return {
