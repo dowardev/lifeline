@@ -3,11 +3,13 @@
     <ion-header class="ion-no-border" mode="ios" :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button v-on:click="$router.go(-1)">
+          <ion-button @click="$router.go(-1)">
             <ion-icon :icon="chevronBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Crear cuenta</ion-title>
+        <ion-title>{{
+          capitalizeFirstLetter($t("message.createAccount"))
+        }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -19,7 +21,9 @@
       />
       <ion-row class="ion-padding">
         <ion-col size="12">
-          <h1 style="color: white">Bienvenido</h1>
+          <h1 style="color: white">
+            {{ capitalizeFirstLetter($t("message.welcome")) }}
+          </h1>
         </ion-col>
       </ion-row>
       <ion-row class="center center-vertical-card-login">
@@ -38,7 +42,9 @@
             <ion-card-content>
               <form>
                 <ion-item>
-                  <ion-label position="floating">Nombre</ion-label>
+                  <ion-label position="floating">{{
+                    capitalizeFirstLetter($t("message.name"))
+                  }}</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.name.$model"
                     autocomplete="name"
@@ -54,7 +60,9 @@
                 </div>
 
                 <ion-item>
-                  <ion-label position="floating">Usuario</ion-label>
+                  <ion-label position="floating">{{
+                    capitalizeFirstLetter($t("message.user"))
+                  }}</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.user.$model"
                     inputmode="text"
@@ -69,7 +77,9 @@
                 </div>
 
                 <ion-item>
-                  <ion-label position="floating">Correo electronico</ion-label>
+                  <ion-label position="floating">{{
+                    capitalizeFirstLetter($t("message.email"))
+                  }}</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.email.$model"
                     autocomplete="email"
@@ -85,27 +95,29 @@
                 </div>
 
                 <ion-item>
-                  <ion-label position="floating">Contraseña</ion-label>
+                  <ion-label position="floating">{{
+                    capitalizeFirstLetter($t("message.password"))
+                  }}</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.password.$model"
                     :type="inputTypePassword1"
                     autocomplete="new-password"
                   ></ion-input>
                   <ion-button
+                    v-if="inputTypePassword1 == 'text'"
                     slot="end"
                     fill="clear"
-                    v-if="inputTypePassword1 == 'text'"
-                    v-on:click="changeInputTypePassword1('password')"
                     style="margin-top: 20px"
+                    @click="changeInputTypePassword1('password')"
                   >
                     <ion-icon :icon="eyeOffOutline"></ion-icon>
                   </ion-button>
                   <ion-button
+                    v-if="inputTypePassword1 == 'password'"
                     slot="end"
                     fill="clear"
-                    v-if="inputTypePassword1 == 'password'"
-                    v-on:click="changeInputTypePassword1('text')"
                     style="margin-top: 20px"
+                    @click="changeInputTypePassword1('text')"
                   >
                     <ion-icon :icon="eyeOutline"></ion-icon>
                   </ion-button>
@@ -118,27 +130,29 @@
                 </div>
 
                 <ion-item>
-                  <ion-label position="floating">Repite contraseña</ion-label>
+                  <ion-label position="floating">{{
+                    capitalizeFirstLetter($t("message.repeatPassword"))
+                  }}</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.password2.$model"
                     :type="inputTypePassword2"
                     autocomplete="new-password"
                   ></ion-input>
                   <ion-button
+                    v-if="inputTypePassword2 == 'text'"
                     slot="end"
                     fill="clear"
-                    v-if="inputTypePassword2 == 'text'"
-                    v-on:click="changeInputTypePassword2('password')"
                     style="margin-top: 20px"
+                    @click="changeInputTypePassword2('password')"
                   >
                     <ion-icon :icon="eyeOffOutline"></ion-icon>
                   </ion-button>
                   <ion-button
+                    v-if="inputTypePassword2 == 'password'"
                     slot="end"
                     fill="clear"
-                    v-if="inputTypePassword2 == 'password'"
-                    v-on:click="changeInputTypePassword2('text')"
                     style="margin-top: 20px"
+                    @click="changeInputTypePassword2('text')"
                   >
                     <ion-icon :icon="eyeOutline"></ion-icon>
                   </ion-button>
@@ -156,17 +170,17 @@
                   <ion-button
                     expand="block"
                     fill="clear"
-                    v-on:click="addUser()"
                     :disabled="
                       (v$ as any).form.$invalid || spinners.buttonSignup == true
                     "
+                    @click="addUser()"
                   >
-                    <ion-label v-if="spinners.buttonSignup == false"
-                      >Registrar</ion-label
-                    >
+                    <ion-label v-if="spinners.buttonSignup == false">{{
+                      $t("message.signup")
+                    }}</ion-label>
                     <ion-spinner
-                      name="crescent"
                       v-if="spinners.buttonSignup == true"
+                      name="crescent"
                     ></ion-spinner>
                   </ion-button>
                 </ion-col>
@@ -176,8 +190,8 @@
           <ion-row>
             <ion-col size="12" class="center">
               <small>
-                <ion-text color="primary" v-on:click="$router.push('/sesion')">
-                  ¿Ya tienes cuenta?</ion-text
+                <ion-text color="primary" @click="$router.push('/sesion')">
+                  {{ capitalizeFirstLetter($t("message.login")) }}</ion-text
                 >
               </small>
             </ion-col>
@@ -208,6 +222,7 @@ import { required, email, helpers, sameAs } from "@vuelidate/validators";
 import { openToast as openToastService } from "../../../services/system";
 import { getUser as getUserService } from "../../../services/user";
 import { USER_NAME } from "../../../services/graphql";
+import { capitalizeFirstLetter } from "../../../services/system";
 
 export default defineComponent({
   name: "RegisterPage",
@@ -226,6 +241,7 @@ export default defineComponent({
       eyeOffOutline,
       chevronBackOutline,
       v$: useVuelidate(),
+      capitalizeFirstLetter: capitalizeFirstLetter,
     };
   },
 

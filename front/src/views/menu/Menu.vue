@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header class="ion-no-border" mode="ios">
       <ion-toolbar class="color-menu">
-        <ion-item lines="none" v-if="logged == true" class="transparent">
+        <ion-item v-if="logged == true" lines="none" class="transparent">
           <ion-avatar slot="start">
             <img :src="userData.img" />
           </ion-avatar>
@@ -13,107 +13,92 @@
         </ion-item>
 
         <ion-item v-if="logged == false" class="transparent" lines="none">
-          <ion-button fill="clear" @click="openRoute('/login')"
-            >Iniciar sesion</ion-button
-          >
-          <ion-button fill="clear" @click="openRoute('/signup')"
-            >Registrarse</ion-button
-          >
+          <ion-button fill="clear" @click="openRoute('/login')">{{
+            capitalizeFirstLetter($t("message.login"))
+          }}</ion-button>
+          <ion-button fill="clear" @click="openRoute('/signup')">{{
+            capitalizeFirstLetter($t("message.signup"))
+          }}</ion-button>
         </ion-item>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="color-menu">
-      <ion-item
-        lines="none"
-        button
-        v-on:click="openRoute('/')"
-        class="color-menu"
-      >
+      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
         <ion-icon
-          class="icon-menu-color"
           slot="start"
+          class="icon-menu-color"
           :icon="homeOutline"
         ></ion-icon>
-        <ion-label class="text-menu-color">Inicio</ion-label>
+        <ion-label class="text-menu-color">{{
+          capitalizeFirstLetter($t("message.start"))
+        }}</ion-label>
       </ion-item>
-      <ion-item
-        lines="none"
-        button
-        v-on:click="openRoute('/')"
-        class="color-menu"
-      >
+
+      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
         <ion-icon
-          class="icon-menu-color"
           slot="start"
+          class="icon-menu-color"
           :icon="cloudDownloadOutline"
         ></ion-icon>
-        <ion-label class="text-menu-color">Modulos</ion-label>
+        <ion-label class="text-menu-color">{{
+          capitalizeFirstLetter($tc("message.module", 2))
+        }}</ion-label>
       </ion-item>
-      <ion-item
-        lines="none"
-        button
-        v-on:click="openRoute('/')"
-        class="color-menu"
-      >
+
+      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
         <ion-icon
-          class="icon-menu-color"
           slot="start"
+          class="icon-menu-color"
           :icon="documentOutline"
         ></ion-icon>
-        <ion-label class="text-menu-color">Notas</ion-label>
+        <ion-label class="text-menu-color">{{
+          capitalizeFirstLetter($tc("message.note", 2))
+        }}</ion-label>
       </ion-item>
-      <ion-item
-        lines="none"
-        button
-        v-on:click="openRoute('/')"
-        class="color-menu"
-      >
+
+      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
         <ion-icon
-          class="icon-menu-color"
           slot="start"
+          class="icon-menu-color"
           :icon="checkboxOutline"
         ></ion-icon>
-        <ion-label class="text-menu-color">Tareas</ion-label>
+        <ion-label class="text-menu-color">{{
+          capitalizeFirstLetter($tc("message.task", 2))
+        }}</ion-label>
       </ion-item>
-      <ion-item
-        lines="none"
-        button
-        v-on:click="openRoute('/')"
-        class="color-menu"
-      >
+
+      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
         <ion-icon
-          class="icon-menu-color"
           slot="start"
+          class="icon-menu-color"
           :icon="cogOutline"
         ></ion-icon>
-        <ion-label class="text-menu-color">Programacion</ion-label>
+        <ion-label class="text-menu-color">{{
+          capitalizeFirstLetter($t("message.programming"))
+        }}</ion-label>
       </ion-item>
-      <ion-item
-        lines="none"
-        button
-        v-on:click="openRoute('/')"
-        class="color-menu"
-      >
+
+      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
         <ion-icon
-          class="icon-menu-color"
           slot="start"
+          class="icon-menu-color"
           :icon="briefcaseOutline"
         ></ion-icon>
-        <ion-label class="text-menu-color">Proyectos</ion-label>
+        <ion-label class="text-menu-color">{{
+          capitalizeFirstLetter($tc("message.projects", 2))
+        }}</ion-label>
       </ion-item>
-      <ion-item
-        lines="none"
-        button
-        v-on:click="openRoute('/')"
-        class="color-menu"
-      >
+
+      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
         <ion-icon
-          class="icon-menu-color"
           slot="start"
+          class="icon-menu-color"
           :icon="helpOutline"
         ></ion-icon>
-        <ion-label class="text-menu-color">Soporte</ion-label>
+        <ion-label class="text-menu-color">{{
+          capitalizeFirstLetter($t("message.support"))
+        }}</ion-label>
       </ion-item>
     </ion-content>
 
@@ -121,19 +106,19 @@
       <ion-toolbar>
         <ion-buttons slot="end">
           <ion-button
-            fill="clear"
-            @click="openModalDesktop()"
             v-if="!androidPlatform && !iosPlatform"
+            fill="clear"
             color="primary"
+            @click="openModalDesktop()"
           >
             <ion-icon :icon="brushOutline"></ion-icon>
           </ion-button>
 
           <ion-button
-            fill="clear"
-            @click="openModalMobile()"
             v-if="androidPlatform || iosPlatform"
+            fill="clear"
             color="primary"
+            @click="openModalMobile()"
           >
             <ion-icon :icon="brushOutline"></ion-icon>
           </ion-button>
@@ -147,20 +132,20 @@
             :dismiss-on-select="true"
           >
             <ion-content>
-              <ion-item button @click="$i18n.locale = 'es'">
+              <ion-item button @click="changeLanguage('es')">
                 <ion-label>Español</ion-label>
               </ion-item>
-              <ion-item button @click="$i18n.locale = 'en'">
+              <ion-item button @click="changeLanguage('en')">
                 <ion-label>English</ion-label>
               </ion-item>
             </ion-content>
           </ion-popover>
 
           <ion-button
-            fill="clear"
-            @click="logout()"
             v-if="logged == true"
+            fill="clear"
             color="primary"
+            @click="logout()"
           >
             <ion-icon :icon="exitOutline"></ion-icon>
           </ion-button>
@@ -204,6 +189,8 @@ import DarkMode from "./darkmode/DarkMode.vue";
 // import systemService from "../../services/system";
 import { USER_MENU } from "../../services/graphql";
 import userAvatar from "../../assets/otros/user.png";
+import { capitalizeFirstLetter } from "../../services/system";
+import { setLanguage } from "../../services/system";
 
 export default defineComponent({
   name: "MenuComponent",
@@ -231,6 +218,7 @@ export default defineComponent({
       iosPlatform: isPlatform("ios"),
       exitOutline,
       languageOutline,
+      capitalizeFirstLetter: capitalizeFirstLetter,
     };
   },
 
@@ -320,6 +308,11 @@ export default defineComponent({
       //   ],
       // });
       // return alert.present();
+    },
+
+    changeLanguage(language: string) {
+      this.$i18n.locale = language;
+      setLanguage(language);
     },
   },
 });

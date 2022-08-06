@@ -8,7 +8,7 @@
             :smode="modeDesingElements"
           ></ion-menu-button>
         </ion-buttons>
-        <ion-title>Iniciar sesión</ion-title>
+        <ion-title>{{ $t("message.login") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -21,7 +21,7 @@
       <ion-row class="ion-padding">
         <ion-col size="12">
           <h1 style="color: white !important">
-            Hola, es un gusto tenerte de vuelta
+            {{ capitalizeFirstLetter($t("message.welcomeMessageLogin")) }}
           </h1>
         </ion-col>
       </ion-row>
@@ -32,7 +32,7 @@
             <ion-card-content>
               <div class="center">
                 <img
-                  src="../../../../public/assets/otros/key.svg"
+                  src="@/assets/otros/key.svg"
                   alt=""
                   class="imagen-usuario"
                 />
@@ -40,13 +40,13 @@
               <form>
                 <ion-item lines="inset" class="transparent">
                   <ion-icon
+                    slot="start"
                     :icon="mailOpenOutline"
                     class="item-icon"
-                    slot="start"
                   >
                   </ion-icon>
                   <ion-label position="floating">
-                    Usuario o correo electrónico
+                    {{ capitalizeFirstLetter($t("message.userOrEmail")) }}
                   </ion-label>
                   <ion-input
                     v-model="(v$ as any).form.email.$model"
@@ -63,32 +63,34 @@
 
                 <ion-item lines="inset" class="transparent">
                   <ion-icon
+                    slot="start"
                     :icon="fingerPrintOutline"
                     class="item-icon"
-                    slot="start"
                   >
                   </ion-icon>
-                  <ion-label position="floating">Contraseña</ion-label>
+                  <ion-label position="floating">{{
+                    capitalizeFirstLetter($t("message.password"))
+                  }}</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.password.$model"
                     :type="inputTypePassword"
                   >
                   </ion-input>
                   <ion-button
+                    v-if="inputTypePassword == 'text'"
                     slot="end"
                     fill="clear"
-                    v-if="inputTypePassword == 'text'"
-                    v-on:click="inputTypePassword = 'password'"
                     style="margin-top: 20px"
+                    @click="inputTypePassword = 'password'"
                   >
                     <ion-icon :icon="eyeOffOutline"></ion-icon>
                   </ion-button>
                   <ion-button
+                    v-if="inputTypePassword == 'password'"
                     slot="end"
                     fill="clear"
-                    v-if="inputTypePassword == 'password'"
-                    v-on:click="inputTypePassword = 'text'"
                     style="margin-top: 20px"
+                    @click="inputTypePassword = 'text'"
                   >
                     <ion-icon :icon="eyeOutline"></ion-icon>
                   </ion-button>
@@ -104,16 +106,16 @@
 
               <ion-button
                 fill="clear"
-                v-on:click="login()"
-                :disabled="(v$ as any).form.$invalid || spinners.buttonLogin"
                 expand="full"
+                :disabled="(v$ as any).form.$invalid || spinners.buttonLogin"
+                @click="login()"
               >
                 <ion-label v-if="spinners.buttonLogin == false">
-                  Iniciar sesión</ion-label
+                  {{ $t("message.login") }}</ion-label
                 >
                 <ion-spinner
-                  name="crescent"
                   v-if="spinners.buttonLogin"
+                  name="crescent"
                 ></ion-spinner>
               </ion-button>
             </ion-card-content>
@@ -123,17 +125,17 @@
             <div class="center">
               <ion-item lines="none" class="transparent">
                 <ion-button
-                  @click="forgotPassword()"
                   class="options"
                   fill="clear"
                   :disabled="spinners.buttonForgotPassword"
+                  @click="forgotPassword()"
                 >
-                  <ion-label v-if="spinners.buttonForgotPassword == false"
-                    >¿Olvidaste la contraseña?</ion-label
-                  >
+                  <ion-label v-if="spinners.buttonForgotPassword == false">{{
+                    capitalizeFirstLetter($t("message.recoverPassword"))
+                  }}</ion-label>
                   <ion-spinner
-                    name="crescent"
                     v-if="spinners.buttonForgotPassword"
+                    name="crescent"
                   ></ion-spinner>
                 </ion-button>
               </ion-item>
@@ -142,18 +144,18 @@
             <div class="center">
               <ion-item lines="none" class="transparent">
                 <ion-button
-                  @click="createAccount()"
                   class="options"
                   fill="clear"
                   :disabled="spinners.buttonCreateAccount"
                   expand="full"
+                  @click="createAccount()"
                 >
-                  <ion-label v-if="spinners.buttonCreateAccount == false"
-                    >Crear cuenta</ion-label
-                  >
+                  <ion-label v-if="spinners.buttonCreateAccount == false">{{
+                    capitalizeFirstLetter($t("message.createAccount"))
+                  }}</ion-label>
                   <ion-spinner
-                    name="crescent"
                     v-if="spinners.buttonCreateAccount"
+                    name="crescent"
                     color="primary"
                   ></ion-spinner>
                 </ion-button>
@@ -205,6 +207,7 @@ import useVuelidate from "@vuelidate/core";
 import { required, helpers } from "@vuelidate/validators";
 // import { openToastErrror } from "../../../services/system";
 import { USER_LOGIN, USER_NAME } from "../../../services/graphql";
+import { capitalizeFirstLetter } from "../../../services/system";
 
 export default defineComponent({
   name: "LoginPage",
@@ -226,6 +229,16 @@ export default defineComponent({
     IonButton,
   },
 
+  beforeRouteEnter(to, from, next) {
+    getUser({ graphql: { name: USER_NAME, fragment: "UserName" } })
+      .then(() => {
+        next("/");
+      })
+      .catch(() => {
+        next();
+      });
+  },
+
   setup() {
     const modeDesingElements = isPlatform("ios") ? "ios" : "md";
     return {
@@ -235,6 +248,7 @@ export default defineComponent({
       fingerPrintOutline,
       mailOpenOutline,
       modeDesingElements,
+      capitalizeFirstLetter: capitalizeFirstLetter,
     };
   },
 
@@ -265,16 +279,6 @@ export default defineComponent({
         },
       },
     };
-  },
-
-  beforeRouteEnter(to, from, next) {
-    getUser({ graphql: { name: USER_NAME, fragment: "UserName" } })
-      .then(() => {
-        next("/");
-      })
-      .catch(() => {
-        next();
-      });
   },
 
   methods: {

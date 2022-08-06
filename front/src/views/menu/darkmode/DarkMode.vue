@@ -2,24 +2,32 @@
   <ion-page>
     <ion-header :translucent="true" class="ion-no-border">
       <ion-toolbar>
-        <ion-title>Modo oscuro</ion-title>
+        <ion-title>{{
+          capitalizeFirstLetter($t("message.darkMode"))
+        }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-radio-group v-model="darkOptions.status" @ionChange="setTheme()">
+      <ion-radio-group v-model="darkOptions.status" @ion-change="setTheme()">
         <ion-item>
-          <ion-label>Activado</ion-label>
+          <ion-label>{{
+            capitalizeFirstLetter($t("message.enabled"))
+          }}</ion-label>
           <ion-radio slot="start" value="enabled"></ion-radio>
         </ion-item>
 
         <ion-item>
-          <ion-label>Desactivado</ion-label>
+          <ion-label>{{
+            capitalizeFirstLetter($t("message.disabled"))
+          }}</ion-label>
           <ion-radio slot="start" value="disabled"></ion-radio>
         </ion-item>
 
         <ion-item>
-          <ion-label>Automatico</ion-label>
+          <ion-label>{{
+            capitalizeFirstLetter($t("message.automatic"))
+          }}</ion-label>
           <ion-radio slot="start" value="automatic"></ion-radio>
         </ion-item>
       </ion-radio-group>
@@ -43,6 +51,7 @@ import {
   setTheme as setThemeService,
   toggleTheme as toggleThemeService,
 } from "../../../services/system";
+import { capitalizeFirstLetter } from "../../../services/system";
 
 export default defineComponent({
   components: {
@@ -54,12 +63,20 @@ export default defineComponent({
     IonRadio,
     IonRadioGroup,
   },
+
+  setup() {
+    return {
+      capitalizeFirstLetter: capitalizeFirstLetter,
+    };
+  },
+
   data() {
     this.getTheme();
     return {
       darkOptions: { status: "disabled" },
     };
   },
+
   methods: {
     async getTheme() {
       const isDarkEnabled = await getThemeService();
