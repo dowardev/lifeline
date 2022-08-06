@@ -6,37 +6,36 @@
   <ion-accordion-group :multiple="true">
     <ion-list v-for="(event, name) in events" :key="name">
       <ion-list-header>{{ formatTimeLine(name) }}</ion-list-header>
-      <ion-row v-for="event2 in event" :key="event2" class="center">
+      <ion-row v-for="dataEvent in event" :key="dataEvent" class="center">
         <ion-col size="12" size-md="10" size-lg="6">
           <ion-card>
             <ion-accordion :value="Math.random()">
               <ion-card-header slot="header">
-                <ion-card-title v-if="event2.title == 'no title'">{{
+                <ion-card-title v-if="dataEvent.title == 'no title'">{{
                   capitalizeFirstLetter($t("message.noTitle"))
                 }}</ion-card-title>
-                <ion-card-title v-if="event2.title != 'no title'">{{
-                  event2.title
+                <ion-card-title v-if="dataEvent.title != 'no title'">{{
+                  dataEvent.title
                 }}</ion-card-title>
                 <ion-card-subtitle>{{
-                  event2.calendar.name
+                  dataEvent.calendar.name
                 }}</ion-card-subtitle>
-                <ion-card-subtitle v-if="event2.timeStart != ''">
-                  {{ event2.timeStart }}
+                <ion-card-subtitle v-if="dataEvent.timeStart != ''">
+                  {{ dataEvent.timeStart }}
                 </ion-card-subtitle>
-                <ion-card-subtitle v-if="event2.timeStart != ''">
-                  {{ event2.timeEnd }}
+                <ion-card-subtitle v-if="dataEvent.timeStart != ''">
+                  {{ dataEvent.timeEnd }}
                 </ion-card-subtitle>
               </ion-card-header>
 
-              <!-- action buttons
-      -->
+              <!-- action buttons -->
               <section slot="content">
                 <ion-list>
                   <ion-item lines="none">
                     <ion-button
                       slot="end"
                       fill="clear"
-                      @click="updateEvent(event2.id)"
+                      @click="updateEvent(dataEvent.id)"
                     >
                       <ion-icon :icon="createOutline"></ion-icon>
                     </ion-button>
@@ -44,7 +43,7 @@
                       slot="end"
                       fill="clear"
                       color="danger"
-                      @click="presentAlertRemoveEvent(event2.id)"
+                      @click="presentAlertRemoveEvent(dataEvent.id)"
                     >
                       <ion-icon :icon="trashOutline"></ion-icon>
                     </ion-button>
@@ -52,8 +51,7 @@
                 </ion-list>
               </section>
 
-              <!-- time zone
-      -->
+              <!-- time zone -->
               <section slot="content">
                 <ion-list>
                   <ion-list-header>
@@ -62,14 +60,13 @@
                     }}</ion-label>
                   </ion-list-header>
                   <ion-item lines="full">
-                    <ion-label>{{ event2.timeZone }}</ion-label>
+                    <ion-label>{{ dataEvent.timeZone }}</ion-label>
                   </ion-item>
                 </ion-list>
               </section>
 
-              <!-- Reminders
-      -->
-              <section v-if="event2.reminders.length > 0" slot="content">
+              <!-- reminders -->
+              <section v-if="dataEvent.reminders.length > 0" slot="content">
                 <ion-list>
                   <ion-list-header>
                     <ion-label>{{
@@ -83,7 +80,7 @@
                   >
                     <div style="display: inline-flex">
                       <ion-chip
-                        v-for="reminder in event2.reminders"
+                        v-for="reminder in dataEvent.reminders"
                         :key="reminder"
                         color="primary"
                         style="text-align: center"
@@ -96,8 +93,7 @@
                 <hr style="border-top: 1px solid rgb(222 222 222)" />
               </section>
 
-              <!-- Repeats
-      -->
+              <!-- Repeats -->
               <section slot="content">
                 <ion-list>
                   <ion-list-header>
@@ -108,16 +104,15 @@
                   <ion-item lines="full">
                     <ion-label>{{
                       capitalizeFirstLetter(
-                        $t(`message.${event2.repeats.frequency}`)
+                        $t(`message.${dataEvent.repeats.frequency}`)
                       )
                     }}</ion-label>
                   </ion-item>
                 </ion-list>
               </section>
 
-              <!-- guests
-      -->
-              <section v-if="event2.guests.length > 0" slot="content">
+              <!-- guests -->
+              <section v-if="dataEvent.guests.length > 0" slot="content">
                 <ion-list>
                   <ion-list-header>
                     <ion-label>{{
@@ -130,7 +125,7 @@
                   >
                     <div style="display: inline-flex">
                       <ion-chip
-                        v-for="guest in event2.guests"
+                        v-for="guest in dataEvent.guests"
                         :key="guest"
                         color="primary"
                       >
@@ -141,9 +136,8 @@
                 </ion-list>
               </section>
 
-              <!-- tags
-      -->
-              <section v-if="event2.tags.length > 0" slot="content">
+              <!-- tags -->
+              <section v-if="dataEvent.tags.length > 0" slot="content">
                 <ion-list>
                   <ion-list-header>
                     <ion-label>{{
@@ -156,7 +150,7 @@
                   >
                     <div style="display: inline-flex">
                       <ion-chip
-                        v-for="tag in event2.tags"
+                        v-for="tag in dataEvent.tags"
                         :key="tag"
                         color="primary"
                       >
@@ -168,10 +162,9 @@
                 <hr style="border-top: 1px solid rgb(222 222 222)" />
               </section>
 
-              <!-- notes
-      -->
+              <!-- notes -->
               <section
-                v-if="event2.notes && event2.notes.length > 0"
+                v-if="dataEvent.notes && dataEvent.notes.length > 0"
                 slot="content"
               >
                 <ion-list>
@@ -182,7 +175,7 @@
                   </ion-list-header>
                   <div class="ion-padding-start ion-padding-end">
                     <ion-label class="ion-text-wrap">{{
-                      event2.notes
+                      dataEvent.notes
                     }}</ion-label>
                   </div>
                 </ion-list>
@@ -255,7 +248,8 @@ export default defineComponent({
 
   computed: {
     formatTimeLine() {
-      return (hour: string) => format(new Date("1/1/1, " + hour + ":00"), "p");
+      return (hour: string | number) =>
+        format(new Date("1/1/1, " + hour + ":00"), "p");
     },
   },
 
@@ -352,7 +346,6 @@ export default defineComponent({
         accumulator[hour].push(arrayItem);
         return accumulator;
       }, {});
-      console.log(resultGroup);
 
       this.events = resultGroup;
       this.storage.set("events", JSON.stringify(events));
@@ -377,9 +370,11 @@ export default defineComponent({
       });
       return loading;
     },
+
     updateEvent(id: number | string) {
       this.$router.push("/event/update/" + id);
     },
+
     async removeEvent(id: string | number) {
       const loading = await this.presentLoading();
       loading.present();
