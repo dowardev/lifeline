@@ -3,180 +3,195 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <ion-accordion-group>
-    <ion-row v-for="event in events" :key="event" class="center">
-      <ion-col size="12" size-md="10" size-lg="6">
-        <ion-card>
-          <ion-accordion :value="Math.random()">
-            <ion-card-header slot="header">
-              <ion-card-title v-if="event.title == 'no title'">{{
-                capitalizeFirstLetter($t("message.noTitle"))
-              }}</ion-card-title>
-              <ion-card-title v-if="event.title != 'no title'">{{
-                event.title
-              }}</ion-card-title>
-              <ion-card-subtitle>{{ event.calendar.name }}</ion-card-subtitle>
-              <ion-card-subtitle v-if="event.timeStart != ''">
-                {{ event.timeStart }}
-              </ion-card-subtitle>
-              <ion-card-subtitle v-if="event.timeStart != ''">
-                {{ event.timeEnd }}
-              </ion-card-subtitle>
-            </ion-card-header>
+  <ion-accordion-group :multiple="true">
+    <ion-list v-for="(event, name) in events" :key="name">
+      <ion-list-header>{{ formatTimeLine(name) }}</ion-list-header>
+      <ion-row v-for="event2 in event" :key="event2" class="center">
+        <ion-col size="12" size-md="10" size-lg="6">
+          <ion-card>
+            <ion-accordion :value="Math.random()">
+              <ion-card-header slot="header">
+                <ion-card-title v-if="event2.title == 'no title'">{{
+                  capitalizeFirstLetter($t("message.noTitle"))
+                }}</ion-card-title>
+                <ion-card-title v-if="event2.title != 'no title'">{{
+                  event2.title
+                }}</ion-card-title>
+                <ion-card-subtitle>{{
+                  event2.calendar.name
+                }}</ion-card-subtitle>
+                <ion-card-subtitle v-if="event2.timeStart != ''">
+                  {{ event2.timeStart }}
+                </ion-card-subtitle>
+                <ion-card-subtitle v-if="event2.timeStart != ''">
+                  {{ event2.timeEnd }}
+                </ion-card-subtitle>
+              </ion-card-header>
 
-            <!-- action buttons -->
-            <section slot="content">
-              <ion-list>
-                <ion-item lines="none">
-                  <ion-button
-                    slot="end"
-                    fill="clear"
-                    @click="updateEvent(event.id)"
+              <!-- action buttons
+      -->
+              <section slot="content">
+                <ion-list>
+                  <ion-item lines="none">
+                    <ion-button
+                      slot="end"
+                      fill="clear"
+                      @click="updateEvent(event2.id)"
+                    >
+                      <ion-icon :icon="createOutline"></ion-icon>
+                    </ion-button>
+                    <ion-button
+                      slot="end"
+                      fill="clear"
+                      color="danger"
+                      @click="presentAlertRemoveEvent(event2.id)"
+                    >
+                      <ion-icon :icon="trashOutline"></ion-icon>
+                    </ion-button>
+                  </ion-item>
+                </ion-list>
+              </section>
+
+              <!-- time zone
+      -->
+              <section slot="content">
+                <ion-list>
+                  <ion-list-header>
+                    <ion-label>{{
+                      capitalizeFirstLetter($t("message.timeZone"))
+                    }}</ion-label>
+                  </ion-list-header>
+                  <ion-item lines="full">
+                    <ion-label>{{ event2.timeZone }}</ion-label>
+                  </ion-item>
+                </ion-list>
+              </section>
+
+              <!-- Reminders
+      -->
+              <section v-if="event2.reminders.length > 0" slot="content">
+                <ion-list>
+                  <ion-list-header>
+                    <ion-label>{{
+                      capitalizeFirstLetter($tc("message.reminder", 2))
+                    }}</ion-label>
+                  </ion-list-header>
+
+                  <div
+                    style="overflow-x: scroll"
+                    class="ion-padding-start ion-padding-end"
                   >
-                    <ion-icon :icon="createOutline"></ion-icon>
-                  </ion-button>
-                  <ion-button
-                    slot="end"
-                    fill="clear"
-                    color="danger"
-                    @click="presentAlertRemoveEvent(event.id)"
+                    <div style="display: inline-flex">
+                      <ion-chip
+                        v-for="reminder in event2.reminders"
+                        :key="reminder"
+                        color="primary"
+                        style="text-align: center"
+                      >
+                        {{ tranlateRemindrers(reminder) }}
+                      </ion-chip>
+                    </div>
+                  </div>
+                </ion-list>
+                <hr style="border-top: 1px solid rgb(222 222 222)" />
+              </section>
+
+              <!-- Repeats
+      -->
+              <section slot="content">
+                <ion-list>
+                  <ion-list-header>
+                    <ion-label>{{
+                      capitalizeFirstLetter($t("message.repeat"))
+                    }}</ion-label>
+                  </ion-list-header>
+                  <ion-item lines="full">
+                    <ion-label>{{
+                      capitalizeFirstLetter(
+                        $t(`message.${event2.repeats.frequency}`)
+                      )
+                    }}</ion-label>
+                  </ion-item>
+                </ion-list>
+              </section>
+
+              <!-- guests
+      -->
+              <section v-if="event2.guests.length > 0" slot="content">
+                <ion-list>
+                  <ion-list-header>
+                    <ion-label>{{
+                      capitalizeFirstLetter($tc("message.guest", 2))
+                    }}</ion-label>
+                  </ion-list-header>
+                  <div
+                    style="overflow-x: scroll"
+                    class="ion-padding-start ion-padding-end"
                   >
-                    <ion-icon :icon="trashOutline"></ion-icon>
-                  </ion-button>
-                </ion-item>
-              </ion-list>
-            </section>
-
-            <!-- time zone -->
-            <section slot="content">
-              <ion-list>
-                <ion-list-header>
-                  <ion-label>{{
-                    capitalizeFirstLetter($t("message.timeZone"))
-                  }}</ion-label>
-                </ion-list-header>
-                <ion-item lines="full">
-                  <ion-label>{{ event.timeZone }}</ion-label>
-                </ion-item>
-              </ion-list>
-            </section>
-
-            <!-- Reminders -->
-            <section v-if="event.reminders.length > 0" slot="content">
-              <ion-list>
-                <ion-list-header>
-                  <ion-label>{{
-                    capitalizeFirstLetter($tc("message.reminder", 2))
-                  }}</ion-label>
-                </ion-list-header>
-
-                <div
-                  style="overflow-x: scroll"
-                  class="ion-padding-start ion-padding-end"
-                >
-                  <div style="display: inline-flex">
-                    <ion-chip
-                      v-for="reminder in event.reminders"
-                      :key="reminder"
-                      color="primary"
-                    >
-                      {{ reminder }}
-                    </ion-chip>
+                    <div style="display: inline-flex">
+                      <ion-chip
+                        v-for="guest in event2.guests"
+                        :key="guest"
+                        color="primary"
+                      >
+                        {{ guest }}
+                      </ion-chip>
+                    </div>
                   </div>
-                </div>
-              </ion-list>
-              <hr style="border-top: 1px solid rgb(222 222 222)" />
-            </section>
+                </ion-list>
+              </section>
 
-            <!-- Repeats -->
-            <section slot="content">
-              <ion-list>
-                <ion-list-header>
-                  <ion-label>{{
-                    capitalizeFirstLetter($t("message.repeat"))
-                  }}</ion-label>
-                </ion-list-header>
-                <ion-item lines="full">
-                  <ion-label>{{
-                    capitalizeFirstLetter(
-                      $t(`message.${event.repeats.frequency}`)
-                    )
-                  }}</ion-label>
-                </ion-item>
-              </ion-list>
-            </section>
-
-            <!-- guests -->
-            <section v-if="event.guests.length > 0" slot="content">
-              <ion-list>
-                <ion-list-header>
-                  <ion-label>{{
-                    capitalizeFirstLetter($tc("message.guest", 2))
-                  }}</ion-label>
-                </ion-list-header>
-                <div
-                  style="overflow-x: scroll"
-                  class="ion-padding-start ion-padding-end"
-                >
-                  <div style="display: inline-flex">
-                    <ion-chip
-                      v-for="guest in event.guests"
-                      :key="guest"
-                      color="primary"
-                    >
-                      {{ guest }}
-                    </ion-chip>
+              <!-- tags
+      -->
+              <section v-if="event2.tags.length > 0" slot="content">
+                <ion-list>
+                  <ion-list-header>
+                    <ion-label>{{
+                      capitalizeFirstLetter($tc("message.tag", 2))
+                    }}</ion-label>
+                  </ion-list-header>
+                  <div
+                    style="overflow-x: scroll"
+                    class="ion-padding-start ion-padding-end"
+                  >
+                    <div style="display: inline-flex">
+                      <ion-chip
+                        v-for="tag in event2.tags"
+                        :key="tag"
+                        color="primary"
+                      >
+                        {{ tag.name }}
+                      </ion-chip>
+                    </div>
                   </div>
-                </div>
-              </ion-list>
-            </section>
+                </ion-list>
+                <hr style="border-top: 1px solid rgb(222 222 222)" />
+              </section>
 
-            <!-- tags -->
-            <section v-if="event.tags.length > 0" slot="content">
-              <ion-list>
-                <ion-list-header>
-                  <ion-label>{{
-                    capitalizeFirstLetter($tc("message.tag", 2))
-                  }}</ion-label>
-                </ion-list-header>
-                <div
-                  style="overflow-x: scroll"
-                  class="ion-padding-start ion-padding-end"
-                >
-                  <div style="display: inline-flex">
-                    <ion-chip
-                      v-for="tag in event.tags"
-                      :key="tag"
-                      color="primary"
-                    >
-                      {{ tag.name }}
-                    </ion-chip>
+              <!-- notes
+      -->
+              <section
+                v-if="event2.notes && event2.notes.length > 0"
+                slot="content"
+              >
+                <ion-list>
+                  <ion-list-header>
+                    <ion-label>{{
+                      capitalizeFirstLetter($tc("message.note", 2))
+                    }}</ion-label>
+                  </ion-list-header>
+                  <div class="ion-padding-start ion-padding-end">
+                    <ion-label class="ion-text-wrap">{{
+                      event2.notes
+                    }}</ion-label>
                   </div>
-                </div>
-              </ion-list>
-              <hr style="border-top: 1px solid rgb(222 222 222)" />
-            </section>
-
-            <!-- notes -->
-            <section
-              v-if="event.notes && event.notes.length > 0"
-              slot="content"
-            >
-              <ion-list>
-                <ion-list-header>
-                  <ion-label>{{
-                    capitalizeFirstLetter($tc("message.note", 2))
-                  }}</ion-label>
-                </ion-list-header>
-                <div class="ion-padding-start ion-padding-end">
-                  <ion-label class="ion-text-wrap">{{ event.notes }}</ion-label>
-                </div>
-              </ion-list>
-            </section>
-          </ion-accordion>
-        </ion-card>
-      </ion-col>
-    </ion-row>
+                </ion-list>
+              </section>
+            </ion-accordion>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-list>
   </ion-accordion-group>
 </template>
 
@@ -221,6 +236,7 @@ export default defineComponent({
       IonList,
       IonListHeader,
       capitalizeFirstLetter: capitalizeFirstLetter,
+      format: format,
     };
   },
 
@@ -235,6 +251,12 @@ export default defineComponent({
       date,
       fileTranslate: Array<any>(),
     };
+  },
+
+  computed: {
+    formatTimeLine() {
+      return (hour: string) => format(new Date("1/1/1, " + hour + ":00"), "p");
+    },
   },
 
   mounted() {
@@ -303,7 +325,7 @@ export default defineComponent({
         delete item.time_zone;
       });
 
-      events.forEach(async (element: any) => {
+      events.forEach((element: any) => {
         const timeStart = formatISO(new Date(element.timeStart + "Z"));
         element.timeStart = format(
           utcToZonedTime(timeStart, element.timeZone),
@@ -315,36 +337,7 @@ export default defineComponent({
           utcToZonedTime(timeEnd, element.timeZone),
           "Pp"
         );
-
-        // if (
-        //   Intl.DateTimeFormat().resolvedOptions().timeZone == element.time_zone
-        // ) {
-        //   element.timeStart =
-        //     this.formatDate(element.time_start, "P") +
-        //     " " +
-        //     this.formatDate(element.time_start + "Z", "pp");
-        //   element.timeEnd =
-        //     this.formatDate(element.time_end, "P") +
-        //     " " +
-        //     this.formatDate(element.time_end + "Z", "pp");
-        // } else {
-        //   const formatStart = utcToZonedTime(
-        //     new Date(element.time_start + "Z"),
-        //     element.time_zone
-        //   );
-        //   element.timeStart =
-        //     this.formatDate(formatStart, "P") +
-        //     " " +
-        //     this.formatDate(formatStart, "pp");
-        //   const formatEnd = utcToZonedTime(
-        //     new Date(element.time_end + "Z"),
-        //     element.time_zone
-        //   );
-        //   element.timeEnd =
-        //     this.formatDate(formatEnd, "P") +
-        //     " " +
-        //     this.formatDate(formatEnd, "pp");
-        // }
+        element.hour = format(new Date(timeStart), "H");
 
         element.guests = JSON.parse(element.guests);
         element.reminders = JSON.parse(element.reminders);
@@ -353,7 +346,15 @@ export default defineComponent({
         // element.type = "event";
       });
 
-      this.events = events;
+      const resultGroup = events.reduce((accumulator: any, arrayItem: any) => {
+        let hour = arrayItem.hour;
+        if (accumulator[hour] == null) accumulator[hour] = [];
+        accumulator[hour].push(arrayItem);
+        return accumulator;
+      }, {});
+      console.log(resultGroup);
+
+      this.events = resultGroup;
       this.storage.set("events", JSON.stringify(events));
     },
 
@@ -429,9 +430,22 @@ export default defineComponent({
       });
       return alert.present();
     },
-    // async getFileTranslate() {
-    //   this.fileTranslate = [await userService().translate()];
-    // },
+
+    tranlateRemindrers(reminder: string): string {
+      if (reminder == "just")
+        return this.capitalizeFirstLetter(this.$t("message.inTime"));
+      if (reminder == "5mnb") return "5 " + this.$tc("message.minuteBefore", 2);
+      if (reminder == "15mnb")
+        return "15 " + this.$tc("message.minuteBefore", 2);
+      if (reminder == "30mnb")
+        return "30 " + this.$tc("message.minuteBefore", 2);
+      if (reminder == "1hrb") return "1 " + this.$tc("message.hourBefore", 2);
+      if (reminder == "4hrb") return "4 " + this.$tc("message.hourBefore", 2);
+      if (reminder == "1db") return "1 " + this.$tc("message.dayBefore", 2);
+      if (reminder == "2db") return "2 " + this.$tc("message.dayBefore", 2);
+      if (reminder == "1sb") return "1 " + this.$tc("message.weekBefore", 2);
+      return reminder;
+    },
   },
 });
 </script>

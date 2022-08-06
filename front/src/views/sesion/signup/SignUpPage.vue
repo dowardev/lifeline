@@ -32,7 +32,7 @@
             <ion-card-header>
               <div class="center">
                 <img
-                  src="../../../../public/assets/otros/user.png"
+                  src="@/assets/otros/user.png"
                   alt=""
                   class="imagen-usuario"
                 />
