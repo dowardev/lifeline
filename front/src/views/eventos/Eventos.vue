@@ -4,7 +4,7 @@
   </ion-refresher>
 
   <ion-accordion-group :multiple="true">
-    <ion-list v-for="(event, name) in events" :key="name">
+    <ion-list v-for="(event, name) in formatEvents" :key="name">
       <ion-list-header>{{ formatTimeLine(name) }}</ion-list-header>
       <ion-row v-for="dataEvent in event" :key="dataEvent" class="center">
         <ion-col size="12" size-md="10" size-lg="6">
@@ -218,10 +218,14 @@ import {
 } from "date-fns-tz";
 import { USER_EVENTS } from "../../services/graphql";
 import { capitalizeFirstLetter } from "../../services/system";
+import { useEventsStore } from "../../store/eventsStore";
+import { storeToRefs } from "pinia";
 
 export default defineComponent({
   name: "EventosPage",
   setup() {
+    const eventsStore = useEventsStore();
+    const { events } = storeToRefs(eventsStore);
     return {
       IonRefresher,
       createOutline,
@@ -230,6 +234,8 @@ export default defineComponent({
       IonListHeader,
       capitalizeFirstLetter: capitalizeFirstLetter,
       format: format,
+      events,
+      eventsStore,
     };
   },
 
@@ -239,7 +245,6 @@ export default defineComponent({
 
     storage.create();
     return {
-      events: [] as Array<any>,
       storage,
       date,
       fileTranslate: Array<any>(),
@@ -250,6 +255,33 @@ export default defineComponent({
     formatTimeLine() {
       return (hour: string | number) =>
         format(new Date("1/1/1, " + hour + ":00"), "p");
+    },
+    formatEvents() {
+      const events = JSON.parse(JSON.stringify(this.events));
+      events.forEach((element: any) => {
+        element.title = element.title != "" ? element.title : "no title";
+
+        const timeStart = formatISO(new Date(element.timeStart));
+        element.timeStart = format(
+          utcToZonedTime(timeStart, element.timeZone),
+          "Pp"
+        );
+
+        const timeEnd = formatISO(new Date(element.timeEnd));
+        element.timeEnd = format(
+          utcToZonedTime(timeEnd, element.timeZone),
+          "Pp"
+        );
+
+        element.hour = format(new Date(timeStart), "H");
+      });
+
+      return events.reduce((accumulator: any, arrayItem: any) => {
+        let hour = arrayItem.hour;
+        if (accumulator[hour] == null) accumulator[hour] = [];
+        accumulator[hour].push(arrayItem);
+        return accumulator;
+      }, {});
     },
   },
 
@@ -308,47 +340,8 @@ export default defineComponent({
       } catch (error) {
         console.error(error);
       }
-
       events = JSON.parse(JSON.stringify(events));
-      events.forEach((item: any) => {
-        item.timeStart = item.time_start;
-        delete item.time_start;
-        item.timeEnd = item.time_end;
-        delete item.time_end;
-        item.timeZone = item.time_zone;
-        delete item.time_zone;
-      });
-
-      events.forEach((element: any) => {
-        const timeStart = formatISO(new Date(element.timeStart + "Z"));
-        element.timeStart = format(
-          utcToZonedTime(timeStart, element.timeZone),
-          "Pp"
-        );
-
-        const timeEnd = formatISO(new Date(element.timeEnd + "Z"));
-        element.timeEnd = format(
-          utcToZonedTime(timeEnd, element.timeZone),
-          "Pp"
-        );
-        element.hour = format(new Date(timeStart), "H");
-
-        element.guests = JSON.parse(element.guests);
-        element.reminders = JSON.parse(element.reminders);
-        element.repeats = JSON.parse(element.repeats);
-        element.tags = JSON.parse(element.tags);
-        // element.type = "event";
-      });
-
-      const resultGroup = events.reduce((accumulator: any, arrayItem: any) => {
-        let hour = arrayItem.hour;
-        if (accumulator[hour] == null) accumulator[hour] = [];
-        accumulator[hour].push(arrayItem);
-        return accumulator;
-      }, {});
-
-      this.events = resultGroup;
-      this.storage.set("events", JSON.stringify(events));
+      this.eventsStore.getEvents(events);
     },
 
     formatDate(date: string | Date, format: string) {

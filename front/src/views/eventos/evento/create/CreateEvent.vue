@@ -109,16 +109,14 @@
                       {{ capitalizeFirstLetter($t("message.dateStart")) }}
                     </ion-label>
                     <ion-label slot="end" class="text-overflow">
-                      {{ customDateFormat(datetime.start, "Pp") }}
+                      {{ customDateFormat(timeStart, "Pp") }}
                     </ion-label>
                     <ion-popover trigger="open-date1" :show-backdrop="false">
                       <ion-datetime
-                        v-model="datetime.start"
+                        v-model="timeStart"
                         presentation="date-time"
                         hour-cycle="h12"
-                        @ion-change="
-                          datetime.start = $event.detail.value as string
-                        "
+                        @ion-change="timeStart = $event.detail.value as string"
                       />
                     </ion-popover>
                   </ion-item>
@@ -135,16 +133,14 @@
                       {{ capitalizeFirstLetter($t("message.dateEnd")) }}
                     </ion-label>
                     <ion-label slot="end" class="text-overflow">
-                      {{ customDateFormat(datetime.end, "Pp") }}
+                      {{ customDateFormat(timeEnd, "Pp") }}
                     </ion-label>
                     <ion-popover trigger="open-date2" :show-backdrop="false">
                       <ion-datetime
-                        v-model="datetime.end"
+                        v-model="timeEnd"
                         presentation="date-time"
                         hour-cycle="h12"
-                        @ion-change="
-                          datetime.end = $event.detail.value as string
-                        "
+                        @ion-change="timeEnd = $event.detail.value as string"
                       />
                     </ion-popover>
                   </ion-item>
@@ -352,8 +348,10 @@ import { format, formatISO } from "date-fns";
 import Repeats from "../repetir/Repetir.vue";
 import TimeZoneComponent from "../../../../components/SelectTimeZone.vue";
 import { USER_CALENDARS } from "../../../../services/graphql";
-import { CreateEvent } from "../../../../services/interfaces";
+import { Event } from "../../../../services/interfaces";
 import { capitalizeFirstLetter as capitalizeFirstLetterService } from "../../../../services/system";
+import { useEventsStore } from "../../../../store/eventsStore";
+import { storeToRefs } from "pinia";
 
 export default defineComponent({
   name: "EventPage",
@@ -387,6 +385,7 @@ export default defineComponent({
       documentTextOutline,
       globeOutline,
       capitalizeFirstLetter: capitalizeFirstLetterService,
+      eventsStore: useEventsStore(),
     };
   },
 
@@ -397,14 +396,12 @@ export default defineComponent({
       buttonEdit: true,
       storage,
       title: "",
-      datetime: {
-        start: formatISO(new Date()),
-        end: formatISO(
-          add(new Date(), {
-            hours: 1,
-          })
-        ),
-      },
+      timeStart: formatISO(new Date()),
+      timeEnd: formatISO(
+        add(new Date(), {
+          hours: 1,
+        })
+      ),
       reminders: [],
       repeats: {
         frequency: "unique",
@@ -487,8 +484,8 @@ export default defineComponent({
       this.$router.push("/horario");
       setTimeout(() => {
         eventBus().emitter.emit("get-schedule-event", {
-          dateTimeStart: this.datetime.start,
-          dateTimeEnd: this.datetime.end,
+          dateTimeStart: this.timeStart,
+          dateTimeEnd: this.timeEnd,
         });
       }, 300);
     },
@@ -507,28 +504,34 @@ export default defineComponent({
         id: this.$route.params.id,
         title: this.title,
         calendar: this.calendar,
-        dateTime: JSON.stringify(this.datetime),
-        guests: JSON.stringify(this.guests),
+        timeStart: this.timeStart,
+        timeEnd: this.timeEnd,
+        guests: this.guests,
         notes: this.notes,
-        reminders: JSON.stringify(this.reminders),
-        repeats: JSON.stringify(this.repeats),
-        tags: JSON.stringify(this.tags),
+        reminders: this.reminders,
+        repeats: this.repeats,
+        tags: this.tags,
         timeZone: this.timeZone,
       };
       if (this.$route.params.id) {
         this.updateEvent(event);
       } else {
-        this.createEvent(event);
+        await this.createEvent({ event });
+        this.updateState(event);
+        this.$router.go(-1);
       }
     },
 
-    async createEvent(event: CreateEvent) {
+    async createEvent(params: { event: Event }) {
+      const event = Object.assign({}, params.event) as any;
       this.spinners.save = true;
+      event.guests = JSON.stringify(event.guests);
+      event.reminders = JSON.stringify(event.reminders);
+      event.repeats = JSON.stringify(event.repeats);
+      event.tags = JSON.stringify(event.tags);
       try {
         await createEventService(event);
         const message = "Evento creado correctamente";
-        eventBus().emitter.emit("refresh-events");
-        this.$router.go(-1);
         this.openToast({ message, color: "dark" });
       } catch (e: any) {
         console.error(e);
@@ -662,6 +665,11 @@ export default defineComponent({
       this.calendar = this.calendars.filter((item) => {
         if (item.default) return item;
       })[0].id;
+    },
+
+    updateState(event: Event) {
+      console.log(event);
+      this.eventsStore.addEvent(event);
     },
   },
 });

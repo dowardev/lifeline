@@ -60,6 +60,18 @@ export interface SystemMessage {
 }
 
 // events
+export interface Event {
+  title?: string;
+  calendar?: string;
+  timeStart?: string;
+  timeEnd?: string;
+  guests?: Array<string>;
+  notes?: string;
+  reminders?: Array<string>;
+  repeats?: { name: string; frequency: string; data: {} };
+  tags?: Array<string>;
+  timeZone?: string;
+}
 export interface GetCalendars {
   graphql: Graphql;
 }
@@ -68,17 +80,7 @@ export interface GetCalendarsResponse {
   name: string;
   default: boolean;
 }
-export interface CreateEvent {
-  title?: string;
-  calendar?: string;
-  dateTime?: string;
-  guests?: string;
-  notes?: string;
-  reminders?: string;
-  repeats?: string;
-  tags?: string;
-  timeZone?: string;
-}
+
 export interface GetEvents {
   dateStart: string;
   dateEnd: string;
@@ -86,7 +88,7 @@ export interface GetEvents {
 }
 export interface GetEventsResponse {
   id: string;
-  title: string;
+  title: Event;
   timeStart: string;
   timeEnd: string;
   calendar: {
@@ -95,5 +97,5 @@ export interface GetEventsResponse {
   guests: [string];
   tags: [string];
   notes: string;
-  time_zone: string;
+  timeZone: string;
 }

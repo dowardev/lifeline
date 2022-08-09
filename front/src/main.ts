@@ -36,6 +36,10 @@ import { DefaultApolloClient } from "@vue/apollo-composable";
 // i18n
 import i18n from "./plugins/i18n/i18n";
 
+// pinia
+import { createPinia } from "pinia";
+const pinia = createPinia();
+
 const app = createApp({
   setup() {
     provide(DefaultApolloClient, apolloClient);
@@ -44,6 +48,7 @@ const app = createApp({
 })
   .use(IonicVue)
   .use(i18n)
+  .use(pinia)
   .use(router);
 
 router.isReady().then(() => {

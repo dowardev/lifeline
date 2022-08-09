@@ -14,12 +14,12 @@ provideApolloClient(apolloClient);
 import {
   GetCalendars,
   GetCalendarsResponse,
-  CreateEvent,
+  Event,
   GetEvents,
   GetEventsResponse,
 } from "./interfaces";
 
-export async function createEvent(params: CreateEvent): Promise<void> {
+export async function createEvent(params: Event): Promise<void> {
   const {
     onError,
     onDone,
@@ -29,7 +29,8 @@ export async function createEvent(params: CreateEvent): Promise<void> {
       mutation createEvent(
         $title: String
         $calendar: String
-        $dateTime: String
+        $time_start: String
+        $time_end: String
         $guests: String
         $notes: String
         $reminders: String
@@ -41,7 +42,8 @@ export async function createEvent(params: CreateEvent): Promise<void> {
           input: {
             title: $title
             calendar: $calendar
-            dateTime: $dateTime
+            time_start: $time_start
+            time_end: $time_end
             guests: $guests
             notes: $notes
             reminders: $reminders
@@ -56,7 +58,8 @@ export async function createEvent(params: CreateEvent): Promise<void> {
       variables: {
         title: params.title,
         calendar: params.calendar,
-        dateTime: params.dateTime,
+        time_start: params.timeStart,
+        time_end: params.timeEnd,
         guests: params.guests,
         notes: params.notes,
         reminders: params.reminders,
@@ -103,14 +106,43 @@ export async function getEvents(
   );
 
   return new Promise((resolve, reject) => {
-    if (result.value != undefined && params.graphql.refetch == false)
-      resolve(result.value.events.events);
+    if (result.value != undefined && params.graphql.refetch == false) {
+      const events = JSON.parse(JSON.stringify(result.value.events.events));
+      events.forEach((element: any) => {
+        element.timeStart = element.time_start;
+        delete element.time_start;
+        element.timeEnd = element.time_end;
+        delete element.time_end;
+        element.timeZone = element.time_zone;
+        delete element.time_zone;
+        element.guests = JSON.parse(element.guests);
+        element.reminders = JSON.parse(element.reminders);
+        element.repeats = JSON.parse(element.repeats);
+        element.tags = JSON.parse(element.tags);
+      });
+      resolve(events);
+    }
 
     if (params.graphql.refetch) {
       refetch()?.then((response) => resolve(response.data.events.events));
     }
 
-    onResult((response) => resolve(response.data.events.events));
+    onResult((response) => {
+      const events = JSON.parse(JSON.stringify(response.data.events.events));
+      events.forEach((element: any) => {
+        element.timeStart = element.time_start;
+        delete element.time_start;
+        element.timeEnd = element.time_end;
+        delete element.time_end;
+        element.timeZone = element.time_zone;
+        delete element.time_zone;
+        element.guests = JSON.parse(element.guests);
+        element.reminders = JSON.parse(element.reminders);
+        element.repeats = JSON.parse(element.repeats);
+        element.tags = JSON.parse(element.tags);
+      });
+      resolve(events);
+    });
 
     onError((error) => {
       reject(error);
