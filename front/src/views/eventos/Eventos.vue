@@ -206,16 +206,9 @@ import {
 } from "../../services/event";
 import { Storage } from "@ionic/storage";
 import EventComponent from "./evento/Evento.vue";
-// import eventBus from "../../EventBus";
-import { formatISO, add } from "date-fns";
+import { formatISO } from "date-fns";
 import { createOutline, trashOutline } from "ionicons/icons";
-// import userService from "../../services/user";
-import {
-  zonedTimeToUtc,
-  utcToZonedTime,
-  format,
-  formatInTimeZone,
-} from "date-fns-tz";
+import { utcToZonedTime, format } from "date-fns-tz";
 import { USER_EVENTS } from "../../services/graphql";
 import { capitalizeFirstLetter } from "../../services/system";
 import { useEventsStore } from "../../store/eventsStore";
@@ -223,6 +216,7 @@ import { storeToRefs } from "pinia";
 
 export default defineComponent({
   name: "EventosPage",
+
   setup() {
     const eventsStore = useEventsStore();
     const { events } = storeToRefs(eventsStore);
@@ -286,7 +280,7 @@ export default defineComponent({
   },
 
   mounted() {
-    this.getEvents();
+    this.getEvents({ refetch: false });
     // this.getFileTranslate().then((response) => {
     //   this.getEvents();
     // });
@@ -314,34 +308,28 @@ export default defineComponent({
       this.$router.push({ name: "CreateEvent" });
     },
 
-    async getEvents() {
+    async getEvents(params: { refetch: boolean }) {
       // const loading = await this.presentLoading();
       // loading.present();
+      const refetch = params.refetch == false ? false : true;
 
-      const dateStart = this.date;
-      const dateEnd = formatISO(
-        new Date(
-          add(new Date(this.date), {
-            days: 2,
-          })
-        )
-      ).split("T")[0];
+      const date = this.date;
 
       let events = [] as any;
       try {
         events = await getEventsService({
-          dateStart,
-          dateEnd,
+          date,
           graphql: {
             name: USER_EVENTS,
             fragment: "Events",
+            refetch,
           },
         });
       } catch (error) {
         console.error(error);
       }
       events = JSON.parse(JSON.stringify(events));
-      this.eventsStore.getEvents(events);
+      this.eventsStore.setEvents(events);
     },
 
     formatDate(date: string | Date, format: string) {
@@ -353,9 +341,10 @@ export default defineComponent({
 
     refreshContent(event: any) {
       setTimeout(async () => {
-        this.getEvents();
+        this.getEvents({ refetch: true });
       }, 200);
     },
+
     async presentLoading() {
       const loading = await loadingController.create({
         cssClass: "my-custom-class",
@@ -373,7 +362,7 @@ export default defineComponent({
       loading.present();
       removeEventService(id)
         .then((response: any) => {
-          this.getEvents();
+          // this.getEvents();
           const message = this.fileTranslate[0].removeEvent;
           this.openToast(message, "success");
           loading.dismiss();

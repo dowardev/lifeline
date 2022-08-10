@@ -517,9 +517,11 @@ export default defineComponent({
         this.updateEvent(event);
       } else {
         await this.createEvent({ event });
-        this.updateState(event);
-        this.$router.go(-1);
       }
+      const message = "Evento creado correctamente";
+      this.openToast({ message, color: "dark" });
+      this.eventsStore.getEvents({ refetch: true });
+      this.$router.go(-1);
     },
 
     async createEvent(params: { event: Event }) {
@@ -531,8 +533,6 @@ export default defineComponent({
       event.tags = JSON.stringify(event.tags);
       try {
         await createEventService(event);
-        const message = "Evento creado correctamente";
-        this.openToast({ message, color: "dark" });
       } catch (e: any) {
         console.error(e);
       } finally {
@@ -665,11 +665,6 @@ export default defineComponent({
       this.calendar = this.calendars.filter((item) => {
         if (item.default) return item;
       })[0].id;
-    },
-
-    updateState(event: Event) {
-      console.log(event);
-      this.eventsStore.addEvent(event);
     },
   },
 });

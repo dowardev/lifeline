@@ -82,20 +82,6 @@ export interface GetCalendarsResponse {
 }
 
 export interface GetEvents {
-  dateStart: string;
-  dateEnd: string;
+  date: string;
   graphql: Graphql;
-}
-export interface GetEventsResponse {
-  id: string;
-  title: Event;
-  timeStart: string;
-  timeEnd: string;
-  calendar: {
-    name: string;
-  };
-  guests: [string];
-  tags: [string];
-  notes: string;
-  timeZone: string;
 }

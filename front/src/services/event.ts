@@ -16,7 +16,6 @@ import {
   GetCalendarsResponse,
   Event,
   GetEvents,
-  GetEventsResponse,
 } from "./interfaces";
 
 export async function createEvent(params: Event): Promise<void> {
@@ -90,24 +89,24 @@ export async function updateEvent(event: Record<string, any>) {
   // });
 }
 
-export async function getEvents(
-  params: GetEvents
-): Promise<Array<GetEventsResponse>> {
+export async function getEvents(params: GetEvents): Promise<Array<Event>> {
   const { onResult, onError, result, refetch } = useQuery(
     gql`
-        query events($dateStart: String!,$dateEnd:String!) {
-          events(input:{dateStart:$dateStart,dateEnd:$dateEnd}) {
+        query events($date: String!) {
+          events(input:{date:$date}) {
             ...${params.graphql.fragment}
           }
         }
         ${params.graphql.name}
       `,
-    { dateStart: params.dateStart, dateEnd: params.dateEnd }
+    { date: params.date },
+    {
+      fetchPolicy: "cache-first",
+    }
   );
 
   return new Promise((resolve, reject) => {
-    if (result.value != undefined && params.graphql.refetch == false) {
-      const events = JSON.parse(JSON.stringify(result.value.events.events));
+    const format = (events: any) => {
       events.forEach((element: any) => {
         element.timeStart = element.time_start;
         delete element.time_start;
@@ -120,7 +119,12 @@ export async function getEvents(
         element.repeats = JSON.parse(element.repeats);
         element.tags = JSON.parse(element.tags);
       });
-      resolve(events);
+      return events;
+    };
+
+    if (result.value != undefined && params.graphql.refetch == false) {
+      const events = JSON.parse(JSON.stringify(result.value.events.events));
+      resolve(format(events));
     }
 
     if (params.graphql.refetch) {
@@ -129,19 +133,7 @@ export async function getEvents(
 
     onResult((response) => {
       const events = JSON.parse(JSON.stringify(response.data.events.events));
-      events.forEach((element: any) => {
-        element.timeStart = element.time_start;
-        delete element.time_start;
-        element.timeEnd = element.time_end;
-        delete element.time_end;
-        element.timeZone = element.time_zone;
-        delete element.time_zone;
-        element.guests = JSON.parse(element.guests);
-        element.reminders = JSON.parse(element.reminders);
-        element.repeats = JSON.parse(element.repeats);
-        element.tags = JSON.parse(element.tags);
-      });
-      resolve(events);
+      resolve(format(events));
     });
 
     onError((error) => {
