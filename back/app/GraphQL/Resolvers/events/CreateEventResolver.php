@@ -25,7 +25,7 @@ class CreateEventResolver
       return Error::createLocatedError('Unauthorized');
     }
 
-    $title = 'Sin titulo';
+    $title = 'no title';
     if (array_key_exists('title', $args) && $args['title'] != '') {
       $title = $args['title'];
     }
@@ -42,9 +42,9 @@ class CreateEventResolver
 
     $dateTimeStart = $this->formatDate('022-07-25T00:00:00-00:00');
     $dateTimeEnd = $this->formatDate('022-07-25T00:00:00-00:00');
-    if (array_key_exists('dateTime', $args)) {
-      $dateTimeStart = $this->formatDate(json_decode($args['dateTime'])->start);
-      $dateTimeEnd = $this->formatDate(json_decode($args['dateTime'])->end);
+    if (array_key_exists('time_start', $args)) {
+      $dateTimeStart = $this->formatDate($args['time_start']);
+      $dateTimeEnd = $this->formatDate($args['time_end']);
     }
 
     $reminders = [];
@@ -99,7 +99,7 @@ class CreateEventResolver
 
   public function formatDate($date)
   {
-    return date('Y-m-d H:i', strtotime($date));
+    return date_time_set(date_create($date), 00, 00, 00);
   }
 
   function createTagsEvent($tags, $eventId)

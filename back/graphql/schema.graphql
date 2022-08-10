@@ -74,7 +74,8 @@ input LoginInput {
 input CreateEvent {
   title: String
   calendar: String
-  dateTime: String
+  time_start: String
+  time_end: String
   guests: String
   notes: String
   reminders: String
@@ -83,8 +84,7 @@ input CreateEvent {
   timeZone: String
 }
 input GetEvents {
-  dateStart: String!
-  dateEnd: String!
+  date: String!
 }
 
 # payloads
