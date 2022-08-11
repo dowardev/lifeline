@@ -53,7 +53,7 @@
           <ion-row v-for="dataEvent in event" :key="dataEvent" class="center">
             <ion-col size="12" size-md="10" size-lg="6">
               <ion-card>
-                <ion-accordion :value="Math.random()">
+                <ion-accordion :value="Math.random().toString()">
                   <ion-card-header slot="header">
                     <ion-card-title v-if="dataEvent.title == 'no title'">{{
                       capitalizeFirstLetter($t("message.noTitle"))
@@ -249,9 +249,20 @@ import {
   IonRefresher,
   IonList,
   IonListHeader,
-  modalController,
   toastController,
   alertController,
+  IonAccordion,
+  IonAccordionGroup,
+  IonCard,
+  IonCardTitle,
+  IonCardHeader,
+  IonRow,
+  IonCol,
+  IonCardSubtitle,
+  IonItem,
+  IonLabel,
+  IonChip,
+  IonIcon,
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import {
@@ -290,6 +301,18 @@ export default defineComponent({
     IonRefresher,
     IonList,
     IonListHeader,
+    IonAccordion,
+    IonAccordionGroup,
+    IonCard,
+    IonCardTitle,
+    IonCardHeader,
+    IonRow,
+    IonCol,
+    IonCardSubtitle,
+    IonItem,
+    IonLabel,
+    IonChip,
+    IonIcon,
   },
 
   setup() {
@@ -360,7 +383,7 @@ export default defineComponent({
   },
 
   mounted() {
-    this.eventsStore.getEvents({ refetch: true });
+    this.eventsStore.loadEvents({ refetch: true });
   },
 
   methods: {
@@ -373,7 +396,7 @@ export default defineComponent({
     selectDay(e: any) {
       const date = e.detail.value;
       this.eventsStore.date = date;
-      this.eventsStore.getEvents({ refetch: false });
+      this.eventsStore.loadEvents({ refetch: false });
     },
 
     async openEvent(event: object) {
@@ -398,9 +421,7 @@ export default defineComponent({
     },
 
     refreshContent() {
-      setTimeout(async () => {
-        this.getEvents({ refetch: true });
-      }, 200);
+      setTimeout(async () => {}, 200);
     },
 
     async presentLoading() {

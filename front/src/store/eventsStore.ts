@@ -15,7 +15,7 @@ export const useEventsStore = defineStore("events", {
   }),
 
   actions: {
-    async getEvents(params: { refetch: boolean }) {
+    async loadEvents(params: { refetch: boolean }) {
       try {
         this.events = await getEventsService({
           date: this.date,

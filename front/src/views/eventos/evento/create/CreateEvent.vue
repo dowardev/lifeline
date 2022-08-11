@@ -520,7 +520,7 @@ export default defineComponent({
       }
       const message = "Evento creado correctamente";
       this.openToast({ message, color: "dark" });
-      this.eventsStore.getEvents({ refetch: true });
+      this.eventsStore.loadEvents({ refetch: true });
       this.$router.go(-1);
     },
 

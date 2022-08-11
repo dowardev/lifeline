@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
 // import HomePage from '../views/HomePage.vue'
 import InicioPage from "@/views/inicio/Inicio.vue";
-import EventosPage from "@/views/eventos/Eventos.vue";
 import CreateEventPage from "@/views/eventos/evento/create/CreateEvent.vue";
 import RepetirPage from "@/views/eventos/evento/repetir/Repetir.vue";
 import SignUpPage from "@/views/sesion/signup/SignUpPage.vue";
@@ -17,11 +16,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/inicio",
     name: "Inicio",
     component: InicioPage,
-  },
-  {
-    path: "/eventos/:date",
-    name: "Eventos",
-    component: EventosPage,
   },
   {
     path: "/event/add",

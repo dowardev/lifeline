@@ -16,7 +16,7 @@
 </template>
 
 <script lang="ts">
-import { IonApp, IonRouterOutlet } from "@ionic/vue";
+import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
 import { defineComponent } from "vue";
 import MenuComponent from "./views/menu/Menu.vue";
 import {
@@ -30,6 +30,8 @@ export default defineComponent({
     IonApp,
     IonRouterOutlet,
     MenuComponent,
+    IonMenu,
+    IonSplitPane,
   },
 
   mounted() {
