@@ -6,12 +6,44 @@
           <ion-menu-button menu="firstMenu" mode="md"></ion-menu-button>
         </ion-buttons>
 
-        <ion-title>{{ capitalizeFirstLetter($t("message.start")) }}</ion-title>
+        <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="end">
-          <ion-button fill="clear" @click="$router.push('/event/add')">
-            <ion-icon :icon="addOutline"></ion-icon>
-          </ion-button>
+          <section>
+            <ion-button
+              id="open-modal-add-document"
+              fill="clear"
+              expand="block"
+            >
+              <ion-icon :icon="addOutline"></ion-icon>
+            </ion-button>
+
+            <ion-modal ref="modalAddDocument" trigger="open-modal-add-document">
+              <ion-header mode="ios" class="ion-no-border">
+                <ion-toolbar>
+                  <ion-buttons slot="start">
+                    <ion-button
+                      @click="($refs as any).modalAddDocument.$el.dismiss(null, 'cancel')"
+                    >
+                      <ion-icon :icon="closeOutline"></ion-icon>
+                    </ion-button>
+                  </ion-buttons>
+
+                  <ion-title>Agregar documento</ion-title>
+
+                  <ion-buttons slot="end">
+                    <ion-button :strong="true">
+                      <ion-icon :icon="saveOutline"></ion-icon>
+                    </ion-button>
+                  </ion-buttons>
+                </ion-toolbar>
+              </ion-header>
+
+              <ion-content class="ion-padding">
+                <AddDocumentComponent></AddDocumentComponent>
+              </ion-content>
+            </ion-modal>
+          </section>
 
           <ion-button id="open-main-calendar" fill="clear">
             <ion-icon :icon="calendarOutline"></ion-icon>
@@ -263,6 +295,7 @@ import {
   IonLabel,
   IonChip,
   IonIcon,
+  IonModal,
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import {
@@ -270,6 +303,8 @@ import {
   documentTextOutline,
   addOutline,
   refreshOutline,
+  closeOutline,
+  saveOutline,
 } from "ionicons/icons";
 import { formatISO } from "date-fns";
 import { capitalizeFirstLetter } from "../../services/system";
@@ -284,6 +319,7 @@ import { createOutline, trashOutline } from "ionicons/icons";
 import { utcToZonedTime, format } from "date-fns-tz";
 import { USER_EVENTS } from "../../services/graphql";
 import { storeToRefs } from "pinia";
+import AddDocumentComponent from "../../components/documents/add_document/AddDocumentComponent.vue";
 
 export default defineComponent({
   name: "InicioPage",
@@ -313,6 +349,8 @@ export default defineComponent({
     IonLabel,
     IonChip,
     IonIcon,
+    IonModal,
+    AddDocumentComponent,
   },
 
   setup() {
@@ -325,6 +363,7 @@ export default defineComponent({
       customDatetime.value.$el.reset();
     };
     return {
+      pageTitle: "Inicio",
       calendarOutline,
       documentTextOutline,
       addOutline,
@@ -336,6 +375,8 @@ export default defineComponent({
       events,
       eventsStore,
       date,
+      closeOutline,
+      saveOutline,
     };
   },
 
@@ -345,7 +386,10 @@ export default defineComponent({
     const storage = new Storage();
 
     storage.create();
-    return { mainSegment: "calendar" as "calendar" | "asigned" };
+    return {
+      mainSegment: "calendar" as "calendar" | "asigned",
+      isOpenModalAddDocument: false,
+    };
   },
 
   computed: {
@@ -421,7 +465,7 @@ export default defineComponent({
     },
 
     refreshContent() {
-      setTimeout(async () => {}, 200);
+      // setTimeout(async () => {}, 200);
     },
 
     async presentLoading() {
