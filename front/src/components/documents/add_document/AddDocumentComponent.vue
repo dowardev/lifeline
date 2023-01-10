@@ -1,6 +1,11 @@
 <template>
   <ion-item lines="none">
-    <ion-button slot="end" fill="clear" @click="toggleReorder()">
+    <ion-button
+      slot="end"
+      :disabled="elementsSelected.length == 0"
+      fill="clear"
+      @click="toggleReorder()"
+    >
       Ordenar elementos
     </ion-button>
   </ion-item>
