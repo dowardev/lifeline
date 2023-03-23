@@ -1,16 +1,10 @@
 <template>
   <ion-content>
-    <ion-item>
-      <ion-label>Posicision</ion-label>
-      <ion-select v-model="position">
-        <ion-select-option value="before">Antes</ion-select-option>
-        <ion-select-option value="after">Despues</ion-select-option>
-      </ion-select>
-    </ion-item>
     <ion-item
       v-for="(element, index) in elements"
       :key="index"
-      @click="selectOption({ element, position })"
+      button
+      @click="selectOption({ element })"
     >
       <ion-label>{{ element.text }}</ion-label>
     </ion-item>
@@ -18,40 +12,40 @@
 </template>
 
 <script lang="ts">
-import { IonContent, popoverController,IonSelect,IonSelectOption } from "@ionic/vue";
+import { IonContent, popoverController } from "@ionic/vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "PopoverAddElementsComponent",
-  components: { IonContent,IonSelect,IonSelectOption },
+  components: { IonContent },
 
   data() {
     return {
       elements: [
-        { name: "note", text: "Nota" },
-        { name: "richText", text: "Texto enriquecido" },
-        // { name: "table", text: "Tabla" },
+        { name: "note", text: "Nota", type: "note" },
+        { name: "richText", text: "richText", type: "richText" },
         {
           name: "list",
           text: "Lista",
+          type: "list",
         },
         {
           name: "todo",
           text: "Tareas",
+          type: "todo",
         },
-      ],
-      position: "after" as "after" | "before",
+      ] as Array<{ name: string; text: string; type: string }>,
     };
   },
 
   methods: {
     selectOption(params: {
-      element: { name: string; text: string };
-      position: "after" | "before";
+      element: { name: string; text: string; type: string };
     }) {
-      const element = params.element;
-      const position = params.position;
-      popoverController.dismiss({ element, position });
+      const name = params.element.name;
+      const text = params.element.text;
+      const type = params.element.type;
+      popoverController.dismiss({ name, text, type });
     },
   },
 });

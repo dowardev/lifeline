@@ -1,7 +1,11 @@
 <template>
   <!-- nota -->
   <ion-item>
-    <ion-textarea placeholder="Nota"></ion-textarea>
+    <ion-textarea
+      v-model="inputValue"
+      placeholder="Nota"
+      @ion-blur="updateValue()"
+    ></ion-textarea>
   </ion-item>
 
   <!-- time -->
@@ -9,6 +13,7 @@
     <ion-button id="click-trigger-calendar" size="small" fill="clear">
       <ion-icon :icon="timeOutline"></ion-icon>
     </ion-button>
+
     <ion-popover
       trigger="click-trigger-calendar"
       trigger-action="click"
@@ -69,6 +74,7 @@ import {
   IonDatetime,
   IonLabel,
   IonList,
+  IonTextarea,
 } from "@ionic/vue";
 import {
   pricetagsOutline,
@@ -77,6 +83,7 @@ import {
   trashOutline,
 } from "ionicons/icons";
 import { defineComponent, ref } from "vue";
+import { NewNote } from "../../../utils/interfaces";
 
 export default defineComponent({
   name: "NoteComponent",
@@ -87,7 +94,10 @@ export default defineComponent({
     IonDatetime,
     IonLabel,
     IonList,
+    IonTextarea,
   },
+
+  emits: ["changeValue"],
 
   setup() {
     const isAlertTrashOpenRef = ref(false);
@@ -108,6 +118,21 @@ export default defineComponent({
       isAlertStorageOpenRef,
       setOpenAlertStorage,
     };
+  },
+
+  data() {
+    return {
+      inputValue: "",
+    };
+  },
+
+  methods: {
+    updateValue() {
+      const value = this.inputValue;
+
+      const note = { content: value } as NewNote;
+      this.$emit("changeValue", note);
+    },
   },
 });
 </script>

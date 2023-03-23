@@ -11,182 +11,12 @@
         <ion-buttons slot="end">
           <section>
             <ion-button
-              id="open-modal-add-document"
               fill="clear"
               expand="block"
+              @click="openModalAddDocument()"
             >
               <ion-icon :icon="addOutline"></ion-icon>
             </ion-button>
-
-            <ion-modal ref="modalAddDocument" trigger="open-modal-add-document">
-              <ion-header mode="ios" class="ion-no-border">
-                <ion-toolbar>
-                  <ion-buttons slot="start">
-                    <ion-button
-                      @click="
-                        ($refs as any).modalAddDocument.$el.dismiss(
-                          null,
-                          'cancel'
-                        )
-                      "
-                    >
-                      <ion-icon :icon="closeOutline"></ion-icon>
-                    </ion-button>
-                  </ion-buttons>
-
-                  <ion-title>Agregar documento</ion-title>
-
-                  <ion-buttons slot="end">
-                    <section>
-                      <ion-button id="open-modal-reminder" :strong="true">
-                        <ion-icon :icon="timeOutline"></ion-icon>
-                      </ion-button>
-
-                      <ion-modal
-                        ref="modalReminder"
-                        trigger="open-modal-reminder"
-                        :initial-breakpoint="0.65"
-                        :breakpoints="[0, 0.25, 0.5, 0.75]"
-                      >
-                        <ion-header class="ion-no-border" mode="ios">
-                          <ion-toolbar>
-                            <ion-buttons slot="start">
-                              <ion-button
-                                @click="
-                                  ($refs as any).modalReminder.$el.dismiss(
-                                    null,
-                                    'cancel'
-                                  )
-                                "
-                              >
-                                <ion-icon :icon="closeOutline"></ion-icon>
-                              </ion-button>
-                            </ion-buttons>
-
-                            <ion-title>Vencimiento</ion-title>
-
-                            <ion-buttons slot="end">
-                              <ion-button :strong="true"
-                                ><ion-icon :icon="saveOutline"></ion-icon
-                              ></ion-button>
-                            </ion-buttons>
-                          </ion-toolbar>
-                        </ion-header>
-
-                        <ion-content class="ion-padding">
-                          <!-- date start -->
-                          <section>
-                            <ion-item button @click="openPopoverReminderStart">
-                              <ion-label>Inicio</ion-label>
-                              <ion-label slot="end">{{
-                                format(new Date(dateReminderStart), "Pp")
-                              }}</ion-label>
-                            </ion-item>
-
-                            <ion-popover
-                              :is-open="popoverReminderStartOpen"
-                              :event="popoverReminderStartEvent"
-                              @did-dismiss="popoverReminderStartOpen = false"
-                            >
-                              <ion-content class="ion-padding">
-                                <ion-datetime
-                                  :show-default-buttons="true"
-                                  cancel-text="Cancelar"
-                                  done-text="Confirmar"
-                                  locale="en-GB-u-hc-h12"
-                                  @ion-change="
-                                    dateReminderStart = $event.detail
-                                      .value as string
-                                  "
-                                ></ion-datetime>
-                              </ion-content>
-                            </ion-popover>
-                          </section>
-
-                          <!-- date end -->
-                          <section>
-                            <ion-item button @click="openPopoverReminderEnd">
-                              <ion-label>Final</ion-label>
-                              <ion-label slot="end">{{
-                                format(new Date(dateReminderEnd), "Pp")
-                              }}</ion-label>
-                            </ion-item>
-
-                            <ion-popover
-                              :is-open="popoverReminderEndOpen"
-                              :event="popoverReminderEndEvent"
-                              @did-dismiss="popoverReminderEndOpen = false"
-                            >
-                              <ion-content class="ion-padding">
-                                <ion-datetime
-                                  :show-default-buttons="true"
-                                  cancel-text="Cancelar"
-                                  done-text="Confirmar"
-                                  locale="en-GB-u-hc-h12"
-                                  @ion-change="
-                                    dateReminderEnd = $event.detail
-                                      .value as string
-                                  "
-                                ></ion-datetime>
-                              </ion-content>
-                            </ion-popover>
-                          </section>
-
-                          <!-- reminder -->
-                          <section>
-                            <ion-item>
-                              <ion-label>Crear recordatorio</ion-label>
-                              <ion-toggle v-model="reminderToggle"></ion-toggle>
-                            </ion-item>
-
-                            <ion-item v-if="reminderToggle == true">
-                              <ion-label>Recordar</ion-label>
-                              <ion-select
-                                v-model="reminderRepeat"
-                                ok-text="Confirmar"
-                                cancel-text="Cancelar"
-                              >
-                                <ion-select-option value="just"
-                                  >A tiempo</ion-select-option
-                                >
-                                <ion-select-option valaue="5mb"
-                                  >5 minutos antes</ion-select-option
-                                >
-                                <ion-select-option valaue="10mb"
-                                  >10 minutos antes</ion-select-option
-                                >
-                                <ion-select-option valaue="30mb"
-                                  >30 minutos antes</ion-select-option
-                                >
-                                <ion-select-option valaue="1hb"
-                                  >1 hora antes</ion-select-option
-                                >
-                                <ion-select-option valaue="1wb"
-                                  >1 dia antes</ion-select-option
-                                >
-                              </ion-select>
-                            </ion-item>
-                          </section>
-                        </ion-content>
-                      </ion-modal>
-                    </section>
-
-                    <ion-button :strong="true">
-                      <ion-icon :icon="saveOutline"></ion-icon>
-                    </ion-button>
-                  </ion-buttons>
-                </ion-toolbar>
-              </ion-header>
-
-              <ion-content class="ion-padding">
-              <ion-item>
-                <ion-label position=floating>Titulo</ion-label>
-                <ion-input placeholder='Documento 1'></ion-input>
-              </ion-item>
-
-                <AddDocumentComponent></AddDocumentComponent>
-              </ion-content>
-            </ion-modal>
           </section>
 
           <ion-button id="open-main-calendar" fill="clear">
@@ -218,194 +48,40 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
+    <ion-content
+      v-if="useDocument().getUserDocuments() != undefined"
+      :fullscreen="true"
+    >
       <ion-refresher slot="fixed" @ion-refresh="refreshContent()">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      <ion-accordion-group :multiple="true">
-        <ion-list v-for="(event, name) in formatEvents" :key="name">
-          <ion-list-header>{{ formatTimeLine(name) }}</ion-list-header>
-          <ion-row v-for="dataEvent in event" :key="dataEvent" class="center">
-            <ion-col size="12" size-md="10" size-lg="6">
-              <ion-card>
-                <ion-accordion :value="Math.random().toString()">
-                  <ion-card-header slot="header">
-                    <ion-card-title v-if="dataEvent.title == 'no title'">{{
-                      capitalizeFirstLetter($t("message.noTitle"))
-                    }}</ion-card-title>
-                    <ion-card-title v-if="dataEvent.title != 'no title'">{{
-                      dataEvent.title
-                    }}</ion-card-title>
-                    <ion-card-subtitle>{{
-                      dataEvent.calendar.name
-                    }}</ion-card-subtitle>
-                    <ion-card-subtitle v-if="dataEvent.timeStart != ''">
-                      {{ dataEvent.timeStart }}
-                    </ion-card-subtitle>
-                    <ion-card-subtitle v-if="dataEvent.timeStart != ''">
-                      {{ dataEvent.timeEnd }}
-                    </ion-card-subtitle>
-                  </ion-card-header>
+      <ion-row>
+        <ion-col
+          v-for="(document, index) in useDocument().getUserDocuments()"
+          :key="index"
+          size-xs="12"
+          class="center"
+          
+        >
+          <ion-card>
+            <ion-card-header @click="openModalUpdateDocument({ documentId: document.id })">
+              <ion-card-title>{{ document.title }}</ion-card-title>
+            </ion-card-header>
 
-                  <!-- action buttons -->
-                  <section slot="content">
-                    <ion-list>
-                      <ion-item lines="none">
-                        <ion-button
-                          slot="end"
-                          fill="clear"
-                          @click="updateEvent(dataEvent.id)"
-                        >
-                          <ion-icon :icon="createOutline"></ion-icon>
-                        </ion-button>
-                        <ion-button
-                          slot="end"
-                          fill="clear"
-                          color="danger"
-                          @click="presentAlertRemoveEvent(dataEvent.id)"
-                        >
-                          <ion-icon :icon="trashOutline"></ion-icon>
-                        </ion-button>
-                      </ion-item>
-                    </ion-list>
-                  </section>
-
-                  <!-- time zone -->
-                  <section slot="content">
-                    <ion-list>
-                      <ion-list-header>
-                        <ion-label>{{
-                          capitalizeFirstLetter($t("message.timeZone"))
-                        }}</ion-label>
-                      </ion-list-header>
-                      <ion-item lines="full">
-                        <ion-label>{{ dataEvent.timeZone }}</ion-label>
-                      </ion-item>
-                    </ion-list>
-                  </section>
-
-                  <!-- reminders -->
-                  <section v-if="dataEvent.reminders.length > 0" slot="content">
-                    <ion-list>
-                      <ion-list-header>
-                        <ion-label>{{
-                          capitalizeFirstLetter($tc("message.reminder", 2))
-                        }}</ion-label>
-                      </ion-list-header>
-
-                      <div
-                        style="overflow-x: scroll"
-                        class="ion-padding-start ion-padding-end"
-                      >
-                        <div style="display: inline-flex">
-                          <ion-chip
-                            v-for="reminder in dataEvent.reminders"
-                            :key="reminder"
-                            color="primary"
-                            style="text-align: center"
-                          >
-                            {{ tranlateRemindrers(reminder) }}
-                          </ion-chip>
-                        </div>
-                      </div>
-                    </ion-list>
-                    <hr style="border-top: 1px solid rgb(222 222 222)" />
-                  </section>
-
-                  <!-- Repeats -->
-                  <section slot="content">
-                    <ion-list>
-                      <ion-list-header>
-                        <ion-label>{{
-                          capitalizeFirstLetter($t("message.repeat"))
-                        }}</ion-label>
-                      </ion-list-header>
-                      <ion-item lines="full">
-                        <ion-label>{{
-                          capitalizeFirstLetter(
-                            $t(`message.${dataEvent.repeats.frequency}`)
-                          )
-                        }}</ion-label>
-                      </ion-item>
-                    </ion-list>
-                  </section>
-
-                  <!-- guests -->
-                  <section v-if="dataEvent.guests.length > 0" slot="content">
-                    <ion-list>
-                      <ion-list-header>
-                        <ion-label>{{
-                          capitalizeFirstLetter($tc("message.guest", 2))
-                        }}</ion-label>
-                      </ion-list-header>
-                      <div
-                        style="overflow-x: scroll"
-                        class="ion-padding-start ion-padding-end"
-                      >
-                        <div style="display: inline-flex">
-                          <ion-chip
-                            v-for="guest in dataEvent.guests"
-                            :key="guest"
-                            color="primary"
-                          >
-                            {{ guest }}
-                          </ion-chip>
-                        </div>
-                      </div>
-                    </ion-list>
-                  </section>
-
-                  <!-- tags -->
-                  <section v-if="dataEvent.tags.length > 0" slot="content">
-                    <ion-list>
-                      <ion-list-header>
-                        <ion-label>{{
-                          capitalizeFirstLetter($tc("message.tag", 2))
-                        }}</ion-label>
-                      </ion-list-header>
-                      <div
-                        style="overflow-x: scroll"
-                        class="ion-padding-start ion-padding-end"
-                      >
-                        <div style="display: inline-flex">
-                          <ion-chip
-                            v-for="tag in dataEvent.tags"
-                            :key="tag"
-                            color="primary"
-                          >
-                            {{ tag.name }}
-                          </ion-chip>
-                        </div>
-                      </div>
-                    </ion-list>
-                    <hr style="border-top: 1px solid rgb(222 222 222)" />
-                  </section>
-
-                  <!-- notes -->
-                  <section
-                    v-if="dataEvent.notes && dataEvent.notes.length > 0"
-                    slot="content"
-                  >
-                    <ion-list>
-                      <ion-list-header>
-                        <ion-label>{{
-                          capitalizeFirstLetter($tc("message.note", 2))
-                        }}</ion-label>
-                      </ion-list-header>
-                      <div class="ion-padding-start ion-padding-end">
-                        <ion-label class="ion-text-wrap">{{
-                          dataEvent.notes
-                        }}</ion-label>
-                      </div>
-                    </ion-list>
-                  </section>
-                </ion-accordion>
-              </ion-card>
-            </ion-col>
-          </ion-row>
-        </ion-list>
-      </ion-accordion-group>
+            <ion-item lines="none">
+              <ion-button
+                slot="end"
+                fill="clear"
+                color="danger"
+                @click="deleteDocument({ documentId: document.id })"
+              >
+                <ion-icon :icon="trashOutline"></ion-icon>
+              </ion-button>
+            </ion-item>
+          </ion-card>
+        </ion-col>
+      </ion-row>
     </ion-content>
   </ion-page>
 </template>
@@ -443,6 +119,7 @@ import {
   IonSelect,
   IonSelectOption,
   IonToggle,
+  modalController,
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import {
@@ -468,6 +145,7 @@ import { utcToZonedTime, format } from "date-fns-tz";
 import { USER_EVENTS } from "../../services/graphql";
 import { storeToRefs } from "pinia";
 import AddDocumentComponent from "../../components/documents/add_document/AddDocumentComponent.vue";
+import { useDocument } from "../../composables/useDocument";
 
 export default defineComponent({
   name: "InicioPage",
@@ -529,6 +207,7 @@ export default defineComponent({
       closeOutline,
       saveOutline,
       timeOutline,
+      useDocument: useDocument,
     };
   },
 
@@ -587,7 +266,8 @@ export default defineComponent({
   },
 
   mounted() {
-    this.eventsStore.loadEvents({ refetch: true });
+    // this.eventsStore.loadEvents({ refetch: true });
+    this.loadDocuments();
   },
 
   methods: {
@@ -717,6 +397,34 @@ export default defineComponent({
     openPopoverReminderEnd(ev: Event) {
       this.popoverReminderEndEvent = ev;
       this.popoverReminderEndOpen = true;
+    },
+
+    async openModalAddDocument() {
+      const modal = await modalController.create({
+        component: AddDocumentComponent,
+      });
+      modal.present();
+    },
+
+    async loadDocuments() {
+      await useDocument().loadUserDocuments();
+    },
+
+    async openModalUpdateDocument(params: { documentId: string }) {
+      const documentId = params.documentId;
+
+      const modal = await modalController.create({
+        component: AddDocumentComponent,
+        componentProps: {
+          documentId,
+        },
+      });
+      modal.present();
+    },
+
+    async deleteDocument(params: { documentId: string }) {
+      const documentId = params.documentId;
+      await useDocument().deleteDocument({ documentId });
     },
   },
 });
