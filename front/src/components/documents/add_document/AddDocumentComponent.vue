@@ -180,7 +180,9 @@
               </ion-button>
             </div>
 
-            <ion-card v-if="element.type == 'note'">
+            <ion-card
+              v-if="element.type == 'note'"
+            >
               <NoteComponent
                 @change-value="
                   updateNoteComponent({
@@ -291,6 +293,7 @@ export default defineComponent({
     IonHeader,
     IonToolbar,
     IonContent,
+
   },
 
   props: { documentId: { type: String, default: undefined } },
@@ -447,7 +450,7 @@ export default defineComponent({
 
     reorderElements(event: CustomEvent) {
       this.elementsBak = this.document.elements;
-      let elements = this.document
+      let elements = this.document;
       const oldPosition = event.detail.from;
       const newPosition = event.detail.to;
 
@@ -467,8 +470,9 @@ export default defineComponent({
           elements.elements = arr;
         }
       }
-      this.document=(event.detail.complete(elements));
+      this.document = event.detail.complete(elements);
     },
+
   },
 });
 </script>

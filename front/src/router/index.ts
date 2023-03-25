@@ -6,6 +6,7 @@ import CreateEventPage from "@/views/eventos/evento/create/CreateEvent.vue";
 import RepetirPage from "@/views/eventos/evento/repetir/Repetir.vue";
 import SignUpPage from "@/views/sesion/signup/SignUpPage.vue";
 import LoginPage from "@/views/sesion/login/Login.vue";
+import PruebaPage from "@/views/prueba/PruebaPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -41,6 +42,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/login",
     name: "Login",
     component: LoginPage,
+  },
+  {
+    path: "/prueba",
+    name: "PruebaPage",
+    component: PruebaPage,
   },
 ];
 

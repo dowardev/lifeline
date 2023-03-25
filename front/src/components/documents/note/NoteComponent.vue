@@ -1,69 +1,74 @@
 <template>
-  <!-- nota -->
-  <ion-item>
-    <ion-textarea
-      v-model="inputValue"
-      placeholder="Nota"
-      @ion-blur="updateValue()"
-    ></ion-textarea>
-  </ion-item>
+  <div
+    @contextmenu.prevent="openPopoverNoteRightMenu({ ev: $event })"
+    @press="openPopoverNoteRightMenu({ ev: $event })"
+  >
+    <!-- nota -->
+    <ion-item>
+      <ion-textarea
+        v-model="inputValue"
+        placeholder="Nota"
+        @ion-blur="updateValue()"
+      ></ion-textarea>
+    </ion-item>
 
-  <!-- time -->
-  <ion-item>
-    <ion-button id="click-trigger-calendar" size="small" fill="clear">
-      <ion-icon :icon="timeOutline"></ion-icon>
-    </ion-button>
+    <!-- time -->
+    <ion-item>
+      <ion-button id="click-trigger-calendar" size="small" fill="clear">
+        <ion-icon :icon="timeOutline"></ion-icon>
+      </ion-button>
 
-    <ion-popover
-      trigger="click-trigger-calendar"
-      trigger-action="click"
-      style="max-height: 60%"
-    >
-      <ion-content>
-        <ion-list>
-          <ion-list-header>
-            <ion-label>Inicio</ion-label>
-          </ion-list-header>
+      <ion-popover
+        trigger="click-trigger-calendar"
+        trigger-action="click"
+        style="max-height: 60%"
+      >
+        <ion-content>
+          <ion-list>
+            <ion-list-header>
+              <ion-label>Inicio</ion-label>
+            </ion-list-header>
 
+            <ion-item>
+              <ion-datetime></ion-datetime>
+            </ion-item>
+          </ion-list>
+
+          <ion-list>
+            <ion-list-header>
+              <ion-label>Final</ion-label>
+            </ion-list-header>
+
+            <ion-item>
+              <ion-datetime></ion-datetime>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-popover>
+
+      <!-- tags -->
+      <ion-button id="click-trigger-tags" size="small" fill="clear">
+        <ion-icon :icon="pricetagsOutline"></ion-icon>
+      </ion-button>
+      <ion-popover trigger="click-trigger-tags" trigger-action="click">
+        <ion-content>
           <ion-item>
-            <ion-datetime></ion-datetime>
+            <ion-input placeholder="Nombre de la etiqueta"></ion-input>
           </ion-item>
-        </ion-list>
 
-        <ion-list>
-          <ion-list-header>
-            <ion-label>Final</ion-label>
-          </ion-list-header>
+          <div class="ion-padding-start" style="display: flex">
+            <div class="ion-padding-end">
+              <ion-text color="primary">ee</ion-text>
+            </div>
 
-          <ion-item>
-            <ion-datetime></ion-datetime>
-          </ion-item>
-        </ion-list>
-      </ion-content>
-    </ion-popover>
-
-    <!-- tags -->
-    <ion-button id="click-trigger-tags" size="small" fill="clear">
-      <ion-icon :icon="pricetagsOutline"></ion-icon>
-    </ion-button>
-    <ion-popover trigger="click-trigger-tags" trigger-action="click">
-      <ion-content>
-        <ion-item>
-          <ion-input placeholder="Nombre de la etiqueta"></ion-input>
-        </ion-item>
-
-        <div class="ion-padding-start" style="display: flex">
-          <div class="ion-padding-end">
-            <ion-text color="primary">ee</ion-text>
+            <div class="ion-padding-end">
+              <ion-text color="primary">esse</ion-text>
+            </div>
           </div>
-
-          <div class="ion-padding-end">
-            <ion-text color="primary">esse</ion-text>
-          </div>
-        </div>
-      </ion-content>
-    </ion-popover>
-  </ion-item>
+        </ion-content>
+      </ion-popover>
+    </ion-item>
+  </div>
 </template>
 
 <script lang="ts">
@@ -75,6 +80,7 @@ import {
   IonLabel,
   IonList,
   IonTextarea,
+  popoverController,
 } from "@ionic/vue";
 import {
   pricetagsOutline,
@@ -84,6 +90,7 @@ import {
 } from "ionicons/icons";
 import { defineComponent, ref } from "vue";
 import { NewNote } from "../../../utils/interfaces";
+import NoteRightMenuComponent from "./rightMenu/noteRightMenuComponent.vue";
 
 export default defineComponent({
   name: "NoteComponent",
@@ -132,6 +139,22 @@ export default defineComponent({
 
       const note = { content: value } as NewNote;
       this.$emit("changeValue", note);
+    },
+
+    async openPopoverNoteRightMenu(params: { ev: Event }) {
+      const ev = params.ev;
+
+      const popover = await popoverController.create({
+        component: NoteRightMenuComponent,
+        event: ev,
+        showBackdrop: false,
+      });
+      await popover.present();
+
+      const { role, data } = await popover.onDidDismiss();
+      if (role == "confirm" && data.option == "delete") {
+        // await this.deleteDocument({ documentId });
+      }
     },
   },
 });

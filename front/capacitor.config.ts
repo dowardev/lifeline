@@ -1,10 +1,14 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'LifeLine',
-  webDir: 'dist',
-  bundledWebRuntime: false
+  appId: "io.ionic.starter",
+  appName: "LifeLine",
+  webDir: "dist",
+  bundledWebRuntime: false,
+  server: {
+    url: "http://192.168.1.72:5173/",
+    cleartext: true,
+  },
 };
 
 export default config;

@@ -62,23 +62,19 @@
           :key="index"
           size-xs="12"
           class="center"
-          
         >
-          <ion-card>
-            <ion-card-header @click="openModalUpdateDocument({ documentId: document.id })">
+          <ion-card
+            @click="openModalUpdateDocument({ documentId: document.id })"
+            @contextmenu.prevent="
+              openPopoverRightMenu({ ev: $event, documentId: document.id })
+            "
+            @press="
+              openPopoverRightMenu({ ev: $event, documentId: document.id })
+            "
+          >
+            <ion-card-header>
               <ion-card-title>{{ document.title }}</ion-card-title>
             </ion-card-header>
-
-            <ion-item lines="none">
-              <ion-button
-                slot="end"
-                fill="clear"
-                color="danger"
-                @click="deleteDocument({ documentId: document.id })"
-              >
-                <ion-icon :icon="trashOutline"></ion-icon>
-              </ion-button>
-            </ion-item>
           </ion-card>
         </ion-col>
       </ion-row>
@@ -120,6 +116,7 @@ import {
   IonSelectOption,
   IonToggle,
   modalController,
+  popoverController,
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import {
@@ -146,6 +143,7 @@ import { USER_EVENTS } from "../../services/graphql";
 import { storeToRefs } from "pinia";
 import AddDocumentComponent from "../../components/documents/add_document/AddDocumentComponent.vue";
 import { useDocument } from "../../composables/useDocument";
+import RightMenuComponent from "./RightMenuComponent.vue";
 
 export default defineComponent({
   name: "InicioPage",
@@ -425,6 +423,23 @@ export default defineComponent({
     async deleteDocument(params: { documentId: string }) {
       const documentId = params.documentId;
       await useDocument().deleteDocument({ documentId });
+    },
+
+    async openPopoverRightMenu(params: { ev: Event; documentId: string }) {
+      const documentId = params.documentId;
+      const ev = params.ev;
+
+      const popover = await popoverController.create({
+        component: RightMenuComponent,
+        event: ev,
+        showBackdrop: false,
+      });
+      await popover.present();
+
+      const { role, data } = await popover.onDidDismiss();
+      if (role == "confirm" && data.option == "delete") {
+        await this.deleteDocument({ documentId });
+      }
     },
   },
 });
