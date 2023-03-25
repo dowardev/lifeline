@@ -1,7 +1,7 @@
 <template>
   <div
-    @contextmenu.prevent="openPopoverNoteRightMenu({ ev: $event })"
-    @press="openPopoverNoteRightMenu({ ev: $event })"
+    @contextmenu.prevent="openPopoverRightMenu({ ev: $event })"
+    @press="openPopoverRightMenu({ ev: $event })"
   >
     <!-- nota -->
     <ion-item>
@@ -89,8 +89,9 @@ import {
   trashOutline,
 } from "ionicons/icons";
 import { defineComponent, ref } from "vue";
-import { NewNote } from "../../../utils/interfaces";
+import { NewNote, Note } from "../../../utils/interfaces";
 import NoteRightMenuComponent from "./rightMenu/noteRightMenuComponent.vue";
+import { OptionsNoteRightMenu } from "../../../utils/types";
 
 export default defineComponent({
   name: "NoteComponent",
@@ -104,7 +105,9 @@ export default defineComponent({
     IonTextarea,
   },
 
-  emits: ["changeValue"],
+  props: { data: { type: Object as () => NewNote, default: {} as NewNote } },
+
+  emits: ["changeValue", "addElement", "removeNote"],
 
   setup() {
     const isAlertTrashOpenRef = ref(false);
@@ -133,6 +136,10 @@ export default defineComponent({
     };
   },
 
+  mounted() {
+    this.setData();
+  },
+
   methods: {
     updateValue() {
       const value = this.inputValue;
@@ -141,7 +148,7 @@ export default defineComponent({
       this.$emit("changeValue", note);
     },
 
-    async openPopoverNoteRightMenu(params: { ev: Event }) {
+    async openPopoverRightMenu(params: { ev: Event }) {
       const ev = params.ev;
 
       const popover = await popoverController.create({
@@ -152,9 +159,21 @@ export default defineComponent({
       await popover.present();
 
       const { role, data } = await popover.onDidDismiss();
-      if (role == "confirm" && data.option == "delete") {
-        // await this.deleteDocument({ documentId });
-      }
+      if (role == "confirm") this.optionMenu({ option: data.option });
+    },
+
+    setData() {
+      const data = this.data;
+      const content = data.content;
+
+      this.inputValue = content == undefined ? "" : content;
+    },
+
+    optionMenu(params: { option: OptionsNoteRightMenu }) {
+      const option = params.option;
+
+      if (option == "add") this.$emit("addElement", option);
+      if (option == "remove") this.$emit("removeNote", option);
     },
   },
 });

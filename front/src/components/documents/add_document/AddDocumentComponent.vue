@@ -180,16 +180,25 @@
               </ion-button>
             </div>
 
-            <ion-card
-              v-if="element.type == 'note'"
-            >
+            <ion-card v-if="element.type == 'note'">
               <NoteComponent
+                :data="element.data"
                 @change-value="
                   updateNoteComponent({
                     data: $event,
                     position: element.position,
                   })
                 "
+                @add-element="
+                  openPopoverAddElement({
+                    ev: $event,
+                    index:
+                      document.elements?.length != undefined
+                        ? document.elements.length
+                        : 0,
+                  })
+                "
+                @remove-note="removeElement({ index, documentId: document.id })"
               ></NoteComponent>
             </ion-card>
 
@@ -274,7 +283,7 @@ import {
   Document,
 } from "../../../utils/interfaces";
 import { useNote } from "../../../composables/useNote";
-import { DocumentElements } from "../../../utils/types";
+import { DocumentElements, OptionRightMenu } from "../../../utils/types";
 
 export default defineComponent({
   name: "AddDocumentComponent",
@@ -293,7 +302,6 @@ export default defineComponent({
     IonHeader,
     IonToolbar,
     IonContent,
-
   },
 
   props: { documentId: { type: String, default: undefined } },
@@ -345,12 +353,11 @@ export default defineComponent({
   },
 
   methods: {
-    removeElement(params: { id: number }) {
-      // const id = params.id;
-      // const elements = this.elementsSelected.filter((element) => {
-      //   if (element.id != id) return element;
-      // });
-      // this.elementsSelected = elements;
+    removeElement(params: { index: number; documentId: string }) {
+      const index = params.index;
+      const documentId = params.documentId;
+
+      useDocument().deleteElement({ index, documentId });
     },
 
     async openPopoverAddElement(params: { ev: Event; index: number }) {
@@ -472,7 +479,6 @@ export default defineComponent({
       }
       this.document = event.detail.complete(elements);
     },
-
   },
 });
 </script>

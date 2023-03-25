@@ -1,8 +1,4 @@
-import {
-  NewDocument,
-  Document,
-  DeleteDocument
-} from "../utils/interfaces";
+import { NewDocument, Document, DeleteDocument } from "../utils/interfaces";
 import {
   getUserDocuments as getUserDocumentsService,
   saveDocument as saveDocumentService,
@@ -47,9 +43,9 @@ export const useDocument = () => {
   }
 
   async function deleteDocument(params: DeleteDocument): Promise<void> {
-    const documentId= params.documentId;
-    await deleteUserDocumentService({ documentId});
-    documentStore.removeDocument({ documentId});
+    const documentId = params.documentId;
+    await deleteUserDocumentService({ documentId });
+    documentStore.removeDocument({ documentId });
   }
 
   async function getUserDocument(params: {
@@ -59,10 +55,8 @@ export const useDocument = () => {
     const document = documentStore.getDocument({ documentId });
     return document != null ? JSON.parse(JSON.stringify(document)) : undefined;
   }
-  //
-  async function updateDocument(params: {
-    document: Document;
-  }): Promise<void> {
+
+  async function updateDocument(params: { document: Document }): Promise<void> {
     try {
       const document = JSON.parse(JSON.stringify(params.document));
       await updateDocumentService({ document });
@@ -72,6 +66,13 @@ export const useDocument = () => {
     }
   }
 
+  function deleteElement(params: { index: number; documentId: string }) {
+    const index = params.index;
+    const documentId = params.documentId;
+
+    documentStore.removeElement({ index, documentId });
+  }
+
   return {
     deleteDocument,
     saveDocument,
@@ -79,5 +80,6 @@ export const useDocument = () => {
     getUserDocument,
     updateDocument,
     getUserDocuments,
+    deleteElement
   };
 };

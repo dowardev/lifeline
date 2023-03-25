@@ -7,7 +7,6 @@ interface Graphql {
   refetch?: boolean;
 }
 
-
 // user
 export interface User {
   id?: string;
@@ -116,15 +115,8 @@ export interface NewDocument {
   ];
 }
 
-export interface DeleteDocument{
-documentId:string
-}
-
-export interface Note {
-  id: string;
-  content: string;
-  reminder: { reminderStart: string; reminderEnd: string };
-  tags: Array<string>;
+export interface DeleteDocument {
+  documentId: string;
 }
 
 export interface RichText {
@@ -140,6 +132,14 @@ export interface List {
 export interface Todo {
   id: string;
   elements: Array<{ position: number; content: string; checked: boolean }>;
+}
+
+export interface Note {
+  id: string;
+  content: string;
+  reminder: { reminderStart: string; reminderEnd: string };
+  tags: Array<string>;
+  documentId: string;
 }
 
 export interface NewNote {

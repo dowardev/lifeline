@@ -47,8 +47,6 @@ export const useDocumentStore = defineStore("document", {
 
     updateDocument(params: { document: Document }) {
       const document = params.document;
-      console.log(document);
-
       this.documents = this.documents.map((element) => {
         if (element.id == document.id) element = { ...element, ...document };
         return element;
@@ -59,6 +57,18 @@ export const useDocumentStore = defineStore("document", {
       const id = params.documentId;
       const index = this.documents.findIndex((element) => element.id == id);
       if (index != undefined) this.documents?.splice(index, 1);
+    },
+
+    removeElement(params: { index: number; documentId: string }) {
+      const indexElement = params.index;
+      const documentId = params.documentId;
+
+      const indexDocument = this.documents.findIndex(
+        (element) => element.id == documentId
+      );
+
+      if (indexDocument != undefined)
+        this.documents[indexDocument].elements?.splice(indexElement, 1);
     },
   },
 });

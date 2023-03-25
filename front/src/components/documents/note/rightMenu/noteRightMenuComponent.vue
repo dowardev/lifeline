@@ -2,7 +2,7 @@
   <ion-content>
     <div>
       <!-- reminders -->
-      <ion-button fill="clear">
+      <ion-button fill="clear" @click='selectOption({option:"add"})'>
         <ion-icon :icon="addOutline" color="danger"> </ion-icon>
       </ion-button>
 
@@ -18,7 +18,7 @@
 
       <!-- cancel -->
       <div style="float: right">
-        <ion-button fill="clear" color="danger">
+        <ion-button fill="clear" color="danger" @click='selectOption({option:"remove"})'>
           <ion-icon :icon="closeOutline"> </ion-icon>
         </ion-button>
       </div>
@@ -43,7 +43,7 @@ import {
 } from "ionicons/icons";
 import { defineComponent, ref } from "vue";
 
-type Option = "delete";
+type Option = "add"|'remove';
 type Role = "confirm" | "cancel";
 
 export default defineComponent({
@@ -59,7 +59,7 @@ export default defineComponent({
       timeOutline,
       pricetagOutline,
       closeOutline,
-addOutline
+      addOutline,
     };
   },
 
@@ -73,29 +73,22 @@ addOutline
   methods: {
     selectOption(params: { option: Option }) {
       const option = params.option;
-      if (option == "delete") this.deleteOption();
+      if (option == "add") this.addOption();
+      if (option == "remove") this.removeOption();
     },
 
-    deleteOption() {
-      this.showDeleteOption = false;
-      this.intervalDeleteId = setInterval(() => {
-        this.progress += 0.01;
-        if (this.progress > 1) {
-          clearInterval(this.intervalDeleteId);
-          setTimeout(async () => {
-            this.progress = 0;
-            await this.closeModal({
-              data: { option: "delete" },
-              role: "confirm",
-            });
-          }, 1000);
-        }
-      }, 30);
+    async addOption() {
+      await this.closeModal({
+        data: { option: "add" },
+        role: "confirm",
+      });
     },
 
-    async cancelDelete() {
-      clearInterval(this.intervalDeleteId);
-      await this.closeModal({ data: { option: "delete" }, role: "cancel" });
+    async removeOption() {
+      await this.closeModal({
+        data: { option: "remove" },
+        role: "confirm",
+      });
     },
 
     async closeModal(params: { data: { option: Option }; role: Role }) {
