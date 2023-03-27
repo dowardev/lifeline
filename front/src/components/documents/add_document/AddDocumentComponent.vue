@@ -140,26 +140,39 @@
             </ion-modal>
           </section>
 
-          <ion-button @click="updateDocument()">
-            <ion-icon :icon="saveOutline"></ion-icon>
-          </ion-button>
+          <!-- <ion-button @click="updateDocument()"> -->
+          <!--   <ion-icon :icon="saveOutline"></ion-icon> -->
+          <!-- </ion-button> -->
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
+    <ion-content
+      v-if="
+        documentId != undefined &&
+        useDocument().getUserDocument({ documentId: documentId }) != undefined
+      "
+      :fullscreen="true"
+    >
       <ion-item>
         <ion-label position="floating">Titulo</ion-label>
         <ion-input
           placeholder="Nuevo documento"
-          :value="document.title"
+          :value="
+            useDocument().getUserDocument({ documentId: documentId })?.title
+          "
+          :debounce="1000"
+          @ion-change="updateTitle({ tltle: $event.target.value as string })"
         ></ion-input>
       </ion-item>
 
       <ion-item lines="none">
         <ion-button
           slot="end"
-          :disabled="document.elements == undefined"
+          :disabled="
+            useDocument().getUserDocument({ documentId: documentId })
+              ?.elements == undefined
+          "
           fill="clear"
           @click="toggleReorder()"
         >
@@ -173,7 +186,12 @@
           :disabled="isDisabled"
           @ion-item-reorder="reorderElements($event)"
         >
-          <ion-list v-for="(element, index) in document.elements" :key="index">
+          <ion-list
+            v-for="(element, indexElement) in useDocument().getUserDocument({
+              documentId: documentId,
+            })?.elements"
+            :key="indexElement"
+          >
             <div style="float: left">
               <ion-button v-if="isDisabled == false" fill="clear">
                 <ion-reorder></ion-reorder>
@@ -184,21 +202,24 @@
               <NoteComponent
                 :data="element.data"
                 @change-value="
-                  updateNoteComponent({
+                  updateElement({
                     data: $event,
-                    position: element.position,
+                    index: indexElement,
                   })
                 "
                 @add-element="
                   openPopoverAddElement({
                     ev: $event,
-                    index:
-                      document.elements?.length != undefined
-                        ? document.elements.length
-                        : 0,
                   })
                 "
-                @remove-note="removeElement({ index, documentId: document.id })"
+                @remove-note="
+                  removeElement({
+                    index: indexElement,
+                    documentId: useDocument().getUserDocument({
+                      documentId: documentId!,
+                    })?.id!,
+                  })
+                "
               ></NoteComponent>
             </ion-card>
 
@@ -226,10 +247,6 @@
         @click="
           openPopoverAddElement({
             ev: $event,
-            index:
-              document.elements?.length != undefined
-                ? document.elements.length
-                : 0,
           })
         "
       >
@@ -255,6 +272,7 @@ import {
   IonToolbar,
   IonContent,
   modalController,
+  IonInput,
 } from "@ionic/vue";
 import {
   pricetagsOutline,
@@ -276,14 +294,9 @@ import RichTextEditor from "../rich_text/RichTextComponent.vue";
 
 import { useDocument } from "../../../composables/useDocument";
 import { format } from "date-fns";
-import {
-  Note,
-  NewNote,
-  NewDocument,
-  Document,
-} from "../../../utils/interfaces";
+import { NewNote, Document } from "../../../utils/interfaces";
 import { useNote } from "../../../composables/useNote";
-import { DocumentElements, OptionRightMenu } from "../../../utils/types";
+import { DocumentElements, ElementData } from "../../../utils/types";
 
 export default defineComponent({
   name: "AddDocumentComponent",
@@ -302,9 +315,10 @@ export default defineComponent({
     IonHeader,
     IonToolbar,
     IonContent,
+    IonInput,
   },
 
-  props: { documentId: { type: String, default: undefined } },
+  props: { documentIdProp: { type: String, default: undefined } },
 
   setup() {
     return {
@@ -317,18 +331,18 @@ export default defineComponent({
       saveOutline,
       format,
       useNote,
+      useDocument,
     };
   },
 
   data() {
-    const document = {
-      id: "",
-      title: "Nuevo documento",
-      elements: undefined,
-    } as Document;
     let isDisabled = ref(true);
     const toggleReorder = () => {
       isDisabled.value = !isDisabled.value;
+      // useDocument().updateDocument({
+      //   document: this.elementsBak as any
+      // });
+      console.log(this.elementsBak);
     };
     return {
       popoverReminderStartOpen: false,
@@ -339,17 +353,17 @@ export default defineComponent({
       dateReminderEnd: new Date().toISOString(),
       reminderRepeat: "just",
       reminderToggle: false,
-      document,
-      elementsBak: undefined as any,
       isDisabled,
       toggleReorder,
+      documentId: "",
     };
   },
 
   mounted() {
-    const documentId = this.documentId;
-    if (documentId != undefined) this.getDocument({ documentId });
-    else this.createDocument();
+    const documentId = this.documentIdProp;
+    if (documentId != undefined) {
+      this.documentId = documentId;
+    } else this.createDocument();
   },
 
   methods: {
@@ -360,7 +374,7 @@ export default defineComponent({
       useDocument().deleteElement({ index, documentId });
     },
 
-    async openPopoverAddElement(params: { ev: Event; index: number }) {
+    async openPopoverAddElement(params: { ev: Event }) {
       const ev = params.ev;
 
       const popover = await popoverController.create({
@@ -380,26 +394,17 @@ export default defineComponent({
 
     insertElement(params: { id: number; type: DocumentElements }) {
       const type = params.type;
-      const index = this.document.elements?.length;
-      const documentId = this.document.id;
+      const documentId = this.documentId;
+      if (!documentId) return;
 
-      if (!this.document.elements)
-        this.document.elements = [
-          {
-            type: "note",
-            position: 0,
-            documentId,
-            data: undefined,
-          },
-        ];
-      else {
-        this.document.elements?.push({
-          type: "note",
-          position: index == undefined ? 0 : index,
-          documentId,
-          data: undefined,
-        });
-      }
+      const element = {
+        type,
+        position: 0,
+        documentId,
+        data: undefined,
+      };
+
+      useDocument().insertElement({ documentId, element });
     },
 
     async createDocument() {
@@ -408,9 +413,9 @@ export default defineComponent({
       };
 
       try {
-        this.document.id = (await useDocument().saveDocument({ document })).id;
+        this.documentId = (await useDocument().saveDocument({ document })).id;
       } catch (e) {
-        console.log(e);
+        console.error(e);
       }
     },
 
@@ -424,60 +429,73 @@ export default defineComponent({
       this.popoverReminderEndOpen = true;
     },
 
-    // saveNote(params: { documentId: string; note: NewNote }) {
-    //   const documentId = params.documentId;
-    //   const note = params.note;
-    //   note.documentId = documentId;
-    //
-    //   useNote().addNote({ note });
-    // },
-
-    updateNoteComponent(params: { data: NewNote; position: number }) {
+    updateElement(params: { data: ElementData; index: number }) {
       const data = params.data;
-      const position = params.position;
+      const index = params.index;
+      const documentId = this.documentId;
+      const document = useDocument().getUserDocument({ documentId });
 
-      if (this.document.elements) this.document.elements[position].data = data;
-    },
+      if (!document?.elements) return;
+      document.elements[index].data = data;
 
-    async updateDocument() {
-      const document = this.document;
-      await useDocument().updateDocument({ document });
-      this.closeModal();
+      useDocument().updateDocument({
+        document,
+      });
     },
 
     closeModal() {
       modalController.dismiss();
     },
 
-    async getDocument(params: { documentId: string }) {
-      const documentId = params.documentId;
-      const document = await useDocument().getUserDocument({ documentId });
-      this.document = document;
-    },
-
     reorderElements(event: CustomEvent) {
-      this.elementsBak = this.document.elements;
-      let elements = this.document;
+      const documentId = this.documentId;
+      let document = useDocument().getUserDocument({ documentId });
       const oldPosition = event.detail.from;
       const newPosition = event.detail.to;
+      if (!document) return;
 
-      if (elements.elements != undefined) {
-        const elementBak = elements.elements[oldPosition];
+      if (document.elements != undefined) {
+        const elementBak = document.elements[oldPosition];
         if (oldPosition < newPosition) {
-          const arr = elements.elements;
+          const arr = document.elements;
           const index = newPosition;
           arr.splice(index + 1, 0, elementBak);
-          elements.elements.splice(oldPosition, 1);
-          elements.elements = arr;
+          document.elements.splice(oldPosition, 1);
+          document.elements = arr;
         } else {
-          const arr = elements.elements;
+          const arr = document.elements;
           const index = newPosition;
           arr.splice(index, 0, elementBak);
-          elements.elements.splice(oldPosition + 1, 1);
-          elements.elements = arr;
+          document.elements.splice(oldPosition + 1, 1);
+          document.elements = arr;
         }
       }
-      this.document = event.detail.complete(elements);
+      // useDocument().updateDocument({
+      //   document: event.detail.complete(document),
+      // });
+      event.detail.complete();
+    },
+
+    toggleReorder2() {
+      this.isDisabled = !this.isDisabled;
+      if (this.isDisabled == true) {
+        useDocument().updateDocument({
+          document: this.elementsBak,
+        });
+      }
+    },
+
+    updateTitle(params: { tltle: string }) {
+      const title = params.tltle;
+      const documentId = this.documentId;
+      const document = useDocument().getUserDocument({ documentId });
+
+      if (!document?.elements) return;
+      document.title = title;
+
+      useDocument().updateDocument({
+        document,
+      });
     },
   },
 });

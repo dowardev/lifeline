@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { Document } from "../utils/interfaces";
+import { DocumentElements } from "../utils/types";
 
 interface DocumentState {
   documents: Array<Document>;
@@ -7,7 +8,7 @@ interface DocumentState {
 
 export const useDocumentStore = defineStore("document", {
   state: (): DocumentState => ({
-    documents: [],
+    documents: Array<Document>(),
   }),
 
   getters: {
@@ -20,12 +21,10 @@ export const useDocumentStore = defineStore("document", {
     getDocument(state) {
       return (params: { documentId: string }) => {
         const id = params.documentId;
-        let document = state.documents.filter((element) => {
+        const document = state.documents.filter((element) => {
           return element.id == id;
         });
-
-        document = JSON.parse(JSON.stringify(document))[0];
-        return document;
+        return document[0];
       };
     },
   },
@@ -69,6 +68,36 @@ export const useDocumentStore = defineStore("document", {
 
       if (indexDocument != undefined)
         this.documents[indexDocument].elements?.splice(indexElement, 1);
+    },
+
+    insertElement(params: { documentId: string; element: DocumentElements }) {
+      const documentId = params.documentId;
+      const element = params.element;
+
+      const indexDocument = this.documents.findIndex(
+        (element) => element.id == documentId
+      );
+      if (!this.documents[indexDocument].elements)
+        this.documents[indexDocument].elements = [] as any;
+
+      this.documents[indexDocument].elements?.push(element);
+    },
+
+    updateElements(params: {
+      documentId: string;
+      elements: Array<DocumentElements>;
+    }) {
+      const documentId = params.documentId;
+      const elements = params.elements;
+
+      const indexDocument = this.documents.findIndex(
+        (element) => element.id == documentId
+      );
+      // if (!this.documents[indexDocument].elements)
+      //   this.documents[indexDocument].elements = [] as any;
+
+      console.log(elements)
+      // this.documents[indexDocument].elements = elements as any;
     },
   },
 });

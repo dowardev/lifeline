@@ -6,6 +6,7 @@ import {
   deleteUserDocument as deleteUserDocumentService,
 } from "../services/document";
 import { useDocumentStore } from "../store/documentStore";
+import { DocumentElements } from "../utils/types";
 
 export const useDocument = () => {
   const documentStore = useDocumentStore();
@@ -48,12 +49,12 @@ export const useDocument = () => {
     documentStore.removeDocument({ documentId });
   }
 
-  async function getUserDocument(params: {
+  function getUserDocument(params: {
     documentId: string;
-  }): Promise<Document> {
+  }): Document | undefined {
     const documentId = params.documentId;
     const document = documentStore.getDocument({ documentId });
-    return document != null ? JSON.parse(JSON.stringify(document)) : undefined;
+    return document ? document : undefined;
   }
 
   async function updateDocument(params: { document: Document }): Promise<void> {
@@ -73,6 +74,15 @@ export const useDocument = () => {
     documentStore.removeElement({ index, documentId });
   }
 
+  function insertElement(params: {
+    documentId: string;
+    element: DocumentElements;
+  }) {
+    const documentId = params.documentId;
+    const element = params.element;
+
+    useDocumentStore().insertElement({ documentId, element });
+  }
   return {
     deleteDocument,
     saveDocument,
@@ -80,6 +90,7 @@ export const useDocument = () => {
     getUserDocument,
     updateDocument,
     getUserDocuments,
-    deleteElement
+    deleteElement,
+    insertElement,
   };
 };

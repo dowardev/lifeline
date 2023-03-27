@@ -1,5 +1,5 @@
 import { DocumentNode } from "graphql";
-import { DocumentElements } from "./types";
+import { DocumentElements, TypeDocumentElement } from "./types";
 
 interface Graphql {
   name: DocumentNode;
@@ -92,27 +92,13 @@ export interface Document {
   id: string;
   title: string;
   reminder?: { start: string; end: string } | null;
-  elements?: [
-    {
-      type: DocumentElements;
-      position: number;
-      documentId: string;
-      data: NewNote | NewRichText | NewList | NewTodo | undefined;
-    }
-  ];
+  elements?: [DocumentElements];
 }
 
 export interface NewDocument {
   title: string;
   reminder?: { start: string; end: string } | null;
-  elements?: [
-    {
-      type: DocumentElements;
-      position: number;
-      documentId: string;
-      data: NewNote | NewRichText | NewList | NewTodo | undefined;
-    }
-  ];
+  elements?: [DocumentElements];
 }
 
 export interface DeleteDocument {

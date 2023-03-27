@@ -414,7 +414,7 @@ export default defineComponent({
       const modal = await modalController.create({
         component: AddDocumentComponent,
         componentProps: {
-          documentId,
+          documentIdProp:documentId,
         },
       });
       modal.present();
