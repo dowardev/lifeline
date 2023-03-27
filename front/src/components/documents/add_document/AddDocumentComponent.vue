@@ -470,9 +470,6 @@ export default defineComponent({
           document.elements = arr;
         }
       }
-      // useDocument().updateDocument({
-      //   document: event.detail.complete(document),
-      // });
       event.detail.complete();
     },
 
