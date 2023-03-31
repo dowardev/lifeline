@@ -11,3 +11,5 @@ export type DocumentElements = {
 };
 
 export type ElementData = NewNote | NewRichText | NewList | NewTodo;
+
+export type OptionsMainMenuDocument = "save" | "order" | "reminder";
