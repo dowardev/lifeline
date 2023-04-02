@@ -10,11 +10,7 @@
 
         <ion-buttons slot="end">
           <section>
-            <ion-button
-              fill="clear"
-              expand="block"
-              @click="openModalAddDocument()"
-            >
+            <ion-button fill="clear" expand="block" @click="addDocument()">
               <ion-icon :icon="addOutline"></ion-icon>
             </ion-button>
           </section>
@@ -64,7 +60,7 @@
           class="center"
         >
           <ion-card
-            @click="openModalUpdateDocument({ documentId: document.id })"
+            @click="openDocument({ documentUrl: document.url })"
             @contextmenu.prevent="
               openPopoverRightMenu({ ev: $event, documentId: document.id })
             "
@@ -397,27 +393,22 @@ export default defineComponent({
       this.popoverReminderEndOpen = true;
     },
 
-    async openModalAddDocument() {
-      const modal = await modalController.create({
-        component: AddDocumentComponent,
+    async addDocument() {
+      const documentUrl = (await this.createDocument())?.documentUrl;
+
+      await this.$router.push({
+        name: "DocumentPage",
+        params: { url: documentUrl },
       });
-      modal.present();
     },
 
     async loadDocuments() {
       await useDocument().loadUserDocuments();
     },
 
-    async openModalUpdateDocument(params: { documentId: string }) {
-      const documentId = params.documentId;
-
-      const modal = await modalController.create({
-        component: AddDocumentComponent,
-        componentProps: {
-          documentIdProp:documentId,
-        },
-      });
-      modal.present();
+    async openDocument(params: { documentUrl: string }) {
+      const url = params.documentUrl;
+      this.$router.push(`/document/${url}`);
     },
 
     async deleteDocument(params: { documentId: string }) {
@@ -440,6 +431,26 @@ export default defineComponent({
       if (role == "confirm" && data.option == "delete") {
         await this.deleteDocument({ documentId });
       }
+    },
+
+    async createDocument(): Promise<
+      { documentUrl: string | undefined } | undefined
+    > {
+      let document = {
+        title: "Nuevo documento",
+      };
+
+      let url = undefined;
+      try {
+        const response = await useDocument().saveDocument({ document });
+        if (response == null) return undefined;
+        url = response.url;
+        return { documentUrl: url };
+      } catch (e) {
+        console.error(e);
+      }
+
+      return undefined;
     },
   },
 });

@@ -19,10 +19,11 @@ export const useDocumentStore = defineStore("document", {
     },
 
     getDocument(state) {
-      return (params: { documentId: string }) => {
-        const id = params.documentId;
+      return (params: { elementSearch: string }) => {
+        const elementSearch = params.elementSearch;
         const document = state.documents.filter((element) => {
-          return element.id == id;
+          if (element.id == elementSearch) return element;
+          if (element.url == elementSearch) return element;
         });
         return document[0];
       };
@@ -96,7 +97,7 @@ export const useDocumentStore = defineStore("document", {
       // if (!this.documents[indexDocument].elements)
       //   this.documents[indexDocument].elements = [] as any;
 
-      console.log(elements)
+      console.log(elements);
       // this.documents[indexDocument].elements = elements as any;
     },
   },

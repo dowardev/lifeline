@@ -18,16 +18,6 @@
       </ion-list-header>
 
       <div style="display: flex; justify-content: space-around">
-        <!-- save -->
-        <ion-button
-          fill="clear"
-          size="large"
-          class="mainButtons"
-          @click="selectOption({ option: 'save' })"
-        >
-          <ion-icon :icon="saveOutline"></ion-icon>
-        </ion-button>
-
         <!-- reminders -->
         <ion-button
           fill="clear"

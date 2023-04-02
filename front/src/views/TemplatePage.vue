@@ -10,6 +10,7 @@
         <ion-buttons slot="start">
           <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
         </ion-buttons>
+
         <ion-title>{{ pageTitle }}</ion-title>
       </ion-toolbar>
     </ion-header>

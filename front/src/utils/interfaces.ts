@@ -93,12 +93,14 @@ export interface Document {
   title: string;
   reminder?: { start: string; end: string } | null;
   elements?: [DocumentElements];
+  url: string;
 }
 
 export interface NewDocument {
   title: string;
   reminder?: { start: string; end: string } | null;
   elements?: [DocumentElements];
+  url: string;
 }
 
 export interface DeleteDocument {

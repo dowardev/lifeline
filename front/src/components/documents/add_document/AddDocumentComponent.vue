@@ -3,22 +3,25 @@
     <ion-header :translucent="true" class="ion-no-border" mode="ios">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button @click="closeModal()">
+          <ion-button @click="closePage()">
             <ion-icon :icon="closeOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
 
-        <ion-title>Agregar documento</ion-title>
+        <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="end">
           <div v-if="isPlatform('desktop')">
-            <!-- save -->
-            <ion-button>
-              <ion-icon :icon="saveOutline"></ion-icon>
-            </ion-button>
-
             <!-- order elements -->
-            <ion-button @click="toggleReorder()">
+            <ion-button
+              :disabled="
+                (
+                  useDocument().getUserDocument({ documentId: documentUrl })
+                    ?.elements ?? []
+                ).length <= 1
+              "
+              @click="toggleReorder()"
+            >
               <ion-icon :icon="moveOutline"></ion-icon>
             </ion-button>
 
@@ -26,7 +29,6 @@
             <ion-button @click="openModalReminderDocument()">
               <ion-icon :icon="timeOutline"></ion-icon>
             </ion-button>
-
           </div>
 
           <ion-button :strong="true" @click="openModalMenuOpt()">
@@ -38,20 +40,20 @@
 
     <ion-content
       v-if="
-        documentId != undefined &&
-        useDocument().getUserDocument({ documentId: documentId }) != undefined
+        documentUrl != undefined &&
+        useDocument().getUserDocument({ documentId: documentUrl }) != undefined
       "
       :fullscreen="true"
     >
       <ion-item>
-        <ion-label position="floating">Titulo</ion-label>
         <ion-input
+          label="Titulo"
+          label-placement="floating"
           placeholder="Nuevo documento"
           :value="
-            useDocument().getUserDocument({ documentId: documentId })?.title
+            useDocument().getUserDocument({ documentId: documentUrl })?.title
           "
-          :debounce="1000"
-          @ion-change="updateTitle({ tltle: $event.target.value as string })"
+          @ion-blur="updateTitle({ tltle: $event.target.value as string })"
         ></ion-input>
       </ion-item>
 
@@ -74,7 +76,7 @@
         >
           <ion-list
             v-for="(element, indexElement) in useDocument().getUserDocument({
-              documentId: documentId,
+              documentId: documentUrl,
             })?.elements"
             :key="indexElement"
           >
@@ -102,7 +104,7 @@
                   removeElement({
                     index: indexElement,
                     documentId: useDocument().getUserDocument({
-                      documentId: documentId!,
+                      documentId: documentUrl!,
                     })?.id!,
                   })
                 "
@@ -182,12 +184,12 @@ import RichTextEditor from "../rich_text/RichTextComponent.vue";
 
 import { useDocument } from "../../../composables/useDocument";
 import { format } from "date-fns";
-import { NewNote, Document } from "../../../utils/interfaces";
 import { useNote } from "../../../composables/useNote";
 import {
   DocumentElements,
   ElementData,
   OptionsMainMenuDocument,
+  TypeDocumentElement,
 } from "../../../utils/types";
 import MenuOptComponent from "./MenuOptComponent.vue";
 import { isPlatform } from "@ionic/vue";
@@ -213,11 +215,9 @@ export default defineComponent({
     IonInput,
   },
 
-  props: { documentIdProp: { type: String, default: undefined } },
-
   setup() {
     return {
-      pageTitle: "Home",
+      pageTitle: "Agregar documento",
       trashOutline,
       timeOutline,
       pricetagsOutline,
@@ -245,18 +245,27 @@ export default defineComponent({
     return {
       isDisabled,
       toggleReorder,
+      documentUrl: "",
       documentId: "",
     };
   },
 
   mounted() {
-    const documentId = this.documentIdProp;
-    if (documentId != undefined) {
-      this.documentId = documentId;
-    } else this.createDocument();
+    const documentUrl = this.$route.params.url as string;
+    if (documentUrl) {
+      this.documentUrl = documentUrl;
+      this.start();
+    }
   },
 
   methods: {
+    async start() {
+      const documentUrl = this.documentUrl;
+      await useDocument().loadDocument({ elementId: documentUrl });
+      this.documentId =
+        useDocument().getUserDocument({ documentUrl })?.id ?? "";
+    },
+
     removeElement(params: { index: number; documentId: string }) {
       const index = params.index;
       const documentId = params.documentId;
@@ -282,37 +291,31 @@ export default defineComponent({
       });
     },
 
-    insertElement(params: { id: number; type: DocumentElements }) {
+    insertElement(params: { id: number; type: TypeDocumentElement }) {
       const type = params.type;
       const documentId = this.documentId;
       if (!documentId) return;
 
       const element = {
         type,
-        position: 0,
         documentId,
         data: undefined,
       };
 
       useDocument().insertElement({ documentId, element });
-    },
 
-    async createDocument() {
-      const document = {
-        title: "Nuevo documento",
-      };
-
-      try {
-        this.documentId = (await useDocument().saveDocument({ document })).id;
-      } catch (e) {
-        console.error(e);
-      }
+      // TODO: improve code
+      const document = useDocument().getUserDocument({ documentId });
+      if (!document?.elements) return;
+      useDocument().updateDocument({
+        document,
+      });
     },
 
     updateElement(params: { data: ElementData; index: number }) {
       const data = params.data;
       const index = params.index;
-      const documentId = this.documentId;
+      const documentId = this.documentUrl;
       const document = useDocument().getUserDocument({ documentId });
 
       if (!document?.elements) return;
@@ -323,12 +326,12 @@ export default defineComponent({
       });
     },
 
-    closeModal() {
-      modalController.dismiss();
+    closePage() {
+      this.$router.go(-1);
     },
 
     reorderElements(event: CustomEvent) {
-      const documentId = this.documentId;
+      const documentId = this.documentUrl;
       let document = useDocument().getUserDocument({ documentId });
       const oldPosition = event.detail.from;
       const newPosition = event.detail.to;
@@ -362,17 +365,21 @@ export default defineComponent({
       }
     },
 
-    updateTitle(params: { tltle: string }) {
+    async updateTitle(params: { tltle: string }) {
       const title = params.tltle;
       const documentId = this.documentId;
       const document = useDocument().getUserDocument({ documentId });
+      const url = `${title.replace(" ", "-")}-${documentId}`;
 
-      if (!document?.elements) return;
+      if (!document) return;
       document.title = title;
+      document.url = url;
 
-      useDocument().updateDocument({
+      await useDocument().updateDocument({
         document,
       });
+
+      this.$router.replace(url);
     },
 
     async openModalMenuOpt() {
@@ -380,7 +387,7 @@ export default defineComponent({
         component: MenuOptComponent,
         initialBreakpoint: 0.75,
         breakpoints: [0, 0.25, 0.5, 0.75],
-        componentProps: { documentId: this.documentId },
+        componentProps: { documentId: this.documentUrl },
       });
       modal.present();
 

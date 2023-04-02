@@ -7,7 +7,7 @@ export type OptionsNoteRightMenu = "add" | "remove";
 export type DocumentElements = {
   type: TypeDocumentElement;
   documentId: string;
-  data: ElementData;
+  data: ElementData|undefined;
 };
 
 export type ElementData = NewNote | NewRichText | NewList | NewTodo;

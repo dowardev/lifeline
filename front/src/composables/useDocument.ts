@@ -1,6 +1,7 @@
 import { NewDocument, Document, DeleteDocument } from "../utils/interfaces";
 import {
   getUserDocuments as getUserDocumentsService,
+  getDocument as getDocumentService,
   saveDocument as saveDocumentService,
   updateDocument as updateDocumentService,
   deleteUserDocument as deleteUserDocumentService,
@@ -12,15 +13,19 @@ export const useDocument = () => {
   const documentStore = useDocumentStore();
 
   async function saveDocument(params: {
-    document: NewDocument;
-  }): Promise<{ id: string }> {
-    const document = JSON.parse(JSON.stringify(params.document));
+    document: { title: string };
+  }): Promise<{ id: string; url: string } | null> {
+    const documentData = params.document;
+    let document = {} as Document;
 
     try {
-      const { id } = await saveDocumentService({ document });
-      document.id = id;
+      document = (
+        await saveDocumentService({
+          document: documentData,
+        })
+      ).document;
       documentStore.addDocument({ document });
-      return { id };
+      return { id: document.id, url: document.url };
     } catch (error: any) {
       throw new Error(error);
     }
@@ -34,6 +39,15 @@ export const useDocument = () => {
     documents.forEach((document) => {
       documentStore.addDocument({ document });
     });
+  }
+
+  async function loadDocument(params: { elementId: string }): Promise<void> {
+    const elementId = params.elementId;
+    const document = await getDocumentService({ elementId: elementId });
+
+    if (document == null) return;
+
+    documentStore.addDocument({ document });
   }
 
   function getUserDocuments(): Array<Document> | undefined {
@@ -50,10 +64,18 @@ export const useDocument = () => {
   }
 
   function getUserDocument(params: {
-    documentId: string;
+    documentId?: string;
+    documentUrl?: string;
   }): Document | undefined {
     const documentId = params.documentId;
-    const document = documentStore.getDocument({ documentId });
+    const documentUrl = params.documentUrl;
+
+    let document = "" as any;
+    if (documentId)
+      document = documentStore.getDocument({ elementSearch: documentId });
+    if (documentUrl)
+      document = documentStore.getDocument({ elementSearch: documentUrl });
+
     return document ? document : undefined;
   }
 
@@ -92,5 +114,6 @@ export const useDocument = () => {
     getUserDocuments,
     deleteElement,
     insertElement,
+    loadDocument,
   };
 };
