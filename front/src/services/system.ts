@@ -5,6 +5,7 @@ import { toastController } from "@ionic/vue";
 import timeZones from "../assets/files/timezones.json";
 import { SystemMessage } from "./interfaces";
 import { alertCircleOutline } from "ionicons/icons";
+import { Clipboard } from "@capacitor/clipboard";
 
 export async function getTheme() {
   return await storage.get("darkMode");
@@ -63,4 +64,12 @@ export function capitalizeFirstLetter(string: string) {
 
 export function setLanguage(language: string) {
   document.cookie = `language=${language}`;
+}
+
+export async function copyToClipboard(params: { phrase: string }) {
+  const phrase = params.phrase;
+
+  await Clipboard.write({
+    string: phrase
+  });
 }

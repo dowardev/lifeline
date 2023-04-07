@@ -31,9 +31,34 @@
             </ion-button>
           </div>
 
-          <ion-button :strong="true" @click="openModalMenuOpt()">
+          <ion-button
+            v-if="isPlatform('mobile') || isPlatform('mobileweb')"
+            :strong="true"
+            @click="openDocumentMobileMenuOpt()"
+          >
             <ion-icon :icon="ellipsisHorizontalOutline"></ion-icon>
           </ion-button>
+
+          <!-- button desktop options -->
+          <ion-button
+            v-if="isPlatform('desktop')"
+            id="popover-document-desktop-menu-opt"
+            :strong="true"
+          >
+            <ion-icon :icon="ellipsisHorizontalOutline"></ion-icon>
+          </ion-button>
+          <ion-popover
+            trigger="popover-document-desktop-menu-opt"
+            trigger-action="click"
+            style="--width: 22rem"
+            @ion-popover-will-dismiss="
+              setOptionMainMenu({ option: $event.detail.data.option })
+            "
+          >
+            <ion-content>
+              <MenuOptComponent :document-id="documentId" />
+            </ion-content>
+          </ion-popover>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -57,21 +82,21 @@
         ></ion-input>
       </ion-item>
 
-      <ion-item lines="none">
-        <ion-button
-          v-if="isDisabled == false && !isPlatform('desktop')"
-          slot="end"
-          fill="clear"
-          @click="toggleReorder()"
-        >
-          Terminar reordenamiento
-        </ion-button>
-      </ion-item>
-
       <!-- elements -->
       <ion-list>
+        <ion-item lines="none">
+          <ion-button
+            v-if="isReorderDisabled == false"
+            slot="end"
+            fill="clear"
+            @click="toggleReorder()"
+          >
+            Terminar reordenamiento
+          </ion-button>
+        </ion-item>
+
         <ion-reorder-group
-          :disabled="isDisabled"
+          :disabled="isReorderDisabled"
           @ion-item-reorder="reorderElements($event)"
         >
           <ion-list
@@ -81,7 +106,7 @@
             :key="indexElement"
           >
             <div style="float: left">
-              <ion-button v-if="isDisabled == false" fill="clear">
+              <ion-button v-if="isReorderDisabled == false" fill="clear">
                 <ion-reorder></ion-reorder>
               </ion-button>
             </div>
@@ -130,7 +155,7 @@
 
       <!-- add element -->
       <ion-item
-        v-if="isDisabled"
+        v-if="isReorderDisabled"
         button
         @click="
           openPopoverAddElement({
@@ -161,6 +186,7 @@ import {
   IonContent,
   modalController,
   IonInput,
+  IonPopover,
 } from "@ionic/vue";
 import {
   pricetagsOutline,
@@ -213,6 +239,8 @@ export default defineComponent({
     IonToolbar,
     IonContent,
     IonInput,
+    IonPopover,
+    MenuOptComponent,
   },
 
   setup() {
@@ -243,7 +271,7 @@ export default defineComponent({
       console.log(this.elementsBak);
     };
     return {
-      isDisabled,
+      isReorderDisabled: isDisabled,
       toggleReorder,
       documentUrl: "",
       documentId: "",
@@ -357,8 +385,8 @@ export default defineComponent({
     },
 
     toggleReorder2() {
-      this.isDisabled = !this.isDisabled;
-      if (this.isDisabled == true) {
+      this.isReorderDisabled = !this.isReorderDisabled;
+      if (this.isReorderDisabled == true) {
         useDocument().updateDocument({
           document: this.elementsBak,
         });
@@ -382,7 +410,7 @@ export default defineComponent({
       this.$router.replace(url);
     },
 
-    async openModalMenuOpt() {
+    async openDocumentMobileMenuOpt() {
       const modal = await modalController.create({
         component: MenuOptComponent,
         initialBreakpoint: 0.75,
@@ -397,6 +425,19 @@ export default defineComponent({
         const dataOption = data.data ? data : undefined;
         this.setOptionMainMenu({ option, data: dataOption });
       }
+    },
+
+    async openDocumentDesktopMenuOpt(params: { ev: CustomEvent }) {
+      const ev = params.ev;
+      const documentId = this.documentId;
+
+      const popover = await popoverController.create({
+        component: MenuOptComponent,
+        event: ev,
+        componentProps: { documentId },
+        cssClass: "prueba",
+      });
+      await popover.present();
     },
 
     setOptionMainMenu(params: { option: OptionsMainMenuDocument; data?: any }) {

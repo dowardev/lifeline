@@ -14,6 +14,7 @@
     "@capacitor/android": "^4.7.1",
     "@capacitor/app": "4.1.1",
     "@capacitor/cli": "^4.7.1",
+    "@capacitor/clipboard": "^4.1.0",
     "@capacitor/core": "^4.7.1",
     "@capacitor/haptics": "4.1.0",
     "@capacitor/keyboard": "^4.1.1",
@@ -42,6 +43,7 @@
     "pinia": "^2.0.33",
     "vue": "^3.2.47",
     "vue-i18n": "^9.2.2",
+    "vue-qr-generator": "^3.0.1",
     "vue-router": "^4.1.6",
     "vue3-markdown-it": "^1.0.10"
   },

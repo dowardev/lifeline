@@ -7,9 +7,14 @@ export type OptionsNoteRightMenu = "add" | "remove";
 export type DocumentElements = {
   type: TypeDocumentElement;
   documentId: string;
-  data: ElementData|undefined;
+  data: ElementData | undefined;
 };
 
 export type ElementData = NewNote | NewRichText | NewList | NewTodo;
 
-export type OptionsMainMenuDocument = "save" | "order" | "reminder";
+export type OptionsMainMenuDocument =
+  | "save"
+  | "order"
+  | "reminder"
+  | "share"
+  | "none";
