@@ -11,34 +11,6 @@
         <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="end">
-          <div v-if="isPlatform('desktop')">
-            <!-- order elements -->
-            <ion-button
-              :disabled="
-                (
-                  useDocument().getUserDocument({ documentId: documentUrl })
-                    ?.elements ?? []
-                ).length <= 1
-              "
-              @click="toggleReorder()"
-            >
-              <ion-icon :icon="moveOutline"></ion-icon>
-            </ion-button>
-
-            <!-- reminders -->
-            <ion-button @click="openModalReminderDocument()">
-              <ion-icon :icon="timeOutline"></ion-icon>
-            </ion-button>
-          </div>
-
-          <ion-button
-            v-if="isPlatform('mobile') || isPlatform('mobileweb')"
-            :strong="true"
-            @click="openDocumentMobileMenuOpt()"
-          >
-            <ion-icon :icon="ellipsisHorizontalOutline"></ion-icon>
-          </ion-button>
-
           <!-- button desktop options -->
           <ion-button
             v-if="isPlatform('desktop')"
@@ -52,13 +24,41 @@
             trigger-action="click"
             style="--width: 22rem"
             @ion-popover-will-dismiss="
-              setOptionMainMenu({ option: $event.detail.data.option })
+              setOptionMainMenu({
+                option: $event.detail.data
+                  ? $event.detail.data.option
+                  : undefined,
+              })
             "
           >
             <ion-content>
               <MenuOptComponent :document-id="documentId" />
             </ion-content>
           </ion-popover>
+
+          <!-- button mobile options -->
+          <ion-button
+            v-if="!isPlatform('desktop')"
+            id="modal-document-mobile-menu-opt"
+            :strong="true"
+          >
+            <ion-icon :icon="ellipsisHorizontalOutline"></ion-icon>
+          </ion-button>
+          <ion-modal
+            ref="modal"
+            trigger="modal-document-mobile-menu-opt"
+            @will-dismiss="
+              setOptionMainMenu({
+                option: $event.detail.data
+                  ? $event.detail.data.option
+                  : undefined,
+              })
+            "
+          >
+            <ion-content>
+              <MenuOptComponent :document-id="documentId" />
+            </ion-content>
+          </ion-modal>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -187,6 +187,7 @@ import {
   modalController,
   IonInput,
   IonPopover,
+  IonModal,
 } from "@ionic/vue";
 import {
   pricetagsOutline,
@@ -212,14 +213,12 @@ import { useDocument } from "../../../composables/useDocument";
 import { format } from "date-fns";
 import { useNote } from "../../../composables/useNote";
 import {
-  DocumentElements,
   ElementData,
   OptionsMainMenuDocument,
   TypeDocumentElement,
 } from "../../../utils/types";
-import MenuOptComponent from "./MenuOptComponent.vue";
-import { isPlatform } from "@ionic/vue";
-import DocumentReminderComponent from "./DocumentReminderComponent.vue";
+import MenuOptComponent from "./menu-document/MenuOptComponent.vue";
+import { isPlatform, } from "@ionic/vue";
 
 export default defineComponent({
   name: "AddDocumentComponent",
@@ -241,6 +240,7 @@ export default defineComponent({
     IonInput,
     IonPopover,
     MenuOptComponent,
+    IonModal,
   },
 
   setup() {
@@ -384,15 +384,6 @@ export default defineComponent({
       event.detail.complete();
     },
 
-    toggleReorder2() {
-      this.isReorderDisabled = !this.isReorderDisabled;
-      if (this.isReorderDisabled == true) {
-        useDocument().updateDocument({
-          document: this.elementsBak,
-        });
-      }
-    },
-
     async updateTitle(params: { tltle: string }) {
       const title = params.tltle;
       const documentId = this.documentId;
@@ -427,34 +418,15 @@ export default defineComponent({
       }
     },
 
-    async openDocumentDesktopMenuOpt(params: { ev: CustomEvent }) {
-      const ev = params.ev;
-      const documentId = this.documentId;
-
-      const popover = await popoverController.create({
-        component: MenuOptComponent,
-        event: ev,
-        componentProps: { documentId },
-        cssClass: "prueba",
-      });
-      await popover.present();
-    },
-
-    setOptionMainMenu(params: { option: OptionsMainMenuDocument; data?: any }) {
+    setOptionMainMenu(params: {
+      option: OptionsMainMenuDocument | undefined;
+      data?: any;
+    }) {
       const option = params.option;
-      const data = params.data;
+      if (option == undefined) return;
+      // const data = params.data;
 
-      console.log(option);
       if (option == "order") this.toggleReorder();
-    },
-
-    async openModalReminderDocument() {
-      const modal = await modalController.create({
-        component: DocumentReminderComponent,
-        initialBreakpoint: 0.75,
-        breakpoints: [0, 0.25, 0.5, 0.75],
-      });
-      modal.present();
     },
   },
 });

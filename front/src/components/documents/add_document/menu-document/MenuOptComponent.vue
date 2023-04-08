@@ -7,7 +7,7 @@
   >
     <ion-toolbar>
       <ion-buttons slot="start">
-        <ion-button @click="closePopover({ role: 'cancel' })">
+        <ion-button @click="closePage({ role: 'cancel' })">
           <ion-icon :icon="closeOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
@@ -126,10 +126,10 @@ import {
   IonButton,
   IonItem,
   IonLabel,
-  modalController,
   IonAccordion,
   IonAccordionGroup,
-popoverController,
+  popoverController,
+  modalController,
 } from "@ionic/vue";
 import {
   closeOutline,
@@ -139,12 +139,11 @@ import {
   timeOutline,
 } from "ionicons/icons";
 import { defineComponent } from "vue";
-import DocumentReminderComponent from "./DocumentReminderComponent.vue";
-import { OptionsMainMenuDocument } from "../../../utils/types";
-import { useDocument } from "../../../composables/useDocument";
+import { OptionsMainMenuDocument } from "../../../../utils/types";
+import { useDocument } from "../../../../composables/useDocument";
 import { isPlatform } from "@ionic/vue";
-import ShareComponent from "./ShareComponent.vue";
-import RemindersComponent from "./RemindersComponent.vue";
+import ShareComponent from "./share/ShareComponent.vue";
+import RemindersComponent from "./reminder/RemindersComponent.vue";
 
 export default defineComponent({
   name: "MenuOptComponent",
@@ -186,22 +185,16 @@ export default defineComponent({
   },
 
   methods: {
-    async closePopover(params: {
+    async closePage(params: {
       role: "confirm" | "cancel";
       data?: { option: OptionsMainMenuDocument; data?: any };
     }) {
       const role = params.role;
       const data = params.data;
-      return await popoverController.dismiss(data, role);
-    },
+      const modal = await modalController.getTop();
 
-    async openModalReminderDocument() {
-      const modal = await modalController.create({
-        component: DocumentReminderComponent,
-        initialBreakpoint: 0.75,
-        breakpoints: [0, 0.25, 0.5, 0.75],
-      });
-      modal.present();
+      if (modal) await modalController.dismiss(data, role);
+      else await popoverController.dismiss(data, role);
     },
 
     selectOption(params: { option: OptionsMainMenuDocument }) {
@@ -214,11 +207,11 @@ export default defineComponent({
     },
 
     async saveOption() {
-      await this.closePopover({ role: "confirm", data: { option: "save" } });
+      await this.closePage({ role: "confirm", data: { option: "save" } });
     },
 
     async orderElementsOption() {
-      await this.closePopover({ role: "confirm", data: { option: "order" } });
+      await this.closePage({ role: "confirm", data: { option: "order" } });
     },
 
     toggleShareOption() {
