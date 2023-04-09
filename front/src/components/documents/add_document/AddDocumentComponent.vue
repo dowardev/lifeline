@@ -23,6 +23,7 @@
             trigger="popover-document-desktop-menu-opt"
             trigger-action="click"
             style="--width: 22rem"
+            mode="md"
             @ion-popover-will-dismiss="
               setOptionMainMenu({
                 option: $event.detail.data
@@ -47,6 +48,7 @@
           <ion-modal
             ref="modal"
             trigger="modal-document-mobile-menu-opt"
+            :mode="isPlatform('ios') ? 'ios' : 'md'"
             @will-dismiss="
               setOptionMainMenu({
                 option: $event.detail.data
@@ -56,7 +58,11 @@
             "
           >
             <ion-content>
-              <MenuOptComponent :document-id="documentId" />
+              <ion-page v-if="!isPlatform('desktop')">
+                <MenuOptComponent :document-id="documentId" />
+              </ion-page>
+
+              <MenuOptComponent v-else :document-id="documentId" />
             </ion-content>
           </ion-modal>
         </ion-buttons>
@@ -70,31 +76,34 @@
       "
       :fullscreen="true"
     >
-      <ion-item>
-        <ion-input
-          label="Titulo"
-          label-placement="floating"
-          placeholder="Nuevo documento"
-          :value="
-            useDocument().getUserDocument({ documentId: documentUrl })?.title
-          "
-          @ion-blur="updateTitle({ tltle: $event.target.value as string })"
-        ></ion-input>
+      <ion-row class="ion-padding">
+        <ion-col>
+          <ion-input
+            label="Titulo"
+            label-placement="floating"
+            placeholder="Nuevo documento"
+            :value="
+              useDocument().getUserDocument({ documentId: documentUrl })?.title
+            "
+            @ion-blur="updateTitle({ tltle: $event.target.value as string })"
+          ></ion-input>
+        </ion-col>
+      </ion-row>
+
+      <ion-item v-if="isReorderDisabled == false" lines="none" >
+        <ion-button slot="end" fill="clear" @click="toggleReorder()">
+          Terminar reordenamiento
+        </ion-button>
       </ion-item>
 
       <!-- elements -->
-      <ion-list>
-        <ion-item lines="none">
-          <ion-button
-            v-if="isReorderDisabled == false"
-            slot="end"
-            fill="clear"
-            @click="toggleReorder()"
-          >
-            Terminar reordenamiento
-          </ion-button>
-        </ion-item>
-
+      <ion-list
+        v-if="
+          useDocument().getUserDocument({
+            documentId: documentUrl,
+          })?.elements ?? [].length > 0
+        "
+      >
         <ion-reorder-group
           :disabled="isReorderDisabled"
           @ion-item-reorder="reorderElements($event)"
@@ -218,7 +227,7 @@ import {
   TypeDocumentElement,
 } from "../../../utils/types";
 import MenuOptComponent from "./menu-document/MenuOptComponent.vue";
-import { isPlatform, } from "@ionic/vue";
+import { isPlatform } from "@ionic/vue";
 
 export default defineComponent({
   name: "AddDocumentComponent",

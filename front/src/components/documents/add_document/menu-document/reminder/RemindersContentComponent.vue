@@ -12,12 +12,14 @@
         <div slot="content">
           <ion-datetime
             ref="datetimeStart"
+            style="float: right;"
             @ion-change="dateReminderStart = $event.detail.value as string"
           >
             <ion-item slot="buttons" lines="none">
               <ion-button
                 color="danger"
                 fill="clear"
+                size='default'
                 @click="cancelDateStart({ nameAccordion: 'date-start' })"
                 >Cancelar</ion-button
               >
@@ -25,6 +27,7 @@
               <ion-button
                 color="primary"
                 fill="solid"
+                size='default'
                 @click="confirmDateStart({ nameAccordion: 'date-end' })"
                 >Confirmar</ion-button
               >
@@ -41,15 +44,17 @@
           </ion-label>
         </ion-item>
 
-        <div slot="content" class="ion-padding">
+        <div slot="content" >
           <ion-datetime
             ref="datetimeEnd"
+            style="float: right;"
             @ion-change="dateReminderEnd = $event.detail.value as string"
           >
             <ion-item slot="buttons" lines="none">
               <ion-button
                 color="danger"
                 fill="clear"
+                size='default'
                 @click="cancelDateEnd({ nameAccordion: 'date-end' })"
                 >Cancelar</ion-button
               >
@@ -57,6 +62,7 @@
               <ion-button
                 color="primary"
                 fill="solid"
+                size='default'
                 @click="confirmDateEnd({ nameAccordion: 'date-reminder' })"
                 >Confirmar</ion-button
               >
@@ -86,12 +92,14 @@
               <ion-button
                 color="danger"
                 fill="clear"
+                size='default'
                 @click="cancelDateEnd({ nameAccordion: 'date-end' })"
                 >Cancelar</ion-button
               >
 
               <ion-button
                 color="primary"
+                size='default'
                 @click="confirmDateStart({ nameAccordion: 'date-reminder' })"
                 >Confirmar</ion-button
               >

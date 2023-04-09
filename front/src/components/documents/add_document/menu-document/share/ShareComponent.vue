@@ -1,14 +1,17 @@
 <template>
-  <HeaderShareComponent @close-share="closeShare()" />
+  <HeaderShareComponent
+    v-if="isPlatform('desktop')"
+    @close-share="closeShare()"
+  />
 
-  <ion-content v-if="isPlatform('desktop')">
+  <ion-content v-if="isPlatform('desktop')" class="ion-padding-start ion-padding-end ion-padding-bottom">
     <ContentShareComponent :url="url" />
   </ion-content>
 
-  <ion-page v-if="isPlatform('mobile') || isPlatform('mobileweb')" id="prueba">
+  <ion-page v-if="!isPlatform('desktop')">
     <HeaderShareComponent @close-share="closeShare()" />
 
-    <ion-content>
+    <ion-content class="ion-padding-start ion-padding-end ion-padding-bottom">
       <ContentShareComponent :url="url" />
     </ion-content>
   </ion-page>

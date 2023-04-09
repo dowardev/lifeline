@@ -16,7 +16,12 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-content>
+  <ion-content
+    :fullscreen="!isPlatform('desktop') ? true : false"
+    :class="{
+      'ion-fade-in': optionSelected == 'none',
+    }"
+  >
     <section v-if="optionSelected == 'none'">
       <ion-list>
         <ion-list-header>
@@ -28,11 +33,7 @@
           <ion-button
             fill="clear"
             class="mainButtons"
-            :size="
-              isPlatform('mobile') || isPlatform('mobileweb')
-                ? 'small'
-                : 'large'
-            "
+            size="large"
             @click="selectOption({ option: 'reminder' })"
           >
             <ion-icon :icon="timeOutline"></ion-icon>
@@ -42,11 +43,7 @@
           <ion-button
             fill="clear"
             class="mainButtons"
-            :size="
-              isPlatform('mobile') || isPlatform('mobileweb')
-                ? 'small'
-                : 'large'
-            "
+            size="large"
             :disabled="
               (
                 useDocument().getUserDocument({ documentId: documentId })
@@ -62,11 +59,7 @@
           <ion-button
             fill="clear"
             class="mainButtons"
-            :size="
-              isPlatform('mobile') || isPlatform('mobileweb')
-                ? 'small'
-                : 'large'
-            "
+            size="large"
             @click="selectOption({ option: 'share' })"
           >
             <ion-icon :icon="shareSocialOutline"></ion-icon>
@@ -102,18 +95,28 @@
         </ion-accordion-group>
       </ion-list>
     </section>
-
-    <section v-if="optionSelected == 'share'">
-      <ShareComponent
-        :url="useDocument().getUserDocument({ documentId: documentId })?.url"
-        @close-share="toggleShareOption()"
-      />
-    </section>
-
-    <section v-if="optionSelected == 'reminder'">
-      <RemindersComponent @close-reminders="toggleReminderOption()" />
-    </section>
   </ion-content>
+
+  <section
+    v-if="optionSelected == 'share'"
+    :class="{
+      'ion-fade-in': optionSelected == 'share',
+    }"
+  >
+    <ShareComponent
+      :url="useDocument().getUserDocument({ documentId: documentId })?.url"
+      @close-share="toggleShareOption()"
+    />
+  </section>
+
+  <section
+    v-if="optionSelected == 'reminder'"
+    :class="{
+      'ion-fade-in': optionSelected == 'reminder',
+    }"
+  >
+    <RemindersComponent @close-reminders="toggleReminderOption()" />
+  </section>
 </template>
 
 <script lang="ts">
@@ -234,5 +237,18 @@ export default defineComponent({
 <style scoped>
 .mainButtons {
   box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+}
+
+.ion-fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 </style>

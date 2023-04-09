@@ -19,14 +19,17 @@
       <ion-button
         id="helpButtonUrl"
         slot="end"
-        size="small"
+        size="default"
         fill="clear"
         @click="copyToClipboard({ phrase: url })"
       >
-        <ion-icon slot="start" :icon="helpCircleOutline"></ion-icon>
+        <ion-icon :icon="helpCircleOutline"></ion-icon>
       </ion-button>
 
-      <ion-popover trigger="helpButtonUrl" trigger-action="hover">
+      <ion-popover
+        trigger="helpButtonUrl"
+        :trigger-action="isPlatform('desktop') ? 'hover' : 'click'"
+      >
         <ion-content class="ion-padding"
           ><ion-label>
             Aquellos que cuenten con el enlace podrán acceder al documento
@@ -36,44 +39,42 @@
       </ion-popover>
     </ion-item>
 
-    <img :src="generateQR" alt="" />
+    <div class="center">
+      <img :src="generateQR" alt="" />
+    </div>
 
-    <ion-item>
-      <ion-input
-        label="Url"
-        label-placement="floating"
-        :readonly="true"
-        :value="url"
-      ></ion-input>
-    </ion-item>
+    <ion-row>
+      <ion-col size="12">
+        <ion-input
+          label="Url"
+          label-placement="floating"
+          :readonly="true"
+          :value="url"
+        ></ion-input>
+      </ion-col>
 
-    <ion-button
-      size="small"
-      expand="block"
-      @click="copyToClipboard({ phrase: url })"
-    >
-      <ion-icon slot="start" :icon="copyOutline"></ion-icon>
-      Copiar
-    </ion-button>
+      <ion-col size="12">
+        <ion-button expand="block" @click="copyToClipboard({ phrase: url })">
+          <ion-icon slot="start" :icon="copyOutline"></ion-icon>
+          Copiar
+        </ion-button>
+      </ion-col>
+    </ion-row>
   </section>
 
   <!-- guests -->
   <section v-if="mainSegment == 'guests'">
-    <ion-item>
-      <ion-input
-        label="Correo electronico"
-        label-placement="floating"
-        :readonly="true"
-      ></ion-input>
-    </ion-item>
-
     <ion-row>
+      <ion-col>
+        <ion-input
+          label="Correo electronico"
+          label-placement="floating"
+          :readonly="true"
+        ></ion-input>
+      </ion-col>
+
       <ion-col size="10">
-        <ion-button
-          expand="block"
-          size="small"
-          @click="copyToClipboard({ phrase: url })"
-        >
+        <ion-button expand="block" @click="copyToClipboard({ phrase: url })">
           <ion-icon slot="start" :icon="addOutline"></ion-icon>
           Agregar
         </ion-button>
@@ -82,14 +83,17 @@
       <ion-col size="2">
         <ion-button
           id="helpButtonGuests"
-          size="small"
+          size="default"
           fill="clear"
           @click="copyToClipboard({ phrase: url })"
         >
-          <ion-icon slot="start" :icon="helpCircleOutline"></ion-icon>
+          <ion-icon :icon="helpCircleOutline"></ion-icon>
         </ion-button>
 
-        <ion-popover trigger="helpButtonGuests" trigger-action="hover">
+        <ion-popover
+          trigger="helpButtonGuests"
+          :trigger-action="isPlatform('desktop') ? 'hover' : 'click'"
+        >
           <ion-content class="ion-padding"
             ><ion-label
               >Los usuarios aquí listados recibirán una invitación para poder
@@ -127,6 +131,7 @@ import {
   IonSegment,
   IonSegmentButton,
   IonButton,
+  isPlatform,
 } from "@ionic/vue";
 import {
   addOutline,
@@ -160,6 +165,7 @@ export default defineComponent({
       copyOutline,
       addOutline,
       helpCircleOutline,
+      isPlatform,
     };
   },
 
@@ -173,9 +179,9 @@ export default defineComponent({
     generateQR() {
       return (
         "https://chart.googleapis.com/chart?cht=qr&chs=" +
-        400 +
+        300 +
         "x" +
-        400 +
+        300 +
         "&chl=" +
         encodeURIComponent(this.url)
       );

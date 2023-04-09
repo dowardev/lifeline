@@ -1,14 +1,20 @@
 <template>
-  <RemindreHeader @close-reminders="closeReminders()" />
+  <RemindreHeader
+    v-if="isPlatform('desktop')"
+    @close-reminders="closeReminders()"
+  />
 
-  <ion-content v-if="isPlatform('desktop')">
+  <ion-content
+    v-if="isPlatform('desktop')"
+    class="ion-padding-start ion-padding-end ion-padding-bottom"
+  >
     <ReminderContent />
   </ion-content>
 
-  <ion-page v-if="isPlatform('mobile') || isPlatform('mobileweb')" id="prueba">
+  <ion-page v-if="!isPlatform('desktop')">
     <RemindreHeader @close-reminders="closeReminders()" />
 
-    <ion-content>
+    <ion-content class="ion-padding-start ion-padding-end ion-padding-bottom">
       <ReminderContent />
     </ion-content>
   </ion-page>
