@@ -1,41 +1,30 @@
 module.exports = {
+  root: true,
   env: {
-    browser: true,
-    es2021: true,
+    node: true,
   },
 
   extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
     "plugin:vue/vue3-recommended",
-    "prettier",
-  ],
-
-  overrides: [
-    {
-      files: [
-        "**/__tests__/*.{j,t}s?(x)",
-        "**/tests/unit/**/*.spec.{j,t}s?(x)",
-      ],
-      env: {
-        jest: true,
-      },
-    },
+    // "eslint:recommended",
+    // "@vue/typescript/recommended",
+    "plugin:prettier/recommended",
   ],
 
   parser: "vue-eslint-parser",
-  parserOptions: {
-    parser: "@typescript-eslint/parser",
-    ecmaVersion: "latest",
-    sourceType: "module",
-  },
 
-  plugins: ["vue", "@typescript-eslint"],
+  parserOptions: {
+    ecmaVersion: 2020,
+    parser: "@typescript-eslint/parser",
+  },
 
   rules: {
     "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
     "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
     "vue/no-deprecated-slot-attribute": "off",
     "@typescript-eslint/no-explicit-any": "off",
+    "prettier/prettier": "error",
   },
+
+  plugins: ["prettier"],
 };
