@@ -22,7 +22,7 @@
           <ion-popover
             trigger="popover-document-desktop-menu-opt"
             trigger-action="click"
-            style="--width: 22rem"
+            style="--width: 24rem"
             mode="md"
             @ion-popover-will-dismiss="
               setOptionMainMenu({

@@ -190,7 +190,6 @@ export default defineComponent({
   name: "MenuComponent",
   components: {
     IonContent,
-    IonHeader,
     IonPage,
     IonToolbar,
     IonFooter,

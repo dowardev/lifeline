@@ -14,60 +14,90 @@
 
     <!-- time -->
     <ion-item>
-      <ion-button id="click-trigger-calendar" size="small" fill="clear">
+      <ion-button
+        :id="`click-trigger-calendar-${idElements}`"
+        size="small"
+        fill="clear"
+      >
         <ion-icon :icon="timeOutline"></ion-icon>
       </ion-button>
-
-      <ion-popover
-        trigger="click-trigger-calendar"
-        trigger-action="click"
-        style="max-height: 60%"
-      >
-        <ion-content>
-          <ion-list>
-            <ion-list-header>
-              <ion-label>Inicio</ion-label>
-            </ion-list-header>
-
-            <ion-item>
-              <ion-datetime></ion-datetime>
-            </ion-item>
-          </ion-list>
-
-          <ion-list>
-            <ion-list-header>
-              <ion-label>Final</ion-label>
-            </ion-list-header>
-
-            <ion-item>
-              <ion-datetime></ion-datetime>
-            </ion-item>
-          </ion-list>
-        </ion-content>
-      </ion-popover>
 
       <!-- tags -->
       <ion-button id="click-trigger-tags" size="small" fill="clear">
         <ion-icon :icon="pricetagsOutline"></ion-icon>
       </ion-button>
-      <ion-popover trigger="click-trigger-tags" trigger-action="click">
-        <ion-content>
-          <ion-item>
-            <ion-input placeholder="Nombre de la etiqueta"></ion-input>
-          </ion-item>
-
-          <div class="ion-padding-start" style="display: flex">
-            <div class="ion-padding-end">
-              <ion-text color="primary">ee</ion-text>
-            </div>
-
-            <div class="ion-padding-end">
-              <ion-text color="primary">esse</ion-text>
-            </div>
-          </div>
-        </ion-content>
-      </ion-popover>
     </ion-item>
+
+    <ion-popover
+      :trigger="`click-trigger-calendar-${idElements}`"
+      trigger-action="click"
+      style="--width: 22rem"
+    >
+      <ion-content>
+        <ion-segment v-model="reminderSegment">
+          <ion-segment-button value="date-start">Inicio</ion-segment-button>
+          <ion-segment-button value="date-end">Final</ion-segment-button>
+        </ion-segment>
+
+        <section v-if="reminderSegment == 'date-start'">
+          <ion-datetime
+            ref="datetimeStart"
+            v-model="dateReminderStart"
+            @ion-change="dateReminderStart = $event.detail.value as string"
+          >
+            <ion-buttons slot="buttons">
+              <ion-button color="danger" @click="resetStart()"
+                >Reiniciar</ion-button
+              >
+              <ion-button color="primary" @click="cancelStart()"
+                >Cancelar</ion-button
+              >
+              <ion-button fill="solid" color="primary" @click="confirmStart()"
+                >Confirmar</ion-button
+              >
+            </ion-buttons>
+          </ion-datetime>
+        </section>
+
+        <section v-if="reminderSegment == 'date-end'">
+          <ion-datetime
+            ref="datetimeEnd"
+            v-model="dateReminderEnd"
+            @ion-change="dateReminderEnd = $event.detail.value as string"
+          >
+            <ion-buttons slot="buttons">
+              <ion-button color="danger" @click="resetEnd()"
+                >Reiniciar</ion-button
+              >
+              <ion-button color="primary" @click="cancelEnd()"
+                >Cancelar</ion-button
+              >
+              <ion-button fill="solid" color="primary" @click="confirmEnd()"
+                >Confirmar</ion-button
+              >
+            </ion-buttons>
+          </ion-datetime>
+        </section>
+      </ion-content>
+    </ion-popover>
+
+    <ion-popover trigger="click-trigger-tags" trigger-action="click">
+      <ion-content>
+        <ion-item>
+          <ion-input placeholder="Nombre de la etiqueta"></ion-input>
+        </ion-item>
+
+        <div class="ion-padding-start" style="display: flex">
+          <div class="ion-padding-end">
+            <ion-text color="primary">ee</ion-text>
+          </div>
+
+          <div class="ion-padding-end">
+            <ion-text color="primary">esse</ion-text>
+          </div>
+        </div>
+      </ion-content>
+    </ion-popover>
   </div>
 </template>
 
@@ -77,10 +107,10 @@ import {
   IonItem,
   IonPopover,
   IonDatetime,
-  IonLabel,
-  IonList,
   IonTextarea,
   popoverController,
+  IonSegment,
+  IonSegmentButton,
 } from "@ionic/vue";
 import {
   pricetagsOutline,
@@ -89,9 +119,10 @@ import {
   trashOutline,
 } from "ionicons/icons";
 import { defineComponent, ref } from "vue";
-import { NewNote, Note } from "../../../utils/interfaces";
+import { NewNote } from "../../../utils/interfaces";
 import NoteRightMenuComponent from "./rightMenu/noteRightMenuComponent.vue";
 import { OptionsNoteRightMenu } from "../../../utils/types";
+import { format } from "date-fns";
 
 export default defineComponent({
   name: "NoteComponent",
@@ -100,9 +131,9 @@ export default defineComponent({
     IonItem,
     IonPopover,
     IonDatetime,
-    IonLabel,
-    IonList,
     IonTextarea,
+    IonSegment,
+    IonSegmentButton,
   },
 
   props: { data: { type: Object as () => NewNote, default: {} as NewNote } },
@@ -110,29 +141,51 @@ export default defineComponent({
   emits: ["changeValue", "addElement", "removeNote"],
 
   setup() {
-    const isAlertTrashOpenRef = ref(false);
-    const setOpenAlertTrash = (state: boolean) =>
-      (isAlertTrashOpenRef.value = state);
+    const datetimeStart = ref();
+    const resetStart = () => datetimeStart.value.$el.reset();
+    const cancelStart = () => datetimeStart.value.$el.cancel();
+    const confirmStart = () => {
+      datetimeStart.value.$el.confirm();
+      reminderSegment.value = "date-end";
+    };
 
-    const isAlertStorageOpenRef = ref(false);
-    const setOpenAlertStorage = (state: boolean) =>
-      (isAlertStorageOpenRef.value = state);
+    const datetimeEnd = ref();
+    const resetEnd = () => datetimeEnd.value.$el.reset();
+    const cancelEnd = () => {
+      datetimeEnd.value.$el.cancel();
+      reminderSegment.value = "date-start";
+    };
+    const confirmEnd = () => {
+      datetimeEnd.value.$el.confirm();
+    };
+
+    const reminderSegment = ref("date-start");
+
     return {
       pageTitle: "Home",
       trashOutline,
       timeOutline,
       pricetagsOutline,
-      isAlertTrashOpenRef,
-      setOpenAlertTrash,
       saveOutline,
-      isAlertStorageOpenRef,
-      setOpenAlertStorage,
+      format,
+      idElements: new Date().getTime(),
+      datetimeStart,
+      resetStart,
+      cancelStart,
+      confirmStart,
+      datetimeEnd,
+      resetEnd,
+      cancelEnd,
+      confirmEnd,
+      reminderSegment,
     };
   },
 
   data() {
     return {
       inputValue: "",
+      dateReminderStart: new Date().toISOString(),
+      dateReminderEnd: new Date().toISOString(),
     };
   },
 
