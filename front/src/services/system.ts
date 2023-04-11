@@ -3,20 +3,31 @@ const storage = new Storage();
 storage.create();
 import { toastController } from "@ionic/vue";
 import timeZones from "../assets/files/timezones.json";
-import { SystemMessage } from "./interfaces";
-import { alertCircleOutline } from "ionicons/icons";
+import { SystemMessage } from "@/utils/interfaces";
 import { Clipboard } from "@capacitor/clipboard";
+import { Theme } from "@/utils/types";
 
-export async function getTheme() {
-  return await storage.get("darkMode");
+export async function getTheme(): Promise<Theme> {
+  return await storage.get("theme");
 }
 
-export async function setTheme(status: boolean | string) {
-  await storage.set("darkMode", status);
+export async function setTheme(params: { theme: Theme }) {
+  const theme = params.theme;
+  const currentTheme = await getTheme();
+
+  if (theme == null) {
+    document.getElementsByTagName("body")[0].classList.add("light");
+  } else {
+    document.getElementsByTagName("body")[0].classList.remove(currentTheme);
+    document.getElementsByTagName("body")[0].classList.add(theme);
+  }
 }
-export function toggleTheme(status: boolean) {
-  document.body.classList.toggle("dark", status);
+
+export async function saveTheme(params: { theme: Theme }): Promise<void> {
+  const theme = params.theme;
+  await storage.set("theme", theme);
 }
+
 export async function openToast(params: SystemMessage) {
   const color = params.color != undefined ? params.color : "dark";
 
@@ -70,6 +81,6 @@ export async function copyToClipboard(params: { phrase: string }) {
   const phrase = params.phrase;
 
   await Clipboard.write({
-    string: phrase
+    string: phrase,
   });
 }

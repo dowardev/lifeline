@@ -1,104 +1,99 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border" mode="ios">
-      <ion-toolbar class="color-menu">
-        <ion-item v-if="logged == true" lines="none" class="transparent">
-          <ion-avatar slot="start">
-            <img :src="userData.img" />
-          </ion-avatar>
-          <ion-label class="text-menu-color">{{ userData.user }}</ion-label>
-          <ion-button slot="end" fill="clear">
-            <ion-icon :icon="settingsOutline"></ion-icon>
-          </ion-button>
-        </ion-item>
-
-        <ion-item v-if="logged == false" class="transparent" lines="none">
-          <ion-button fill="clear" @click="openRoute('/login')">{{
-            capitalizeFirstLetter($t("message.login"))
-          }}</ion-button>
-          <ion-button fill="clear" @click="openRoute('/signup')">{{
-            capitalizeFirstLetter($t("message.signup"))
-          }}</ion-button>
-        </ion-item>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="color-menu">
-      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
-        <ion-icon
-          slot="start"
-          class="icon-menu-color"
-          :icon="homeOutline"
-        ></ion-icon>
-        <ion-label class="text-menu-color">{{
-          capitalizeFirstLetter($t("message.start"))
-        }}</ion-label>
+    <ion-content>
+      <ion-item v-if="logged == true" lines="none" class="transparent">
+        <ion-avatar slot="start">
+          <img :src="userData.img" />
+        </ion-avatar>
+        <ion-label class="labelOptionMenu">{{ userData.user }}</ion-label>
+        <ion-button slot="end" fill="clear">
+          <ion-icon :icon="settingsOutline"></ion-icon>
+        </ion-button>
       </ion-item>
 
-      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
-        <ion-icon
-          slot="start"
-          class="icon-menu-color"
-          :icon="cloudDownloadOutline"
-        ></ion-icon>
-        <ion-label class="text-menu-color">{{
-          capitalizeFirstLetter($tc("message.module", 2))
-        }}</ion-label>
+      <ion-item v-if="logged == false" class="transparent" lines="none">
+        <ion-button fill="clear" @click="openRoute('/login')">{{
+          capitalizeFirstLetter($t("message.login"))
+        }}</ion-button>
+        <ion-button fill="clear" @click="openRoute('/signup')">{{
+          capitalizeFirstLetter($t("message.signup"))
+        }}</ion-button>
       </ion-item>
 
-      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
-        <ion-icon
-          slot="start"
-          class="icon-menu-color"
-          :icon="documentOutline"
-        ></ion-icon>
-        <ion-label class="text-menu-color">{{
-          capitalizeFirstLetter($tc("message.note", 2))
-        }}</ion-label>
+      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+        <div slot="start">
+          <ion-icon
+            :icon="homeOutline"
+            :class="{
+              iconOptionSelected: $route.path == '/home',
+              iconOptionNoSelected: $route.path != '/home',
+            }"
+          ></ion-icon>
+        </div>
+
+        <ion-label class="labelOptionMenu">
+          {{ capitalizeFirstLetter($t("message.start")) }}
+        </ion-label>
       </ion-item>
 
-      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
-        <ion-icon
-          slot="start"
-          class="icon-menu-color"
-          :icon="checkboxOutline"
-        ></ion-icon>
-        <ion-label class="text-menu-color">{{
-          capitalizeFirstLetter($tc("message.task", 2))
-        }}</ion-label>
+      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+        <div slot="start">
+          <ion-icon :icon="cloudDownloadOutline"></ion-icon>
+        </div>
+
+        <ion-label class="labelOptionMenu">
+          {{ capitalizeFirstLetter($tc("message.module", 2)) }}
+        </ion-label>
       </ion-item>
 
-      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
-        <ion-icon
-          slot="start"
-          class="icon-menu-color"
-          :icon="cogOutline"
-        ></ion-icon>
-        <ion-label class="text-menu-color">{{
-          capitalizeFirstLetter($t("message.programming"))
-        }}</ion-label>
+      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+        <div slot="start">
+          <ion-icon :icon="documentOutline"></ion-icon>
+        </div>
+
+        <ion-label class="labelOptionMenu">
+          {{ capitalizeFirstLetter($tc("message.note", 2)) }}
+        </ion-label>
       </ion-item>
 
-      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
-        <ion-icon
-          slot="start"
-          class="icon-menu-color"
-          :icon="briefcaseOutline"
-        ></ion-icon>
-        <ion-label class="text-menu-color">{{
-          capitalizeFirstLetter($tc("message.projects", 2))
-        }}</ion-label>
+      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+        <div slot="start">
+          <ion-icon :icon="checkboxOutline"></ion-icon>
+        </div>
+
+        <ion-label class="labelOptionMenu">
+          {{ capitalizeFirstLetter($tc("message.task", 2)) }}
+        </ion-label>
       </ion-item>
 
-      <ion-item lines="none" button class="color-menu" @click="openRoute('/')">
-        <ion-icon
-          slot="start"
-          class="icon-menu-color"
-          :icon="helpOutline"
-        ></ion-icon>
-        <ion-label class="text-menu-color">{{
-          capitalizeFirstLetter($t("message.support"))
-        }}</ion-label>
+      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+        <div slot="start">
+          <ion-icon :icon="cogOutline"></ion-icon>
+        </div>
+
+        <ion-label class="labelOptionMenu">
+          {{ capitalizeFirstLetter($t("message.programming")) }}
+        </ion-label>
+      </ion-item>
+
+      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+        <div slot="start">
+          <ion-icon :icon="briefcaseOutline"></ion-icon>
+        </div>
+
+        <ion-label class="labelOptionMenu">
+          {{ capitalizeFirstLetter($tc("message.projects", 2)) }}
+        </ion-label>
+      </ion-item>
+
+      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+        <div slot="start">
+          <ion-icon :icon="helpOutline"></ion-icon>
+        </div>
+
+        <ion-label class="labelOptionMenu">
+          {{ capitalizeFirstLetter($t("message.support")) }}
+        </ion-label>
       </ion-item>
     </ion-content>
 
@@ -165,7 +160,6 @@ import {
   isPlatform,
   modalController,
   IonFooter,
-  alertController,
 } from "@ionic/vue";
 import { brushOutline, exitOutline, languageOutline } from "ionicons/icons";
 import { defineComponent } from "vue";
@@ -184,7 +178,7 @@ import { getUser as getUserService } from "../../services/user";
 import { Storage } from "@ionic/storage";
 const store = new Storage();
 store.create();
-import DarkMode from "./darkmode/DarkMode.vue";
+import ThemeSelectorComponent from "./theme/ThemeMenuComponent.vue";
 // import sesionService from "../../services/sesion";
 // import systemService from "../../services/system";
 import { USER_MENU } from "../../services/graphql";
@@ -262,7 +256,7 @@ export default defineComponent({
 
     async openModalDesktop() {
       const modal = await modalController.create({
-        component: DarkMode,
+        component: ThemeSelectorComponent,
         cssClass: "my-custom-class",
         componentProps: {
           title: "New Title",
@@ -272,7 +266,7 @@ export default defineComponent({
     },
     async openModalMobile() {
       const modal = await modalController.create({
-        component: DarkMode,
+        component: ThemeSelectorComponent,
         initialBreakpoint: 0.5,
         breakpoints: [0, 0.5, 1],
       });
@@ -319,21 +313,36 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.color-menu,
-ion-toolbar {
-  --background: #252729;
-}
-.text-menu-color {
-  color: white;
-}
-.icon-menu-color {
-  color: white;
-}
-ion-title[size="large"] {
-  font-size: 34px;
+/* .color-menu, */
+/* ion-toolbar { */
+/*   --background: #252729; */
+/* } */
+/* .text-menu-color { */
+/*   color: white; */
+/* } */
+/* .icon-menu-color { */
+/*   color: white; */
+/* } */
+/* ion-title[size="large"] { */
+/*   font-size: 34px; */
+/* } */
+/**/
+/* ion-app.md .header-collapse-condense { */
+/*   display: block; */
+/* } */
+
+.labelOptionMenu {
+  color: var(--ion-color-primary);
 }
 
-ion-app.md .header-collapse-condense {
-  display: block;
+.iconOptionSelected {
+  background: var(--ion-color-primary);
+  border-radius: 6px;
+  padding: 8px;
+  color: white;
+}
+
+.iconOptionNoSelected {
+  padding: 8px;
 }
 </style>

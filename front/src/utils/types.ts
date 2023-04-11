@@ -18,3 +18,5 @@ export type OptionsMainMenuDocument =
   | "reminder"
   | "share"
   | "none";
+
+export type Theme = "light" | "nord" | "gruvbox";
