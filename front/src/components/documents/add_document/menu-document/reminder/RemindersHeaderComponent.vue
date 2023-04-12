@@ -15,6 +15,20 @@
         </ion-button>
       </ion-buttons>
     </ion-toolbar>
+
+    <ion-toolbar>
+      <ion-segment
+        :mode="isPlatform('ios') ? 'ios' : 'md'"
+        :value="reminderSegment"
+        @ion-change="
+          changeSegmentReminderValue({ value: $event.detail.value as string })
+        "
+      >
+        <ion-segment-button value="date-start">Inicio</ion-segment-button>
+        <ion-segment-button value="date-end">Final</ion-segment-button>
+        <ion-segment-button value="reminders">Recordatorios</ion-segment-button>
+      </ion-segment>
+    </ion-toolbar>
   </ion-header>
 </template>
 
@@ -25,12 +39,12 @@ import {
   IonToolbar,
   IonButtons,
   IonButton,
+  IonSegment,
+  IonSegmentButton,
+  isPlatform,
 } from "@ionic/vue";
-import {
-  closeOutline,
-  saveOutline,
-} from "ionicons/icons";
-import { defineComponent, } from "vue";
+import { closeOutline, saveOutline } from "ionicons/icons";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "MenuOptComponent",
@@ -41,31 +55,31 @@ export default defineComponent({
     IonToolbar,
     IonButtons,
     IonButton,
+    IonSegment,
+    IonSegmentButton,
   },
 
-  emits: ["closeReminders"],
+  props: { reminderSegment: { type: String, default: "date-start" } },
+
+  emits: ["closeReminders", "segmentRerminderChange"],
 
   setup() {
     return {
       closeOutline,
       pageTitle: "Recordatorios",
       saveOutline,
+      isPlatform,
     };
   },
 
   methods: {
-    openPopoverReminderStart(ev: Event) {
-      this.popoverReminderStartEvent = ev;
-      this.popoverReminderStartOpen = true;
-    },
-
-    openPopoverReminderEnd(ev: Event) {
-      this.popoverReminderEndEvent = ev;
-      this.popoverReminderEndOpen = true;
-    },
-
     closeReminders() {
       this.$emit("closeReminders");
+    },
+
+    changeSegmentReminderValue(params: { value: string }) {
+      const value = params.value;
+      this.$emit("segmentRerminderChange", value);
     },
   },
 });

@@ -28,21 +28,41 @@
       </ion-button>
     </ion-item>
 
+    <!-- popover reminders -->
     <ion-popover
       :trigger="`click-trigger-calendar-${idElements}`"
       trigger-action="click"
       style="--width: 22rem"
     >
-      <ion-content>
-        <ion-segment v-model="reminderSegment">
-          <ion-segment-button value="date-start">Inicio</ion-segment-button>
-          <ion-segment-button value="date-end">Final</ion-segment-button>
-        </ion-segment>
+      <ion-header mode="ios" class="ion-no-border">
+        <ion-toolbar>
+          <ion-title>Recordatorio</ion-title>
 
-        <section v-if="reminderSegment == 'date-start'">
+          <ion-buttons slot="end">
+            <ion-button>
+              <ion-icon :icon="saveOutline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+
+        <ion-toolbar>
+          <ion-segment
+            v-model="reminderSegment"
+            :mode="isPlatform('ios') ? 'ios' : 'md'"
+          >
+            <ion-segment-button value="date-start">Inicio</ion-segment-button>
+            <ion-segment-button value="date-end">Final</ion-segment-button>
+          </ion-segment>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content>
+        <!-- date start -->
+        <section v-if="reminderSegment == 'date-start'" class="ion-padding">
           <ion-datetime
             ref="datetimeStart"
             v-model="dateReminderStart"
+            class="transparent"
             @ion-change="dateReminderStart = $event.detail.value as string"
           >
             <ion-buttons slot="buttons">
@@ -59,10 +79,12 @@
           </ion-datetime>
         </section>
 
-        <section v-if="reminderSegment == 'date-end'">
+        <!-- date end -->
+        <section v-if="reminderSegment == 'date-end'" class="ion-padding">
           <ion-datetime
             ref="datetimeEnd"
             v-model="dateReminderEnd"
+            class="transparent"
             @ion-change="dateReminderEnd = $event.detail.value as string"
           >
             <ion-buttons slot="buttons">
@@ -81,6 +103,7 @@
       </ion-content>
     </ion-popover>
 
+    <!-- popover tags -->
     <ion-popover trigger="click-trigger-tags" trigger-action="click">
       <ion-content>
         <ion-item>
@@ -111,6 +134,7 @@ import {
   popoverController,
   IonSegment,
   IonSegmentButton,
+  isPlatform,
 } from "@ionic/vue";
 import {
   pricetagsOutline,
@@ -178,6 +202,7 @@ export default defineComponent({
       cancelEnd,
       confirmEnd,
       reminderSegment,
+      isPlatform,
     };
   },
 

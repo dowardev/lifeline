@@ -22,7 +22,7 @@
           <ion-popover
             trigger="popover-document-desktop-menu-opt"
             trigger-action="click"
-            style="--width: 24rem"
+            style="--width: 22rem"
             mode="md"
             @ion-popover-will-dismiss="
               setOptionMainMenu({
@@ -90,7 +90,7 @@
         </ion-col>
       </ion-row>
 
-      <ion-item v-if="isReorderDisabled == false" lines="none" >
+      <ion-item v-if="isReorderDisabled == false" lines="none">
         <ion-button slot="end" fill="clear" @click="toggleReorder()">
           Terminar reordenamiento
         </ion-button>

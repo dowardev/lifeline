@@ -1,134 +1,65 @@
 <template>
-  <section>
-    <ion-accordion-group ref="accordionGroupDate">
-      <!-- date start -->
-      <ion-accordion value="date-start">
-        <ion-item slot="header">
-          <ion-label
-            >Fecha inicial {{ format(new Date(dateReminderStart), "Pp") }}
-          </ion-label>
-        </ion-item>
+  <!-- date start -->
+  <section v-if="reminderSegment == 'date-start'" class="center">
+    <ion-datetime
+      ref="datetimeStart"
+      v-model="dateReminderStart"
+      class="transparent"
+      @ion-change="dateReminderStart = $event.detail.value as string"
+    >
+      <ion-buttons slot="buttons">
+        <ion-button color="danger" @click="resetStart()">Reiniciar</ion-button>
+        <ion-button color="primary" @click="cancelStart()">Cancelar</ion-button>
+        <ion-button fill="solid" color="primary" @click="confirmStart()"
+          >Confirmar</ion-button
+        >
+      </ion-buttons>
+    </ion-datetime>
+  </section>
 
-        <div slot="content">
-          <ion-datetime
-            ref="datetimeStart"
-            style="float: right"
-            @ion-change="dateReminderStart = $event.detail.value as string"
-          >
-            <ion-item
-              slot="buttons"
-              lines="none"
-              style="--background: transparent"
-            >
-              <ion-button
-                color="danger"
-                fill="clear"
-                size="default"
-                @click="cancelDateStart({ nameAccordion: 'date-start' })"
-                >Cancelar</ion-button
-              >
+  <!-- date end -->
+  <section v-if="reminderSegment == 'date-end'" class="center">
+    <ion-datetime
+      ref="datetimeEnd"
+      v-model="dateReminderEnd"
+      class="transparent"
+      @ion-change="dateReminderEnd = $event.detail.value as string"
+    >
+      <ion-buttons slot="buttons">
+        <ion-button color="danger" @click="resetEnd()">Reiniciar</ion-button>
+        <ion-button color="primary" @click="cancelEnd()">Cancelar</ion-button>
+        <ion-button fill="solid" color="primary" @click="confirmEnd()"
+          >Confirmar</ion-button
+        >
+      </ion-buttons>
+    </ion-datetime>
+  </section>
 
-              <ion-button
-                color="primary"
-                fill="solid"
-                size="default"
-                @click="confirmDateStart({ nameAccordion: 'date-end' })"
-                >Confirmar</ion-button
-              >
-            </ion-item>
-          </ion-datetime>
-        </div>
-      </ion-accordion>
+  <!-- reminders -->
+  <section v-if="reminderSegment == 'reminders'">
+    <ion-item v-for="(repeat, index) in reminderRepeatBak" :key="index">
+      <ion-checkbox
+        label-placement="end"
+        :value="repeat.value"
+        :checked="repeat.isChecked"
+        >{{ repeat.text }}</ion-checkbox
+      >
+    </ion-item>
 
-      <!-- date end -->
-      <ion-accordion value="date-end">
-        <ion-item slot="header">
-          <ion-label
-            >Fecha inicial {{ format(new Date(dateReminderEnd), "Pp") }}
-          </ion-label>
-        </ion-item>
+    <ion-item lines="none">
+      <ion-button slot="end" color="danger" fill="clear" size="default"
+        >Cancelar</ion-button
+      >
 
-        <div slot="content">
-          <ion-datetime
-            ref="datetimeEnd"
-            style="float: right"
-            @ion-change="dateReminderEnd = $event.detail.value as string"
-          >
-            <ion-item
-              slot="buttons"
-              lines="none"
-              style="--background: transparent"
-            >
-              <ion-button
-                color="danger"
-                fill="clear"
-                size="default"
-                @click="cancelDateEnd({ nameAccordion: 'date-end' })"
-                >Cancelar</ion-button
-              >
-
-              <ion-button
-                color="primary"
-                fill="solid"
-                size="default"
-                @click="confirmDateEnd({ nameAccordion: 'date-reminder' })"
-                >Confirmar</ion-button
-              >
-            </ion-item>
-          </ion-datetime>
-        </div>
-      </ion-accordion>
-
-      <!-- reminder -->
-      <ion-accordion value="date-reminder">
-        <ion-item slot="header">
-          <ion-label>Recordatorios </ion-label>
-        </ion-item>
-
-        <div slot="content" class="ion-padding">
-          <ion-item v-for="(repeat, index) in reminderRepeatBak" :key="index">
-            <ion-checkbox
-              label-placement="end"
-              :value="repeat.value"
-              :checked="repeat.isChecked"
-              >{{ repeat.text }}</ion-checkbox
-            >
-          </ion-item>
-
-          <div style="float: right">
-            <ion-item slot="buttons" lines="none">
-              <ion-button
-                color="danger"
-                fill="clear"
-                size="default"
-                @click="cancelDateEnd({ nameAccordion: 'date-end' })"
-                >Cancelar</ion-button
-              >
-
-              <ion-button
-                color="primary"
-                size="default"
-                @click="confirmDateStart({ nameAccordion: 'date-reminder' })"
-                >Confirmar</ion-button
-              >
-            </ion-item>
-          </div>
-        </div>
-      </ion-accordion>
-    </ion-accordion-group>
+      <ion-button slot="end" color="primary" size="default"
+        >Confirmar</ion-button
+      >
+    </ion-item>
   </section>
 </template>
 
 <script lang="ts">
-import {
-  IonButton,
-  IonItem,
-  IonLabel,
-  IonDatetime,
-  IonAccordion,
-  IonAccordionGroup,
-  IonCheckbox,
-} from "@ionic/vue";
+import { IonButton, IonItem, IonDatetime, IonCheckbox } from "@ionic/vue";
 import {
   closeOutline,
   moveOutline,
@@ -143,54 +74,30 @@ export default defineComponent({
 
   components: {
     IonButton,
-    IonItem,
-    IonLabel,
     IonDatetime,
-    IonAccordion,
-    IonAccordionGroup,
-    IonCheckbox,
   },
 
   setup() {
-    const accordionGroupDate = ref(null);
-    const toggleAccordionDate = (params: { nameAccordion: string }) => {
-      const nameAccordion = params.nameAccordion;
-
-      if (!accordionGroupDate.value) {
-        return;
-      }
-      const nativeEl = (accordionGroupDate as any).value.$el;
-
-      if (nativeEl.value === nameAccordion) {
-        nativeEl.value = undefined;
-      } else {
-        nativeEl.value = nameAccordion;
-      }
-    };
-
     const datetimeStart = ref();
-    const cancelDateStart = (params: { nameAccordion: string }) => {
-      const nameAccordion = params.nameAccordion;
-      datetimeStart.value.$el.cancel();
-      toggleAccordionDate({ nameAccordion });
-    };
-    const confirmDateStart = (params: { nameAccordion: string }) => {
-      const nameAccordion = params.nameAccordion;
+    const resetStart = () => datetimeStart.value.$el.reset();
+    const cancelStart = () => datetimeStart.value.$el.cancel();
+    const confirmStart = () => {
       datetimeStart.value.$el.confirm();
-      toggleAccordionDate({ nameAccordion });
+      reminderSegment.value = "date-end";
     };
 
     const datetimeEnd = ref();
-    const cancelDateEnd = (params: { nameAccordion: string }) => {
-      const nameAccordion = params.nameAccordion;
+    const resetEnd = () => datetimeEnd.value.$el.reset();
+    const cancelEnd = () => {
       datetimeEnd.value.$el.cancel();
-      toggleAccordionDate({ nameAccordion });
+      reminderSegment.value = "date-start";
     };
-    const confirmDateEnd = (params: { nameAccordion: string }) => {
-      const nameAccordion = params.nameAccordion;
+    const confirmEnd = () => {
       datetimeEnd.value.$el.confirm();
-      toggleAccordionDate({ nameAccordion });
+      reminderSegment.value = "reminders";
     };
+
+    const reminderSegment = ref("date-start");
 
     return {
       closeOutline,
@@ -199,14 +106,15 @@ export default defineComponent({
       moveOutline,
       timeOutline,
       format,
-      accordionGroupDate,
-      toggleAccordionDate,
       datetimeStart,
-      confirmDateStart,
-      cancelDateStart,
+      resetStart,
+      cancelStart,
+      confirmStart,
       datetimeEnd,
-      confirmDateEnd,
-      cancelDateEnd,
+      resetEnd,
+      cancelEnd,
+      confirmEnd,
+      reminderSegment,
     };
   },
 
@@ -245,14 +153,9 @@ export default defineComponent({
   },
 
   methods: {
-    openPopoverReminderStart(ev: Event) {
-      this.popoverReminderStartEvent = ev;
-      this.popoverReminderStartOpen = true;
-    },
-
-    openPopoverReminderEnd(ev: Event) {
-      this.popoverReminderEndEvent = ev;
-      this.popoverReminderEndOpen = true;
+    changeSegmentReminderValue(params: { value: string }) {
+      const value = params.value;
+      this.reminderSegment = value;
     },
   },
 });
