@@ -19,23 +19,6 @@
           >
             <ion-icon :icon="ellipsisHorizontalOutline"></ion-icon>
           </ion-button>
-          <ion-popover
-            trigger="popover-document-desktop-menu-opt"
-            trigger-action="click"
-            style="--width: 22rem"
-            mode="md"
-            @ion-popover-will-dismiss="
-              setOptionMainMenu({
-                option: $event.detail.data
-                  ? $event.detail.data.option
-                  : undefined,
-              })
-            "
-          >
-            <ion-content>
-              <MenuOptComponent :document-id="documentId" />
-            </ion-content>
-          </ion-popover>
 
           <!-- button mobile options -->
           <ion-button
@@ -45,26 +28,15 @@
           >
             <ion-icon :icon="ellipsisHorizontalOutline"></ion-icon>
           </ion-button>
-          <ion-modal
-            ref="modal"
-            trigger="modal-document-mobile-menu-opt"
-            :mode="isPlatform('ios') ? 'ios' : 'md'"
-            @will-dismiss="
-              setOptionMainMenu({
-                option: $event.detail.data
-                  ? $event.detail.data.option
-                  : undefined,
-              })
-            "
-          >
-            <ion-content>
-              <ion-page v-if="!isPlatform('desktop')">
-                <MenuOptComponent :document-id="documentId" />
-              </ion-page>
+        </ion-buttons>
+      </ion-toolbar>
 
-              <MenuOptComponent v-else :document-id="documentId" />
-            </ion-content>
-          </ion-modal>
+      <!-- reorder -->
+      <ion-toolbar v-if="isReorderDisabled == false">
+        <ion-buttons slot="end">
+          <ion-button @click="toggleReorder()">
+            Terminar reordenamiento
+          </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -76,35 +48,31 @@
       "
       :fullscreen="true"
     >
-      <ion-row class="ion-padding">
-        <ion-col>
-          <ion-input
-            label="Titulo"
-            label-placement="floating"
-            placeholder="Nuevo documento"
-            :value="
-              useDocument().getUserDocument({ documentId: documentUrl })?.title
-            "
-            @ion-blur="updateTitle({ tltle: $event.target.value as string })"
-          ></ion-input>
-        </ion-col>
-      </ion-row>
-
-      <ion-item v-if="isReorderDisabled == false" lines="none">
-        <ion-button slot="end" fill="clear" @click="toggleReorder()">
-          Terminar reordenamiento
-        </ion-button>
-      </ion-item>
+      <section>
+        <ion-row class="ion-padding">
+          <ion-col>
+            <ion-input
+              label="Titulo"
+              label-placement="floating"
+              placeholder="Nuevo documento"
+              :value="
+                useDocument().getUserDocument({ documentId: documentUrl })
+                  ?.title
+              "
+              @ion-blur="updateTitle({ tltle: $event.target.value as string })"
+            ></ion-input>
+          </ion-col>
+        </ion-row>
+      </section>
 
       <!-- elements -->
-      <ion-list
-        v-if="
-          useDocument().getUserDocument({
-            documentId: documentUrl,
-          })?.elements ?? [].length > 0
-        "
-      >
+      <section>
         <ion-reorder-group
+          v-if="
+            useDocument().getUserDocument({
+              documentId: documentUrl,
+            })?.elements ?? [].length > 0
+          "
           :disabled="isReorderDisabled"
           @ion-item-reorder="reorderElements($event)"
         >
@@ -114,53 +82,59 @@
             })?.elements"
             :key="indexElement"
           >
-            <div style="float: left">
-              <ion-button v-if="isReorderDisabled == false" fill="clear">
+            <ion-list-header v-if="isReorderDisabled == false">
+              <ion-button fill="clear">
                 <ion-reorder></ion-reorder>
               </ion-button>
-            </div>
+            </ion-list-header>
 
-            <ion-card v-if="element.type == 'note'">
-              <NoteComponent
-                :data="element.data"
-                @change-value="
-                  updateElement({
-                    data: $event,
-                    index: indexElement,
-                  })
-                "
-                @add-element="
-                  openPopoverAddElement({
-                    ev: $event,
-                  })
-                "
-                @remove-note="
-                  removeElement({
-                    index: indexElement,
-                    documentId: useDocument().getUserDocument({
-                      documentId: documentUrl!,
-                    })?.id!,
-                  })
-                "
-              ></NoteComponent>
-            </ion-card>
+            <ion-row>
+              <ion-col class="elements">
+                <ion-card v-if="element.type == 'note'" id="card-element">
+                  <ion-card-header> </ion-card-header>
+                  <!-- note component -->
+                  <NoteComponent
+                    :data="element.data"
+                    @change-value="
+                      updateElement({
+                        data: $event,
+                        index: indexElement,
+                      })
+                    "
+                    @add-element="
+                      openPopoverAddElement({
+                        ev: $event,
+                      })
+                    "
+                    @remove-note="
+                      removeElement({
+                        index: indexElement,
+                        documentId: useDocument().getUserDocument({
+                          documentId: documentUrl!,
+                        })?.id!,
+                      })
+                    "
+                  ></NoteComponent>
+                </ion-card>
 
-            <!-- <TableComponent v-if="element.element.name == 'table'"></TableComponent> -->
+                <!-- <TableComponent v-if="element.element.name == 'table'"></TableComponent> -->
 
-            <ion-card v-if="element.type == 'list'">
-              <ListComponent></ListComponent>
-            </ion-card>
+                <ion-card v-if="element.type == 'list'">
+                  <ListComponent></ListComponent>
+                </ion-card>
 
-            <ion-card v-if="element.type == 'todo'">
-              <TodoComponent></TodoComponent>
-            </ion-card>
+                <ion-card v-if="element.type == 'todo'">
+                  <TodoComponent></TodoComponent>
+                </ion-card>
 
-            <ion-card v-if="element.type == 'richtext'">
-              <RichTextEditor :content-editable="true"></RichTextEditor>
-            </ion-card>
+                <ion-card v-if="element.type == 'richtext'">
+                  <RichTextEditor :content-editable="true"></RichTextEditor>
+                </ion-card>
+              </ion-col>
+            </ion-row>
           </ion-list>
         </ion-reorder-group>
-      </ion-list>
+      </section>
 
       <!-- add element -->
       <ion-item
@@ -177,6 +151,43 @@
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
       </ion-item>
+
+      <!-- popovers -->
+      <ion-popover
+        trigger="popover-document-desktop-menu-opt"
+        trigger-action="click"
+        style="--width: 22rem"
+        mode="md"
+        @ion-popover-will-dismiss="
+          setOptionMainMenu({
+            option: $event.detail.data ? $event.detail.data.option : undefined,
+          })
+        "
+      >
+        <ion-content>
+          <MenuOptComponent :document-id="documentId" />
+        </ion-content>
+      </ion-popover>
+
+      <!-- modals -->
+      <ion-modal
+        ref="modal"
+        trigger="modal-document-mobile-menu-opt"
+        :mode="isPlatform('ios') ? 'ios' : 'md'"
+        @will-dismiss="
+          setOptionMainMenu({
+            option: $event.detail.data ? $event.detail.data.option : undefined,
+          })
+        "
+      >
+        <ion-content>
+          <ion-page v-if="!isPlatform('desktop')">
+            <MenuOptComponent :document-id="documentId" />
+          </ion-page>
+
+          <MenuOptComponent v-else :document-id="documentId" />
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -410,23 +421,6 @@ export default defineComponent({
       this.$router.replace(url);
     },
 
-    async openDocumentMobileMenuOpt() {
-      const modal = await modalController.create({
-        component: MenuOptComponent,
-        initialBreakpoint: 0.75,
-        breakpoints: [0, 0.25, 0.5, 0.75],
-        componentProps: { documentId: this.documentUrl },
-      });
-      modal.present();
-
-      const { data, role } = await modal.onWillDismiss();
-      if (role === "confirm") {
-        const option = data.option;
-        const dataOption = data.data ? data : undefined;
-        this.setOptionMainMenu({ option, data: dataOption });
-      }
-    },
-
     setOptionMainMenu(params: {
       option: OptionsMainMenuDocument | undefined;
       data?: any;
@@ -440,3 +434,15 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+@media only screen and (min-width: 992px) {
+  .elements {
+    display: flex;
+    justify-content: center;
+  }
+  .elements > #card-element {
+    width: 60%;
+  }
+}
+</style>

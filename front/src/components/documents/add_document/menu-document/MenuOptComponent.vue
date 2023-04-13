@@ -1,4 +1,5 @@
 <template>
+  <!-- FIX: remove mobile devices -->
   <ion-header
     v-if="optionSelected == 'none'"
     :translucent="true"
