@@ -95,6 +95,19 @@
           {{ capitalizeFirstLetter($t("message.support")) }}
         </ion-label>
       </ion-item>
+
+      <ion-item
+        lines="none"
+        class="transparent"
+        button
+        @click="openRoute('/policies')"
+      >
+        <div slot="start">
+          <ion-icon :icon="documentTextOutline"></ion-icon>
+        </div>
+
+        <ion-label class="labelOptionMenu"> Politicas </ion-label>
+      </ion-item>
     </ion-content>
 
     <ion-footer class="ion-no-border">
@@ -161,7 +174,12 @@ import {
   modalController,
   IonFooter,
 } from "@ionic/vue";
-import { brushOutline, exitOutline, languageOutline } from "ionicons/icons";
+import {
+  brushOutline,
+  documentTextOutline,
+  exitOutline,
+  languageOutline,
+} from "ionicons/icons";
 import { defineComponent } from "vue";
 import {
   settingsOutline,
@@ -212,6 +230,7 @@ export default defineComponent({
       exitOutline,
       languageOutline,
       capitalizeFirstLetter: capitalizeFirstLetter,
+      documentTextOutline,
     };
   },
 

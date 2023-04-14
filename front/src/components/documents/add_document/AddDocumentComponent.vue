@@ -91,7 +91,6 @@
             <ion-row>
               <ion-col class="elements">
                 <ion-card v-if="element.type == 'note'" id="card-element">
-                  <ion-card-header> </ion-card-header>
                   <!-- note component -->
                   <NoteComponent
                     :data="element.data"

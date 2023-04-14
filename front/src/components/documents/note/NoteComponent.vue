@@ -4,38 +4,13 @@
     @press="openPopoverRightMenu({ ev: $event })"
   >
     <!-- nota -->
-    <ion-item>
+    <ion-item lines="none">
       <ion-textarea
         v-model="inputValue"
         placeholder="Nota"
         @ion-blur="updateValue()"
+        :auto-grow="true"
       ></ion-textarea>
-    </ion-item>
-
-    <!-- time -->
-    <ion-item lines="none">
-      <ion-button
-        v-if="isPlatform('desktop')"
-        :id="`click-trigger-popover-calendar-${idElements}`"
-        size="small"
-        fill="clear"
-      >
-        <ion-icon :icon="timeOutline"></ion-icon>
-      </ion-button>
-
-      <ion-button
-        v-if="!isPlatform('desktop')"
-        :id="`click-trigger-modal-calendar-${idElements}`"
-        size="small"
-        fill="clear"
-      >
-        <ion-icon :icon="timeOutline"></ion-icon>
-      </ion-button>
-
-      <!-- tags -->
-      <ion-button id="click-trigger-tags" size="small" fill="clear">
-        <ion-icon :icon="pricetagsOutline"></ion-icon>
-      </ion-button>
     </ion-item>
 
     <!-- popovers -->
@@ -61,8 +36,9 @@
     <!-- popover reminders -->
     <ion-popover
       :trigger="`click-trigger-popover-calendar-${idElements}`"
-      trigger-action="click"
       style="--width: 22rem"
+      :is-open="isOpenPopoverReminders"
+      @will-dismiss="isOpenPopoverReminders = false"
     >
       <RemindersComponent />
     </ion-popover>
@@ -70,7 +46,11 @@
 
     <!-- modals -->
     <!-- modal reminders -->
-    <ion-modal :trigger="`click-trigger-modal-calendar-${idElements}`">
+    <ion-modal
+      :trigger="`click-trigger-modal-calendar-${idElements}`"
+      :is-open="isOpenModalReminders"
+      @will-dismiss="isOpenModalReminders = false"
+    >
       <ion-page>
         <RemindersComponent />
       </ion-page>
@@ -80,7 +60,6 @@
 
 <script lang="ts">
 import {
-  IonContent,
   IonItem,
   IonPopover,
   IonTextarea,
@@ -105,7 +84,6 @@ import RemindersComponent from "./reminders/RemindersComponent.vue";
 export default defineComponent({
   name: "NoteComponent",
   components: {
-    IonContent,
     IonItem,
     IonPopover,
     IonTextarea,
@@ -134,6 +112,8 @@ export default defineComponent({
   data() {
     return {
       inputValue: "",
+      isOpenModalReminders: false,
+      isOpenPopoverReminders: false,
     };
   },
 
@@ -175,6 +155,10 @@ export default defineComponent({
 
       if (option == "add") this.$emit("addElement", option);
       if (option == "remove") this.$emit("removeNote", option);
+      if (option == "reminders") {
+        if (isPlatform("desktop")) this.isOpenPopoverReminders = true;
+        else this.isOpenModalReminders = true;
+      }
     },
   },
 });

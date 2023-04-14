@@ -2,7 +2,7 @@ import { NewList, NewNote, NewRichText, NewTodo } from "./interfaces";
 
 export type TypeDocumentElement = "note" | "richtext" | "list" | "todo";
 
-export type OptionsNoteRightMenu = "add" | "remove";
+export type OptionsNoteRightMenu = "add" | "remove" | "reminders";
 
 export type DocumentElements = {
   type: TypeDocumentElement;

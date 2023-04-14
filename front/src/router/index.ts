@@ -8,6 +8,7 @@ import SignUpPage from "@/views/sesion/signup/SignUpPage.vue";
 import LoginPage from "@/views/sesion/login/Login.vue";
 import PruebaPage from "@/views/prueba/PruebaPage.vue";
 import DocumentPage from "../components/documents/add_document/AddDocumentComponent.vue";
+import PoliciesPage from "../views/policies/PoliciesPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -53,6 +54,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/document/:url",
     name: "DocumentPage",
     component: DocumentPage,
+  },
+  {
+    path: "/policies",
+    name: "PoliciesPage",
+    component: PoliciesPage,
   },
 ];
 

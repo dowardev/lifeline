@@ -2,23 +2,27 @@
   <ion-content>
     <div>
       <!-- reminders -->
-      <ion-button fill="clear" @click='selectOption({option:"add"})'>
-        <ion-icon :icon="addOutline" color="danger"> </ion-icon>
+      <ion-button fill="clear" @click="selectOption({ option: 'add' })">
+        <ion-icon :icon="addOutline"> </ion-icon>
       </ion-button>
 
       <!-- reminders -->
-      <ion-button fill="clear">
-        <ion-icon :icon="timeOutline" color="danger"> </ion-icon>
+      <ion-button fill="clear" @click="selectOption({ option: 'reminders' })">
+        <ion-icon :icon="timeOutline"> </ion-icon>
       </ion-button>
 
       <!-- tags -->
-      <ion-button fill="clear">
-        <ion-icon :icon="pricetagOutline" color="danger"> </ion-icon>
-      </ion-button>
+      <!-- <ion-button fill="clear"> -->
+      <!--   <ion-icon :icon="pricetagOutline" color="danger"> </ion-icon> -->
+      <!-- </ion-button> -->
 
       <!-- cancel -->
       <div style="float: right">
-        <ion-button fill="clear" color="danger" @click='selectOption({option:"remove"})'>
+        <ion-button
+          fill="clear"
+          color="danger"
+          @click="selectOption({ option: 'remove' })"
+        >
           <ion-icon :icon="closeOutline"> </ion-icon>
         </ion-button>
       </div>
@@ -27,13 +31,7 @@
 </template>
 
 <script lang="ts">
-import {
-  IonContent,
-  popoverController,
-  IonItem,
-  IonButton,
-  IonLabel,
-} from "@ionic/vue";
+import { IonContent, popoverController, IonButton } from "@ionic/vue";
 import {
   addOutline,
   closeOutline,
@@ -43,13 +41,13 @@ import {
 } from "ionicons/icons";
 import { defineComponent, ref } from "vue";
 
-type Option = "add"|'remove';
+type Option = "add" | "remove" | "reminders";
 type Role = "confirm" | "cancel";
 
 export default defineComponent({
   name: "MenuRightComponent",
 
-  components: { IonContent, IonItem, IonButton, IonLabel },
+  components: { IonContent, IonButton },
 
   setup() {
     let progress = ref(0);
@@ -75,6 +73,7 @@ export default defineComponent({
       const option = params.option;
       if (option == "add") this.addOption();
       if (option == "remove") this.removeOption();
+      if (option == "reminders") this.reminderOption();
     },
 
     async addOption() {
@@ -95,6 +94,13 @@ export default defineComponent({
       const data = params.data;
       const role = params.role;
       await popoverController.dismiss(data, role);
+    },
+
+    async reminderOption() {
+      await this.closeModal({
+        data: { option: "reminders" },
+        role: "confirm",
+      });
     },
   },
 });
