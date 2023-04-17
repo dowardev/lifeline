@@ -1,4 +1,9 @@
-import { NewDocument, Document, DeleteDocument } from "../utils/interfaces";
+import {
+  NewDocument,
+  Document,
+  DeleteDocument,
+  Note,
+} from "../utils/interfaces";
 import {
   getUserDocuments as getUserDocumentsService,
   getDocument as getDocumentService,
@@ -105,6 +110,49 @@ export const useDocument = () => {
 
     useDocumentStore().insertElement({ documentId, element });
   }
+
+  async function updateNoteValue(params: {
+    data: { value: string };
+    index: number;
+    documentId: string;
+  }) {
+    const value = params.data.value;
+    const index = params.index;
+    const documentId = params.documentId;
+    const document = await getDocumentService({ elementId: documentId });
+    if (!document) return;
+
+    const note = document?.elements![index].data as Note;
+    note.content = value;
+    await updateDocument({ document });
+
+    if (!document?.elements) return;
+    (document.elements[index].data as Note).content = value;
+    await updateDocument({ document });
+  }
+
+  async function updateNoteReminder(params: {
+    data: { dateStart: string; dateEnd: string };
+    index: number;
+    documentId: string;
+  }) {
+    const dateStart = params.data.dateStart;
+    const dateEnd = params.data.dateEnd;
+    const index = params.index;
+    const documentId = params.documentId;
+    const document = await getDocumentService({ elementId: documentId });
+    if (!document) return;
+
+    if (!document?.elements) return;
+    (document.elements[index].data as Note) = {
+      reminder: {
+        reminderStart: dateStart,
+        reminderEnd: dateEnd,
+      },
+    };
+    await updateDocument({ document });
+  }
+
   return {
     deleteDocument,
     saveDocument,
@@ -115,5 +163,7 @@ export const useDocument = () => {
     deleteElement,
     insertElement,
     loadDocument,
+    updateNoteValue,
+    updateNoteReminder,
   };
 };

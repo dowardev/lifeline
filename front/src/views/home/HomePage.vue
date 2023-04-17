@@ -140,6 +140,7 @@ import { storeToRefs } from "pinia";
 import AddDocumentComponent from "../../components/documents/add_document/AddDocumentComponent.vue";
 import { useDocument } from "../../composables/useDocument";
 import RightMenuComponent from "./RightMenuComponent.vue";
+import { LocalNotifications } from "@capacitor/local-notifications";
 
 export default defineComponent({
   name: "InicioPage",
@@ -261,10 +262,41 @@ export default defineComponent({
 
   mounted() {
     // this.eventsStore.loadEvents({ refetch: true });
-    this.loadDocuments();
+    this.start();
   },
 
   methods: {
+    async start() {
+      await this.loadDocuments();
+      const documents = useDocument().getUserDocuments();
+      if (documents == undefined) return;
+      const permission = await this.checkNotificationPermissions();
+      if (!permission) return;
+      documents.forEach((document) => {
+        document.elements?.forEach((element) => {
+          const reminder = element.data.reminder.reminderStart;
+
+          LocalNotifications.schedule({
+            notifications: [
+              {
+                title: "My notification",
+                body: "This is my notification",
+                id: 1,
+                schedule: {
+                  at: new Date(reminder),
+                },
+                sound: null,
+                attachments: null,
+                actionTypeId: "",
+                extra: null,
+                channelId: null,
+              },
+            ],
+          });
+        });
+      });
+    },
+
     async resetCalendar() {
       (
         this.$refs.mainCalendar as InstanceType<typeof HTMLFormElement>
@@ -451,6 +483,18 @@ export default defineComponent({
       }
 
       return undefined;
+    },
+
+    async checkNotificationPermissions(): Promise<boolean> {
+      if ("Notification" in window && Notification.permission === "granted") {
+        return true;
+      } else if (Notification.permission !== "denied") {
+        const response = await Notification.requestPermission();
+        if (response === "granted") {
+          return true;
+        }
+      }
+      return false;
     },
   },
 });

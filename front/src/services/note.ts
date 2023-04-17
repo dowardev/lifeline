@@ -9,7 +9,7 @@ export async function getNotes(): Promise<Array<Note | null>> {
 }
 
 export async function saveNote(params: {
-  note: NewNote;
+  note: Note;
 }): Promise<{ id: string }> {
   const note = JSON.parse(JSON.stringify(params.note));
   const id = Date.now().toString();

@@ -93,11 +93,12 @@
                 <ion-card v-if="element.type == 'note'" id="card-element">
                   <!-- note component -->
                   <NoteComponent
-                    :data="element.data"
-                    @change-value="
-                      updateElement({
-                        data: $event,
+                    :data="element.data as Note"
+                    @update-value="
+                      updateNoteValue({
+                        data: { value: $event },
                         index: indexElement,
+                        documentId,
                       })
                     "
                     @add-element="
@@ -111,6 +112,16 @@
                         documentId: useDocument().getUserDocument({
                           documentId: documentUrl!,
                         })?.id!,
+                      })
+                    "
+                    @update-reminder="
+                      setNoteReminders({
+                        data: {
+                          dateStart: $event.data.dateStart,
+                          dateEnd: $event.data.dateEnd,
+                        },
+                        index: indexElement,
+                        documentId,
                       })
                     "
                   ></NoteComponent>
@@ -238,6 +249,7 @@ import {
 } from "../../../utils/types";
 import MenuOptComponent from "./menu-document/MenuOptComponent.vue";
 import { isPlatform } from "@ionic/vue";
+import { Note } from "@/utils/interfaces";
 
 export default defineComponent({
   name: "AddDocumentComponent",
@@ -303,6 +315,10 @@ export default defineComponent({
       this.documentUrl = documentUrl;
       this.start();
     }
+    // if (isPlatform("desktop")) setInterval(this.setDekstopReminders, 60000);
+    // else {
+    //   this.setMobileReminders();
+    // }
   },
 
   methods: {
@@ -373,6 +389,17 @@ export default defineComponent({
       });
     },
 
+    updateNoteValue(params: {
+      data: { value: string };
+      index: number;
+      documentId: string;
+    }) {
+      const data = params.data;
+      const index = params.index;
+      const documentId = params.documentId;
+      useDocument().updateNoteValue({ data, index, documentId });
+    },
+
     closePage() {
       this.$router.go(-1);
     },
@@ -429,6 +456,17 @@ export default defineComponent({
       // const data = params.data;
 
       if (option == "order") this.toggleReorder();
+    },
+
+    setNoteReminders(params: {
+      data: { dateStart: string; dateEnd: string };
+      index: number;
+      documentId: string;
+    }) {
+      const data = params.data;
+      const index = params.index;
+      const documentId = params.documentId;
+      useDocument().updateNoteReminder({ data, index, documentId });
     },
   },
 });

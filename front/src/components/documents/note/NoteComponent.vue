@@ -6,10 +6,10 @@
     <!-- nota -->
     <ion-item lines="none">
       <ion-textarea
-        v-model="inputValue"
+        :value="inputValue"
         placeholder="Nota"
-        @ion-blur="updateValue()"
         :auto-grow="true"
+        @ion-input="updateValue({ value: $event.detail.value as string })"
       ></ion-textarea>
     </ion-item>
 
@@ -40,7 +40,10 @@
       :is-open="isOpenPopoverReminders"
       @will-dismiss="isOpenPopoverReminders = false"
     >
-      <RemindersComponent />
+      <RemindersComponent
+        :data-reminders="data.reminder"
+        @reminders="$emit('updateReminder', $event)"
+      />
     </ion-popover>
     <!-- end popovers -->
 
@@ -52,7 +55,7 @@
       @will-dismiss="isOpenModalReminders = false"
     >
       <ion-page>
-        <RemindersComponent />
+        <RemindersComponent @reminders="$emit('updateReminder', $event)" />
       </ion-page>
     </ion-modal>
   </div>
@@ -75,7 +78,7 @@ import {
   closeOutline,
 } from "ionicons/icons";
 import { defineComponent } from "vue";
-import { NewNote } from "../../../utils/interfaces";
+import { NewNote, Note } from "../../../utils/interfaces";
 import NoteRightMenuComponent from "./rightMenu/noteRightMenuComponent.vue";
 import { OptionsNoteRightMenu } from "../../../utils/types";
 import { format } from "date-fns";
@@ -91,13 +94,13 @@ export default defineComponent({
     RemindersComponent,
   },
 
-  props: { data: { type: Object as () => NewNote, default: {} as NewNote } },
+  props: { data: { type: Object as () => Note, default: {} as Note } },
 
-  emits: ["changeValue", "addElement", "removeNote"],
+  emits: ["updateValue", "addElement", "removeNote", "updateReminder"],
 
   setup() {
     return {
-      pageTitle: "Home",
+      pageTitle: "NoteComponent",
       trashOutline,
       timeOutline,
       pricetagsOutline,
@@ -117,16 +120,22 @@ export default defineComponent({
     };
   },
 
+  watch: {
+    data(newVal) {
+      const data = newVal;
+      const content = data.content;
+      this.inputValue = content;
+    },
+  },
+
   mounted() {
     this.setData();
   },
 
   methods: {
-    updateValue() {
-      const value = this.inputValue;
-
-      const note = { content: value } as NewNote;
-      this.$emit("changeValue", note);
+    updateValue(params: { value: string }) {
+      const value = params.value;
+      this.$emit("updateValue", value);
     },
 
     async openPopoverRightMenu(params: { ev: Event }) {
@@ -147,7 +156,7 @@ export default defineComponent({
       const data = this.data;
       const content = data.content;
 
-      this.inputValue = content == undefined ? "" : content;
+      this.inputValue = content as string;
     },
 
     optionMenu(params: { option: OptionsNoteRightMenu }) {

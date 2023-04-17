@@ -92,7 +92,12 @@ export interface Document {
   id: string;
   title: string;
   reminder?: { start: string; end: string } | null;
-  elements?: [DocumentElements];
+  elements?: [
+    {
+      type: "note" | "list" | "richtext" | "todo";
+      data: {};
+    }
+  ];
   url: string;
 }
 
@@ -123,11 +128,10 @@ export interface Todo {
 }
 
 export interface Note {
-  id: string;
-  content: string;
-  reminder: { reminderStart: string; reminderEnd: string };
-  tags: Array<string>;
-  documentId: string;
+  id?: string;
+  content?: string;
+  reminder?: { reminderStart: string; reminderEnd: string };
+  tags?: Array<string>;
 }
 
 export interface NewNote {

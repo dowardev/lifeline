@@ -11,7 +11,7 @@
       <ion-title>{{ pageTitle }}</ion-title>
 
       <ion-buttons slot="end">
-        <ion-button>
+        <ion-button @click="saveReminder()">
           <ion-icon :icon="saveOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
@@ -84,6 +84,7 @@ import {
   IonButton,
   IonDatetime,
 } from "@ionic/vue";
+import { add } from "date-fns";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { defineComponent, ref } from "vue";
 
@@ -99,6 +100,20 @@ export default defineComponent({
     IonButton,
     IonDatetime,
   },
+
+  props: {
+    dataReminders: {
+      type: Object,
+      default: function () {
+        return {
+          reminderStart: "",
+          reminderEnd: "",
+        };
+      },
+    },
+  },
+
+  emits: ["reminders"],
 
   setup() {
     const datetimeStart = ref();
@@ -138,15 +153,35 @@ export default defineComponent({
   },
 
   data() {
+    const dateReminderStart =
+      this.dataReminders.reminderStart != ""
+        ? this.dataReminders.reminderStart
+        : new Date().toISOString();
+
+    const dateReminderEnd =
+      this.dataReminders.reminderEnd != ""
+        ? this.dataReminders.reminderEnd
+        : new Date(
+            add(new Date(dateReminderStart), {
+              hours: 1,
+            })
+          ).toISOString();
+
     return {
-      dateReminderStart: new Date().toISOString(),
-      dateReminderEnd: new Date().toISOString(),
+      dateReminderStart,
+      dateReminderEnd,
     };
   },
 
   methods: {
     closPage() {
       modalController.dismiss();
+    },
+
+    saveReminder() {
+      const dateStart = this.dateReminderStart;
+      const dateEnd = this.dateReminderEnd;
+      this.$emit("reminders", { data: { dateStart, dateEnd } });
     },
   },
 });
