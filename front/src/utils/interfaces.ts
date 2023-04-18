@@ -95,7 +95,16 @@ export interface Document {
   elements?: [
     {
       type: "note" | "list" | "richtext" | "todo";
-      data: {};
+      data: {
+        id?: string;
+        content?: string;
+        reminder?: {
+          reminderStart: string;
+          reminderEnd: string;
+          notificationId?: string;
+        };
+        tags?: Array<string>;
+      };
     }
   ];
   url: string;

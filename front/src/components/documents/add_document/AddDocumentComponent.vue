@@ -458,7 +458,7 @@ export default defineComponent({
       if (option == "order") this.toggleReorder();
     },
 
-    setNoteReminders(params: {
+    async setNoteReminders(params: {
       data: { dateStart: string; dateEnd: string };
       index: number;
       documentId: string;
@@ -466,7 +466,8 @@ export default defineComponent({
       const data = params.data;
       const index = params.index;
       const documentId = params.documentId;
-      useDocument().updateNoteReminder({ data, index, documentId });
+      await useDocument().updateNoteReminder({ data, index, documentId });
+      await useDocument().loadReminders();
     },
   },
 });

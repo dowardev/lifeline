@@ -30,43 +30,49 @@
 
   <ion-content :fullscreen="true">
     <!-- date start -->
-    <section v-if="reminderSegment == 'date-start'" class="ion-padding center">
-      <ion-datetime
-        ref="datetimeStart"
-        v-model="dateReminderStart"
-        class="transparent"
-        @ion-change="dateReminderStart = $event.detail.value as string"
-      >
-        <ion-buttons slot="buttons">
-          <ion-button color="danger" @click="resetStart()"
-            >Reiniciar</ion-button
-          >
-          <ion-button color="primary" @click="cancelStart()"
-            >Cancelar</ion-button
-          >
-          <ion-button fill="solid" color="primary" @click="confirmStart()"
-            >Confirmar</ion-button
-          >
-        </ion-buttons>
-      </ion-datetime>
+    <section v-if="reminderSegment == 'date-start'" class="ion-padding">
+      <div class="center">
+        <ion-datetime
+          ref="datetimeStart"
+          v-model="dateReminderStart"
+          class="transparent"
+          @ion-change="dateReminderStart = $event.detail.value as string"
+        >
+        </ion-datetime>
+      </div>
+
+      <div style="float: right" class="ion-padding-top ion-padding-bottom">
+        <ion-button
+          color="danger"
+          fill="clear"
+          size="default"
+          @click="resetStart()"
+          >Reiniciar</ion-button
+        >
+      </div>
     </section>
 
     <!-- date end -->
-    <section v-if="reminderSegment == 'date-end'" class="ion-padding center">
-      <ion-datetime
-        ref="datetimeEnd"
-        v-model="dateReminderEnd"
-        class="transparent"
-        @ion-change="dateReminderEnd = $event.detail.value as string"
-      >
-        <ion-buttons slot="buttons">
-          <ion-button color="danger" @click="resetEnd()">Reiniciar</ion-button>
-          <ion-button color="primary" @click="cancelEnd()">Cancelar</ion-button>
-          <ion-button fill="solid" color="primary" @click="confirmEnd()"
-            >Confirmar</ion-button
-          >
-        </ion-buttons>
-      </ion-datetime>
+    <section v-if="reminderSegment == 'date-end'" class="ion-padding">
+      <div style="center">
+        <ion-datetime
+          ref="datetimeEnd"
+          v-model="dateReminderEnd"
+          class="transparent"
+          @ion-change="dateReminderEnd = $event.detail.value as string"
+        >
+        </ion-datetime>
+      </div>
+
+      <div style="float: right" class="ion-padding-top ion-padding-bottom">
+        <ion-button
+          color="danger"
+          fill="clear"
+          size="default"
+          @click="resetEnd()"
+          >Reiniciar</ion-button
+        >
+      </div>
     </section>
   </ion-content>
 </template>
@@ -83,13 +89,14 @@ import {
   IonSegmentButton,
   IonButton,
   IonDatetime,
+  popoverController,
 } from "@ionic/vue";
-import { add } from "date-fns";
+import { add, format } from "date-fns";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
-  name: "HomePage",
+  name: "RemindersComponent",
   components: {
     IonContent,
     IonHeader,
@@ -118,21 +125,9 @@ export default defineComponent({
   setup() {
     const datetimeStart = ref();
     const resetStart = () => datetimeStart.value.$el.reset();
-    const cancelStart = () => datetimeStart.value.$el.cancel();
-    const confirmStart = () => {
-      datetimeStart.value.$el.confirm();
-      reminderSegment.value = "date-end";
-    };
 
     const datetimeEnd = ref();
     const resetEnd = () => datetimeEnd.value.$el.reset();
-    const cancelEnd = () => {
-      datetimeEnd.value.$el.cancel();
-      reminderSegment.value = "date-start";
-    };
-    const confirmEnd = () => {
-      datetimeEnd.value.$el.confirm();
-    };
 
     const reminderSegment = ref("date-start");
     return {
@@ -142,12 +137,8 @@ export default defineComponent({
       isPlatform,
       datetimeStart,
       resetStart,
-      cancelStart,
-      confirmStart,
       datetimeEnd,
       resetEnd,
-      cancelEnd,
-      confirmEnd,
       reminderSegment,
     };
   },
@@ -156,17 +147,19 @@ export default defineComponent({
     const dateReminderStart =
       this.dataReminders.reminderStart != ""
         ? this.dataReminders.reminderStart
-        : new Date().toISOString();
+        : format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
 
     const dateReminderEnd =
       this.dataReminders.reminderEnd != ""
         ? this.dataReminders.reminderEnd
-        : new Date(
-            add(new Date(dateReminderStart), {
-              hours: 1,
-            })
-          ).toISOString();
-
+        : format(
+            new Date(
+              add(new Date(), {
+                hours: 1,
+              })
+            ),
+            "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
+          );
     return {
       dateReminderStart,
       dateReminderEnd,
@@ -178,10 +171,14 @@ export default defineComponent({
       modalController.dismiss();
     },
 
-    saveReminder() {
+    async saveReminder() {
       const dateStart = this.dateReminderStart;
       const dateEnd = this.dateReminderEnd;
       this.$emit("reminders", { data: { dateStart, dateEnd } });
+
+      const modal = await modalController.getTop();
+      if (modal) await modalController.dismiss();
+      else await popoverController.dismiss();
     },
   },
 });
