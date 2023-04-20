@@ -101,7 +101,6 @@ export interface Document {
         reminder?: {
           reminderStart: string;
           reminderEnd: string;
-          notificationId?: string;
         };
         tags?: Array<string>;
       };
@@ -167,4 +166,11 @@ export interface NewTodo {
   elements: Array<{ position: number; content: string; checked: boolean }>;
   documentId: string;
   position: number;
+}
+
+export interface Reminder {
+  id: number;
+  title: string;
+  message: string;
+  date: { start: string; end: string };
 }

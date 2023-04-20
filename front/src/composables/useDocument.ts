@@ -155,64 +155,6 @@ export const useDocument = () => {
     await updateDocument({ document });
   }
 
-  function loadReminders() {
-    const documents = getUserDocuments() ?? [];
-
-    documents.forEach(async (document) => {
-      document.elements?.forEach(async (element) => {
-        if (!element.data.reminder) return;
-
-        const reminder = format(
-          new Date(element.data.reminder.reminderStart),
-          "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-        );
-        if (!reminder) return;
-        const id = new Date().getTime();
-
-        await setReminders({ reminder, id });
-
-        element.data.reminder!.notificationId = id.toString();
-      });
-
-      await updateDocument({ document });
-    });
-  }
-
-  async function setReminders(params: { reminder: string; id: number }) {
-    const reminder = params.reminder;
-    const id = params.id;
-    const permission = await checkNotificationsPermissions();
-    if (permission == false) return;
-
-    await LocalNotifications.schedule({
-      notifications: [
-        {
-          title: "My notification",
-          body: "This is my notification",
-          id,
-          schedule: {
-            at: new Date(reminder),
-          },
-          sound: null,
-          attachments: null,
-          actionTypeId: "",
-          extra: null,
-          channelId: null,
-        },
-      ],
-    });
-  }
-
-  async function checkNotificationsPermissions(): Promise<boolean> {
-    const permission = await LocalNotifications.requestPermissions();
-
-    if (permission.display == "granted") {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   return {
     deleteDocument,
     saveDocument,
@@ -225,7 +167,5 @@ export const useDocument = () => {
     loadDocument,
     updateNoteValue,
     updateNoteReminder,
-    loadReminders,
-    setReminders,
   };
 };

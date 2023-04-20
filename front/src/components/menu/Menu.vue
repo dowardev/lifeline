@@ -20,6 +20,7 @@
         }}</ion-button>
       </ion-item>
 
+      <!-- home -->
       <ion-item lines="none" class="transparent" button @click="openRoute('/')">
         <div slot="start">
           <ion-icon
@@ -36,7 +37,14 @@
         </ion-label>
       </ion-item>
 
-      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+      <!-- module -->
+      <ion-item
+        lines="none"
+        class="transparent"
+        button
+        disabled
+        @click="openRoute('/')"
+      >
         <div slot="start">
           <ion-icon :icon="cloudDownloadOutline"></ion-icon>
         </div>
@@ -46,17 +54,28 @@
         </ion-label>
       </ion-item>
 
-      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+      <!-- documents -->
+      <ion-item
+        lines="none"
+        class="transparent"
+        button
+        @click="$router.push({ name: 'DocumentsPage' })"
+      >
         <div slot="start">
           <ion-icon :icon="documentOutline"></ion-icon>
         </div>
 
-        <ion-label class="labelOptionMenu">
-          {{ capitalizeFirstLetter($tc("message.note", 2)) }}
-        </ion-label>
+        <ion-label class="labelOptionMenu"> Documentos </ion-label>
       </ion-item>
 
-      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+      <!-- tareas -->
+      <ion-item
+        lines="none"
+        class="transparent"
+        button
+        disabled
+        @click="openRoute('/')"
+      >
         <div slot="start">
           <ion-icon :icon="checkboxOutline"></ion-icon>
         </div>
@@ -66,7 +85,14 @@
         </ion-label>
       </ion-item>
 
-      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+      <!-- programming -->
+      <ion-item
+        lines="none"
+        class="transparent"
+        button
+        disabled
+        @click="openRoute('/')"
+      >
         <div slot="start">
           <ion-icon :icon="cogOutline"></ion-icon>
         </div>
@@ -76,7 +102,14 @@
         </ion-label>
       </ion-item>
 
-      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+      <!-- projects -->
+      <ion-item
+        lines="none"
+        class="transparent"
+        button
+        disabled
+        @click="openRoute('/')"
+      >
         <div slot="start">
           <ion-icon :icon="briefcaseOutline"></ion-icon>
         </div>
@@ -86,7 +119,14 @@
         </ion-label>
       </ion-item>
 
-      <ion-item lines="none" class="transparent" button @click="openRoute('/')">
+      <!-- support -->
+      <ion-item
+        lines="none"
+        class="transparent"
+        button
+        disabled
+        @click="openRoute('/')"
+      >
         <div slot="start">
           <ion-icon :icon="helpOutline"></ion-icon>
         </div>
@@ -131,9 +171,9 @@
             <ion-icon :icon="brushOutline"></ion-icon>
           </ion-button>
 
-          <ion-button id="click-trigger" color="primary">
-            <ion-icon :icon="languageOutline"></ion-icon>
-          </ion-button>
+          <!-- <ion-button id="click-trigger" color="primary"> -->
+          <!--   <ion-icon :icon="languageOutline"></ion-icon> -->
+          <!-- </ion-button> -->
           <ion-popover
             trigger="click-trigger"
             trigger-action="click"

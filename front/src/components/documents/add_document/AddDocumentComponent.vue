@@ -250,6 +250,7 @@ import {
 import MenuOptComponent from "./menu-document/MenuOptComponent.vue";
 import { isPlatform } from "@ionic/vue";
 import { Note } from "@/utils/interfaces";
+import { useReminders } from "@/composables/useReminders";
 
 export default defineComponent({
   name: "AddDocumentComponent",
@@ -467,7 +468,7 @@ export default defineComponent({
       const index = params.index;
       const documentId = params.documentId;
       await useDocument().updateNoteReminder({ data, index, documentId });
-      await useDocument().loadReminders();
+      useReminders().loadReminders();
     },
   },
 });

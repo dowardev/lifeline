@@ -9,6 +9,7 @@ import LoginPage from "@/views/sesion/login/Login.vue";
 import PruebaPage from "@/views/prueba/PruebaPage.vue";
 import DocumentPage from "../components/documents/add_document/AddDocumentComponent.vue";
 import PoliciesPage from "../views/policies/PoliciesPage.vue";
+import DocumentsPage from "@/views/documents/DocumentsPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -59,6 +60,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/policies",
     name: "PoliciesPage",
     component: PoliciesPage,
+  },
+  {
+    path: "/documents",
+    name: "DocumentsPage",
+    component: DocumentsPage,
   },
 ];
 
