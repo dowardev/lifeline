@@ -20,6 +20,8 @@ import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
 import { defineComponent } from "vue";
 import MenuComponent from "@/components/menu/Menu.vue";
 import { getTheme, setTheme } from "@/services/system";
+import { useDocument } from "./composables/useDocument";
+import { useReminders } from "./composables/useReminders";
 
 export default defineComponent({
   name: "App",
@@ -35,7 +37,15 @@ export default defineComponent({
     getTheme().then((response) => {
       const theme = response;
       setTheme({ theme: theme });
+      this.start();
     });
+  },
+
+  methods: {
+    async start() {
+      await useDocument().loadUserDocuments();
+      useReminders().loadReminders();
+    },
   },
 });
 </script>

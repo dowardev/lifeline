@@ -24,12 +24,7 @@ export const userReminderStore = defineStore("reminder", {
 
       if (this.reminders.length == 0) this.reminders = [reminder];
       else {
-        let exists = false as boolean;
-        this.reminders.forEach((element) => {
-          if (element.id == reminder.id) exists = true;
-        });
-
-        if (exists == false) this.reminders.push(reminder);
+        this.reminders.push(reminder);
       }
     },
 

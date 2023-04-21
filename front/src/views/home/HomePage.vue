@@ -16,48 +16,50 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense" mode="ios">
-        <ion-toolbar>
-          <ion-title size="large">{{ pageTitle }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
+      <!-- <ion-header collapse="condense" mode="ios"> -->
+      <!--   <ion-toolbar> -->
+      <!--     <ion-title size="large">{{ pageTitle }}</ion-title> -->
+      <!--   </ion-toolbar> -->
+      <!-- </ion-header> -->
 
       <ion-row>
         <ion-col size="12" class="ion-padding">
-          <table class="schedule-table">
-            <thead>
-              <tr>
-                <th></th>
-                <th v-for="day in daysOfWeek" :key="day">{{ day }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="hour in hoursOfDay" :key="hour">
-                <td>{{ hour }}</td>
-                <td v-for="day in daysOfWeek" :key="day">
-                  <ul>
-                    <li v-for="date in dates[day.toLowerCase()]" :key="date">
-                      <template
-                        v-if="
-                          new Date(date.start).getHours() === parseInt(hour)
-                        "
-                      >
-                        <ion-card>
-                          <ion-card-header>
-                            <ion-card-title>{{ date.title }}</ion-card-title>
-                          </ion-card-header>
+          <div style="height: 90vh; overflow: auto; overflow-x: auto">
+            <table class="schedule-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th v-for="day in daysOfWeek" :key="day">{{ day }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="hour in hoursOfDay" :key="hour">
+                  <td>{{ hour }}</td>
+                  <td v-for="day in daysOfWeek" :key="day">
+                    <div>
+                      <div v-for="date in dates[day.toLowerCase()]" :key="date">
+                        <template
+                          v-if="
+                            new Date(date.start).getHours() === parseInt(hour)
+                          "
+                        >
+                          <ion-card>
+                            <ion-card-header>
+                              <ion-card-title>{{ date.title }}</ion-card-title>
+                            </ion-card-header>
 
-                          <ion-card-content>{{
-                            format(new Date(date.start), "Pp")
-                          }}</ion-card-content>
-                        </ion-card>
-                      </template>
-                    </li>
-                  </ul>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                            <ion-card-content>{{
+                              format(new Date(date.start), "Pp")
+                            }}</ion-card-content>
+                          </ion-card>
+                        </template>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </ion-col>
       </ion-row>
     </ion-content>
@@ -97,13 +99,13 @@ export default defineComponent({
   data() {
     return {
       daysOfWeek: [
+        "domingo",
         "lunes",
         "martes",
         "miércoles",
         "jueves",
         "viernes",
         "sábado",
-        "domingo",
       ],
       hoursOfDay: [
         "00:00",
@@ -148,7 +150,7 @@ export default defineComponent({
       for (const day of daysOfWeek) {
         initialAcc[day] = [];
       }
-      return dates.reduce((acc: any, dateObj: any) => {
+      const result = dates.reduce((acc: any, dateObj: any) => {
         const date = new Date(dateObj.start);
         const dayOfWeekIndex = date.getDay();
         const dayOfWeek = daysOfWeek[dayOfWeekIndex];
@@ -156,53 +158,96 @@ export default defineComponent({
         acc[dayOfWeek].push(newDateObj);
         return acc;
       }, initialAcc);
-    },
-  },
-
-  mounted() {
-    this.start();
-  },
-
-  methods: {
-    async start() {
-      await useDocument().loadUserDocuments();
-      useReminders().loadReminders();
+      // console.log(dates,result)
+      return result;
     },
   },
 });
 </script>
 
 <style scoped>
-.schedule-table {
+table.schedule-table {
   border-collapse: collapse;
-  width: 100%;
 }
 
-.schedule-table th,
-.schedule-table td {
+table.schedule-table td {
   padding: 10px;
   text-align: center;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.schedule-table th {
+table.schedule-table td:first-child {
+  position: sticky;
+  left: 0;
+}
+
+table.schedule-table td:not(:first-child) {
+  position: relative;
+  width: 150px; /* ancho fijo para las demás columnas */
+}
+
+table.schedule-table th {
   font-weight: bold;
   border: none !important;
+  position: sticky;
+  top: 0;
+  background-color: var(--ion-background-color);
+  z-index: 2;
 }
 
-.schedule-table tr td:first-child,
-.schedule-table th:first-child {
+table.schedule-table tr td:first-child,
+table.schedule-table th:first-child {
   border: none !important;
+  z-index: 3;
+  background-color: var(--ion-background-color);
 }
 
-ul,
-ol {
-  list-style: none;
+ion-content {
+  overflow: hidden;
 }
 
 ion-card {
   border-style: solid;
   border-width: 1px;
   border-color: #ffb4b4;
+}
+
+ion-content {
+  --offset-bottom: auto !important;
+  --overflow: hidden;
+  overflow: auto;
+}
+ion-content::-webkit-scrollbar {
+  display: none;
+}
+
+@media only screen and (min-width: 992px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: #f5f5f5;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 20px;
+    border: 2px solid #f5f5f5;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #777;
+  }
+
+  /* Estilo de la barra de scroll en hover */
+
+  ::-webkit-scrollbar-thumb:vertical:hover {
+    background-color: #666;
+  }
+
+  ::-webkit-scrollbar-thumb:horizontal:hover {
+    background-color: #666;
+  }
 }
 </style>

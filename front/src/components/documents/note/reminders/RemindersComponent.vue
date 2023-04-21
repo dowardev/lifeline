@@ -36,6 +36,7 @@
           ref="datetimeStart"
           v-model="dateReminderStart"
           class="transparent"
+          :min="new Date().toISOString().split('T')[0]"
           @ion-change="dateReminderStart = $event.detail.value as string"
         >
         </ion-datetime>

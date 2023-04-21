@@ -8,10 +8,11 @@ export const useReminders = () => {
   const reminderStore = userReminderStore();
 
   function loadReminders() {
-    const documents = useDocument().getUserDocuments() ?? [];
+    const documents = useDocument().getUserDocuments();
+    if (!documents) return;
 
     documents.forEach(async (document) => {
-      document.elements?.forEach(async (element) => {
+      document.elements?.forEach((element) => {
         if (!element.data || !element.data.reminder) return;
 
         const date = {
@@ -101,6 +102,6 @@ export const useReminders = () => {
     loadReminders,
     setReminders,
     checkNotificationsPermissions,
-    getReminders
+    getReminders,
   };
 };
