@@ -16,14 +16,56 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <!-- <ion-header collapse="condense" mode="ios"> -->
-      <!--   <ion-toolbar> -->
-      <!--     <ion-title size="large">{{ pageTitle }}</ion-title> -->
-      <!--   </ion-toolbar> -->
-      <!-- </ion-header> -->
-
       <ion-row>
-        <ion-col size="12" class="ion-padding">
+        <ion-col size="3">
+          <section>
+            <div style="display: flex; justify-content: space-around">
+              <div class="ion-padding">
+                <ion-input
+                  label="Tarea"
+                  label-placement="floating"
+                  fill="outline"
+                ></ion-input>
+              </div>
+
+              <div style="display: flex; align-items: center">
+                <ion-button fill="clear"
+                  ><ion-icon :icon="addOutline"></ion-icon
+                ></ion-button>
+              </div>
+            </div>
+
+            <div style="height: 80vh; overflow: auto; overflow-x: auto">
+              <div v-for="(task, indexTask) in todo" :key="indexTask">
+                <ion-item
+                  :ref="`item-todo-${new Date().getTime()}`"
+                  lines="none"
+                  button
+                  @mouseenter="showButtonsOptionTODO = indexTask"
+                  @mouseleave="showButtonsOptionTODO = -1"
+                >
+                  <ion-label class="ion-text-wrap">{{ task.title }}</ion-label>
+
+                  <ion-button
+                    v-if="showButtonsOptionTODO === indexTask"
+                    fill="clear"
+                    ><ion-icon :icon="createOutline"></ion-icon
+                  ></ion-button>
+
+                  <ion-button
+                    v-if="showButtonsOptionTODO === indexTask"
+                    fill="clear"
+                    color="danger"
+                    ><ion-icon :icon="trashOutline"></ion-icon
+                  ></ion-button>
+                </ion-item>
+              </div>
+            </div>
+          </section>
+        </ion-col>
+
+        <!-- table -->
+        <ion-col size="9" class="ion-padding">
           <div style="height: 90vh; overflow: auto; overflow-x: auto">
             <table class="schedule-table">
               <thead>
@@ -73,11 +115,16 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
+  IonInput,
+  IonLabel,
+  IonButton,
+  IonItem,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import { useReminders } from "../../composables/useReminders";
 import { useDocument } from "../../composables/useDocument";
 import { format } from "date-fns";
+import { addOutline, createOutline, trashOutline } from "ionicons/icons";
 
 export default defineComponent({
   name: "HomePage",
@@ -87,17 +134,21 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
+    IonInput,
+    IonLabel,
+    IonButton,
+    IonItem,
   },
 
   setup() {
+    const showButtonsOptionTODO = ref(-1);
     return {
       pageTitle: "Inicio",
       format,
-    };
-  },
-
-  data() {
-    return {
+      addOutline,
+      trashOutline,
+      createOutline,
+      showButtonsOptionTODO,
       daysOfWeek: [
         "domingo",
         "lunes",
@@ -133,6 +184,27 @@ export default defineComponent({
         "22:00",
         "23:00",
       ],
+      todo: [
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+        { title: "Terminar proyecto" },
+      ],
     };
   },
 
@@ -160,6 +232,14 @@ export default defineComponent({
       }, initialAcc);
       // console.log(dates,result)
       return result;
+    },
+  },
+
+  methods: {
+    toggleButtonsOptionsTODO(params: { id: string; option: string }) {
+      const id = params.id;
+      const element = this.$refs[`item-todo-${id}`];
+      console.log(element);
     },
   },
 });
