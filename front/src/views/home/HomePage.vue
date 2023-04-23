@@ -12,6 +12,12 @@
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
+
+        <ion-buttons slot="end">
+          <ion-button @click="$router.push({ name: 'AdminEvent' })"
+            ><ion-icon :icon="addOutline"></ion-icon
+          ></ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -44,7 +50,7 @@
                   @mouseenter="showButtonsOptionTODO = indexTask"
                   @mouseleave="showButtonsOptionTODO = -1"
                 >
-                  <ion-label class="ion-text-wrap">{{ task.title }}</ion-label>
+                  <ion-label>{{ task.title }}</ion-label>
 
                   <ion-button
                     v-if="showButtonsOptionTODO === indexTask"
@@ -232,14 +238,6 @@ export default defineComponent({
       }, initialAcc);
       // console.log(dates,result)
       return result;
-    },
-  },
-
-  methods: {
-    toggleButtonsOptionsTODO(params: { id: string; option: string }) {
-      const id = params.id;
-      const element = this.$refs[`item-todo-${id}`];
-      console.log(element);
     },
   },
 });

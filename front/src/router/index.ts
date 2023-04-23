@@ -1,15 +1,16 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
 // import HomePage from '../views/HomePage.vue'
-import HomePage from "../views/home/HomePage.vue";
+import HomePage from "@/views/home/HomePage.vue";
 import CreateEventPage from "@/views/eventos/evento/create/CreateEvent.vue";
 import RepetirPage from "@/views/eventos/evento/repetir/Repetir.vue";
 import SignUpPage from "@/views/sesion/signup/SignUpPage.vue";
 import LoginPage from "@/views/sesion/login/Login.vue";
 import PruebaPage from "@/views/prueba/PruebaPage.vue";
-import DocumentPage from "../components/documents/add_document/AddDocumentComponent.vue";
-import PoliciesPage from "../views/policies/PoliciesPage.vue";
+import DocumentPage from "@/components/documents/add_document/AddDocumentComponent.vue";
+import PoliciesPage from "@/views/policies/PoliciesPage.vue";
 import DocumentsPage from "@/views/documents/DocumentsPage.vue";
+import AdminEvent from "@/components/events/add/AddEventCompoenent.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -65,6 +66,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/documents",
     name: "DocumentsPage",
     component: DocumentsPage,
+  },
+  {
+    path: "/admin-event",
+    name: "AdminEvent",
+    component: AdminEvent,
   },
 ];
 

@@ -55,7 +55,10 @@
       @will-dismiss="isOpenModalReminders = false"
     >
       <ion-page>
-        <RemindersComponent @reminders="$emit('updateReminder', $event)" />
+        <RemindersComponent
+          :data-reminders="data.reminder"
+          @reminders="$emit('updateReminder', $event)"
+        />
       </ion-page>
     </ion-modal>
   </div>
