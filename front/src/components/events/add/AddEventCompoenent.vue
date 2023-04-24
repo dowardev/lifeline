@@ -22,10 +22,10 @@
         </ion-toolbar>
       </ion-header>
 
-      <ion-row>
-        <ion-col size="6">
+      <div>
+        <section>
           <ion-row>
-            <ion-col>
+            <ion-col size-lg="6">
               <!-- basic -->
               <ion-list class="last-item">
                 <ion-list-header>
@@ -211,8 +211,25 @@
               </ion-list>
             </ion-col>
           </ion-row>
-        </ion-col>
-      </ion-row>
+        </section>
+
+        <section>
+          <div
+            style="
+              height: 90vh;
+              overflow: auto;
+              overflow-x: auto;
+              position: fixed;
+              top: 11vh;
+              right: 0;
+              max-width: 40%;
+            "
+            class="ion-padding"
+          >
+            <CalendarComponent />
+          </div>
+        </section>
+      </div>
 
       <!-- popovers -->
       <!-- popover reminders -->
@@ -316,6 +333,7 @@ import {
   timeOutline,
   trashOutline,
 } from "ionicons/icons";
+import CalendarComponent from "./calendar/CalendarComponent.vue";
 
 export default defineComponent({
   name: "EventComponent",
@@ -337,6 +355,7 @@ export default defineComponent({
     IonSelectOption,
     IonList,
     IonListHeader,
+    CalendarComponent,
   },
 
   setup() {
@@ -401,5 +420,9 @@ export default defineComponent({
 .last-item {
   --border-width: 0 0 1px 0;
   --border-color: red;
+}
+
+.hidde-scroll::-webkit-scrollbar {
+  display: none;
 }
 </style>
