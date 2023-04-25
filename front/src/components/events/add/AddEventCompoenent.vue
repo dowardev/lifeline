@@ -12,6 +12,14 @@
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
+
+        <ion-buttons
+          v-if="!isPlatform('desktop')"
+          id="open-modal-calendar"
+          slot="end"
+        >
+          <ion-button><ion-icon :icon="calendarOutline"></ion-icon></ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -25,27 +33,32 @@
       <div>
         <section>
           <ion-row>
-            <ion-col size-lg="6">
+            <ion-col size-lg="7" size-xl="6">
               <!-- basic -->
-              <ion-list class="last-item">
+              <ion-list>
                 <ion-list-header>
                   <ion-label>Basico</ion-label>
                 </ion-list-header>
 
                 <!-- name -->
                 <ion-row>
-                  <ion-col size="1" style="display: flex; align-items: center">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon :icon="personOutline"></ion-icon></ion-button
-                  ></ion-col>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div style="display: flex; align-items: center">
+                        <ion-button fill="clear" :disabled="true"
+                          ><ion-icon :icon="personOutline"></ion-icon
+                        ></ion-button>
+                      </div>
 
-                  <ion-col size="11">
-                    <ion-input
-                      label="Nombre"
-                      placeholder="Visita al dentista"
-                      label-placement="fixed"
-                      fill="outline"
-                    ></ion-input>
+                      <div style="width: 100%">
+                        <ion-input
+                          label="Nombre"
+                          placeholder="Visita al dentista"
+                          label-placement="fixed"
+                          fill="outline"
+                        ></ion-input>
+                      </div>
+                    </div>
                   </ion-col>
                 </ion-row>
 
@@ -53,21 +66,24 @@
 
                 <!-- description -->
                 <ion-row>
-                  <ion-col size="1">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon
-                        :icon="documentTextOutline"
-                      ></ion-icon></ion-button
-                  ></ion-col>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div style="display: flex; align-items: center">
+                        <ion-button fill="clear" :disabled="true"
+                          ><ion-icon :icon="documentTextOutline"></ion-icon
+                        ></ion-button>
+                      </div>
 
-                  <ion-col size="11">
-                    <ion-textarea
-                      placeholder="Visita rutinaria"
-                      fill="outline"
-                      label="Descripcion"
-                      label-placement="fixed"
-                      :auto-grow="true"
-                    ></ion-textarea>
+                      <div style="width: 100%">
+                        <ion-textarea
+                          placeholder="Visita rutinaria"
+                          fill="outline"
+                          label="Descripcion"
+                          label-placement="fixed"
+                          :auto-grow="true"
+                        ></ion-textarea>
+                      </div>
+                    </div>
                   </ion-col>
                 </ion-row>
 
@@ -75,22 +91,28 @@
 
                 <!-- dates -->
                 <ion-row>
-                  <ion-col size="1">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon :icon="globeOutline"></ion-icon></ion-button
-                  ></ion-col>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div style="display: flex; align-items: center">
+                        <ion-button fill="clear" :disabled="true"
+                          ><ion-icon :icon="globeOutline"></ion-icon
+                        ></ion-button>
+                      </div>
 
-                  <ion-col size="11">
-                    <ion-item
-                      fill="outline"
-                      lines="none"
-                      @click="isOpenPopoverReminders = true"
-                    >
-                      <ion-label>Tiempo</ion-label>
-                      <ion-label
-                        >{{ reminders.start }} - {{ reminders.end }}</ion-label
-                      >
-                    </ion-item>
+                      <div style="width: 100%">
+                        <ion-item
+                          fill="outline"
+                          lines="none"
+                          @click="isOpenPopoverReminders = true"
+                        >
+                          <ion-label>Tiempo</ion-label>
+                          <ion-label slot="end" class="ion-text-wrap"
+                            >{{ reminders.start }} -
+                            {{ reminders.end }}</ion-label
+                          >
+                        </ion-item>
+                      </div>
+                    </div>
                   </ion-col>
                 </ion-row>
 
@@ -98,23 +120,32 @@
 
                 <!-- time zone -->
                 <ion-row>
-                  <ion-col size="1">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon :icon="timeOutline"></ion-icon></ion-button
-                  ></ion-col>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div style="display: flex; align-items: center">
+                        <ion-button fill="clear" :disabled="true"
+                          ><ion-icon :icon="timeOutline"></ion-icon
+                        ></ion-button>
+                      </div>
 
-                  <ion-col size="11">
-                    <ion-item
-                      button
-                      fill="outline"
-                      lines="none"
-                      @click="isOpenPopoverTimezones = true"
-                      ><ion-label>Zona horaria</ion-label
-                      ><ion-label>{{ zoneSelected }}</ion-label></ion-item
-                    >
+                      <div style="width: 100%">
+                        <ion-item
+                          fill="outline"
+                          lines="none"
+                          @click="isOpenPopoverTimezones = true"
+                        >
+                          <ion-label>Tiempo</ion-label>
+                          <ion-label slot="end" class="ion-text-wrap"
+                            >{{ zoneSelected }}
+                          </ion-label>
+                        </ion-item>
+                      </div>
+                    </div>
                   </ion-col>
                 </ion-row>
               </ion-list>
+
+              <br />
 
               <!-- others -->
               <ion-list class="last-item">
@@ -124,38 +155,26 @@
 
                 <!-- guests -->
                 <ion-row>
-                  <ion-col size="12">
-                    <ion-row>
-                      <ion-col
-                        size="1"
-                        style="display: flex; align-items: center"
-                      >
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div style="display: flex; align-items: center">
                         <ion-button fill="clear" :disabled="true"
-                          ><ion-icon
-                            :icon="peopleOutline"
-                          ></ion-icon></ion-button
-                      ></ion-col>
+                          ><ion-icon :icon="peopleOutline"></ion-icon
+                        ></ion-button>
+                      </div>
 
-                      <ion-col size="10">
+                      <div style="width: 100%">
                         <ion-input
                           label="Invitados"
                           label-placement="fixed"
                           fill="outline"
                           placeholder="Correo electronico"
                         ></ion-input>
-                      </ion-col>
-
-                      <ion-col
-                        size="1"
-                        style="display: flex; align-items: center"
-                        ><ion-button fill="clear"
-                          ><ion-icon :icon="addOutline"></ion-icon
-                        ></ion-button>
-                      </ion-col>
-                    </ion-row>
+                      </div>
+                    </div>
                   </ion-col>
 
-                  <ion-col size="12" style="padding-left: 4vh">
+                  <ion-col size-xs="11" size="10" style="padding-left: 12%">
                     <ion-item
                       v-for="(guest, indexGuest) in guests"
                       :key="indexGuest"
@@ -184,28 +203,31 @@
 
                 <!-- availability -->
                 <ion-row>
-                  <ion-col size="1">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon
-                        :icon="briefcaseOutline"
-                      ></ion-icon></ion-button
-                  ></ion-col>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div style="display: flex; align-items: center">
+                        <ion-button fill="clear" :disabled="true"
+                          ><ion-icon :icon="briefcaseOutline"></ion-icon
+                        ></ion-button>
+                      </div>
 
-                  <ion-col size="11">
-                    <ion-item>
-                      <ion-select
-                        placeholder="Disponibilidad"
-                        ok-text="Confirmar"
-                        cancel-text="Cancelar"
-                      >
-                        <ion-select-option value="available"
-                          >Disponible</ion-select-option
-                        >
-                        <ion-select-option value="unavailable"
-                          >Ocupado</ion-select-option
-                        >
-                      </ion-select>
-                    </ion-item>
+                      <div style="width: 100%">
+                        <ion-item>
+                          <ion-select
+                            placeholder="Disponibilidad"
+                            ok-text="Confirmar"
+                            cancel-text="Cancelar"
+                          >
+                            <ion-select-option value="available"
+                              >Disponible</ion-select-option
+                            >
+                            <ion-select-option value="unavailable"
+                              >Ocupado</ion-select-option
+                            >
+                          </ion-select>
+                        </ion-item>
+                      </div>
+                    </div>
                   </ion-col>
                 </ion-row>
               </ion-list>
@@ -213,7 +235,8 @@
           </ion-row>
         </section>
 
-        <section>
+        <!-- calendar component -->
+        <section v-if="isPlatform('desktop')">
           <div
             style="
               height: 90vh;
@@ -296,6 +319,24 @@
         </ion-content>
       </ion-popover>
       <!-- end popovers -->
+
+      <!-- modals -->
+      <ion-modal trigger="open-modal-calendar">
+        <ion-header :translucent="true" class="ion-no-border" mode='ios'>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="modalController.dismiss()"><ion-icon :icon='closeOutline'></ion-icon></ion-button>
+            </ion-buttons>
+
+            <ion-title>Calendario</ion-title>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="ion-padding">
+          <CalendarComponent />
+        </ion-content>
+      </ion-modal>
+      <!-- end modals -->
     </ion-content>
   </ion-page>
 </template>
@@ -318,6 +359,11 @@ import {
   IonSelectOption,
   IonList,
   IonListHeader,
+  isPlatform,
+  IonItem,
+  IonLabel,
+  IonModal,
+modalController,
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import RemindersComponent from "../reminders/RemindersComponent.vue";
@@ -325,6 +371,8 @@ import { format } from "date-fns";
 import {
   addOutline,
   briefcaseOutline,
+  calendarOutline,
+  closeOutline,
   createOutline,
   documentTextOutline,
   globeOutline,
@@ -356,6 +404,9 @@ export default defineComponent({
     IonList,
     IonListHeader,
     CalendarComponent,
+    IonItem,
+    IonLabel,
+    IonModal,
   },
 
   setup() {
@@ -397,6 +448,9 @@ export default defineComponent({
       timeOutline,
       peopleOutline,
       briefcaseOutline,
+      isPlatform,
+      calendarOutline,
+      modalController,closeOutline
     };
   },
 
