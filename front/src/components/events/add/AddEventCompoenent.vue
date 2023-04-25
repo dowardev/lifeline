@@ -13,12 +13,14 @@
 
         <ion-title>{{ pageTitle }}</ion-title>
 
-        <ion-buttons
-          v-if="!isPlatform('desktop')"
-          id="open-modal-calendar"
-          slot="end"
-        >
-          <ion-button><ion-icon :icon="calendarOutline"></ion-icon></ion-button>
+        <ion-buttons slot="end">
+          <ion-button @click="saveEvent()"
+            ><ion-icon :icon="saveOutline"></ion-icon
+          ></ion-button>
+
+          <ion-button v-if="!isPlatform('desktop')" id="open-modal-calendar"
+            ><ion-icon :icon="calendarOutline"></ion-icon
+          ></ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -56,6 +58,12 @@
                           placeholder="Visita al dentista"
                           label-placement="fixed"
                           fill="outline"
+                          autocomplete="off"
+                          autocorrect="on"
+                          :value="event.name.value"
+                          @ion-input="
+                            event.name.value = $event.target.value as string
+                          "
                         ></ion-input>
                       </div>
                     </div>
@@ -81,6 +89,14 @@
                           label="Descripcion"
                           label-placement="fixed"
                           :auto-grow="true"
+                          autocomplete="off"
+                          autocorrect="on"
+                          type="text"
+                          :value="event.description.value"
+                          @ion-input="
+                            event.description.value = $event.target
+                              .value as string
+                          "
                         ></ion-textarea>
                       </div>
                     </div>
@@ -107,8 +123,8 @@
                         >
                           <ion-label>Tiempo</ion-label>
                           <ion-label slot="end" class="ion-text-wrap"
-                            >{{ reminders.start }} -
-                            {{ reminders.end }}</ion-label
+                            >{{ event.reminders.value.start }} -
+                            {{ event.reminders.value.end }}</ion-label
                           >
                         </ion-item>
                       </div>
@@ -134,9 +150,9 @@
                           lines="none"
                           @click="isOpenPopoverTimezones = true"
                         >
-                          <ion-label>Tiempo</ion-label>
+                          <ion-label>Zona horaria</ion-label>
                           <ion-label slot="end" class="ion-text-wrap"
-                            >{{ zoneSelected }}
+                            >{{ event.timezone.value }}
                           </ion-label>
                         </ion-item>
                       </div>
@@ -169,7 +185,20 @@
                           label-placement="fixed"
                           fill="outline"
                           placeholder="Correo electronico"
+                          autocomplete="off"
+                          autocorrect="on"
+                          type="email"
+                          :value="inputGuest"
+                          @ion-input="
+                            inputGuest = $event.target.value as string
+                          "
                         ></ion-input>
+                      </div>
+
+                      <div style="display: flex; align-items: center">
+                        <ion-button fill="clear" @click="addGuest()"
+                          ><ion-icon :icon="addOutline"></ion-icon
+                        ></ion-button>
                       </div>
                     </div>
                   </ion-col>
@@ -217,6 +246,11 @@
                             placeholder="Disponibilidad"
                             ok-text="Confirmar"
                             cancel-text="Cancelar"
+                            :value="event.availability.value"
+                            @ion-change="
+                              event.availability.value = $event.target
+                                .value as string
+                            "
                           >
                             <ion-select-option value="available"
                               >Disponible</ion-select-option
@@ -263,7 +297,10 @@
       >
         <RemindersComponent
           @reminders="
-            reminders = { start: $event.data.start, end: $event.data.end }
+            event.reminders.value = {
+              start: $event.data.start,
+              end: $event.data.end,
+            }
           "
         />
       </ion-popover>
@@ -322,10 +359,12 @@
 
       <!-- modals -->
       <ion-modal trigger="open-modal-calendar">
-        <ion-header :translucent="true" class="ion-no-border" mode='ios'>
+        <ion-header :translucent="true" class="ion-no-border" mode="ios">
           <ion-toolbar>
             <ion-buttons slot="start">
-              <ion-button @click="modalController.dismiss()"><ion-icon :icon='closeOutline'></ion-icon></ion-button>
+              <ion-button @click="modalController.dismiss()"
+                ><ion-icon :icon="closeOutline"></ion-icon
+              ></ion-button>
             </ion-buttons>
 
             <ion-title>Calendario</ion-title>
@@ -363,7 +402,7 @@ import {
   IonItem,
   IonLabel,
   IonModal,
-modalController,
+  modalController,
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import RemindersComponent from "../reminders/RemindersComponent.vue";
@@ -378,6 +417,7 @@ import {
   globeOutline,
   peopleOutline,
   personOutline,
+  saveOutline,
   timeOutline,
   trashOutline,
 } from "ionicons/icons";
@@ -411,32 +451,32 @@ export default defineComponent({
 
   setup() {
     const isOpenPopoverReminders = ref(false);
-    const reminders = ref({
-      start: format(new Date(), "Pp"),
-      end: format(new Date(), "Pp"),
-    });
     const timeZones = Intl.supportedValuesOf("timeZone").map(
       (timeZone) => timeZone
     );
     const isOpenPopoverTimezones = ref(false);
     const filteredZones = ref(Array<string>());
-    const zoneSelected = ref(Intl.DateTimeFormat().resolvedOptions().timeZone);
-    const guests = ref([
-      { email: "pepito@pepito.com" },
-      { email: "pepito@pepito.com" },
-      { email: "pepito@pepito.com" },
-      { email: "pepito@pepito.com" },
-    ]);
     const showButtonsOptionGuest = ref(-1);
+
+    // models
+    const name = ref("");
+    const description = ref("");
+    const reminders = ref({
+      start: format(new Date(), "Pp"),
+      end: format(new Date(), "Pp"),
+    });
+    const timezone = ref(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    const guests = ref(Array<{ email: string }>());
+    const availability = ref("");
+    const repeats: string[] = [];
+    const inputGuest = ref("");
 
     return {
       pageTitle: "Agregar evento",
       isOpenPopoverReminders,
-      reminders,
       timeZones,
       isOpenPopoverTimezones,
       filteredZones,
-      zoneSelected,
       addOutline,
       guests,
       showButtonsOptionGuest,
@@ -450,7 +490,19 @@ export default defineComponent({
       briefcaseOutline,
       isPlatform,
       calendarOutline,
-      modalController,closeOutline
+      modalController,
+      closeOutline,
+      saveOutline,
+      event: {
+        name,
+        description,
+        reminders,
+        timezone,
+        guests,
+        availability,
+        repeats,
+      },
+      inputGuest,
     };
   },
 
@@ -463,8 +515,19 @@ export default defineComponent({
 
     selectZone(params: { zone: string }) {
       const zone = params.zone;
-      this.zoneSelected = zone;
+      this.event.timezone.value = zone;
       this.isOpenPopoverTimezones = false;
+    },
+
+    addGuest() {
+      const email = this.inputGuest.valueOf();
+      this.event.guests.value.push({ email });
+      this.inputGuest = "";
+    },
+
+    saveEvent() {
+      const event = JSON.parse(JSON.stringify(this.event));
+      console.log(event);
     },
   },
 });
