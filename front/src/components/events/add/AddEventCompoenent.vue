@@ -14,7 +14,7 @@
         <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="end">
-          <ion-button @click="saveEvent()"
+          <ion-button :disabled="isButtonSaveDisabled" @click="saveEvent()"
             ><ion-icon :icon="saveOutline"></ion-icon
           ></ion-button>
 
@@ -54,15 +54,28 @@
 
                       <div style="width: 100%">
                         <ion-input
+                          ref="inputName"
                           label="Nombre"
                           placeholder="Visita al dentista"
                           label-placement="fixed"
                           fill="outline"
-                          autocomplete="off"
+                          autocomplete="on"
                           autocorrect="on"
+                          type="text"
+                          :error-text="messageError.required"
+                          :class="[
+                            event.name.value.match(regexValidations.required)
+                              ? 'ion-invalid'
+                              : 'ion-valid',
+                          ]"
                           :value="event.name.value"
                           @ion-input="
                             event.name.value = $event.target.value as string
+                          "
+                          @ion-focus="
+                            ($refs.inputName as any).$el.classList.add(
+                              'ion-touched'
+                            )
                           "
                         ></ion-input>
                       </div>
@@ -89,7 +102,7 @@
                           label="Descripcion"
                           label-placement="fixed"
                           :auto-grow="true"
-                          autocomplete="off"
+                          autocomplete="on"
                           autocorrect="on"
                           type="text"
                           :value="event.description.value"
@@ -164,7 +177,7 @@
               <br />
 
               <!-- others -->
-              <ion-list class="last-item">
+              <ion-list>
                 <ion-list-header>
                   <ion-label>Otros</ion-label>
                 </ion-list-header>
@@ -181,22 +194,46 @@
 
                       <div style="width: 100%">
                         <ion-input
+                          ref="inputGuest"
                           label="Invitados"
                           label-placement="fixed"
                           fill="outline"
                           placeholder="Correo electronico"
-                          autocomplete="off"
+                          autocomplete="on"
                           autocorrect="on"
                           type="email"
-                          :value="inputGuest"
+                          :error-text="messageError.email"
+                          :class="[
+                            emailGuest.match(regexValidations.email)
+                              ? 'ion-valid'
+                              : 'ion-invalid',
+                          ]"
+                          :value="emailGuest"
                           @ion-input="
-                            inputGuest = $event.target.value as string
+                            emailGuest = $event.target.value as string
+                          "
+                          @ion-focus="
+                            ($refs.inputGuest as any).$el.classList.add(
+                              'ion-touched'
+                            )
+                          "
+                          @ion-blur="
+                            ($refs.inputGuest as any).$el.classList.remove(
+                              'ion-touched'
+                            )
                           "
                         ></ion-input>
                       </div>
 
                       <div style="display: flex; align-items: center">
-                        <ion-button fill="clear" @click="addGuest()"
+                        <ion-button
+                          fill="clear"
+                          :disabled="
+                            emailGuest.match(regexValidations.email)
+                              ? false
+                              : true
+                          "
+                          @click="addGuest()"
                           ><ion-icon :icon="addOutline"></ion-icon
                         ></ion-button>
                       </div>
@@ -404,7 +441,7 @@ import {
   IonModal,
   modalController,
 } from "@ionic/vue";
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, watch } from "vue";
 import RemindersComponent from "../reminders/RemindersComponent.vue";
 import { format } from "date-fns";
 import {
@@ -422,6 +459,7 @@ import {
   trashOutline,
 } from "ionicons/icons";
 import CalendarComponent from "./calendar/CalendarComponent.vue";
+import { openToast } from "@/services/system";
 
 export default defineComponent({
   name: "EventComponent",
@@ -457,6 +495,7 @@ export default defineComponent({
     const isOpenPopoverTimezones = ref(false);
     const filteredZones = ref(Array<string>());
     const showButtonsOptionGuest = ref(-1);
+    const isButtonSaveDisabled = ref(true);
 
     // models
     const name = ref("");
@@ -469,7 +508,29 @@ export default defineComponent({
     const guests = ref(Array<{ email: string }>());
     const availability = ref("");
     const repeats: string[] = [];
-    const inputGuest = ref("");
+    const emailGuest = ref("");
+    const regexValidations = {
+      email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      required: /^\s*$/,
+    };
+    const messageError = {
+      email: "Correo electronico no valido",
+      required: "Campo requerido",
+    };
+
+    // inputs
+    const inputName = ref(null);
+
+    watch(
+      () => name.value,
+      (newVal, oldVal) => {
+        let status = true;
+        if ((inputName.value as any).$el.classList.contains("ion-invalid"))
+          status = false;
+
+        isButtonSaveDisabled.value = status;
+      }
+    );
 
     return {
       pageTitle: "Agregar evento",
@@ -502,7 +563,11 @@ export default defineComponent({
         availability,
         repeats,
       },
-      inputGuest,
+      emailGuest,
+      regexValidations,
+      isButtonSaveDisabled,
+      messageError,
+      inputName,
     };
   },
 
@@ -520,25 +585,41 @@ export default defineComponent({
     },
 
     addGuest() {
-      const email = this.inputGuest.valueOf();
+      const email = this.emailGuest.valueOf();
       this.event.guests.value.push({ email });
-      this.inputGuest = "";
+      this.emailGuest = "";
     },
 
     saveEvent() {
       const event = JSON.parse(JSON.stringify(this.event));
-      console.log(event);
+    },
+
+    validateInput(params: { value: string; ref: string; regex: RegExp }) {
+      const value = params.value;
+      const ref = params.ref;
+      const regex = params.regex;
+      const inputRef = this.$refs[ref] as any;
+
+      inputRef.$el.classList.remove("ion-valid");
+      inputRef.$el.classList.remove("ion-invalid");
+
+      if (value === "") return;
+
+      const rex = value.match(regex);
+
+      if (rex) {
+        inputRef.$el.classList.add("ion-valid");
+        this.isButtonSaveDisabled = false;
+      } else {
+        inputRef.$el.classList.add("ion-invalid");
+        this.isButtonSaveDisabled = true;
+      }
     },
   },
 });
 </script>
 
 <style scoped>
-.last-item {
-  --border-width: 0 0 1px 0;
-  --border-color: red;
-}
-
 .hidde-scroll::-webkit-scrollbar {
   display: none;
 }
