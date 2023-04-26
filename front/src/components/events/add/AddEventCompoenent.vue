@@ -89,10 +89,18 @@
                 <ion-row>
                   <ion-col size-xs="11" size="10">
                     <div style="display: flex">
-                      <div style="display: flex; align-items: center">
-                        <ion-button fill="clear" :disabled="true"
-                          ><ion-icon :icon="documentTextOutline"></ion-icon
-                        ></ion-button>
+                      <div>
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            height: 50px;
+                          "
+                        >
+                          <ion-button fill="clear" :disabled="true"
+                            ><ion-icon :icon="documentTextOutline"></ion-icon
+                          ></ion-button>
+                        </div>
                       </div>
 
                       <div style="width: 100%">
@@ -186,10 +194,18 @@
                 <ion-row>
                   <ion-col size-xs="11" size="10">
                     <div style="display: flex">
-                      <div style="display: flex; align-items: center">
-                        <ion-button fill="clear" :disabled="true"
-                          ><ion-icon :icon="peopleOutline"></ion-icon
-                        ></ion-button>
+                      <div>
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            height: 50px;
+                          "
+                        >
+                          <ion-button fill="clear" :disabled="true"
+                            ><ion-icon :icon="peopleOutline"></ion-icon
+                          ></ion-button>
+                        </div>
                       </div>
 
                       <div style="width: 100%">
@@ -223,45 +239,46 @@
                             )
                           "
                         ></ion-input>
+
+                        <ion-item
+                          v-for="(guest, indexGuest) in guests"
+                          :key="indexGuest"
+                          @mouseenter="showButtonsOptionGuest = indexGuest"
+                          @mouseleave="showButtonsOptionGuest = -1"
+                        >
+                          <ion-label>{{ guest.email }}</ion-label>
+
+                          <ion-button
+                            v-if="showButtonsOptionGuest === indexGuest"
+                            fill="clear"
+                            color="danger"
+                            @click="removeGuest({ index: indexGuest })"
+                            ><ion-icon :icon="trashOutline"></ion-icon
+                          ></ion-button>
+                        </ion-item>
                       </div>
 
-                      <div style="display: flex; align-items: center">
-                        <ion-button
-                          fill="clear"
-                          :disabled="
-                            emailGuest.match(regexValidations.email)
-                              ? false
-                              : true
+                      <div>
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            height: 50px;
                           "
-                          @click="addGuest()"
-                          ><ion-icon :icon="addOutline"></ion-icon
-                        ></ion-button>
+                        >
+                          <ion-button
+                            fill="clear"
+                            :disabled="
+                              emailGuest.match(regexValidations.email)
+                                ? false
+                                : true
+                            "
+                            @click="addGuest()"
+                            ><ion-icon :icon="addOutline"></ion-icon
+                          ></ion-button>
+                        </div>
                       </div>
                     </div>
-                  </ion-col>
-
-                  <ion-col size-xs="11" size="10" style="padding-left: 12%">
-                    <ion-item
-                      v-for="(guest, indexGuest) in guests"
-                      :key="indexGuest"
-                      @mouseenter="showButtonsOptionGuest = indexGuest"
-                      @mouseleave="showButtonsOptionGuest = -1"
-                    >
-                      <ion-label>{{ guest.email }}</ion-label>
-
-                      <ion-button
-                        v-if="showButtonsOptionGuest === indexGuest"
-                        fill="clear"
-                        ><ion-icon :icon="createOutline"></ion-icon
-                      ></ion-button>
-
-                      <ion-button
-                        v-if="showButtonsOptionGuest === indexGuest"
-                        fill="clear"
-                        color="danger"
-                        ><ion-icon :icon="trashOutline"></ion-icon
-                      ></ion-button>
-                    </ion-item>
                   </ion-col>
                 </ion-row>
 
@@ -318,7 +335,7 @@
               right: 0;
               max-width: 40%;
             "
-            class="ion-padding"
+            class="ion-padding hidde-scroll"
           >
             <CalendarComponent />
           </div>
@@ -590,30 +607,13 @@ export default defineComponent({
       this.emailGuest = "";
     },
 
-    saveEvent() {
-      const event = JSON.parse(JSON.stringify(this.event));
+    removeGuest(params: { index: number }) {
+      const index = params.index;
+      this.event.guests.value.splice(index, 1);
     },
 
-    validateInput(params: { value: string; ref: string; regex: RegExp }) {
-      const value = params.value;
-      const ref = params.ref;
-      const regex = params.regex;
-      const inputRef = this.$refs[ref] as any;
-
-      inputRef.$el.classList.remove("ion-valid");
-      inputRef.$el.classList.remove("ion-invalid");
-
-      if (value === "") return;
-
-      const rex = value.match(regex);
-
-      if (rex) {
-        inputRef.$el.classList.add("ion-valid");
-        this.isButtonSaveDisabled = false;
-      } else {
-        inputRef.$el.classList.add("ion-invalid");
-        this.isButtonSaveDisabled = true;
-      }
+    saveEvent() {
+      const event = JSON.parse(JSON.stringify(this.event));
     },
   },
 });
