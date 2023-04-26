@@ -73,7 +73,7 @@
                   }}</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.password.$model"
-                    :type="inputTypePassword"
+                    :type="inputTypePassword as any"
                   >
                   </ion-input>
                   <ion-button
@@ -107,14 +107,14 @@
               <ion-button
                 fill="clear"
                 expand="full"
-                :disabled="(v$ as any).form.$invalid || spinners.buttonLogin"
+                :disabled="(v$ as any).form.$invalid || spinners.buttonLogin.value"
                 @click="login()"
               >
-                <ion-label v-if="spinners.buttonLogin == false">
+                <ion-label v-if="spinners.buttonLogin.value == false">
                   {{ $t("message.login") }}</ion-label
                 >
                 <ion-spinner
-                  v-if="spinners.buttonLogin"
+                  v-if="spinners.buttonLogin.value"
                   name="crescent"
                 ></ion-spinner>
               </ion-button>
@@ -127,14 +127,17 @@
                 <ion-button
                   class="options"
                   fill="clear"
-                  :disabled="spinners.buttonForgotPassword"
+                  :disabled="spinners.buttonForgotPassword.value"
                   @click="forgotPassword()"
                 >
-                  <ion-label v-if="spinners.buttonForgotPassword == false">{{
-                    capitalizeFirstLetter($t("message.recoverPassword"))
-                  }}</ion-label>
+                  <ion-label
+                    v-if="spinners.buttonForgotPassword.value == false"
+                    >{{
+                      capitalizeFirstLetter($t("message.recoverPassword"))
+                    }}</ion-label
+                  >
                   <ion-spinner
-                    v-if="spinners.buttonForgotPassword"
+                    v-if="spinners.buttonForgotPassword.value"
                     name="crescent"
                   ></ion-spinner>
                 </ion-button>
@@ -146,15 +149,18 @@
                 <ion-button
                   class="options"
                   fill="clear"
-                  :disabled="spinners.buttonCreateAccount"
+                  :disabled="spinners.buttonCreateAccount.value"
                   expand="full"
                   @click="createAccount()"
                 >
-                  <ion-label v-if="spinners.buttonCreateAccount == false">{{
-                    capitalizeFirstLetter($t("message.createAccount"))
-                  }}</ion-label>
+                  <ion-label
+                    v-if="spinners.buttonCreateAccount.value == false"
+                    >{{
+                      capitalizeFirstLetter($t("message.createAccount"))
+                    }}</ion-label
+                  >
                   <ion-spinner
-                    v-if="spinners.buttonCreateAccount"
+                    v-if="spinners.buttonCreateAccount.value"
                     name="crescent"
                     color="primary"
                   ></ion-spinner>
@@ -190,7 +196,7 @@ import {
   IonButton,
   isPlatform,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import {
   eyeOffOutline,
   eyeOutline,
@@ -241,6 +247,17 @@ export default defineComponent({
 
   setup() {
     const modeDesingElements = isPlatform("ios") ? "ios" : "md";
+    const inputTypePassword = ref("password");
+
+    // form
+    const email = ref("");
+    const password = ref("");
+
+    // spinners
+    const buttonLogin = ref(false);
+    const buttonForgotPassword = ref(false);
+    const buttonCreateAccount = ref(false);
+
     return {
       eyeOffOutline,
       eyeOutline,
@@ -249,20 +266,15 @@ export default defineComponent({
       mailOpenOutline,
       modeDesingElements,
       capitalizeFirstLetter: capitalizeFirstLetter,
-    };
-  },
-
-  data() {
-    return {
-      inputTypePassword: "password" as "text" | "password",
+      inputTypePassword,
       form: {
-        email: "",
-        password: "",
+        email,
+        password,
       },
       spinners: {
-        buttonLogin: false,
-        buttonForgotPassword: false,
-        buttonCreateAccount: false,
+        buttonLogin,
+        buttonForgotPassword,
+        buttonCreateAccount,
       },
     };
   },
@@ -293,10 +305,10 @@ export default defineComponent({
     },
 
     async login() {
-      this.spinners.buttonLogin = true;
+      this.spinners.buttonLogin.value = true;
 
-      const user = this.form.email.replace(/\s+/g, "");
-      const password = this.form.password;
+      const user = this.form.email.value.replace(/\s+/g, "");
+      const password = this.form.password.value;
 
       try {
         const response = await userLogin({
@@ -308,11 +320,11 @@ export default defineComponent({
         const token = "Bearer " + response.auth.access_token;
         setUserToken({ token });
 
-        this.spinners.buttonLogin = false;
+        this.spinners.buttonLogin.value = false;
         this.clearInputs();
         location.reload();
       } catch (e: any) {
-        this.spinners.buttonLogin = false;
+        this.spinners.buttonLogin.value = false;
         if (e.message == "Unauthorized" || e.message == "Not found") {
           this.presentToast("Usuario y/o contraseña incorrectos", "danger");
           return;
@@ -335,8 +347,8 @@ export default defineComponent({
     },
 
     clearInputs() {
-      this.form.password = "";
-      this.form.email = "";
+      this.form.password.value = "";
+      this.form.email.value = "";
     },
 
     async alertConfirmationEmail() {
@@ -370,11 +382,11 @@ export default defineComponent({
     },
 
     async forgotPassword() {
-      this.spinners.buttonForgotPassword = true;
+      this.spinners.buttonForgotPassword.value = true;
 
       const alertResponse = await this.presentAlertRestorePassword();
       if (alertResponse.role == "cancel") {
-        this.spinners.buttonForgotPassword = false;
+        this.spinners.buttonForgotPassword.value = false;
         return;
       }
 
@@ -387,13 +399,13 @@ export default defineComponent({
       //   openToastErrror(e);
       // }
 
-      this.spinners.buttonForgotPassword = false;
+      this.spinners.buttonForgotPassword.value = false;
     },
 
     async createAccount() {
-      this.spinners.buttonCreateAccount = true;
+      this.spinners.buttonCreateAccount.value = true;
       await this.$router.push("/signup");
-      this.spinners.buttonCreateAccount = false;
+      this.spinners.buttonCreateAccount.value = false;
     },
 
     async presentAlertRestorePassword(): Promise<{
