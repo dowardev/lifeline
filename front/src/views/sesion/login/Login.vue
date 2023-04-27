@@ -13,11 +13,7 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <img
-        src="https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg"
-        class="img-fondo"
-        style="opacity: 90%"
-      />
+      <img :src="loginImagePath" class="img-fondo" style="opacity: 90%" />
       <ion-row class="ion-padding">
         <ion-col size="12">
           <h1 style="color: white !important">
@@ -31,11 +27,7 @@
           <ion-card>
             <ion-card-content>
               <div class="center">
-                <img
-                  src="@/assets/otros/key.svg"
-                  alt=""
-                  class="imagen-usuario"
-                />
+                <img :src="imageKeyPath" alt="" class="imagen-usuario" />
               </div>
 
               <!-- user -->
@@ -244,7 +236,7 @@ import {
   IonButton,
   isPlatform,
 } from "@ionic/vue";
-import { defineComponent, ref, } from "vue";
+import { defineComponent, ref } from "vue";
 import {
   eyeOffOutline,
   eyeOutline,
@@ -263,6 +255,10 @@ import { required, helpers, email } from "@vuelidate/validators";
 // import { openToastErrror } from "../../../services/system";
 import { USER_LOGIN, USER_NAME } from "../../../services/graphql";
 import { capitalizeFirstLetter } from "../../../services/system";
+import { useSystem } from "@/composables/useSystem";
+import keyImage from "@/assets/otros/key.svg";
+import keyImageGruvbox from "@/assets/otros/key-gruvbox.png";
+import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
 
 export default defineComponent({
   name: "LoginPage",
@@ -354,6 +350,25 @@ export default defineComponent({
       inputPassword,
       isPasswordVisible,
     };
+  },
+
+  computed: {
+    imageKeyPath() {
+      const theme = useSystem().getTheme();
+      let image = "";
+      if (theme == "nord" || "light") image = keyImage;
+      if (theme == "gruvbox") image = keyImageGruvbox;
+      return image;
+    },
+    loginImagePath() {
+      const theme = useSystem().getTheme();
+      let image = "";
+      if (theme == "nord" || "light")
+        image =
+          "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
+      if (theme == "gruvbox") image = loginImageGruvbox;
+      return image;
+    },
   },
 
   methods: {

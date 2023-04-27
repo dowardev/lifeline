@@ -53,6 +53,7 @@ import {
 } from "ionicons/icons";
 import { Theme } from "@/utils/types";
 import { saveTheme, setTheme } from "@/services/system";
+import { useSystem } from "@/composables/useSystem";
 
 export default defineComponent({
   name: "ThemeComponent",
@@ -66,11 +67,12 @@ export default defineComponent({
   },
 
   setup() {
+    const availableThemes: Theme[] = ["light", "nord", "gruvbox"];
     return {
       chevronBackOutline,
       eyeOutline,
       checkmarkOutline,
-      availableThemes: ["light", "nord", "gruvbox"],
+      availableThemes,
     };
   },
 
@@ -100,8 +102,8 @@ export default defineComponent({
 
     async applyTheme(params: { name: Theme }) {
       const theme = params.name;
-      await setTheme({ theme });
-      saveTheme({ theme });
+      useSystem().applyTheme({theme})
+      useSystem().updateThemeSelected({theme})
     },
   },
 });

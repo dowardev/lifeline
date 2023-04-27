@@ -1,5 +1,5 @@
 import { DocumentNode } from "graphql";
-import { DocumentElements, TypeDocumentElement } from "./types";
+import { DocumentElements, Theme, TypeDocumentElement } from "./types";
 
 interface Graphql {
   name: DocumentNode;
@@ -173,4 +173,10 @@ export interface Reminder {
   title: string;
   message: string;
   date: { start: string; end: string };
+}
+
+export interface System {
+  theme: {
+    selected: Theme;
+  };
 }

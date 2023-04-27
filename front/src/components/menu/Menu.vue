@@ -3,7 +3,7 @@
     <ion-content>
       <ion-item v-if="logged == true" lines="none" class="transparent">
         <ion-avatar slot="start">
-          <img :src="userData.img" />
+          <img :src="imageKeyPath" />
         </ion-avatar>
         <ion-label class="labelOptionMenu">{{ userData.user }}</ion-label>
         <ion-button slot="end" fill="clear">
@@ -243,6 +243,9 @@ import { USER_MENU } from "../../services/graphql";
 import userAvatar from "../../assets/otros/user.png";
 import { capitalizeFirstLetter } from "../../services/system";
 import { setLanguage } from "../../services/system";
+import { useSystem } from "@/composables/useSystem";
+import userImage from "@/assets/otros/user.png";
+import userImageGruvbox from "@/assets/otros/user-gruvbox.png";
 
 export default defineComponent({
   name: "MenuComponent",
@@ -282,6 +285,16 @@ export default defineComponent({
         user: "Usuario",
       },
     };
+  },
+
+  computed: {
+    imageKeyPath() {
+      const theme = useSystem().getTheme();
+      let image = "";
+      if (theme == "nord" || "light") image = userImage;
+      if (theme == "gruvbox") image = userImageGruvbox;
+      return image;
+    },
   },
 
   mounted() {
