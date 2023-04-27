@@ -526,6 +526,8 @@ export default defineComponent({
     const availability = ref("");
     const repeats: string[] = [];
     const emailGuest = ref("");
+
+    // validation
     const regexValidations = {
       email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
       required: /^\s*$/,
