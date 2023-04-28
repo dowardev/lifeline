@@ -4,54 +4,32 @@
     @close-share="closeShare()"
   />
 
-  <ion-content v-if="isPlatform('desktop')" class="ion-padding-start ion-padding-end ion-padding-bottom">
-    <ContentShareComponent :url="url" />
+  <ion-content
+    v-if="isPlatform('desktop')"
+    class="ion-padding-start ion-padding-end ion-padding-bottom"
+  >
+    <ContentShareComponent :url="props.url" />
   </ion-content>
 
   <ion-page v-if="!isPlatform('desktop')">
     <HeaderShareComponent @close-share="closeShare()" />
 
     <ion-content class="ion-padding-start ion-padding-end ion-padding-bottom">
-      <ContentShareComponent :url="url" />
+      <ContentShareComponent :url="props.url" />
     </ion-content>
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { IonContent, isPlatform, IonPage } from "@ionic/vue";
-import { defineComponent } from "vue";
 import ContentShareComponent from "./ShareContent.vue";
 import HeaderShareComponent from "./ShareHeader.vue";
 
-export default defineComponent({
-  name: "HomePage",
-  components: {
-    IonContent,
-    ContentShareComponent,
-    IonPage,
-    HeaderShareComponent,
-  },
+const props = defineProps({ url: { type: String, default: "" } });
 
-  props: { url: { type: String, default: "" } },
+const emitEvent = defineEmits(["closeShare"]);
 
-  emits: ["closeShare"],
-
-  setup() {
-    return {
-      isPlatform,
-    };
-  },
-
-  data() {
-    return {
-      mainSegment: "url",
-    };
-  },
-
-  methods: {
-    closeShare() {
-      this.$emit("closeShare");
-    },
-  },
-});
+const closeShare = () => {
+  emitEvent("closeShare");
+};
 </script>

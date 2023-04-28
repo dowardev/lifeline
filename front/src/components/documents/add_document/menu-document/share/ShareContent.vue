@@ -124,7 +124,7 @@
   </section>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonInput,
@@ -141,58 +141,28 @@ import {
   linkOutline,
   mailOutline,
 } from "ionicons/icons";
-import { defineComponent } from "vue";
+import { computed } from "vue";
 import { copyToClipboard as copyToClipboardService } from "../../../../../services/system";
 
-export default defineComponent({
-  name: "HomePage",
-  components: {
-    IonContent,
-    IonInput,
-    IonSegment,
-    IonSegmentButton,
-    IonButton,
-  },
+const props = defineProps({ url: { type: String, default: "" } });
 
-  props: { url: { type: String, default: "" } },
+const mainSegment = "url";
 
-  setup() {
-    return {
-      pageTitle: "Compartir",
-      closeOutline,
-      linkOutline,
-      mailOutline,
-      copyOutline,
-      addOutline,
-      helpCircleOutline,
-      isPlatform,
-    };
-  },
-
-  data() {
-    return {
-      mainSegment: "url",
-    };
-  },
-
-  computed: {
-    generateQR() {
-      return (
-        "https://chart.googleapis.com/chart?cht=qr&chs=" +
-        300 +
-        "x" +
-        300 +
-        "&chl=" +
-        encodeURIComponent(this.url)
-      );
-    },
-  },
-
-  methods: {
-    async copyToClipboard(params: { phrase: string }) {
-      const phrase = params.phrase;
-      await copyToClipboardService({ phrase });
-    },
-  },
+// computed
+const generateQR = computed(() => {
+  return (
+    "https://chart.googleapis.com/chart?cht=qr&chs=" +
+    300 +
+    "x" +
+    300 +
+    "&chl=" +
+    encodeURIComponent(props.url)
+  );
 });
+
+// functions
+const copyToClipboard = async (params: { phrase: string }) => {
+  const phrase = params.phrase;
+  await copyToClipboardService({ phrase });
+};
 </script>

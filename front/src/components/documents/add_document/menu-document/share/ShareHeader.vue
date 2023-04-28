@@ -12,40 +12,16 @@
   </ion-header>
 </template>
 
-<script lang="ts">
-import {
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButton,
-} from "@ionic/vue";
-import {
-  closeOutline,
-} from "ionicons/icons";
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { IonHeader, IonTitle, IonToolbar, IonButton } from "@ionic/vue";
+import { closeOutline } from "ionicons/icons";
 
-export default defineComponent({
-  name: "HomePage",
-  components: {
-    IonHeader,
-    IonTitle,
-    IonToolbar,
-    IonButton,
-  },
+const emitEvent = defineEmits(["closeShare"]);
 
-  emits: ["closeShare"],
+const pageTitle = "Compartir";
 
-  setup() {
-    return {
-      pageTitle: "Compartir",
-      closeOutline
-    };
-  },
-
-  methods: {
-    closeShare() {
-      this.$emit("closeShare");
-    },
-  },
-});
+// functions
+const closeShare = () => {
+  emitEvent("closeShare");
+};
 </script>
