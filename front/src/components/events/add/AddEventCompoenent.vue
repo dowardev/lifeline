@@ -14,7 +14,7 @@
         <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="end">
-          <ion-button :disabled="isButtonSaveDisabled" @click="saveEvent()"
+          <ion-button :disabled="v$.$invalid" @click="saveEvent()"
             ><ion-icon :icon="saveOutline"></ion-icon
           ></ion-button>
 
@@ -62,11 +62,11 @@
                           autocomplete="on"
                           autocorrect="on"
                           type="text"
-                          :error-text="messageError.required"
+                          :error-text="v$.event.name.$errors[0]?.$message as string"
                           :class="[
-                            event.name.value.match(regexValidations.required)
-                              ? 'ion-invalid'
-                              : 'ion-valid',
+                            v$.event.name.$errors.length == 0
+                              ? 'ion-valid'
+                              : 'ion-invalid',
                           ]"
                           :value="event.name.value"
                           @ion-input="
@@ -75,7 +75,8 @@
                           @ion-focus="
                             ($refs.inputName as any).$el.classList.add(
                               'ion-touched'
-                            )
+                            );
+                            v$.event.name.$touch();
                           "
                         ></ion-input>
                       </div>
@@ -218,9 +219,9 @@
                           autocomplete="on"
                           autocorrect="on"
                           type="email"
-                          :error-text="messageError.email"
+                          :error-text="v2$.emailGuest.$errors[0]?.$message as string"
                           :class="[
-                            emailGuest.match(regexValidations.email)
+                            v2$.emailGuest.$errors.length == 0
                               ? 'ion-valid'
                               : 'ion-invalid',
                           ]"
@@ -236,7 +237,8 @@
                           @ion-blur="
                             ($refs.inputGuest as any).$el.classList.remove(
                               'ion-touched'
-                            )
+                            );
+                            v2$.emailGuest.$touch();
                           "
                         ></ion-input>
 
@@ -477,6 +479,8 @@ import {
 } from "ionicons/icons";
 import CalendarComponent from "./calendar/CalendarComponent.vue";
 import { openToast } from "@/services/system";
+import useVuelidate from "@vuelidate/core";
+import { email, helpers, required } from "@vuelidate/validators";
 
 export default defineComponent({
   name: "EventComponent",
@@ -512,9 +516,8 @@ export default defineComponent({
     const isOpenPopoverTimezones = ref(false);
     const filteredZones = ref(Array<string>());
     const showButtonsOptionGuest = ref(-1);
-    const isButtonSaveDisabled = ref(true);
 
-    // models
+    // vars
     const name = ref("");
     const description = ref("");
     const reminders = ref({
@@ -527,6 +530,17 @@ export default defineComponent({
     const repeats: string[] = [];
     const emailGuest = ref("");
 
+    // event
+    const event = {
+      name,
+      description,
+      reminders,
+      timezone,
+      guests,
+      availability,
+      repeats,
+    };
+
     // validation
     const regexValidations = {
       email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
@@ -536,20 +550,25 @@ export default defineComponent({
       email: "Correo electronico no valido",
       required: "Campo requerido",
     };
+    const rules = {
+      event: {
+        name: {
+          required: helpers.withMessage(messageError.required, required),
+        },
+      },
+    };
+    const rulesGuest = {
+      emailGuest: {
+        required: helpers.withMessage(messageError.required, required),
+        email: helpers.withMessage(messageError.email, email),
+      },
+    };
+    const v$ = useVuelidate(rules, { event });
+    const v2$ = useVuelidate(rulesGuest, { emailGuest });
 
     // inputs
     const inputName = ref(null);
-
-    watch(
-      () => name.value,
-      (newVal, oldVal) => {
-        let status = true;
-        if ((inputName.value as any).$el.classList.contains("ion-invalid"))
-          status = false;
-
-        isButtonSaveDisabled.value = status;
-      }
-    );
+    const inputGuest = ref(null);
 
     return {
       pageTitle: "Agregar evento",
@@ -573,20 +592,14 @@ export default defineComponent({
       modalController,
       closeOutline,
       saveOutline,
-      event: {
-        name,
-        description,
-        reminders,
-        timezone,
-        guests,
-        availability,
-        repeats,
-      },
+      event,
       emailGuest,
       regexValidations,
-      isButtonSaveDisabled,
       messageError,
       inputName,
+      inputGuest,
+      v$,
+      v2$,
     };
   },
 
