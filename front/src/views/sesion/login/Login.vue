@@ -50,8 +50,7 @@
                         fill="outline"
                         label="Usuario o correo electrónico"
                         label-placement="floating"
-                        autocomplete="on"
-                        autocorrect="on"
+                        autocomplete="email"
                         type="email"
                         :error-text="v$.form.email.$errors[0]?.$message as string"
                         :class="[
@@ -95,8 +94,7 @@
                         fill="outline"
                         label="Contraseña"
                         label-placement="floating"
-                        autocomplete="on"
-                        autocorrect="on"
+                        autocomplete="current-password"
                         :type="isPasswordVisible ? 'text' : 'password'"
                         :error-text="v$.form.password.$errors[0]?.$message as string"
                         :class="[
