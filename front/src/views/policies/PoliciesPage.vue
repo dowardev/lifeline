@@ -163,7 +163,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -174,43 +174,18 @@ import {
   IonSegmentButton,
   isPlatform,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
+import { ref } from "vue";
+const modeDesingElements = isPlatform("ios") ? "ios" : ("md" as "ios" | "md");
 
-export default defineComponent({
-  name: "HomePage",
-  components: {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonSegment,
-    IonSegmentButton,
-  },
+// refs
+const pageTitle = ref("Politicas");
+const policieSegment = ref("privacy");
 
-  setup() {
-    const modeDesingElements = isPlatform("ios")
-      ? "ios"
-      : ("md" as "ios" | "md");
-    return {
-      modeDesingElements,
-    };
-  },
-
-  data() {
-    return {
-      pageTitle: "Politicas",
-      policieSegment: "privacy",
-    };
-  },
-
-  methods: {
-    openUrl(params: { url: string }) {
-      const url = params.url;
-      window.open(url, "_blank");
-    },
-  },
-});
+// methods
+const openUrl = (params: { url: string }) => {
+  const url = params.url;
+  window.open(url, "_blank");
+};
 </script>
 
 <style scoped>
