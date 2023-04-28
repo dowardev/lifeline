@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="component-container">
     <ion-content>
       <ion-item v-if="logged == true" lines="none" class="transparent">
         <ion-avatar slot="start">

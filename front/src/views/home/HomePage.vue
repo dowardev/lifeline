@@ -1,11 +1,6 @@
 <template>
   <ion-page>
-    <ion-header
-      :translucent="true"
-      collapse="fade"
-      mode="ios"
-      class="ion-no-border"
-    >
+    <ion-header :translucent="true" mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
@@ -91,7 +86,7 @@
                             new Date(date.start).getHours() === parseInt(hour)
                           "
                         >
-                          <ion-card>
+                          <ion-card class="card-event">
                             <ion-card-header>
                               <ion-card-title>{{ date.title }}</ion-card-title>
                             </ion-card-header>
@@ -284,7 +279,7 @@ ion-content {
   overflow: hidden;
 }
 
-ion-card {
+.card-event {
   border-style: solid;
   border-width: 1px;
   border-color: #ffb4b4;
@@ -297,35 +292,5 @@ ion-content {
 }
 ion-content::-webkit-scrollbar {
   display: none;
-}
-
-@media only screen and (min-width: 992px) {
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background-color: #f5f5f5;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background-color: #555;
-    border-radius: 20px;
-    border: 2px solid #f5f5f5;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: #777;
-  }
-
-  /* Estilo de la barra de scroll en hover */
-
-  ::-webkit-scrollbar-thumb:vertical:hover {
-    background-color: #666;
-  }
-
-  ::-webkit-scrollbar-thumb:horizontal:hover {
-    background-color: #666;
-  }
 }
 </style>
