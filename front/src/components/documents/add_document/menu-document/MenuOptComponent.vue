@@ -120,7 +120,7 @@
   </section>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -149,90 +149,51 @@ import { isPlatform } from "@ionic/vue";
 import ShareComponent from "./share/ShareComponent.vue";
 import RemindersComponent from "./reminder/RemindersComponent.vue";
 
-export default defineComponent({
-  name: "MenuOptComponent",
+const props = defineProps({ documentId: { default: "", type: String } });
 
-  components: {
-    IonContent,
-    IonHeader,
-    IonTitle,
-    IonToolbar,
-    IonButtons,
-    IonButton,
-    IonItem,
-    IonLabel,
-    IonAccordion,
-    IonAccordionGroup,
-    ShareComponent,
-    RemindersComponent,
-  },
+const pageTitle = "Opciones";
 
-  props: { documentId: { default: "", type: String } },
+let optionSelected = "none";
 
-  setup() {
-    return {
-      closeOutline,
-      pageTitle: "Opciones",
-      saveOutline,
-      moveOutline,
-      timeOutline,
-      useDocument,
-      isPlatform,
-      shareSocialOutline,
-    };
-  },
+// functions
+const closePage = async (params: {
+  role: "confirm" | "cancel";
+  data?: { option: OptionsMainMenuDocument; data?: any };
+}) => {
+  const role = params.role;
+  const data = params.data;
+  const modal = await modalController.getTop();
 
-  data() {
-    return {
-      optionSelected: "none" as OptionsMainMenuDocument,
-    };
-  },
+  if (modal) await modalController.dismiss(data, role);
+  else await popoverController.dismiss(data, role);
+};
 
-  methods: {
-    async closePage(params: {
-      role: "confirm" | "cancel";
-      data?: { option: OptionsMainMenuDocument; data?: any };
-    }) {
-      const role = params.role;
-      const data = params.data;
-      const modal = await modalController.getTop();
+const selectOption = (params: { option: OptionsMainMenuDocument }) => {
+  const option = params.option;
 
-      if (modal) await modalController.dismiss(data, role);
-      else await popoverController.dismiss(data, role);
-    },
+  if (option == "save") saveOption();
+  if (option == "order") orderElementsOption();
+  if (option == "share") toggleShareOption();
+  if (option == "reminder") toggleReminderOption();
+};
 
-    selectOption(params: { option: OptionsMainMenuDocument }) {
-      const option = params.option;
+const saveOption = async () => {
+  await closePage({ role: "confirm", data: { option: "save" } });
+};
 
-      if (option == "save") this.saveOption();
-      if (option == "order") this.orderElementsOption();
-      if (option == "share") this.toggleShareOption();
-      if (option == "reminder") this.toggleReminderOption();
-    },
+const orderElementsOption = async () => {
+  await closePage({ role: "confirm", data: { option: "order" } });
+};
 
-    async saveOption() {
-      await this.closePage({ role: "confirm", data: { option: "save" } });
-    },
+const toggleShareOption = () => {
+  if (optionSelected == "none") optionSelected = "share";
+  if (optionSelected == "share") optionSelected = "none";
+};
 
-    async orderElementsOption() {
-      await this.closePage({ role: "confirm", data: { option: "order" } });
-    },
-
-    toggleShareOption() {
-      const optionSelected = this.optionSelected;
-
-      if (optionSelected == "none") this.optionSelected = "share";
-      if (optionSelected == "share") this.optionSelected = "none";
-    },
-
-    toggleReminderOption() {
-      const optionSelected = this.optionSelected;
-
-      if (optionSelected == "none") this.optionSelected = "reminder";
-      if (optionSelected == "reminder") this.optionSelected = "none";
-    },
-  },
-});
+const toggleReminderOption = () => {
+  if (optionSelected == "none") optionSelected = "reminder";
+  if (optionSelected == "reminder") optionSelected = "none";
+};
 </script>
 
 <style scoped>
