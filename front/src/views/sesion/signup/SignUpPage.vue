@@ -100,26 +100,23 @@
                   }}</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.password.$model"
-                    :type="inputTypePassword1"
+                    :type="isPasswordVisible1 ? 'text' : 'password'"
                     autocomplete="new-password"
                   ></ion-input>
+
                   <ion-button
-                    v-if="inputTypePassword1 == 'text'"
                     slot="end"
                     fill="clear"
                     style="margin-top: 20px"
-                    @click="changeInputTypePassword1('password')"
+                    @click="isPasswordVisible1 = !isPasswordVisible1.valueOf()"
                   >
-                    <ion-icon :icon="eyeOffOutline"></ion-icon>
-                  </ion-button>
-                  <ion-button
-                    v-if="inputTypePassword1 == 'password'"
-                    slot="end"
-                    fill="clear"
-                    style="margin-top: 20px"
-                    @click="changeInputTypePassword1('text')"
-                  >
-                    <ion-icon :icon="eyeOutline"></ion-icon>
+                    <ion-icon
+                      :icon="
+                        isPasswordVisible1.valueOf()
+                          ? eyeOffOutline
+                          : eyeOutline
+                      "
+                    ></ion-icon>
                   </ion-button>
                 </ion-item>
                 <div
@@ -135,26 +132,22 @@
                   }}</ion-label>
                   <ion-input
                     v-model="(v$ as any).form.password2.$model"
-                    :type="inputTypePassword2"
+                    :type="isPasswordVisible2 ? 'text' : 'password'"
                     autocomplete="new-password"
                   ></ion-input>
                   <ion-button
-                    v-if="inputTypePassword2 == 'text'"
                     slot="end"
                     fill="clear"
                     style="margin-top: 20px"
-                    @click="changeInputTypePassword2('password')"
+                    @click="isPasswordVisible2 = !isPasswordVisible2.valueOf()"
                   >
-                    <ion-icon :icon="eyeOffOutline"></ion-icon>
-                  </ion-button>
-                  <ion-button
-                    v-if="inputTypePassword2 == 'password'"
-                    slot="end"
-                    fill="clear"
-                    style="margin-top: 20px"
-                    @click="changeInputTypePassword2('text')"
-                  >
-                    <ion-icon :icon="eyeOutline"></ion-icon>
+                    <ion-icon
+                      :icon="
+                        isPasswordVisible2.valueOf()
+                          ? eyeOffOutline
+                          : eyeOutline
+                      "
+                    ></ion-icon>
                   </ion-button>
                 </ion-item>
                 <div
@@ -171,15 +164,15 @@
                     expand="block"
                     fill="clear"
                     :disabled="
-                      (v$ as any).form.$invalid || spinners.buttonSignup == true
+                      (v$ as any).form.$invalid || spinners.buttonSignup.value == true
                     "
                     @click="addUser()"
                   >
-                    <ion-label v-if="spinners.buttonSignup == false">{{
+                    <ion-label v-if="spinners.buttonSignup.value == false">{{
                       $t("message.signup")
                     }}</ion-label>
                     <ion-spinner
-                      v-if="spinners.buttonSignup == true"
+                      v-if="spinners.buttonSignup.value == true"
                       name="crescent"
                     ></ion-spinner>
                   </ion-button>
@@ -202,7 +195,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   alertController,
   IonContent,
@@ -210,11 +203,9 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  toastController,
   IonInput,
-  loadingController,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
+import { ref } from "vue";
 import { userRegister as userRegisterService } from "../../../services/session";
 import { eyeOutline, eyeOffOutline, chevronBackOutline } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
@@ -223,207 +214,140 @@ import { openToast as openToastService } from "../../../services/system";
 import { getUser as getUserService } from "../../../services/user";
 import { USER_NAME } from "../../../services/graphql";
 import { capitalizeFirstLetter } from "../../../services/system";
+import { useRouter, onBeforeRouteUpdate } from "vue-router";
 
-export default defineComponent({
-  name: "RegisterPage",
-  components: {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonInput,
-  },
+const router = useRouter();
 
-  setup() {
-    return {
-      eyeOutline,
-      eyeOffOutline,
-      chevronBackOutline,
-      v$: useVuelidate(),
-      capitalizeFirstLetter: capitalizeFirstLetter,
-    };
-  },
+const form = {
+  user: ref(""),
+  name: ref(""),
+  email: ref(""),
+  password: ref(""),
+  password2: ref(""),
+};
+const spinners = {
+  buttonSignup: ref(false),
+};
+const isPasswordVisible1 = ref(false);
+const isPasswordVisible2 = ref(false);
 
-  data() {
-    return {
-      inputTypePassword1: "password" as "text" | "password",
-      inputTypePassword2: "password" as "text" | "password",
-      form: {
-        user: "",
-        name: "",
-        email: "",
-        password: "",
-        password2: "",
-      },
-      spinners: {
-        buttonSignup: false,
-      },
-    };
-  },
+const messageError = {
+  email: "Correo electronico no valido",
+  required: "Campo requerido",
+  text: "Solamente puede contener texto",
+};
 
-  validations() {
-    const messageRequired = "Campo requerido";
-    const messageAlpha = "Solamente puede contener texto";
-    return {
-      form: {
-        name: {
-          required: helpers.withMessage(messageRequired, required),
-          alpha: helpers.withMessage(
-            messageAlpha,
-            helpers.regex(/^[a-zA-Z ]*$/)
-          ),
-        },
-        user: {
-          required: helpers.withMessage(messageRequired, required),
-        },
-        email: {
-          required: helpers.withMessage(messageRequired, required),
-          email: helpers.withMessage("Correo no valido", email),
-        },
-        password: {
-          required: helpers.withMessage(messageRequired, required),
-          minLength: helpers.withMessage(
-            "La contraseña debe tener almenos una mayuscula, un numero y tener un tamaño de 8",
-            helpers.regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
-          ),
-        },
-        password2: {
-          same: helpers.withMessage(
-            "Las contraseñas no coinciden",
-            sameAs(this.form.password)
-          ),
-        },
-      },
-    };
-  },
-
-  beforeRouteEnter(to, from, next) {
-    getUserService({ graphql: { name: USER_NAME, fragment: "UserName" } })
-      .then(() => {
-        next("/");
-      })
-      .catch(() => {
-        next();
-      });
-  },
-
-  methods: {
-    async addUser() {
-      this.spinners.buttonSignup = true;
-
-      const name = this.form.name;
-      const user = this.form.user;
-      const email = this.form.email.replace(/\s+/g, "");
-      const password = this.form.password;
-      try {
-        await userRegisterService({
-          name,
-          user,
-          email,
-          password,
-        });
-        this.alertConfirmaciónEmail();
-        this.$router.push("/login");
-        this.clearInputs();
-      } catch (e: any) {
-        this.spinners.buttonSignup = false;
-        if (e.message == "The email has already been selected") {
-          openToastService({
-            message: "Correo ya en uso",
-            color: "warning",
-          });
-          return;
-        }
-        if (e.message == "The user has already been selected") {
-          openToastService({
-            message: "Usuario ya en uso",
-            color: "warning",
-          });
-          return;
-        }
-        console.error(e);
-        // systemService().openToastErrror(e);
-      } finally {
-        this.spinners.buttonSignup = false;
-      }
+const rules = {
+  form: {
+    name: {
+      required: helpers.withMessage(messageError.required, required),
+      alpha: helpers.withMessage(
+        messageError.text,
+        helpers.regex(/^[a-zA-Z ]*$/)
+      ),
     },
-
-    async presentToast(message: string, color: string) {
-      const toast = await toastController.create({
-        message,
-        duration: 3000,
-        mode: "ios",
-        color,
-      });
-      toast.present();
+    user: {
+      required: helpers.withMessage(messageError.required, required),
     },
-    clearInputs() {
-      this.form.name = "";
-      this.form.user = "";
-      this.form.password = "";
-      this.form.password2 = "";
-      this.form.email = "";
+    email: {
+      required: helpers.withMessage(messageError.required, required),
+      email: helpers.withMessage("Correo no valido", email),
     },
-    changeInputTypePassword1(type: "text" | "password") {
-      this.inputTypePassword1 = type;
+    password: {
+      required: helpers.withMessage(messageError.required, required),
+      minLength: helpers.withMessage(
+        "La contraseña debe tener almenos una mayuscula, un numero y tener un tamaño de 8",
+        helpers.regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+      ),
     },
-    changeInputTypePassword2(type: "text" | "password") {
-      this.inputTypePassword2 = type;
-    },
-    async alertConfirmacionEmail() {
-      const alert = await alertController.create({
-        cssClass: "my-custom-class",
-        header: "Alerta",
-        subHeader: "Confirmacion",
-        message:
-          "Hemos enviado un correo electronico a <b>" +
-          this.form.email +
-          "</b> con un enlace para verificar tu identidad.",
-        buttons: [
-          {
-            text: "Continuar",
-            handler: () => {
-              this.$router.push("/sesion");
-            },
-          },
-        ],
-      });
-
-      await alert.present();
-    },
-    async presentLoading() {
-      const loading = await loadingController.create({
-        cssClass: "my-custom-class",
-        message: "Espere por favor",
-      });
-
-      // await loading.present();
-      return loading;
-    },
-
-    async alertConfirmaciónEmail() {
-      const alert = await alertController.create({
-        header: "Alerta",
-        subHeader: "Confirmación",
-        message:
-          "Hemos enviado un correo electrónico a <b>" +
-          this.form.email +
-          "</b> con un enlace para verificar tu identidad.",
-        buttons: [
-          {
-            text: "Continuar",
-            handler: () => {
-              this.$router.push("/login");
-            },
-          },
-        ],
-      });
-
-      await alert.present();
+    password2: {
+      same: helpers.withMessage(
+        "Las contraseñas no coinciden",
+        sameAs(form.password)
+      ),
     },
   },
+};
+const v$ = useVuelidate(rules, { form });
+
+onBeforeRouteUpdate((to, from, next) => {
+  getUserService({ graphql: { name: USER_NAME, fragment: "UserName" } })
+    .then(() => {
+      next("/");
+    })
+    .catch(() => {
+      next();
+    });
 });
+
+const addUser = async () => {
+  spinners.buttonSignup.value = true;
+
+  const name = form.name;
+  const user = form.user;
+  const email = form.email.value.replace(/\s+/g, "");
+  const password = form.password;
+  try {
+    await userRegisterService({
+      name,
+      user,
+      email,
+      password,
+    });
+    alertConfirmaciónEmail();
+    router.push("/login");
+    clearInputs();
+  } catch (e: any) {
+    spinners.buttonSignup.value = false;
+    if (e.message == "The email has already been selected") {
+      openToastService({
+        message: "Correo ya en uso",
+        color: "warning",
+      });
+      return;
+    }
+    if (e.message == "The user has already been selected") {
+      openToastService({
+        message: "Usuario ya en uso",
+        color: "warning",
+      });
+      return;
+    }
+    console.error(e);
+    // systemService().openToastErrror(e);
+  } finally {
+    spinners.buttonSignup.value = false;
+  }
+};
+
+const clearInputs = () => {
+  form.name.value = "";
+  form.user.value = "";
+  form.password.value = "";
+  form.password2.value = "";
+  form.email.value = "";
+};
+
+const alertConfirmaciónEmail = async () => {
+  const alert = await alertController.create({
+    header: "Alerta",
+    subHeader: "Confirmación",
+    message:
+      "Hemos enviado un correo electrónico a <b>" +
+      form.email +
+      "</b> con un enlace para verificar tu identidad.",
+    buttons: [
+      {
+        text: "Continuar",
+        handler: () => {
+          router.push("/login");
+        },
+      },
+    ],
+  });
+
+  await alert.present();
+};
 </script>
 
 <style scoped>

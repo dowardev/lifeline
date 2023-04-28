@@ -270,11 +270,7 @@
                         >
                           <ion-button
                             fill="clear"
-                            :disabled="
-                              emailGuest.match(regexValidations.email)
-                                ? false
-                                : true
-                            "
+                            :disabled="v2$.$invalid"
                             @click="addGuest()"
                             ><ion-icon :icon="addOutline"></ion-icon
                           ></ion-button>
