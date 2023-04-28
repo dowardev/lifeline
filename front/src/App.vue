@@ -15,58 +15,45 @@
   </ion-app>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
-import { defineComponent } from "vue";
+import { nextTick, watch } from "vue";
 import MenuComponent from "@/components/menu/Menu.vue";
 import { setTheme } from "@/services/system";
 import { useDocument } from "@/composables/useDocument";
 import { useReminders } from "@/composables/useReminders";
 import { useSystem } from "@/composables/useSystem";
+import { useRoute } from "vue-router";
 
-export default defineComponent({
-  name: "App",
-  components: {
-    IonApp,
-    IonRouterOutlet,
-    MenuComponent,
-    IonMenu,
-    IonSplitPane,
-  },
+const route = useRoute();
 
-  watch: {
-    $route(to, from) {
-      this.$nextTick(() => {
-        const elementos = document.querySelectorAll(
-          ".split-pane-main .ion-page"
-        );
+watch(route, (newValue, oldValue) => {
+  nextTick(() => {
+    const elementos = document.querySelectorAll(".split-pane-main .ion-page");
 
-        elementos.forEach(function (elemento) {
-          elemento.classList.add("component-container");
-        });
-      });
-    },
-  },
-
-  mounted() {
-    this.start();
-    this.$nextTick(() => {
-      const ionPage = this.$el.querySelector(".split-pane-main .ion-page");
-      if (ionPage) {
-        ionPage.classList.add("component-container");
-      }
+    elementos.forEach(function (elemento) {
+      elemento.classList.add("component-container");
     });
-  },
+  });
+});
 
-  methods: {
-    async start() {
-      await useDocument().loadUserDocuments();
-      useReminders().loadReminders();
+// functions
+const start = async () => {
+  await useDocument().loadUserDocuments();
+  useReminders().loadReminders();
 
-      await useSystem().loadThemeSelected();
-      const theme = useSystem().getTheme();
-      setTheme({ theme: theme });
-    },
-  },
+  await useSystem().loadThemeSelected();
+  const theme = useSystem().getTheme();
+  setTheme({ theme: theme });
+};
+
+// mounted
+start();
+nextTick(() => {
+  const elementos = document.querySelectorAll(".split-pane-main .ion-page");
+
+  elementos.forEach(function (elemento) {
+    elemento.classList.add("component-container");
+  });
 });
 </script>
