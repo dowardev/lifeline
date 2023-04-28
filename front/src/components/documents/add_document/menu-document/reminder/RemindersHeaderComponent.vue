@@ -19,7 +19,7 @@
     <ion-toolbar>
       <ion-segment
         :mode="isPlatform('ios') ? 'ios' : 'md'"
-        :value="reminderSegment"
+        :value="props.reminderSegment"
         @ion-change="
           changeSegmentReminderValue({ value: $event.detail.value as string })
         "
@@ -32,7 +32,7 @@
   </ion-header>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonHeader,
   IonTitle,
@@ -44,43 +44,22 @@ import {
   isPlatform,
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { defineComponent } from "vue";
 
-export default defineComponent({
-  name: "MenuOptComponent",
-
-  components: {
-    IonHeader,
-    IonTitle,
-    IonToolbar,
-    IonButtons,
-    IonButton,
-    IonSegment,
-    IonSegmentButton,
-  },
-
-  props: { reminderSegment: { type: String, default: "date-start" } },
-
-  emits: ["closeReminders", "segmentRerminderChange"],
-
-  setup() {
-    return {
-      closeOutline,
-      pageTitle: "Recordatorios",
-      saveOutline,
-      isPlatform,
-    };
-  },
-
-  methods: {
-    closeReminders() {
-      this.$emit("closeReminders");
-    },
-
-    changeSegmentReminderValue(params: { value: string }) {
-      const value = params.value;
-      this.$emit("segmentRerminderChange", value);
-    },
-  },
+const props = defineProps({
+  reminderSegment: { type: String, default: "date-start" },
 });
+
+const emitEvent = defineEmits(["closeReminders", "segmentRerminderChange"]);
+
+const pageTitle = "Recordatorios";
+
+// functions
+const closeReminders = () => {
+  emitEvent("closeReminders");
+};
+
+const changeSegmentReminderValue = (params: { value: string }) => {
+  const value = params.value;
+  emitEvent("segmentRerminderChange", value);
+};
 </script>

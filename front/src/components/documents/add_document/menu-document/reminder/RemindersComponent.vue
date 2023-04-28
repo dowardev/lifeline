@@ -30,50 +30,20 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { IonContent, isPlatform, IonPage } from "@ionic/vue";
-import { defineComponent, ref } from "vue";
+import { ref } from "vue";
 import RemindreHeader from "./RemindersHeaderComponent.vue";
 import ReminderContent from "./RemindersContentComponent.vue";
 
-export default defineComponent({
-  name: "MenuOptComponent",
+const emitEvent = defineEmits(["closeReminders"]);
 
-  components: {
-    IonContent,
-    RemindreHeader,
-    ReminderContent,
-    IonPage,
-  },
+// ref
+const contentDesktop = ref();
+const contentMobile = ref();
 
-  emits: ["closeReminders"],
-
-  setup() {
-    const contentDesktop = ref();
-    const contentMobile = ref();
-    return {
-      isPlatform,
-      contentDesktop,
-      contentMobile,
-    };
-  },
-
-  computed: {
-    generateCalendar() {
-      const hours = [];
-      for (let i = 0; i < 24; i++) {
-        hours.push({
-          hour: i,
-        });
-      }
-      return hours;
-    },
-  },
-
-  methods: {
-    closeReminders() {
-      this.$emit("closeReminders");
-    },
-  },
-});
+// funtions
+const closeReminders = () => {
+  emitEvent("closeReminders");
+};
 </script>

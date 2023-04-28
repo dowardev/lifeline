@@ -37,7 +37,7 @@
 
   <!-- reminders -->
   <section v-if="reminderSegment == 'reminders'">
-    <ion-item v-for="(repeat, index) in reminderRepeatBak" :key="index">
+    <ion-item v-for="(repeat, index) in reminderRepeat" :key="index">
       <ion-checkbox
         label-placement="end"
         :value="repeat.value"
@@ -58,105 +58,37 @@
   </section>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { IonButton, IonItem, IonDatetime, IonCheckbox } from "@ionic/vue";
-import {
-  closeOutline,
-  moveOutline,
-  saveOutline,
-  timeOutline,
-} from "ionicons/icons";
-import { defineComponent, ref } from "vue";
-import { format } from "date-fns";
+import { ref } from "vue";
 
-export default defineComponent({
-  name: "MenuOptComponent",
+const datetimeStart = ref();
+const datetimeEnd = ref();
+const resetEnd = () => datetimeEnd.value.$el.reset();
+const cancelEnd = () => {
+  datetimeEnd.value.$el.cancel();
+  reminderSegment.value = "date-start";
+};
+const confirmEnd = () => {
+  datetimeEnd.value.$el.confirm();
+  reminderSegment.value = "reminders";
+};
+const resetStart = () => datetimeStart.value.$el.reset();
+const cancelStart = () => datetimeStart.value.$el.cancel();
+const confirmStart = () => {
+  datetimeStart.value.$el.confirm();
+  reminderSegment.value = "date-end";
+};
+const reminderSegment = ref("date-start");
 
-  components: {
-    IonButton,
-    IonDatetime,
-  },
-
-  setup() {
-    const datetimeStart = ref();
-    const resetStart = () => datetimeStart.value.$el.reset();
-    const cancelStart = () => datetimeStart.value.$el.cancel();
-    const confirmStart = () => {
-      datetimeStart.value.$el.confirm();
-      reminderSegment.value = "date-end";
-    };
-
-    const datetimeEnd = ref();
-    const resetEnd = () => datetimeEnd.value.$el.reset();
-    const cancelEnd = () => {
-      datetimeEnd.value.$el.cancel();
-      reminderSegment.value = "date-start";
-    };
-    const confirmEnd = () => {
-      datetimeEnd.value.$el.confirm();
-      reminderSegment.value = "reminders";
-    };
-
-    const reminderSegment = ref("date-start");
-
-    return {
-      closeOutline,
-      pageTitle: "Recordatorios",
-      saveOutline,
-      moveOutline,
-      timeOutline,
-      format,
-      datetimeStart,
-      resetStart,
-      cancelStart,
-      confirmStart,
-      datetimeEnd,
-      resetEnd,
-      cancelEnd,
-      confirmEnd,
-      reminderSegment,
-    };
-  },
-
-  data() {
-    const reminderRepeat = [
-      { value: "just", text: "A tiempo", isChecked: false },
-      { value: "5mb", text: "5 minutos antes", isChecked: false },
-      { value: "10mb", text: "10 minutos antes", isChecked: false },
-      { value: "30mb", text: "30 minutos antes", isChecked: false },
-      { value: "1hb", text: "1 hora antes", isChecked: false },
-      { value: "1db", text: "1 dia antes", isChecked: false },
-    ];
-    return {
-      popoverReminderStartOpen: false,
-      popoverReminderStartEvent: Event as any,
-      popoverReminderEndOpen: false,
-      popoverReminderEndEvent: Event as any,
-      dateReminderStart: new Date().toISOString(),
-      dateReminderEnd: new Date().toISOString(),
-      reminderRepeat,
-      reminderRepeatBak: reminderRepeat,
-      hours: Array<{ hour: string }>,
-    };
-  },
-
-  computed: {
-    generateCalendar() {
-      const hours = [];
-      for (let i = 0; i < 24; i++) {
-        hours.push({
-          hour: i,
-        });
-      }
-      return hours;
-    },
-  },
-
-  methods: {
-    changeSegmentReminderValue(params: { value: string }) {
-      const value = params.value;
-      this.reminderSegment = value;
-    },
-  },
-});
+const dateReminderStart = ref(new Date().toISOString());
+const dateReminderEnd = ref(new Date().toISOString());
+const reminderRepeat = ref([
+  { value: "just", text: "A tiempo", isChecked: false },
+  { value: "5mb", text: "5 minutos antes", isChecked: false },
+  { value: "10mb", text: "10 minutos antes", isChecked: false },
+  { value: "30mb", text: "30 minutos antes", isChecked: false },
+  { value: "1hb", text: "1 hora antes", isChecked: false },
+  { value: "1db", text: "1 dia antes", isChecked: false },
+]);
 </script>
