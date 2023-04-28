@@ -18,7 +18,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   popoverController,
@@ -27,61 +27,46 @@ import {
   IonLabel,
 } from "@ionic/vue";
 import { trashOutline } from "ionicons/icons";
-import { defineComponent, ref } from "vue";
+import { ref } from "vue";
 
 type Option = "delete";
 type Role = "confirm" | "cancel";
 
-export default defineComponent({
-  name: "MenuRightComponent",
+// refs
+const progress = ref(0);
+const showDeleteOption = ref(true);
+const intervalDeleteId = ref(0);
 
-  components: { IonContent, IonItem, IonButton, IonLabel },
+const selectOption = (params: { option: Option }) => {
+  const option = params.option;
+  if (option == "delete") deleteOption();
+};
 
-  setup() {
-    let progress = ref(0);
-    return { trashOutline, progress };
-  },
+const deleteOption = () => {
+  showDeleteOption.value = false;
+  intervalDeleteId.value = setInterval(() => {
+    progress.value += 0.01;
+    if (progress.value > 1) {
+      clearInterval(intervalDeleteId.value);
+      setTimeout(async () => {
+        progress.value = 0;
+        await closeModal({
+          data: { option: "delete" },
+          role: "confirm",
+        });
+      }, 1000);
+    }
+  }, 30);
+};
 
-  data() {
-    return {
-      showDeleteOption: true,
-      intervalDeleteId: null as any,
-    };
-  },
+const cancelDelete = async () => {
+  clearInterval(intervalDeleteId.value);
+  await closeModal({ data: { option: "delete" }, role: "cancel" });
+};
 
-  methods: {
-    selectOption(params: { option: Option }) {
-      const option = params.option;
-      if (option == "delete") this.deleteOption();
-    },
-
-    deleteOption() {
-      this.showDeleteOption = false;
-      this.intervalDeleteId = setInterval(() => {
-        this.progress += 0.01;
-        if (this.progress > 1) {
-          clearInterval(this.intervalDeleteId)
-          setTimeout(async () => {
-            this.progress = 0;
-            await this.closeModal({
-              data: { option: "delete" },
-              role: "confirm",
-            });
-          }, 1000);
-        }
-      }, 30);
-    },
-
-    async cancelDelete() {
-      clearInterval(this.intervalDeleteId);
-      await this.closeModal({ data: { option: "delete" }, role: "cancel" });
-    },
-
-    async closeModal(params: { data: { option: Option }; role: Role }) {
-      const data = params.data;
-      const role = params.role;
-      await popoverController.dismiss(data, role);
-    },
-  },
-});
+const closeModal = async (params: { data: { option: Option }; role: Role }) => {
+  const data = params.data;
+  const role = params.role;
+  await popoverController.dismiss(data, role);
+};
 </script>
