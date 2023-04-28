@@ -3,7 +3,7 @@ import { RouteRecordRaw } from "vue-router";
 // import HomePage from '../views/HomePage.vue'
 import HomePage from "@/views/home/HomePage.vue";
 import SignUpPage from "@/views/sesion/signup/SignUpPage.vue";
-import LoginPage from "@/views/sesion/login/Login.vue";
+import LoginPage from "@/views/sesion/login/LoginPage.vue";
 import PruebaPage from "@/views/prueba/PruebaPage.vue";
 import DocumentPage from "@/components/documents/add_document/AddDocumentComponent.vue";
 import PoliciesPage from "@/views/policies/PoliciesPage.vue";

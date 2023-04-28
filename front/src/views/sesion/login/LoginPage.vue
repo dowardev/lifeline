@@ -212,7 +212,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -222,7 +222,6 @@ import {
   toastController,
   alertController,
   IonInput,
-  loadingController,
   IonCard,
   IonRow,
   IonCol,
@@ -234,12 +233,11 @@ import {
   IonButton,
   isPlatform,
 } from "@ionic/vue";
-import { defineComponent, ref } from "vue";
+import { computed, ref } from "vue";
 import {
   eyeOffOutline,
   eyeOutline,
   fingerPrintOutline,
-  mailOpenOutline,
   personOutline,
 } from "ionicons/icons";
 import { userLogin } from "../../../services/session";
@@ -257,275 +255,221 @@ import { useSystem } from "@/composables/useSystem";
 import keyImage from "@/assets/otros/key.svg";
 import keyImageGruvbox from "@/assets/otros/key-gruvbox.png";
 import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
+import { onBeforeRouteUpdate, useRouter } from "vue-router";
 
-export default defineComponent({
-  name: "LoginPage",
-  components: {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonInput,
-    IonCard,
-    IonRow,
-    IonCol,
-    IonButtons,
-    IonMenuButton,
-    IonItem,
-    IonIcon,
-    IonLabel,
-    IonButton,
-  },
+const router = useRouter();
 
-  beforeRouteEnter(to, from, next) {
-    getUser({ graphql: { name: USER_NAME, fragment: "UserName" } })
-      .then(() => {
-        next("/");
-      })
-      .catch(() => {
-        next();
-      });
-  },
-
-  setup() {
-    const modeDesingElements = isPlatform("ios") ? "ios" : "md";
-
-    // form
-    const form = { email: ref(""), password: ref("") };
-
-    // spinners
-    const buttonLogin = ref(false);
-    const buttonForgotPassword = ref(false);
-    const buttonCreateAccount = ref(false);
-
-    // validation
-    const regexValidations = {
-      email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      required: /^\s*$/,
-    };
-    const messageError = {
-      email: "Correo electronico no valido",
-      required: "Campo requerido",
-    };
-    const rules = {
-      form: {
-        email: {
-          required: helpers.withMessage(messageError.required, required),
-          email: helpers.withMessage(messageError.email, email),
-        },
-        password: {
-          required: helpers.withMessage(messageError.required, required),
-        },
-      },
-    };
-    const v$ = useVuelidate(rules, { form });
-
-    // input ref
-    const inputMail = ref(null);
-    const inputPassword = ref(null);
-
-    // others
-    const isPasswordVisible = ref(false);
-    return {
-      eyeOffOutline,
-      eyeOutline,
-      v$,
-      fingerPrintOutline,
-      mailOpenOutline,
-      modeDesingElements,
-      capitalizeFirstLetter: capitalizeFirstLetter,
-      form,
-      spinners: {
-        buttonLogin,
-        buttonForgotPassword,
-        buttonCreateAccount,
-      },
-      personOutline,
-      messageError,
-      regexValidations,
-      inputMail,
-      inputPassword,
-      isPasswordVisible,
-    };
-  },
-
-  computed: {
-    imageKeyPath() {
-      const theme = useSystem().getTheme();
-      let image = "";
-      if (theme == "nord" || "light") image = keyImage;
-      if (theme == "gruvbox") image = keyImageGruvbox;
-      return image;
-    },
-    loginImagePath() {
-      const theme = useSystem().getTheme();
-      let image = "";
-      if (theme == "nord" || "light")
-        image =
-          "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
-      if (theme == "gruvbox") image = loginImageGruvbox;
-      return image;
-    },
-  },
-
-  methods: {
-    async presentToast(message: string, color: string) {
-      const toast = await toastController.create({
-        message,
-        duration: 3000,
-        mode: "ios",
-        color,
-      });
-      toast.present();
-    },
-
-    async login() {
-      this.spinners.buttonLogin.value = true;
-
-      const user = this.form.email.value.replace(/\s+/g, "");
-      const password = this.form.password.value;
-
-      try {
-        const response = await userLogin({
-          user,
-          password,
-          graphql: { name: USER_LOGIN, fragment: "UserLogin" },
-        });
-
-        const token = "Bearer " + response.auth.access_token;
-        setUserToken({ token });
-
-        this.spinners.buttonLogin.value = false;
-        this.clearInputs();
-        location.reload();
-      } catch (e: any) {
-        this.spinners.buttonLogin.value = false;
-        if (e.message == "Unauthorized" || e.message == "Not found") {
-          this.presentToast("Usuario y/o contraseña incorrectos", "danger");
-          return;
-        }
-        if (e.message == "Unverified email") {
-          this.alertConfirmationEmail();
-          return;
-        }
-        if (e.message == "Disabled user") {
-          this.presentToast(
-            "Cuenta de usuario deshabilitada, para mas informacion contacte a soporte.",
-            "danger"
-          );
-          return;
-        }
-
-        // openToastErrror(e);
-        console.error(e.message);
-      }
-    },
-
-    clearInputs() {
-      this.form.password.value = "";
-      this.form.email.value = "";
-    },
-
-    async alertConfirmationEmail() {
-      const alert = await alertController.create({
-        cssClass: "my-custom-class",
-        header: "Alerta",
-
-        subHeader: "Confirmación",
-        message:
-          "Hemos enviado un correo electrónico a " +
-          this.form.email +
-          " con un enlace para verificar tu identidad.",
-        buttons: [
-          {
-            text: "Continuar",
-            handler: () => {
-              resendEmailConfirmation({ email: this.form.email });
-            },
-          },
-        ],
-      });
-
-      await alert.present();
-    },
-
-    async presentLoading(message: string) {
-      const loading = await loadingController.create({
-        message,
-      });
-      return loading;
-    },
-
-    async forgotPassword() {
-      this.spinners.buttonForgotPassword.value = true;
-
-      const alertResponse = await this.presentAlertRestorePassword();
-      if (alertResponse.role == "cancel") {
-        this.spinners.buttonForgotPassword.value = false;
-        return;
-      }
-
-      // try {
-      //   await sendMailResetPassword({
-      //     email: alertResponse.email,
-      //   });
-      // } catch (e: any) {
-      //   console.error(e);
-      //   openToastErrror(e);
-      // }
-
-      this.spinners.buttonForgotPassword.value = false;
-    },
-
-    async createAccount() {
-      this.spinners.buttonCreateAccount.value = true;
-      await this.$router.push("/signup");
-      this.spinners.buttonCreateAccount.value = false;
-    },
-
-    async presentAlertRestorePassword(): Promise<{
-      email: string;
-      role: string;
-    }> {
-      const alert = await alertController.create({
-        cssClass: "my-custom-class",
-        header: "Restauracion de contraseña",
-        message:
-          "Te enviaremos un correo electronico con las intrucciones para restablecer tu contraseña.",
-        inputs: [
-          {
-            name: "email",
-            id: "email",
-            placeholder: "Correo electronico",
-            type: "email",
-          },
-        ],
-        buttons: [
-          {
-            text: "Cancelar",
-            role: "cancel",
-            cssClass: "secondary",
-            handler: () => {
-              // console.log("Confirm Cancel");
-            },
-          },
-          {
-            text: "Confirmar",
-            handler: () => {
-              // console.log(e);
-            },
-          },
-        ],
-      });
-
-      await alert.present();
-      const response = await alert.onDidDismiss();
-      // eslint-disable-next-line
-      return { email: response.data.values.email, role: response.role! };
-    },
-  },
+onBeforeRouteUpdate((to, from, next) => {
+  getUser({ graphql: { name: USER_NAME, fragment: "UserName" } })
+    .then(() => {
+      next("/");
+    })
+    .catch(() => {
+      next();
+    });
 });
+
+// refs
+const form = { email: ref(""), password: ref("") };
+// spinners
+const spinners = {
+  buttonLogin: ref(false),
+  buttonForgotPassword: ref(false),
+  buttonCreateAccount: ref(false),
+};
+
+// input ref
+const inputMail = ref(null);
+const inputPassword = ref(null);
+
+// others
+const isPasswordVisible = ref(false);
+
+// vars
+const modeDesingElements = isPlatform("ios") ? "ios" : "md";
+const messageError = {
+  email: "Correo electronico no valido",
+  required: "Campo requerido",
+};
+const rules = {
+  form: {
+    email: {
+      required: helpers.withMessage(messageError.required, required),
+      email: helpers.withMessage(messageError.email, email),
+    },
+    password: {
+      required: helpers.withMessage(messageError.required, required),
+    },
+  },
+};
+const v$ = useVuelidate(rules, { form });
+
+// computed
+const imageKeyPath = computed(() => {
+  const theme = useSystem().getTheme();
+  let image = "";
+  if (theme == "nord" || "light") image = keyImage;
+  if (theme == "gruvbox") image = keyImageGruvbox;
+  return image;
+});
+const loginImagePath = computed(() => {
+  const theme = useSystem().getTheme();
+  let image = "";
+  if (theme == "nord" || "light")
+    image =
+      "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
+  if (theme == "gruvbox") image = loginImageGruvbox;
+  return image;
+});
+
+// funcions
+const presentToast = async (message: string, color: string) => {
+  const toast = await toastController.create({
+    message,
+    duration: 3000,
+    mode: "ios",
+    color,
+  });
+  toast.present();
+};
+
+const login = async () => {
+  spinners.buttonLogin.value = true;
+
+  const user = form.email.value.replace(/\s+/g, "");
+  const password = form.password.value;
+
+  try {
+    const response = await userLogin({
+      user,
+      password,
+      graphql: { name: USER_LOGIN, fragment: "UserLogin" },
+    });
+
+    const token = "Bearer " + response.auth.access_token;
+    setUserToken({ token });
+
+    spinners.buttonLogin.value = false;
+    clearInputs();
+    location.reload();
+  } catch (e: any) {
+    spinners.buttonLogin.value = false;
+    if (e.message == "Unauthorized" || e.message == "Not found") {
+      presentToast("Usuario y/o contraseña incorrectos", "danger");
+      return;
+    }
+    if (e.message == "Unverified email") {
+      alertConfirmationEmail();
+      return;
+    }
+    if (e.message == "Disabled user") {
+      presentToast(
+        "Cuenta de usuario deshabilitada, para mas informacion contacte a soporte.",
+        "danger"
+      );
+      return;
+    }
+
+    // openToastErrror(e);
+    console.error(e.message);
+  }
+};
+
+const clearInputs = () => {
+  form.password.value = "";
+  form.email.value = "";
+};
+
+const alertConfirmationEmail = async () => {
+  const alert = await alertController.create({
+    cssClass: "my-custom-class",
+    header: "Alerta",
+
+    subHeader: "Confirmación",
+    message:
+      "Hemos enviado un correo electrónico a " +
+      form.email +
+      " con un enlace para verificar tu identidad.",
+    buttons: [
+      {
+        text: "Continuar",
+        handler: () => {
+          resendEmailConfirmation({ email: form.email });
+        },
+      },
+    ],
+  });
+
+  await alert.present();
+};
+
+const forgotPassword = async () => {
+  spinners.buttonForgotPassword.value = true;
+
+  const alertResponse = await presentAlertRestorePassword();
+  if (alertResponse.role == "cancel") {
+    spinners.buttonForgotPassword.value = false;
+    return;
+  }
+
+  // try {
+  //   await sendMailResetPassword({
+  //     email: alertResponse.email,
+  //   });
+  // } catch (e: any) {
+  //   console.error(e);
+  //   openToastErrror(e);
+  // }
+
+  spinners.buttonForgotPassword.value = false;
+};
+
+const createAccount = async () => {
+  spinners.buttonCreateAccount.value = true;
+  await router.push("/signup");
+  spinners.buttonCreateAccount.value = false;
+};
+
+const presentAlertRestorePassword = async (): Promise<{
+  email: string;
+  role: string;
+}> => {
+  const alert = await alertController.create({
+    cssClass: "my-custom-class",
+    header: "Restauracion de contraseña",
+    message:
+      "Te enviaremos un correo electronico con las intrucciones para restablecer tu contraseña.",
+    inputs: [
+      {
+        name: "email",
+        id: "email",
+        placeholder: "Correo electronico",
+        type: "email",
+      },
+    ],
+    buttons: [
+      {
+        text: "Cancelar",
+        role: "cancel",
+        cssClass: "secondary",
+        handler: () => {
+          // console.log("Confirm Cancel");
+        },
+      },
+      {
+        text: "Confirmar",
+        handler: () => {
+          // console.log(e);
+        },
+      },
+    ],
+  });
+
+  await alert.present();
+  const response = await alert.onDidDismiss();
+  // eslint-disable-next-line
+  return { email: response.data.values.email, role: response.role! };
+};
 </script>
 
 <style scoped>
