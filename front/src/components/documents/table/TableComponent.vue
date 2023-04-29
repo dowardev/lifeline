@@ -16,34 +16,4 @@
   </ion-card>
 </template>
 
-<script lang="ts">
-import {
-  IonItem,
-  IonLabel,
-} from "@ionic/vue";
-import {
-  pricetagsOutline,
-  saveOutline,
-  timeOutline,
-  trashOutline,
-} from "ionicons/icons";
-import { defineComponent, } from "vue";
-
-export default defineComponent({
-  name: "TableComponent",
-  components: {
-    IonItem,
-    IonLabel,
-  },
-
-  setup() {
-    return {
-      pageTitle: "Home",
-      trashOutline,
-      timeOutline,
-      pricetagsOutline,
-      saveOutline,
-    };
-  },
-});
-</script>
+<script setup lang="ts"></script>
