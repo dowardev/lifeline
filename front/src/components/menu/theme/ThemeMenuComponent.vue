@@ -33,7 +33,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -45,66 +45,37 @@ import {
   IonLabel,
   modalController,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import {
   checkmarkOutline,
   chevronBackOutline,
   eyeOutline,
 } from "ionicons/icons";
 import { Theme } from "@/utils/types";
-import { saveTheme, setTheme } from "@/services/system";
 import { useSystem } from "@/composables/useSystem";
 
-export default defineComponent({
-  name: "ThemeComponent",
-  components: {
-    IonContent,
-    IonHeader,
-    IonTitle,
-    IonToolbar,
-    IonButtons,
-    IonButton,
-  },
+const availableThemes: Theme[] = ["light", "nord", "gruvbox"];
 
-  setup() {
-    const availableThemes: Theme[] = ["light", "nord", "gruvbox"];
-    return {
-      chevronBackOutline,
-      eyeOutline,
-      checkmarkOutline,
-      availableThemes,
-    };
-  },
+const pageTitle = "Selector de tema";
+let themeSelected = "";
 
-  data() {
-    return {
-      pageTitle: "Selector de tema",
-      themeSelected: "",
-    };
-  },
+// funtions
+const closeModal = () => {
+  modalController.dismiss();
+};
 
-  methods: {
-    closeModal() {
-      modalController.dismiss();
-    },
+const previewTheme = (params: { name: Theme }) => {
+  const theme = params.name;
+  themeSelected = themeSelected;
 
-    previewTheme(params: { name: Theme }) {
-      const theme = params.name;
-      const themeSelected = this.themeSelected;
+  document.body.classList.add(theme);
+  themeSelected = theme;
+  if (themeSelected != "")
+    document.getElementsByTagName("body")[0].classList.remove(themeSelected);
+};
 
-      document.body.classList.add(theme);
-      this.themeSelected = theme;
-      if (themeSelected != "")
-        document
-          .getElementsByTagName("body")[0]
-          .classList.remove(themeSelected);
-    },
-
-    async applyTheme(params: { name: Theme }) {
-      const theme = params.name;
-      useSystem().applyTheme({theme})
-      useSystem().updateThemeSelected({theme})
-    },
-  },
-});
+const applyTheme = async (params: { name: Theme }) => {
+  const theme = params.name;
+  useSystem().applyTheme({ theme });
+  useSystem().updateThemeSelected({ theme });
+};
 </script>
