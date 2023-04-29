@@ -64,7 +64,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonItem,
   IonPopover,
@@ -73,105 +73,72 @@ import {
   isPlatform,
   IonModal,
 } from "@ionic/vue";
-import {
-  pricetagsOutline,
-  saveOutline,
-  timeOutline,
-  trashOutline,
-  closeOutline,
-} from "ionicons/icons";
-import { defineComponent } from "vue";
-import { NewNote, Note } from "../../../utils/interfaces";
+import { watch } from "vue";
+import { Note } from "../../../utils/interfaces";
 import NoteRightMenuComponent from "./rightMenu/noteRightMenuComponent.vue";
 import { OptionsNoteRightMenu } from "../../../utils/types";
-import { format } from "date-fns";
 import RemindersComponent from "./reminders/RemindersComponent.vue";
 
-export default defineComponent({
-  name: "NoteComponent",
-  components: {
-    IonItem,
-    IonPopover,
-    IonTextarea,
-    IonModal,
-    RemindersComponent,
-  },
-
-  props: { data: { type: Object as () => Note, default: {} as Note } },
-
-  emits: ["updateValue", "addElement", "removeNote", "updateReminder"],
-
-  setup() {
-    return {
-      pageTitle: "NoteComponent",
-      trashOutline,
-      timeOutline,
-      pricetagsOutline,
-      saveOutline,
-      format,
-      idElements: new Date().getTime(),
-      isPlatform,
-      closeOutline,
-    };
-  },
-
-  data() {
-    return {
-      inputValue: "",
-      isOpenModalReminders: false,
-      isOpenPopoverReminders: false,
-    };
-  },
-
-  watch: {
-    data(newVal) {
-      const data = newVal;
-      const content = data.content;
-      this.inputValue = content;
-    },
-  },
-
-  mounted() {
-    this.setData();
-  },
-
-  methods: {
-    updateValue(params: { value: string }) {
-      const value = params.value;
-      this.$emit("updateValue", value);
-    },
-
-    async openPopoverRightMenu(params: { ev: Event }) {
-      const ev = params.ev;
-
-      const popover = await popoverController.create({
-        component: NoteRightMenuComponent,
-        event: ev,
-        showBackdrop: false,
-      });
-      await popover.present();
-
-      const { role, data } = await popover.onDidDismiss();
-      if (role == "confirm") this.optionMenu({ option: data.option });
-    },
-
-    setData() {
-      const data = this.data;
-      const content = data.content;
-
-      this.inputValue = content as string;
-    },
-
-    optionMenu(params: { option: OptionsNoteRightMenu }) {
-      const option = params.option;
-
-      if (option == "add") this.$emit("addElement", option);
-      if (option == "remove") this.$emit("removeNote", option);
-      if (option == "reminders") {
-        if (isPlatform("desktop")) this.isOpenPopoverReminders = true;
-        else this.isOpenModalReminders = true;
-      }
-    },
-  },
+const props = defineProps({
+  data: { type: Object as () => Note, default: {} as Note },
 });
+
+const emitEvent = defineEmits([
+  "updateValue",
+  "addElement",
+  "removeNote",
+  "updateReminder",
+]);
+
+const idElements = new Date().getTime();
+let inputValue = "";
+let isOpenModalReminders = false;
+let isOpenPopoverReminders = false;
+
+watch(props.data, (newValue, oldValue) => {
+  const data = newValue;
+  const content = data.content;
+  if (!content) return;
+  inputValue = content;
+});
+
+// functions
+const updateValue = (params: { value: string }) => {
+  const value = params.value;
+  emitEvent("updateValue", value);
+};
+
+const openPopoverRightMenu = async (params: { ev: Event }) => {
+  const ev = params.ev;
+
+  const popover = await popoverController.create({
+    component: NoteRightMenuComponent,
+    event: ev,
+    showBackdrop: false,
+  });
+  await popover.present();
+
+  const { role, data } = await popover.onDidDismiss();
+  if (role == "confirm") optionMenu({ option: data.option });
+};
+
+const setData = () => {
+  const content = props.data.content;
+
+  inputValue = content as string;
+};
+
+const optionMenu = (params: { option: OptionsNoteRightMenu }) => {
+  const option = params.option;
+
+  if (option == "add") emitEvent("addElement", option);
+  if (option == "remove") emitEvent("removeNote", option);
+  if (option == "reminders") {
+    if (isPlatform("desktop")) isOpenPopoverReminders = true;
+    else isOpenModalReminders = true;
+  }
+};
+
+// mounted
+setData();
 </script>
