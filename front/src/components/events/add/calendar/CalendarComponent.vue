@@ -60,50 +60,30 @@
   </ion-popover>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { IonDatetime, IonPopover } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { add, format, subDays } from "date-fns";
 import { chevronBackOutline, chevronForwardOutline } from "ionicons/icons";
 
-export default defineComponent({
-  name: "CalendarComponent",
+const currentDate = ref(new Date());
+const hours = Array.from(
+  { length: 24 },
+  (_, i) => `${i.toString().padStart(2, "0")}:00`
+);
 
-  components: {
-    IonDatetime,
-    IonPopover,
-  },
+// functions
+const nextDay = () => {
+  const date = currentDate;
+  currentDate.value = add(new Date(date.value), {
+    days: 1,
+  });
+};
 
-  setup() {
-    const currentDate = ref(new Date());
-    return {
-      pageTitle: "Calendario",
-      hours: Array.from(
-        { length: 24 },
-        (_, i) => `${i.toString().padStart(2, "0")}:00`
-      ),
-      events: {},
-      format,
-      chevronBackOutline,
-      chevronForwardOutline,
-      currentDate,
-    };
-  },
-
-  methods: {
-    nextDay() {
-      const date = this.currentDate;
-      this.currentDate = add(new Date(date), {
-        days: 1,
-      });
-    },
-
-    previousDay() {
-      const date = this.currentDate;
-      this.currentDate = subDays(new Date(date), 1);
-    },
-  },
-});
+const previousDay = () => {
+  const date = currentDate;
+  currentDate.value = subDays(new Date(date.value), 1);
+};
 </script>
 
 <style scoped>
