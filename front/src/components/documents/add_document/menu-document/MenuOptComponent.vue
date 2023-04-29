@@ -47,7 +47,7 @@
             size="large"
             :disabled="
               (
-                useDocument().getUserDocument({ documentId: documentId })
+                useDocument().getUserDocument({ documentId: props.documentId })
                   ?.elements ?? []
               ).length <= 1
             "
@@ -138,11 +138,9 @@ import {
 import {
   closeOutline,
   moveOutline,
-  saveOutline,
   shareSocialOutline,
   timeOutline,
 } from "ionicons/icons";
-import { defineComponent } from "vue";
 import { OptionsMainMenuDocument } from "../../../../utils/types";
 import { useDocument } from "../../../../composables/useDocument";
 import { isPlatform } from "@ionic/vue";
