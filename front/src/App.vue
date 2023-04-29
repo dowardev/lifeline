@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
 import { nextTick, watch } from "vue";
-import MenuComponent from "@/components/menu/Menu.vue";
+import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { setTheme } from "@/services/system";
 import { useDocument } from "@/composables/useDocument";
 import { useReminders } from "@/composables/useReminders";

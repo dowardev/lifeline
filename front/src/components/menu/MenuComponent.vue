@@ -154,7 +154,7 @@
       <ion-toolbar>
         <ion-buttons slot="end">
           <ion-button
-            v-if="!androidPlatform && !iosPlatform"
+            v-if="isPlatform('android') || isPlatform('ios')"
             fill="clear"
             color="primary"
             @click="openModalDesktop()"
@@ -163,7 +163,7 @@
           </ion-button>
 
           <ion-button
-            v-if="androidPlatform || iosPlatform"
+            v-if="isPlatform('android') || isPlatform('ios')"
             fill="clear"
             color="primary"
             @click="openModalMobile()"
@@ -189,12 +189,7 @@
             </ion-content>
           </ion-popover>
 
-          <ion-button
-            v-if="logged == true"
-            fill="clear"
-            color="primary"
-            @click="logout()"
-          >
+          <ion-button v-if="logged == true" fill="clear" color="primary">
             <ion-icon :icon="exitOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -203,7 +198,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -220,7 +215,7 @@ import {
   exitOutline,
   languageOutline,
 } from "ionicons/icons";
-import { defineComponent } from "vue";
+import { computed, defineComponent } from "vue";
 import {
   settingsOutline,
   homeOutline,
@@ -246,141 +241,72 @@ import { setLanguage } from "../../services/system";
 import { useSystem } from "@/composables/useSystem";
 import userImage from "@/assets/otros/user.png";
 import userImageGruvbox from "@/assets/otros/user-gruvbox.png";
+import { useRouter } from "vue-router";
 
-export default defineComponent({
-  name: "MenuComponent",
-  components: {
-    IonContent,
-    IonPage,
-    IonToolbar,
-    IonFooter,
-  },
+const router = useRouter();
 
-  setup() {
-    return {
-      settingsOutline,
-      homeOutline,
-      documentOutline,
-      checkboxOutline,
-      briefcaseOutline,
-      helpOutline,
-      menuController,
-      cogOutline,
-      cloudDownloadOutline,
-      brushOutline,
-      androidPlatform: isPlatform("android"),
-      iosPlatform: isPlatform("ios"),
-      exitOutline,
-      languageOutline,
-      capitalizeFirstLetter: capitalizeFirstLetter,
-      documentTextOutline,
-    };
-  },
+const logged = false;
+const userData = {
+  img: userAvatar,
+  user: "Usuario",
+};
 
-  data() {
-    return {
-      logged: false,
-      userData: {
-        img: userAvatar,
-        user: "Usuario",
-      },
-    };
-  },
-
-  computed: {
-    imageKeyPath() {
-      const theme = useSystem().getTheme();
-      let image = "";
-      if (theme == "nord" || "light") image = userImage;
-      if (theme == "gruvbox") image = userImageGruvbox;
-      return image;
-    },
-  },
-
-  mounted() {
-    this.getUser();
-    // eventBus().emitter.on("content-refresh", () => {
-    //   this.getUser();
-    //   eventBus().emitter.all.clear();
-    // });
-  },
-
-  methods: {
-    openRoute(route: string) {
-      this.menuController.close();
-      this.$router.push(route);
-    },
-
-    async getUser() {
-      try {
-        const { user } = await getUserService({
-          graphql: { name: USER_MENU, fragment: "UserMenu" },
-        });
-        this.logged = true;
-        this.userData.user = user;
-      } catch (e: any) {
-        if (e.message == "Unauthorized") return;
-        // openToastErrror(e);
-        console.error(e);
-      }
-    },
-
-    async openModalDesktop() {
-      const modal = await modalController.create({
-        component: ThemeSelectorComponent,
-        cssClass: "my-custom-class",
-        componentProps: {
-          title: "New Title",
-        },
-      });
-      return modal.present();
-    },
-    async openModalMobile() {
-      const modal = await modalController.create({
-        component: ThemeSelectorComponent,
-        initialBreakpoint: 0.5,
-        breakpoints: [0, 0.5, 1],
-      });
-      return modal.present();
-    },
-    async logout() {
-      // const alert = await alertController.create({
-      //   cssClass: "my-custom-class",
-      //   header: "Cerrar sesion",
-      //   message: "¿Continuar?",
-      //   buttons: [
-      //     {
-      //       text: "Si",
-      //       id: "confirm-button",
-      //       handler: () => {
-      //         sesionService()
-      //           .logout()
-      //           .then((response) => {
-      //             systemService().openToast("Hasta pronto", "success");
-      //           })
-      //           .catch((e) => {
-      //             systemService().openToast("Ocurrio un error", "danger");
-      //           });
-      //       },
-      //     },
-      //     {
-      //       text: "No",
-      //       role: "cancel",
-      //       handler: (blah) => {
-      //         console.log("Confirm Cancel:", blah);
-      //       },
-      //     },
-      //   ],
-      // });
-      // return alert.present();
-    },
-
-    changeLanguage(language: string) {
-      this.$i18n.locale = language;
-      setLanguage(language);
-    },
-  },
+// computed
+const imageKeyPath = computed(() => {
+  const theme = useSystem().getTheme();
+  let image = "";
+  if (theme == "nord" || "light") image = userImage;
+  if (theme == "gruvbox") image = userImageGruvbox;
+  return image;
 });
+
+// functions
+const openRoute = (route: string) => {
+  menuController.close();
+  router.push(route);
+};
+
+const getUser = async () => {
+  try {
+    const { user } = await getUserService({
+      graphql: { name: USER_MENU, fragment: "UserMenu" },
+    });
+    logged = true;
+    userData.user = user;
+  } catch (e: any) {
+    if (e.message == "Unauthorized") return;
+    // openToastErrror(e);
+    console.error(e);
+  }
+};
+
+const openModalDesktop = async () => {
+  const modal = await modalController.create({
+    component: ThemeSelectorComponent,
+    cssClass: "my-custom-class",
+    componentProps: {
+      title: "New Title",
+    },
+  });
+  return modal.present();
+};
+
+const openModalMobile = async () => {
+  const modal = await modalController.create({
+    component: ThemeSelectorComponent,
+    initialBreakpoint: 0.5,
+    breakpoints: [0, 0.5, 1],
+  });
+  return modal.present();
+};
+
+const changeLanguage = (language: string) => {
+  // $i18n.locale = language;
+  setLanguage(language);
+};
+
+// mounted
+getUser();
 </script>
 
 <style scoped>
