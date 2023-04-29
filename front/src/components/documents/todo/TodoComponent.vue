@@ -33,83 +33,21 @@
   </ion-button>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
-  IonContent,
   IonItem,
-  IonPopover,
-  IonDatetime,
-  IonLabel,
   IonList,
-  IonAlert,
   IonInput,
   IonReorder,
   IonReorderGroup,
 } from "@ionic/vue";
-import {
-  addOutline,
-  closeOutline,
-  pricetagsOutline,
-  saveOutline,
-  timeOutline,
-  trashOutline,
-} from "ionicons/icons";
-import { defineComponent, ref } from "vue";
+import { addOutline, closeOutline } from "ionicons/icons";
 
-export default defineComponent({
-  name: "TodoComponent",
-  components: {
-    IonContent,
-    IonItem,
-    IonPopover,
-    IonDatetime,
-    IonLabel,
-    IonList,
-    IonAlert,
-    IonInput,
-    IonReorder,
-    IonReorderGroup,
-  },
+const todoElements = [{ value: "", isChecked: false }];
 
-  setup() {
-    const isAlertTrashOpenRef = ref(false);
-    const setOpenAlertTrash = (state: boolean) =>
-      (isAlertTrashOpenRef.value = state);
-
-    const isAlertStorageOpenRef = ref(false);
-    const setOpenAlertStorage = (state: boolean) =>
-      (isAlertStorageOpenRef.value = state);
-
-    const handleReorder = (event: CustomEvent) => {
-      console.log(
-        "Dragged from index",
-        event.detail.from,
-        "to",
-        event.detail.to
-      );
-      event.detail.complete();
-    };
-
-    return {
-      pageTitle: "Home",
-      trashOutline,
-      timeOutline,
-      pricetagsOutline,
-      isAlertTrashOpenRef,
-      setOpenAlertTrash,
-      saveOutline,
-      isAlertStorageOpenRef,
-      setOpenAlertStorage,
-      addOutline,
-      handleReorder,
-      closeOutline,
-    };
-  },
-
-  data() {
-    return {
-      todoElements: [{ value: "", isChecked: false }],
-    };
-  },
-});
+// functions
+const handleReorder = (event: CustomEvent) => {
+  console.log("Dragged from index", event.detail.from, "to", event.detail.to);
+  event.detail.complete();
+};
 </script>
