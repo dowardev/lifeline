@@ -23,37 +23,20 @@
   </ion-page>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
 import { IonTextarea } from "@ionic/vue";
 // markdown
 import Markdown from "vue3-markdown-it";
 import "highlight.js/styles/monokai.css";
 import { closeOutline, createOutline } from "ionicons/icons";
 
-export default defineComponent({
-  name: "TodoComponent",
-  components: { IonTextarea, Markdown },
-
-  props: { contentEditable: { type: Boolean, default: false } },
-
-  setup() {
-    return {
-      pageTitle: "Home",
-      createOutline,
-      closeOutline,
-    };
-  },
-
-  data() {
-    return {
-      content: "# e",
-      isContentEditable: false,
-    };
-  },
-
-  mounted() {
-    if (this.contentEditable == true) this.isContentEditable = true;
-  },
+const props = defineProps({
+  contentEditable: { type: Boolean, default: false },
 });
+
+const content = "# e";
+let isContentEditable = false;
+
+// mounted
+if (props.contentEditable == true) isContentEditable = true;
 </script>
