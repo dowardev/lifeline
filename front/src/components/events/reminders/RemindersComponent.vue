@@ -78,7 +78,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -94,93 +94,60 @@ import {
 } from "@ionic/vue";
 import { add, format } from "date-fns";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { defineComponent, ref } from "vue";
+import { ref } from "vue";
 
-export default defineComponent({
-  name: "RemindersComponent",
-  components: {
-    IonContent,
-    IonHeader,
-    IonTitle,
-    IonToolbar,
-    IonSegment,
-    IonSegmentButton,
-    IonButton,
-    IonDatetime,
-  },
-
-  props: {
-    dataReminders: {
-      type: Object,
-      default: function () {
-        return {
-          reminderStart: "",
-          reminderEnd: "",
-        };
-      },
-    },
-  },
-
-  emits: ["reminders"],
-
-  setup() {
-    const datetimeStart = ref();
-    const resetStart = () => datetimeStart.value.$el.reset();
-
-    const datetimeEnd = ref();
-    const resetEnd = () => datetimeEnd.value.$el.reset();
-
-    const reminderSegment = ref("date-start");
-    return {
-      pageTitle: "Recordatorios",
-      closeOutline,
-      saveOutline,
-      isPlatform,
-      datetimeStart,
-      resetStart,
-      datetimeEnd,
-      resetEnd,
-      reminderSegment,
-    };
-  },
-
-  data() {
-    const dateReminderStart =
-      this.dataReminders.reminderStart != ""
-        ? this.dataReminders.reminderStart
-        : format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
-
-    const dateReminderEnd =
-      this.dataReminders.reminderEnd != ""
-        ? this.dataReminders.reminderEnd
-        : format(
-            new Date(
-              add(new Date(), {
-                hours: 1,
-              })
-            ),
-            "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-          );
-    return {
-      dateReminderStart,
-      dateReminderEnd,
-    };
-  },
-
-  methods: {
-    closPage() {
-      modalController.dismiss();
-    },
-
-    async saveReminder() {
-      const dateStart = this.dateReminderStart;
-      const dateEnd = this.dateReminderEnd;
-      this.$emit("reminders", { data: { start: dateStart, end: dateEnd } });
-
-      const modal = await modalController.getTop();
-      if (modal) await modalController.dismiss();
-      else await popoverController.dismiss();
+const props = defineProps({
+  dataReminders: {
+    type: Object,
+    default: function () {
+      return {
+        reminderStart: "",
+        reminderEnd: "",
+      };
     },
   },
 });
+
+const emitEvent = defineEmits(["reminders"]);
+
+const datetimeStart = ref();
+const resetStart = () => datetimeStart.value.$el.reset();
+
+const datetimeEnd = ref();
+const resetEnd = () => datetimeEnd.value.$el.reset();
+
+const reminderSegment = ref("date-start");
+const pageTitle = "Recordatorios";
+
+const dateReminderStart =
+  props.dataReminders.reminderStart != ""
+    ? props.dataReminders.reminderStart
+    : format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+
+const dateReminderEnd =
+  props.dataReminders.reminderEnd != ""
+    ? props.dataReminders.reminderEnd
+    : format(
+        new Date(
+          add(new Date(), {
+            hours: 1,
+          })
+        ),
+        "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
+      );
+
+// functions
+const closPage = () => {
+  modalController.dismiss();
+};
+
+const saveReminder = async () => {
+  const dateStart = dateReminderStart;
+  const dateEnd = dateReminderEnd;
+  emitEvent("reminders", { data: { start: dateStart, end: dateEnd } });
+
+  const modal = await modalController.getTop();
+  if (modal) await modalController.dismiss();
+  else await popoverController.dismiss();
+};
 </script>
