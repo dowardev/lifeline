@@ -30,78 +30,45 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { IonContent, popoverController, IonButton } from "@ionic/vue";
-import {
-  addOutline,
-  closeOutline,
-  pricetagOutline,
-  timeOutline,
-  trashOutline,
-} from "ionicons/icons";
-import { defineComponent, ref } from "vue";
+import { addOutline, closeOutline, timeOutline } from "ionicons/icons";
 
 type Option = "add" | "remove" | "reminders";
 type Role = "confirm" | "cancel";
 
-export default defineComponent({
-  name: "MenuRightComponent",
+// functions;
+const selectOption = (params: { option: Option }) => {
+  const option = params.option;
+  if (option == "add") addOption();
+  if (option == "remove") removeOption();
+  if (option == "reminders") reminderOption();
+};
 
-  components: { IonContent, IonButton },
+const addOption = async () => {
+  await closeModal({
+    data: { option: "add" },
+    role: "confirm",
+  });
+};
 
-  setup() {
-    let progress = ref(0);
-    return {
-      trashOutline,
-      progress,
-      timeOutline,
-      pricetagOutline,
-      closeOutline,
-      addOutline,
-    };
-  },
+const removeOption = async () => {
+  await closeModal({
+    data: { option: "remove" },
+    role: "confirm",
+  });
+};
 
-  data() {
-    return {
-      showDeleteOption: true,
-      intervalDeleteId: null as any,
-    };
-  },
+const closeModal = async (params: { data: { option: Option }; role: Role }) => {
+  const data = params.data;
+  const role = params.role;
+  await popoverController.dismiss(data, role);
+};
 
-  methods: {
-    selectOption(params: { option: Option }) {
-      const option = params.option;
-      if (option == "add") this.addOption();
-      if (option == "remove") this.removeOption();
-      if (option == "reminders") this.reminderOption();
-    },
-
-    async addOption() {
-      await this.closeModal({
-        data: { option: "add" },
-        role: "confirm",
-      });
-    },
-
-    async removeOption() {
-      await this.closeModal({
-        data: { option: "remove" },
-        role: "confirm",
-      });
-    },
-
-    async closeModal(params: { data: { option: Option }; role: Role }) {
-      const data = params.data;
-      const role = params.role;
-      await popoverController.dismiss(data, role);
-    },
-
-    async reminderOption() {
-      await this.closeModal({
-        data: { option: "reminders" },
-        role: "confirm",
-      });
-    },
-  },
-});
+const reminderOption = async () => {
+  await closeModal({
+    data: { option: "reminders" },
+    role: "confirm",
+  });
+};
 </script>
