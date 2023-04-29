@@ -387,22 +387,22 @@
         <ion-content class="ion-padding">
           <div v-if="filteredZones.length == 0">
             <ion-item
-              v-for="(timezone, index) in timeZones"
+              v-for="(timezoneElement, index) in timeZones"
               :key="index"
               button
-              @click="selectZone({ zone: timezone })"
-              ><ion-label>{{ timezone }}</ion-label></ion-item
+              @click="selectZone({ zone: timezoneElement })"
+              ><ion-label>{{ timezoneElement }}</ion-label></ion-item
             >
           </div>
 
           <!-- search time zone -->
           <div v-if="filteredZones.length > 0">
             <ion-item
-              v-for="(timezone, index) in filteredZones"
+              v-for="(timezoneElement, index) in filteredZones"
               :key="index"
               button
-              @click="selectZone({ zone: timezone })"
-              ><ion-label>{{ timezone }}</ion-label></ion-item
+              @click="selectZone({ zone: timezoneElement })"
+              ><ion-label>{{ timezoneElement }}</ion-label></ion-item
             >
           </div>
         </ion-content>
@@ -432,7 +432,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -456,7 +456,7 @@ import {
   IonModal,
   modalController,
 } from "@ionic/vue";
-import { defineComponent, ref, watch } from "vue";
+import { ref } from "vue";
 import RemindersComponent from "../reminders/RemindersComponent.vue";
 import { format } from "date-fns";
 import {
@@ -464,7 +464,6 @@ import {
   briefcaseOutline,
   calendarOutline,
   closeOutline,
-  createOutline,
   documentTextOutline,
   globeOutline,
   peopleOutline,
@@ -474,160 +473,90 @@ import {
   trashOutline,
 } from "ionicons/icons";
 import CalendarComponent from "./calendar/CalendarComponent.vue";
-import { openToast } from "@/services/system";
 import useVuelidate from "@vuelidate/core";
 import { email, helpers, required } from "@vuelidate/validators";
 
-export default defineComponent({
-  name: "EventComponent",
-  components: {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonRow,
-    IonCol,
-    IonInput,
-    IonButton,
-    RemindersComponent,
-    IonPopover,
-    IonSearchbar,
-    IonTextarea,
-    IonSelect,
-    IonSelectOption,
-    IonList,
-    IonListHeader,
-    CalendarComponent,
-    IonItem,
-    IonLabel,
-    IonModal,
-  },
-
-  setup() {
-    const isOpenPopoverReminders = ref(false);
-    const timeZones = Intl.supportedValuesOf("timeZone").map(
-      (timeZone) => timeZone
-    );
-    const isOpenPopoverTimezones = ref(false);
-    const filteredZones = ref(Array<string>());
-    const showButtonsOptionGuest = ref(-1);
-
-    // vars
-    const name = ref("");
-    const description = ref("");
-    const reminders = ref({
-      start: format(new Date(), "Pp"),
-      end: format(new Date(), "Pp"),
-    });
-    const timezone = ref(Intl.DateTimeFormat().resolvedOptions().timeZone);
-    const guests = ref(Array<{ email: string }>());
-    const availability = ref("");
-    const repeats: string[] = [];
-    const emailGuest = ref("");
-
-    // event
-    const event = {
-      name,
-      description,
-      reminders,
-      timezone,
-      guests,
-      availability,
-      repeats,
-    };
-
-    // validation
-    const regexValidations = {
-      email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      required: /^\s*$/,
-    };
-    const messageError = {
-      email: "Correo electronico no valido",
-      required: "Campo requerido",
-    };
-    const rules = {
-      event: {
-        name: {
-          required: helpers.withMessage(messageError.required, required),
-        },
-      },
-    };
-    const rulesGuest = {
-      emailGuest: {
-        required: helpers.withMessage(messageError.required, required),
-        email: helpers.withMessage(messageError.email, email),
-      },
-    };
-    const v$ = useVuelidate(rules, { event });
-    const v2$ = useVuelidate(rulesGuest, { emailGuest });
-
-    // inputs
-    const inputName = ref(null);
-    const inputGuest = ref(null);
-
-    return {
-      pageTitle: "Agregar evento",
-      isOpenPopoverReminders,
-      timeZones,
-      isOpenPopoverTimezones,
-      filteredZones,
-      addOutline,
-      guests,
-      showButtonsOptionGuest,
-      createOutline,
-      trashOutline,
-      personOutline,
-      documentTextOutline,
-      globeOutline,
-      timeOutline,
-      peopleOutline,
-      briefcaseOutline,
-      isPlatform,
-      calendarOutline,
-      modalController,
-      closeOutline,
-      saveOutline,
-      event,
-      emailGuest,
-      regexValidations,
-      messageError,
-      inputName,
-      inputGuest,
-      v$,
-      v2$,
-    };
-  },
-
-  methods: {
-    filterZones(query: string) {
-      this.filteredZones = this.timeZones.filter((zone: string) =>
-        zone.toLowerCase().includes(query.toLowerCase())
-      );
-    },
-
-    selectZone(params: { zone: string }) {
-      const zone = params.zone;
-      this.event.timezone.value = zone;
-      this.isOpenPopoverTimezones = false;
-    },
-
-    addGuest() {
-      const email = this.emailGuest.valueOf();
-      this.event.guests.value.push({ email });
-      this.emailGuest = "";
-    },
-
-    removeGuest(params: { index: number }) {
-      const index = params.index;
-      this.event.guests.value.splice(index, 1);
-    },
-
-    saveEvent() {
-      const event = JSON.parse(JSON.stringify(this.event));
-    },
-  },
+const isOpenPopoverReminders = ref(false);
+const timeZones = Intl.supportedValuesOf("timeZone").map(
+  (timeZone) => timeZone
+);
+let isOpenPopoverTimezones = ref(false);
+const filteredZones = ref(Array<string>());
+const showButtonsOptionGuest = ref(-1);
+const name = ref("");
+const description = ref("");
+const reminders = ref({
+  start: format(new Date(), "Pp"),
+  end: format(new Date(), "Pp"),
 });
+const timezone = ref(Intl.DateTimeFormat().resolvedOptions().timeZone);
+const guests = ref(Array<{ email: string }>());
+const availability = ref("");
+const repeats: string[] = [];
+let emailGuest = ref("");
+// event
+const event = {
+  name,
+  description,
+  reminders,
+  timezone,
+  guests,
+  availability,
+  repeats,
+};
+// validation
+const messageError = {
+  email: "Correo electronico no valido",
+  required: "Campo requerido",
+};
+const rules = {
+  event: {
+    name: {
+      required: helpers.withMessage(messageError.required, required),
+    },
+  },
+};
+const rulesGuest = {
+  emailGuest: {
+    required: helpers.withMessage(messageError.required, required),
+    email: helpers.withMessage(messageError.email, email),
+  },
+};
+const v$ = useVuelidate(rules, { event });
+const v2$ = useVuelidate(rulesGuest, { emailGuest });
+// inputs
+const inputName = ref(null);
+const inputGuest = ref(null);
+
+const pageTitle = "Agregar evento";
+
+// functions
+const filterZones = (query: string) => {
+  filteredZones.value = timeZones.filter((zone: string) =>
+    zone.toLowerCase().includes(query.toLowerCase())
+  );
+};
+
+const selectZone = (params: { zone: string }) => {
+  const zone = params.zone;
+  event.timezone.value = zone;
+  isOpenPopoverTimezones.value = false;
+};
+
+const addGuest = () => {
+  const email = emailGuest.value;
+  event.guests.value.push({ email });
+  emailGuest.value = "";
+};
+
+const removeGuest = (params: { index: number }) => {
+  const index = params.index;
+  event.guests.value.splice(index, 1);
+};
+
+const saveEvent = () => {
+  // const event = JSON.parse(JSON.stringify(event));
+};
 </script>
 
 <style scoped>
