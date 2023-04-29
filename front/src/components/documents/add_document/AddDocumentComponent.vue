@@ -202,7 +202,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonItem,
   IonLabel,
@@ -251,227 +251,169 @@ import MenuOptComponent from "./menu-document/MenuOptComponent.vue";
 import { isPlatform } from "@ionic/vue";
 import { Note } from "@/utils/interfaces";
 import { useReminders } from "@/composables/useReminders";
+import { useRoute, useRouter } from "vue-router";
 
-export default defineComponent({
-  name: "AddDocumentComponent",
-  components: {
-    IonItem,
-    IonLabel,
-    IonList,
-    IonReorder,
-    IonReorderGroup,
-    NoteComponent,
-    // TableComponent,
-    ListComponent,
-    TodoComponent,
-    RichTextEditor,
-    IonPage,
-    IonHeader,
-    IonToolbar,
-    IonContent,
-    IonInput,
-    IonPopover,
-    MenuOptComponent,
-    IonModal,
-  },
+const route = useRoute();
+const router = useRouter();
+const pageTitle = "Agregar documento";
+const isDisabled = ref(true);
+const toggleReorder = () => {
+  isDisabled.value = !isDisabled.value;
+};
+const isReorderDisabled = isDisabled;
+let documentUrl = route.params.url as string;
+let documentId = "";
 
-  setup() {
-    return {
-      pageTitle: "Agregar documento",
-      trashOutline,
-      timeOutline,
-      pricetagsOutline,
-      addOutline,
-      closeOutline,
-      saveOutline,
-      format,
-      useNote,
-      useDocument,
-      ellipsisHorizontalOutline,
-      isPlatform,
-      moveOutline,
-    };
-  },
+// functions
+const start = async () => {
+  await useDocument().loadDocument({ elementId: documentUrl });
+  documentId = useDocument().getUserDocument({ documentUrl })?.id ?? "";
+};
 
-  data() {
-    let isDisabled = ref(true);
-    const toggleReorder = () => {
-      isDisabled.value = !isDisabled.value;
-      // useDocument().updateDocument({
-      //   document: this.elementsBak as any
-      // });
-      console.log(this.elementsBak);
-    };
-    return {
-      isReorderDisabled: isDisabled,
-      toggleReorder,
-      documentUrl: "",
-      documentId: "",
-    };
-  },
+const removeElement = (params: { index: number; documentId: string }) => {
+  const index = params.index;
+  const documentId = params.documentId;
 
-  mounted() {
-    const documentUrl = this.$route.params.url as string;
-    if (documentUrl) {
-      this.documentUrl = documentUrl;
-      this.start();
+  useDocument().deleteElement({ index, documentId });
+};
+
+const openPopoverAddElement = async (params: { ev: Event }) => {
+  const ev = params.ev;
+
+  const popover = await popoverController.create({
+    component: PopOverAddElements,
+    event: ev,
+  });
+  await popover.present();
+
+  await popover.onDidDismiss().then((response) => {
+    if (response.data == undefined) return;
+
+    const type = response.data.type;
+    const id = Date.now();
+    insertElement({ type, id });
+  });
+};
+
+const insertElement = (params: { id: number; type: TypeDocumentElement }) => {
+  const type = params.type;
+  if (!documentId) return;
+
+  const element = {
+    type,
+    documentId,
+    data: undefined,
+  };
+
+  useDocument().insertElement({ documentId, element });
+
+  // TODO: improve code
+  const document = useDocument().getUserDocument({ documentId });
+  if (!document?.elements) return;
+  useDocument().updateDocument({
+    document,
+  });
+};
+
+const updateElement = (params: { data: ElementData; index: number }) => {
+  const data = params.data;
+  const index = params.index;
+  const documentId = documentUrl;
+  const document = useDocument().getUserDocument({ documentId });
+
+  if (!document?.elements) return;
+  document.elements[index].data = data;
+
+  useDocument().updateDocument({
+    document,
+  });
+};
+
+const updateNoteValue = (params: {
+  data: { value: string };
+  index: number;
+  documentId: string;
+}) => {
+  const data = params.data;
+  const index = params.index;
+  const documentId = params.documentId;
+  useDocument().updateNoteValue({ data, index, documentId });
+};
+
+const closePage = () => {
+  router.go(-1);
+};
+
+const reorderElements = (event: CustomEvent) => {
+  const documentId = documentUrl;
+  let document = useDocument().getUserDocument({ documentId });
+  const oldPosition = event.detail.from;
+  const newPosition = event.detail.to;
+  if (!document) return;
+
+  if (document.elements != undefined) {
+    const elementBak = document.elements[oldPosition];
+    if (oldPosition < newPosition) {
+      const arr = document.elements;
+      const index = newPosition;
+      arr.splice(index + 1, 0, elementBak);
+      document.elements.splice(oldPosition, 1);
+      document.elements = arr;
+    } else {
+      const arr = document.elements;
+      const index = newPosition;
+      arr.splice(index, 0, elementBak);
+      document.elements.splice(oldPosition + 1, 1);
+      document.elements = arr;
     }
-    // if (isPlatform("desktop")) setInterval(this.setDekstopReminders, 60000);
-    // else {
-    //   this.setMobileReminders();
-    // }
-  },
+  }
+  event.detail.complete();
+};
 
-  methods: {
-    async start() {
-      const documentUrl = this.documentUrl;
-      await useDocument().loadDocument({ elementId: documentUrl });
-      this.documentId =
-        useDocument().getUserDocument({ documentUrl })?.id ?? "";
-    },
+const updateTitle = async (params: { tltle: string }) => {
+  const title = params.tltle;
+  const document = useDocument().getUserDocument({ documentId });
+  const url = `${title.replace(" ", "-")}-${documentId}`;
 
-    removeElement(params: { index: number; documentId: string }) {
-      const index = params.index;
-      const documentId = params.documentId;
+  if (!document) return;
+  document.title = title;
+  document.url = url;
 
-      useDocument().deleteElement({ index, documentId });
-    },
+  await useDocument().updateDocument({
+    document,
+  });
 
-    async openPopoverAddElement(params: { ev: Event }) {
-      const ev = params.ev;
+  router.replace(url);
+};
 
-      const popover = await popoverController.create({
-        component: PopOverAddElements,
-        event: ev,
-      });
-      await popover.present();
+const setOptionMainMenu = (params: {
+  option: OptionsMainMenuDocument | undefined;
+  data?: any;
+}) => {
+  const option = params.option;
+  if (option == undefined) return;
+  // const data = params.data;
 
-      await popover.onDidDismiss().then((response) => {
-        if (response.data == undefined) return;
+  if (option == "order") toggleReorder();
+};
 
-        const type = response.data.type;
-        const id = Date.now();
-        this.insertElement({ type, id });
-      });
-    },
+const setNoteReminders = async (params: {
+  data: { dateStart: string; dateEnd: string };
+  index: number;
+  documentId: string;
+}) => {
+  const data = params.data;
+  const index = params.index;
+  const documentId = params.documentId;
+  await useDocument().updateNoteReminder({ data, index, documentId });
+  useReminders().loadReminders();
+};
 
-    insertElement(params: { id: number; type: TypeDocumentElement }) {
-      const type = params.type;
-      const documentId = this.documentId;
-      if (!documentId) return;
-
-      const element = {
-        type,
-        documentId,
-        data: undefined,
-      };
-
-      useDocument().insertElement({ documentId, element });
-
-      // TODO: improve code
-      const document = useDocument().getUserDocument({ documentId });
-      if (!document?.elements) return;
-      useDocument().updateDocument({
-        document,
-      });
-    },
-
-    updateElement(params: { data: ElementData; index: number }) {
-      const data = params.data;
-      const index = params.index;
-      const documentId = this.documentUrl;
-      const document = useDocument().getUserDocument({ documentId });
-
-      if (!document?.elements) return;
-      document.elements[index].data = data;
-
-      useDocument().updateDocument({
-        document,
-      });
-    },
-
-    updateNoteValue(params: {
-      data: { value: string };
-      index: number;
-      documentId: string;
-    }) {
-      const data = params.data;
-      const index = params.index;
-      const documentId = params.documentId;
-      useDocument().updateNoteValue({ data, index, documentId });
-    },
-
-    closePage() {
-      this.$router.go(-1);
-    },
-
-    reorderElements(event: CustomEvent) {
-      const documentId = this.documentUrl;
-      let document = useDocument().getUserDocument({ documentId });
-      const oldPosition = event.detail.from;
-      const newPosition = event.detail.to;
-      if (!document) return;
-
-      if (document.elements != undefined) {
-        const elementBak = document.elements[oldPosition];
-        if (oldPosition < newPosition) {
-          const arr = document.elements;
-          const index = newPosition;
-          arr.splice(index + 1, 0, elementBak);
-          document.elements.splice(oldPosition, 1);
-          document.elements = arr;
-        } else {
-          const arr = document.elements;
-          const index = newPosition;
-          arr.splice(index, 0, elementBak);
-          document.elements.splice(oldPosition + 1, 1);
-          document.elements = arr;
-        }
-      }
-      event.detail.complete();
-    },
-
-    async updateTitle(params: { tltle: string }) {
-      const title = params.tltle;
-      const documentId = this.documentId;
-      const document = useDocument().getUserDocument({ documentId });
-      const url = `${title.replace(" ", "-")}-${documentId}`;
-
-      if (!document) return;
-      document.title = title;
-      document.url = url;
-
-      await useDocument().updateDocument({
-        document,
-      });
-
-      this.$router.replace(url);
-    },
-
-    setOptionMainMenu(params: {
-      option: OptionsMainMenuDocument | undefined;
-      data?: any;
-    }) {
-      const option = params.option;
-      if (option == undefined) return;
-      // const data = params.data;
-
-      if (option == "order") this.toggleReorder();
-    },
-
-    async setNoteReminders(params: {
-      data: { dateStart: string; dateEnd: string };
-      index: number;
-      documentId: string;
-    }) {
-      const data = params.data;
-      const index = params.index;
-      const documentId = params.documentId;
-      await useDocument().updateNoteReminder({ data, index, documentId });
-      useReminders().loadReminders();
-    },
-  },
-});
+// mountded
+if (documentUrl) {
+  documentUrl = documentUrl;
+  start();
+}
 </script>
 
 <style scoped>
