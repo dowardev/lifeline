@@ -109,7 +109,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -121,120 +121,92 @@ import {
   IonButton,
   IonItem,
 } from "@ionic/vue";
-import { defineComponent, ref } from "vue";
+import { computed } from "vue";
 import { useReminders } from "../../composables/useReminders";
-import { useDocument } from "../../composables/useDocument";
 import { format } from "date-fns";
 import { addOutline, createOutline, trashOutline } from "ionicons/icons";
 
-export default defineComponent({
-  name: "HomePage",
-  components: {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonInput,
-    IonLabel,
-    IonButton,
-    IonItem,
-  },
+const showButtonsOptionTODO = ref(-1);
+const pageTitle = "Inicio";
+const daysOfWeek = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+];
+const hoursOfDay = [
+  "00:00",
+  "01:00",
+  "02:00",
+  "03:00",
+  "04:00",
+  "05:00",
+  "06:00",
+  "07:00",
+  "08:00",
+  "09:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:00",
+  "22:00",
+  "23:00",
+];
+const todo = [
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+  { title: "Terminar proyecto" },
+];
 
-  setup() {
-    const showButtonsOptionTODO = ref(-1);
-    return {
-      pageTitle: "Inicio",
-      format,
-      addOutline,
-      trashOutline,
-      createOutline,
-      showButtonsOptionTODO,
-      daysOfWeek: [
-        "domingo",
-        "lunes",
-        "martes",
-        "miércoles",
-        "jueves",
-        "viernes",
-        "sábado",
-      ],
-      hoursOfDay: [
-        "00:00",
-        "01:00",
-        "02:00",
-        "03:00",
-        "04:00",
-        "05:00",
-        "06:00",
-        "07:00",
-        "08:00",
-        "09:00",
-        "10:00",
-        "11:00",
-        "12:00",
-        "13:00",
-        "14:00",
-        "15:00",
-        "16:00",
-        "17:00",
-        "18:00",
-        "19:00",
-        "20:00",
-        "21:00",
-        "22:00",
-        "23:00",
-      ],
-      todo: [
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-        { title: "Terminar proyecto" },
-      ],
-    };
-  },
+// computed
+const dates = computed(() => {
+  const response = useReminders().getReminders();
 
-  computed: {
-    dates() {
-      const response = useReminders().getReminders();
+  const dates = response?.map((element) => {
+    return { start: element.date.start, title: "Prueba" };
+  });
+  if (!dates) return;
 
-      const dates = response?.map((element) => {
-        return { start: element.date.start, title: "Prueba" };
-      });
-      if (!dates) return;
-
-      const daysOfWeek = this.daysOfWeek;
-      const initialAcc: any = {};
-      for (const day of daysOfWeek) {
-        initialAcc[day] = [];
-      }
-      const result = dates.reduce((acc: any, dateObj: any) => {
-        const date = new Date(dateObj.start);
-        const dayOfWeekIndex = date.getDay();
-        const dayOfWeek = daysOfWeek[dayOfWeekIndex];
-        const newDateObj = { start: dateObj.start, title: dateObj.title };
-        acc[dayOfWeek].push(newDateObj);
-        return acc;
-      }, initialAcc);
-      // console.log(dates,result)
-      return result;
-    },
-  },
+  const initialAcc: any = {};
+  for (const day of daysOfWeek) {
+    initialAcc[day] = [];
+  }
+  const result = dates.reduce((acc: any, dateObj: any) => {
+    const date = new Date(dateObj.start);
+    const dayOfWeekIndex = date.getDay();
+    const dayOfWeek = daysOfWeek[dayOfWeekIndex];
+    const newDateObj = { start: dateObj.start, title: dateObj.title };
+    acc[dayOfWeek].push(newDateObj);
+    return acc;
+  }, initialAcc);
+  return result;
 });
 </script>
 
