@@ -1,85 +1,66 @@
 <template>
-  <ion-page>
-    <ion-header
-      :translucent="true"
-      collapse="fade"
-      mode="ios"
-      class="ion-no-border"
-    >
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
-        </ion-buttons>
-        <ion-title>{{ pageTitle }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content :fullscreen="true">
-      <ion-input
-        label="ddd"
-        label-placement="floating"
-        fill="solid"
-        :value="name"
-        @ion-input="name = $event.target.value as string"
-      ></ion-input>
-
-      {{ v$.name }}
-    </ion-content>
-  </ion-page>
+  <div>
+    <table>
+      <thead>
+        <tr>
+          <th>Día</th>
+          <th>Número</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(day, index) in days" :key="index">
+          <td>{{ day.name }} {{ day.number }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Hoy es {{ currentDay }}</p>
+    <div>
+      <button @click="previousWeek">Anterior</button>
+      <button @click="nextWeek">Siguiente</button>
+    </div>
+  </div>
 </template>
 
-<script lang="ts">
-import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  popoverController,
-  IonInput,
-} from "@ionic/vue";
-import { computed, defineComponent, ref } from "vue";
-import MenuComponent from "./MenuComponent.vue";
-import { minLength, required } from "@vuelidate/validators";
-import useVuelidate from "@vuelidate/core";
+<script setup lang="ts">
+import { ref } from "vue";
+import { startOfWeek, addDays, format } from "date-fns";
 
-export default defineComponent({
-  name: "HomePage",
-  components: {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonInput,
-  },
+interface Day {
+  name: string;
+  number: number;
+}
 
-  setup() {
-    const name = ref("");
-    const requiredNameLength = ref(2);
-    const rules = computed(() => ({
-      name: {
-        required,
-      },
-    }));
+const currentDate = new Date();
+const currentDayName = format(currentDate, "EEEE");
+const currentDayNumber = currentDate.getDate();
 
-    const v$ = useVuelidate(rules, { name });
-    return {
-      pageTitle: "Home",
-      name,
-      requiredNameLength,
-      v$,
-    };
-  },
-  methods: {
-    async openPopover(ev: Event) {
-      const popover = await popoverController.create({
-        component: MenuComponent,
-        event: ev,
-        showBackdrop: false,
-      });
-      await popover.present();
-    },
-  },
-});
+const days = ref(getDaysForCurrentWeek());
+const currentDay = `${currentDayName} ${currentDayNumber}`;
+
+function getDaysForCurrentWeek(): Day[] {
+  const firstDayOfWeek = startOfWeek(currentDate);
+  const daysOfWeek: Day[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    const day = addDays(firstDayOfWeek, i);
+    const name = format(day, "EEEE");
+    const number = day.getDate();
+    daysOfWeek.push({ name, number });
+  }
+
+  return daysOfWeek;
+}
+
+function previousWeek() {
+  if (currentDate.getMonth() === 0 && currentDate.getDate() <= 7) {
+    return;
+  }
+  currentDate.setDate(currentDate.getDate() - 7);
+  days.value = getDaysForCurrentWeek();
+}
+
+function nextWeek() {
+  currentDate.setDate(currentDate.getDate() + 7);
+  days.value = getDaysForCurrentWeek();
+}
 </script>

@@ -2,8 +2,8 @@
   <ion-app>
     <ion-split-pane when="md" content-id="menu-content">
       <ion-menu
-        contenta-id="menu-content"
-        menu-id="firstMenu"
+        content-id="menu-content"
+        menu-id="mainMenu"
         side="start"
         type="overlay"
         style="--side-max-width: 200px; border-right-width: 0px"
@@ -16,8 +16,14 @@
 </template>
 
 <script setup lang="ts">
-import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
-import { nextTick, watch } from "vue";
+import {
+  IonApp,
+  IonRouterOutlet,
+  IonMenu,
+  IonSplitPane,
+  isPlatform,
+} from "@ionic/vue";
+import { nextTick, onMounted, watch } from "vue";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { setTheme } from "@/services/system";
 import { useDocument } from "@/composables/useDocument";
@@ -27,15 +33,17 @@ import { useRoute } from "vue-router";
 
 const route = useRoute();
 
-watch(route, (newValue, oldValue) => {
-  nextTick(() => {
-    const elementos = document.querySelectorAll(".split-pane-main .ion-page");
+if (isPlatform("desktop")) {
+  watch(route, (newValue, oldValue) => {
+    nextTick(() => {
+      const elementos = document.querySelectorAll(".split-pane-main .ion-page");
 
-    elementos.forEach(function (elemento) {
-      elemento.classList.add("component-container");
+      elementos.forEach(function (elemento) {
+        elemento.classList.add("component-container");
+      });
     });
   });
-});
+}
 
 // functions
 const start = async () => {
@@ -48,12 +56,16 @@ const start = async () => {
 };
 
 // mounted
-start();
-nextTick(() => {
-  const elementos = document.querySelectorAll(".split-pane-main .ion-page");
+onMounted(() => {
+  start();
+  if (isPlatform("desktop")) {
+    nextTick(() => {
+      const elementos = document.querySelectorAll(".split-pane-main .ion-page");
 
-  elementos.forEach(function (elemento) {
-    elemento.classList.add("component-container");
-  });
+      elementos.forEach(function (elemento) {
+        elemento.classList.add("component-container");
+      });
+    });
+  }
 });
 </script>

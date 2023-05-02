@@ -1,5 +1,5 @@
 <template>
-  <ion-page class="component-container">
+  <ion-page :class="{ 'component-container': isPlatform('desktop') }">
     <ion-content>
       <ion-item v-if="logged == true" lines="none" class="transparent">
         <ion-avatar slot="start">

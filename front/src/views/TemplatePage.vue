@@ -25,7 +25,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -33,22 +33,6 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 
-export default defineComponent({
-  name: "HomePage",
-  components: {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-  },
-
-  setup() {
-    return {
-      pageTitle: "Home",
-    };
-  },
-});
+const pageTitle = "Home";
 </script>
