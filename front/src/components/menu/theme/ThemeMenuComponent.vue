@@ -19,12 +19,6 @@
       <ion-col size="12">
         <ion-item lines="none"
           ><ion-label>{{ theme }}</ion-label>
-          <ion-button
-            fill="clear"
-            @click="previewTheme({ name: theme as Theme })"
-            ><ion-icon :icon="eyeOutline"></ion-icon
-          ></ion-button>
-
           <ion-button fill="clear" @click="applyTheme({ name: theme as Theme })"
             ><ion-icon :icon="checkmarkOutline"></ion-icon></ion-button
         ></ion-item>
@@ -45,37 +39,22 @@ import {
   IonLabel,
   modalController,
 } from "@ionic/vue";
-import {
-  checkmarkOutline,
-  chevronBackOutline,
-  eyeOutline,
-} from "ionicons/icons";
+import { checkmarkOutline, chevronBackOutline } from "ionicons/icons";
 import { Theme } from "@/utils/types";
 import { useSystem } from "@/composables/useSystem";
 
 const availableThemes: Theme[] = ["light", "nord", "gruvbox"];
 
 const pageTitle = "Selector de tema";
-let themeSelected = "";
 
 // funtions
 const closeModal = () => {
   modalController.dismiss();
 };
 
-const previewTheme = (params: { name: Theme }) => {
-  const theme = params.name;
-  themeSelected = themeSelected;
-
-  document.body.classList.add(theme);
-  themeSelected = theme;
-  if (themeSelected != "")
-    document.getElementsByTagName("body")[0].classList.remove(themeSelected);
-};
-
-const applyTheme = async (params: { name: Theme }) => {
+async function applyTheme(params: { name: Theme }) {
   const theme = params.name;
   useSystem().applyTheme({ theme });
   useSystem().updateThemeSelected({ theme });
-};
+}
 </script>

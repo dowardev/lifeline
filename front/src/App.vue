@@ -45,16 +45,6 @@ if (isPlatform("desktop")) {
   });
 }
 
-// functions
-const start = async () => {
-  await useDocument().loadUserDocuments();
-  useReminders().loadReminders();
-
-  await useSystem().loadThemeSelected();
-  const theme = useSystem().getTheme();
-  setTheme({ theme: theme });
-};
-
 // mounted
 onMounted(() => {
   start();
@@ -68,4 +58,15 @@ onMounted(() => {
     });
   }
 });
+
+// functions
+const start = async () => {
+  await useDocument().loadUserDocuments();
+  useReminders().loadReminders();
+
+  await useSystem().loadThemeSelected();
+  const theme = useSystem().getTheme();
+  setTheme({ theme: theme, currentTheme: theme });
+  await useSystem().updateThemeSelected({ theme });
+};
 </script>

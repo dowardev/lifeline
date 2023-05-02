@@ -10,7 +10,8 @@ export const useSystem = () => {
   const systemStore = userSystemStore();
 
   async function loadThemeSelected() {
-    const theme = await getThemeService();
+    const theme =
+      (await getThemeService()) != null ? await getThemeService() : "light";
     systemStore.setThemeSelected({ theme });
   }
 
@@ -20,13 +21,14 @@ export const useSystem = () => {
 
   function applyTheme(params: { theme: Theme }) {
     const theme = params.theme;
+    const currentTheme = getTheme();
+    setThemeService({ theme, currentTheme });
     systemStore.setThemeSelected({ theme });
-    setThemeService({ theme });
   }
 
-  function updateThemeSelected(params: { theme: Theme }) {
+  async function updateThemeSelected(params: { theme: Theme }) {
     const theme = params.theme;
-    saveThemeService({ theme });
+    await saveThemeService({ theme });
   }
 
   return {

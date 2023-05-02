@@ -22,7 +22,6 @@ export const userSystemStore = defineStore("system", {
   actions: {
     setThemeSelected(params: { theme: Theme }) {
       const theme = params.theme;
-
       this.system.theme.selected = theme;
     },
   },

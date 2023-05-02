@@ -154,7 +154,7 @@
       <ion-toolbar>
         <ion-buttons slot="end">
           <ion-button
-            v-if="isPlatform('android') || isPlatform('ios')"
+            v-if="isPlatform('desktop')"
             fill="clear"
             color="primary"
             @click="openModalDesktop()"
@@ -163,7 +163,7 @@
           </ion-button>
 
           <ion-button
-            v-if="isPlatform('android') || isPlatform('ios')"
+            v-if="!isPlatform('desktop')"
             fill="clear"
             color="primary"
             @click="openModalMobile()"
@@ -201,7 +201,6 @@
 <script setup lang="ts">
 import {
   IonContent,
-  IonHeader,
   IonPage,
   IonToolbar,
   menuController,
@@ -209,13 +208,8 @@ import {
   modalController,
   IonFooter,
 } from "@ionic/vue";
-import {
-  brushOutline,
-  documentTextOutline,
-  exitOutline,
-  languageOutline,
-} from "ionicons/icons";
-import { computed, defineComponent } from "vue";
+import { brushOutline, documentTextOutline, exitOutline } from "ionicons/icons";
+import { computed, onMounted, ref } from "vue";
 import {
   settingsOutline,
   homeOutline,
@@ -245,7 +239,7 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
-const logged = false;
+const logged = ref(false);
 const userData = {
   img: userAvatar,
   user: "Usuario",
@@ -260,6 +254,11 @@ const imageKeyPath = computed(() => {
   return image;
 });
 
+// mounted
+onMounted(() => {
+  getUser();
+});
+
 // functions
 const openRoute = (route: string) => {
   menuController.close();
@@ -271,7 +270,7 @@ const getUser = async () => {
     const { user } = await getUserService({
       graphql: { name: USER_MENU, fragment: "UserMenu" },
     });
-    logged = true;
+    logged.value = true;
     userData.user = user;
   } catch (e: any) {
     if (e.message == "Unauthorized") return;
@@ -304,9 +303,6 @@ const changeLanguage = (language: string) => {
   // $i18n.locale = language;
   setLanguage(language);
 };
-
-// mounted
-getUser();
 </script>
 
 <style scoped>
