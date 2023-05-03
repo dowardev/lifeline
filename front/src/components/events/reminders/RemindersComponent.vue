@@ -34,9 +34,9 @@
       <div class="center">
         <ion-datetime
           ref="datetimeStart"
-          v-model="dateReminderStart"
           class="transparent"
           :min="new Date().toISOString().split('T')[0]"
+          :value="dateReminderStart"
           @ion-change="dateReminderStart = $event.detail.value as string"
         >
         </ion-datetime>
@@ -58,8 +58,8 @@
       <div style="center">
         <ion-datetime
           ref="datetimeEnd"
-          v-model="dateReminderEnd"
           class="transparent"
+          :value="dateReminderEnd"
           @ion-change="dateReminderEnd = $event.detail.value as string"
         >
         </ion-datetime>
@@ -94,15 +94,15 @@ import {
 } from "@ionic/vue";
 import { add, format } from "date-fns";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 const props = defineProps({
   dataReminders: {
     type: Object,
     default: function () {
       return {
-        reminderStart: "",
-        reminderEnd: "",
+        start: "",
+        end: "",
       };
     },
   },
@@ -119,22 +119,17 @@ const resetEnd = () => datetimeEnd.value.$el.reset();
 const reminderSegment = ref("date-start");
 const pageTitle = "Recordatorios";
 
-const dateReminderStart =
-  props.dataReminders.reminderStart != ""
-    ? props.dataReminders.reminderStart
-    : format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+const dateReminderStart = ref(props.dataReminders.start);
 
-const dateReminderEnd =
-  props.dataReminders.reminderEnd != ""
-    ? props.dataReminders.reminderEnd
-    : format(
-        new Date(
-          add(new Date(), {
-            hours: 1,
-          })
-        ),
-        "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-      );
+const dateReminderEnd = ref(props.dataReminders.end);
+
+// watch
+watch(props.dataReminders.start, (newValue, oldValue) => {
+  dateReminderStart.value = newValue.toISOString();
+});
+watch(props.dataReminders.end, (newValue, oldValue) => {
+  dateReminderEnd.value = newValue.toISOString();
+});
 
 // functions
 const closPage = () => {
@@ -142,8 +137,8 @@ const closPage = () => {
 };
 
 const saveReminder = async () => {
-  const dateStart = dateReminderStart;
-  const dateEnd = dateReminderEnd;
+  const dateStart = dateReminderStart.value;
+  const dateEnd = dateReminderEnd.value;
   emitEvent("reminders", { data: { start: dateStart, end: dateEnd } });
 
   const modal = await modalController.getTop();

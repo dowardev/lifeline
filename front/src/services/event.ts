@@ -1,9 +1,10 @@
 import axios from "axios";
 import userService from "./user.vue";
 import { Storage } from "@ionic/storage";
-const storage = new Storage();
-storage.create();
 import { format } from "date-fns";
+
+const store = new Storage();
+store.create();
 
 import apolloClient from "../Apollo";
 import gql from "graphql-tag";
@@ -16,7 +17,8 @@ import {
   GetCalendarsResponse,
   Event,
   GetEvents,
-} from "./interfaces";
+} from "@/utils/interfaces";
+import { NewEvent } from "@/utils/interfaces";
 
 export async function createEvent(params: Event): Promise<void> {
   const {
@@ -89,58 +91,58 @@ export async function updateEvent(event: Record<string, any>) {
   // });
 }
 
-export async function getEvents(params: GetEvents): Promise<Array<Event>> {
-  const { onResult, onError, result, refetch } = useQuery(
-    gql`
-        query events($date: String!) {
-          events(input:{date:$date}) {
-            ...${params.graphql.fragment}
-          }
-        }
-        ${params.graphql.name}
-      `,
-    { date: params.date },
-    {
-      fetchPolicy: "cache-first",
-    }
-  );
-
-  return new Promise((resolve, reject) => {
-    const format = (events: any) => {
-      events.forEach((element: any) => {
-        element.timeStart = element.time_start;
-        delete element.time_start;
-        element.timeEnd = element.time_end;
-        delete element.time_end;
-        element.timeZone = element.time_zone;
-        delete element.time_zone;
-        element.guests = JSON.parse(element.guests);
-        element.reminders = JSON.parse(element.reminders);
-        element.repeats = JSON.parse(element.repeats);
-        element.tags = JSON.parse(element.tags);
-      });
-      return events;
-    };
-
-    if (result.value != undefined && params.graphql.refetch == false) {
-      const events = JSON.parse(JSON.stringify(result.value.events.events));
-      resolve(format(events));
-    }
-
-    if (params.graphql.refetch) {
-      refetch()?.then((response) => resolve(response.data.events.events));
-    }
-
-    onResult((response) => {
-      const events = JSON.parse(JSON.stringify(response.data.events.events));
-      resolve(format(events));
-    });
-
-    onError((error) => {
-      reject(error);
-    });
-  });
-}
+// export async function getEvents(params: GetEvents): Promise<Array<Event>> {
+//   const { onResult, onError, result, refetch } = useQuery(
+//     gql`
+//         query events($date: String!) {
+//           events(input:{date:$date}) {
+//             ...${params.graphql.fragment}
+//           }
+//         }
+//         ${params.graphql.name}
+//       `,
+//     { date: params.date },
+//     {
+//       fetchPolicy: "cache-first",
+//     }
+//   );
+//
+//   return new Promise((resolve, reject) => {
+//     const format = (events: any) => {
+//       events.forEach((element: any) => {
+//         element.timeStart = element.time_start;
+//         delete element.time_start;
+//         element.timeEnd = element.time_end;
+//         delete element.time_end;
+//         element.timeZone = element.time_zone;
+//         delete element.time_zone;
+//         element.guests = JSON.parse(element.guests);
+//         element.reminders = JSON.parse(element.reminders);
+//         element.repeats = JSON.parse(element.repeats);
+//         element.tags = JSON.parse(element.tags);
+//       });
+//       return events;
+//     };
+//
+//     if (result.value != undefined && params.graphql.refetch == false) {
+//       const events = JSON.parse(JSON.stringify(result.value.events.events));
+//       resolve(format(events));
+//     }
+//
+//     if (params.graphql.refetch) {
+//       refetch()?.then((response) => resolve(response.data.events.events));
+//     }
+//
+//     onResult((response) => {
+//       const events = JSON.parse(JSON.stringify(response.data.events.events));
+//       resolve(format(events));
+//     });
+//
+//     onError((error) => {
+//       reject(error);
+//     });
+//   });
+// }
 
 export async function getEvent(id: number) {
   // const token = await userService()
@@ -218,4 +220,26 @@ export async function removeEvent(id: string | number) {
   //     },
   //   }
   // );
+}
+
+export async function saveLocalEvent(params: {
+  event: NewEvent;
+}): Promise<{ event: Event }> {
+  const eventData = params.event;
+  let event = {} as Event;
+  const id = Date.now().toString();
+
+  (eventData as Event).id = "";
+  event = eventData as Event;
+  event.id = id;
+
+  const events = (await getEvents()) != null ? await getEvents() : [];
+  events?.push(eventData as Event);
+  await store.set("events", events);
+
+  return { event: eventData as Event };
+}
+
+export async function getEvents(): Promise<Array<Event> | null> {
+  return await store.get("events");
 }

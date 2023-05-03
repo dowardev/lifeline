@@ -15,7 +15,6 @@ export function setTheme(params: { theme: Theme; currentTheme: Theme }) {
   const theme = params.theme;
   const currentTheme = params.currentTheme;
 
-  console.log(theme, currentTheme);
   document.getElementsByTagName("body")[0].classList.remove(currentTheme);
   document.getElementsByTagName("body")[0].classList.add(theme);
 }

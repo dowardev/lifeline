@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { Event } from "../services/interfaces";
+import { Event } from "@/utils/interfaces";
 import { getEvents as getEventsService } from "../services/event";
 import { USER_EVENTS } from "../services/graphql";
 
@@ -13,6 +13,14 @@ export const useEventsStore = defineStore("events", {
     events: [] as Event[],
     date: new Date().toISOString(),
   }),
+
+  getters: {
+    getEvents(state) {
+      return () => {
+        return state.events;
+      };
+    },
+  },
 
   actions: {
     async loadEvents(params: { refetch: boolean }) {
@@ -30,8 +38,8 @@ export const useEventsStore = defineStore("events", {
       }
     },
 
-    addEvent(event: Event) {
-      this.events.push(event);
+    addEvent(params: { event: Event }) {
+      this.events.push(params.event);
     },
   },
 });

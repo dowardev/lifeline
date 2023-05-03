@@ -145,8 +145,16 @@
                         >
                           <ion-label>Tiempo</ion-label>
                           <ion-label slot="end" class="ion-text-wrap"
-                            >{{ event.reminders.value.start }} -
-                            {{ event.reminders.value.end }}</ion-label
+                            >{{
+                              format(
+                                new Date(event.reminders.value.start),
+                                "Pp"
+                              )
+                            }}
+                            -
+                            {{
+                              format(new Date(event.reminders.value.end), "Pp")
+                            }}</ion-label
                           >
                         </ion-item>
                       </div>
@@ -243,7 +251,7 @@
                         ></ion-input>
 
                         <ion-item
-                          v-for="(guest, indexGuest) in guests"
+                          v-for="(guest, indexGuest) in event.guests.value"
                           :key="indexGuest"
                           @mouseenter="showButtonsOptionGuest = indexGuest"
                           @mouseleave="showButtonsOptionGuest = -1"
@@ -322,21 +330,20 @@
         </section>
 
         <!-- calendar component -->
-        <section v-if="isPlatform('desktop')">
-          <div
-            style="
-              height: 90vh;
-              overflow: auto;
-              overflow-x: auto;
-              position: fixed;
-              top: 11vh;
-              right: 0;
-              max-width: 40%;
-            "
-            class="ion-padding hidde-scroll"
-          >
-            <CalendarComponent />
-          </div>
+        <section
+          v-if="isPlatform('desktop')"
+          style="
+            height: 90vh;
+            overflow: auto;
+            overflow-x: auto;
+            position: fixed;
+            top: 11vh;
+            right: 0;
+            width: 32%;
+          "
+          class="ion-padding hidde-scroll"
+        >
+          <CalendarComponent :events="useEvent().getEvents()" />
         </section>
       </div>
 
@@ -348,6 +355,10 @@
         @will-dismiss="isOpenPopoverReminders = false"
       >
         <RemindersComponent
+          :data-reminders="{
+            start: event.reminders.value.start,
+            end: event.reminders.value.end,
+          }"
           @reminders="
             event.reminders.value = {
               start: $event.data.start,
@@ -390,7 +401,7 @@
               v-for="(timezoneElement, index) in timeZones"
               :key="index"
               button
-              @click="selectZone({ zone: timezoneElement })"
+              @click="selectZone({ zone: timezoneElement as any })"
               ><ion-label>{{ timezoneElement }}</ion-label></ion-item
             >
           </div>
@@ -456,7 +467,7 @@ import {
   IonModal,
   modalController,
 } from "@ionic/vue";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import RemindersComponent from "../reminders/RemindersComponent.vue";
 import { format } from "date-fns";
 import {
@@ -472,9 +483,17 @@ import {
   timeOutline,
   trashOutline,
 } from "ionicons/icons";
-import CalendarComponent from "./calendar/CalendarComponent.vue";
 import useVuelidate from "@vuelidate/core";
 import { email, helpers, required } from "@vuelidate/validators";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+// components
+import CalendarComponent from "./calendar/CalendarComponent.vue";
+
+// composables
+import { useEvent } from "@/composables/useEvent";
 
 const isOpenPopoverReminders = ref(false);
 const timeZones = Intl.supportedValuesOf("timeZone").map(
@@ -483,26 +502,19 @@ const timeZones = Intl.supportedValuesOf("timeZone").map(
 let isOpenPopoverTimezones = ref(false);
 const filteredZones = ref(Array<string>());
 const showButtonsOptionGuest = ref(-1);
-const name = ref("");
-const description = ref("");
-const reminders = ref({
-  start: format(new Date(), "Pp"),
-  end: format(new Date(), "Pp"),
-});
-const timezone = ref(Intl.DateTimeFormat().resolvedOptions().timeZone);
-const guests = ref(Array<{ email: string }>());
-const availability = ref("");
-const repeats: string[] = [];
+// const repeats: string[] = [];
 let emailGuest = ref("");
 // event
 const event = {
-  name,
-  description,
-  reminders,
-  timezone,
-  guests,
-  availability,
-  repeats,
+  name: ref(""),
+  description: ref(""),
+  reminders: ref({
+    start: new Date().toISOString(),
+    end: new Date().toISOString(),
+  }),
+  timezone: ref(Intl.DateTimeFormat().resolvedOptions().timeZone),
+  guests: ref(Array<{ email: string }>()),
+  availability: ref("available"),
 };
 // validation
 const messageError = {
@@ -530,6 +542,12 @@ const inputGuest = ref(null);
 
 const pageTitle = "Agregar evento";
 
+// mounted
+onMounted(() => {
+  // getEvents({ date: new Date() });
+  useEvent().loadEvents();
+});
+
 // functions
 const filterZones = (query: string) => {
   filteredZones.value = timeZones.filter((zone: string) =>
@@ -554,9 +572,28 @@ const removeGuest = (params: { index: number }) => {
   event.guests.value.splice(index, 1);
 };
 
-const saveEvent = () => {
-  // const event = JSON.parse(JSON.stringify(event));
+const saveEvent = async () => {
+  const eventFormated = {
+  
+    name: event.name.value,
+    guests: event.guests.value,
+    reminders: {
+      start: event.reminders.value.start,
+      end: event.reminders.value.end,
+    },
+    description: event.description.value,
+    availability: event.availability.value,
+  };
+  await useEvent().saveEvent({
+    event: JSON.parse(JSON.stringify(eventFormated)),
+  });
+  router.go(-1);
 };
+
+function getEvents(params: { date: string }) {
+  const date = params.date;
+  console.log(date);
+}
 </script>
 
 <style scoped>

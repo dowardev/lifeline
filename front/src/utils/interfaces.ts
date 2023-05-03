@@ -62,16 +62,27 @@ export interface SystemMessage {
 
 // events
 export interface Event {
-  title?: string;
-  calendar?: string;
-  timeStart?: string;
-  timeEnd?: string;
-  guests?: Array<string>;
-  notes?: string;
-  reminders?: Array<string>;
-  repeats?: { name: string; frequency: string; data: {} };
-  tags?: Array<string>;
+  id: string;
+  name: string;
+  // calendar?: string;
+  guests?: Array<{ email: string }>;
+  reminders?: { start: string; end: string };
+  // repeats?: { name: string; frequency: string; data: {} };
+  // tags?: Array<string>;
+  timeZone: string;
+  description?: string;
+  availability: string;
+}
+export interface NewEvent {
+  name?: string;
+  // calendar?: string;
+  guests?: Array<{ email: string }>;
+  reminders?: { start: string; end: string };
+  // repeats?: { name: string; frequency: string; data: {} };
+  // tags?: Array<string>;
   timeZone?: string;
+  description: string;
+  availability: string;
 }
 export interface GetCalendars {
   graphql: Graphql;
