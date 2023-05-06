@@ -574,7 +574,6 @@ const removeGuest = (params: { index: number }) => {
 
 const saveEvent = async () => {
   const eventFormated = {
-  
     name: event.name.value,
     guests: event.guests.value,
     reminders: {
@@ -589,11 +588,6 @@ const saveEvent = async () => {
   });
   router.go(-1);
 };
-
-function getEvents(params: { date: string }) {
-  const date = params.date;
-  console.log(date);
-}
 </script>
 
 <style scoped>

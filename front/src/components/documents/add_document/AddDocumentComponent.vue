@@ -250,7 +250,7 @@ import {
 import MenuOptComponent from "./menu-document/MenuOptComponent.vue";
 import { isPlatform } from "@ionic/vue";
 import { Note } from "@/utils/interfaces";
-import { useReminders } from "@/composables/useReminders";
+// import { useReminders } from "@/composables/useReminders";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();

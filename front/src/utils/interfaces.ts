@@ -179,11 +179,19 @@ export interface NewTodo {
   position: number;
 }
 
-export interface Reminder {
-  id: number;
+export interface ScheduleElement {
+  id: string;
   title: string;
   message: string;
-  date: { start: string; end: string };
+  date: string;
+}
+
+export interface Schedule {
+  [year: number]: {
+    [month: number]: {
+      [day: number]: ScheduleElement[];
+    };
+  };
 }
 
 export interface System {

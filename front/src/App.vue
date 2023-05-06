@@ -26,10 +26,11 @@ import {
 import { nextTick, onMounted, watch } from "vue";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { setTheme } from "@/services/system";
-import { useDocument } from "@/composables/useDocument";
-import { useReminders } from "@/composables/useReminders";
-import { useSystem } from "@/composables/useSystem";
 import { useRoute } from "vue-router";
+
+import { useDocument } from "@/composables/useDocument";
+import { useSchedule } from "@/composables/useSchedule";
+import { useSystem } from "@/composables/useSystem";
 
 const route = useRoute();
 
@@ -62,11 +63,14 @@ onMounted(() => {
 // functions
 const start = async () => {
   await useDocument().loadUserDocuments();
-  useReminders().loadReminders();
 
   await useSystem().loadThemeSelected();
   const theme = useSystem().getTheme();
   setTheme({ theme: theme, currentTheme: theme });
   await useSystem().updateThemeSelected({ theme });
+
+  await useSchedule().generateEventsSchedule();
+  await useSchedule().loadSchedule();
+
 };
 </script>

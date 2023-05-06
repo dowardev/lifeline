@@ -142,12 +142,17 @@
                   >
                     {{ hour }}
                   </td>
-                  <td v-for="day in daysOfWeek" :key="day">
+                  <td v-for="day in days" :key="day.date.toString()">
                     <div>
-                      <div v-for="date in dates[day.toLowerCase()]" :key="date">
+                      <div
+                        v-for="date in dates2[
+                          daysOfWeek[new Date(day.date).getDay()]
+                        ]"
+                        :key="date.date.toString()"
+                      >
                         <template
                           v-if="
-                            new Date(date.start).getHours() === parseInt(hour)
+                            new Date(date.date).getHours() === parseInt(hour)
                           "
                         >
                           <ion-card class="card-event">
@@ -156,7 +161,7 @@
                             </ion-card-header>
 
                             <ion-card-content>{{
-                              format(new Date(date.start), "Pp")
+                              format(new Date(date.date), "Pp")
                             }}</ion-card-content>
                           </ion-card>
                         </template>
@@ -170,7 +175,6 @@
         </ion-col>
       </ion-row>
 
-      {{ currentDate }}
       <!-- popovers -->
       <ion-popover
         :is-open="isOpenpopoverMainCalendar"
@@ -234,8 +238,8 @@ import {
   IonDatetime,
   IonModal,
 } from "@ionic/vue";
-import { computed, onMounted, ref } from "vue";
-import { useReminders } from "../../composables/useReminders";
+import { computed, onMounted, ref, watch } from "vue";
+import { useSchedule } from "@/composables/useSchedule";
 import { format, getMonth } from "date-fns";
 import {
   addOutline,
@@ -246,20 +250,29 @@ import {
   todayOutline,
 } from "ionicons/icons";
 import RescheduleComponent from "../../components/events/schedule-elements/RescheduleElements.vue";
+import { ScheduleElement } from "@/utils/interfaces";
 
 interface Day {
   date: Date;
 }
+interface Dates {
+  [key: string]: Array<{
+    id: string;
+    title: string;
+    message: string;
+    date: string;
+  }>;
+}
 
 const pageTitle = "Inicio";
 const daysOfWeek = [
-  "domingo",
-  "lunes",
-  "martes",
-  "miércoles",
-  "jueves",
-  "viernes",
-  "sábado",
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
 ];
 const hoursOfDay = [
   "00:00",
@@ -305,35 +318,30 @@ const months = [
   "Diciembre",
 ];
 const modalRescheduleElements = ref(null);
-
-// computed
-const dates = computed(() => {
-  const response = useReminders().getReminders();
-
-  const dates = response?.map((element) => {
-    return { start: element.date.start, title: "Prueba" };
-  });
-  if (!dates) return;
-
-  const initialAcc: any = {};
-  for (const day of daysOfWeek) {
-    initialAcc[day] = [];
-  }
-  const result = dates.reduce((acc: any, dateObj: any) => {
-    const date = new Date(dateObj.start);
-    const dayOfWeekIndex = date.getDay();
-    const dayOfWeek = daysOfWeek[dayOfWeekIndex];
-    const newDateObj = { start: dateObj.start, title: dateObj.title };
-    acc[dayOfWeek].push(newDateObj);
-    return acc;
-  }, initialAcc);
-  return result;
-});
+const dates = ref({
+  monday: [],
+  tuesday: [],
+  wednesday: [],
+  thursday: [],
+  friday: [],
+  saturday: [],
+  sunday: [],
+} as Dates);
 
 // mounted
-onMounted(() => {
+onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
+  // setSchedule({ schedule: useSchedule().getSchedule() });
 });
+
+// watch(
+//   async () => {
+//     return await useSchedule().getSchedule();
+//   },
+//   (newVal, oldVal) => {
+//     console.log(newVal);
+//   }
+// );
 
 // funtions
 function getDaysForCurrentWeek(params: { date: Date }): Day[] {
@@ -382,6 +390,72 @@ function loadDaysWeek(params: { date: number }) {
 
 function setDaysToWeek(params: { days: Array<Day> }) {
   days.value = params.days;
+}
+
+const dates2 = computed(() => {
+  const schedule = useSchedule().getSchedule();
+  if (!schedule) return;
+  console.log(schedule)
+
+  const eventsByDayOfWeek: { [day: string]: ScheduleElement[] } = {
+    sunday: [],
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+  };
+
+  for (const day of daysOfWeek) {
+    eventsByDayOfWeek[day] = [];
+  }
+
+  for (const year in schedule) {
+    for (const month in schedule[parseInt(year)]) {
+      for (const day in schedule[parseInt(year)][month]) {
+        for (const event of schedule[parseInt(year)][month][day]) {
+          const date = new Date(event.date);
+          const dayOfWeek = daysOfWeek[date.getDay()];
+          eventsByDayOfWeek[dayOfWeek].push(event);
+        }
+      }
+    }
+  }
+
+  return eventsByDayOfWeek as any;
+});
+
+async function setSchedule(params: { schedule: Schedule }) {
+  const schedule = params.schedule;
+
+  const eventsByDayOfWeek: { [day: string]: ScheduleElement[] } = {
+    sunday: [],
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+  };
+
+  for (const day of daysOfWeek) {
+    eventsByDayOfWeek[day] = [];
+  }
+
+  for (const year in schedule) {
+    for (const month in schedule[parseInt(year)]) {
+      for (const day in schedule[parseInt(year)][month]) {
+        for (const event of schedule[parseInt(year)][month][day]) {
+          const date = new Date(event.date);
+          const dayOfWeek = daysOfWeek[date.getDay()];
+          eventsByDayOfWeek[dayOfWeek].push(event);
+        }
+      }
+    }
+  }
+
+  dates.value = eventsByDayOfWeek as any;
 }
 </script>
 
