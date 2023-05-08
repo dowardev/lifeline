@@ -8,28 +8,33 @@ export async function storeSchedule(params: { schedule: Schedule }) {
   const scheduleElement = params.schedule;
   let schedule = (await getSchedule()) ?? ({} as Schedule);
 
-  const newObj = {};
+  const newSchedule: Schedule = {};
+
+  let year: number, month: number, day: number;
 
   [schedule, scheduleElement].forEach((obj) => {
-    Object.keys(obj).forEach((year) => {
-      if (!newObj.hasOwnProperty(year)) {
-        newObj[year] = {};
+    Object.keys(obj).forEach((yearStr) => {
+      year = parseInt(yearStr);
+      if (!newSchedule.hasOwnProperty(year)) {
+        newSchedule[year] = {};
       }
-      Object.keys(obj[year]).forEach((month) => {
-        if (!newObj[year].hasOwnProperty(month)) {
-          newObj[year][month] = {};
+      Object.keys(obj[year]).forEach((monthStr) => {
+        month = parseInt(monthStr);
+        if (!newSchedule[year].hasOwnProperty(month)) {
+          newSchedule[year][month] = {};
         }
-        Object.keys(obj[year][month]).forEach((day) => {
-          if (!newObj[year][month].hasOwnProperty(day)) {
-            newObj[year][month][day] = [];
+        Object.keys(obj[year][month]).forEach((dayStr) => {
+          day = parseInt(dayStr);
+          if (!newSchedule[year][month].hasOwnProperty(day)) {
+            newSchedule[year][month][day] = [];
           }
           obj[year][month][day].forEach((element) => {
             if (
-              !newObj[year][month][day].some(
+              !newSchedule[year][month][day].some(
                 (e) => e.idElement === element.idElement
               )
             ) {
-              newObj[year][month][day].push(element);
+              newSchedule[year][month][day].push(element);
             }
           });
         });
@@ -40,7 +45,7 @@ export async function storeSchedule(params: { schedule: Schedule }) {
   if (Object.keys(schedule).length == 0) {
     schedule = scheduleElement;
   } else {
-    schedule = newObj;
+    schedule = newSchedule;
   }
   await store.set("schedule", schedule);
 }
