@@ -181,9 +181,11 @@ export interface NewTodo {
 
 export interface ScheduleElement {
   id: string;
+  idElement: string;
   title: string;
   message: string;
   date: string;
+  type: string;
 }
 
 export interface Schedule {

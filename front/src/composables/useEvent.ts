@@ -8,7 +8,9 @@ import { useEventsStore } from "../store/eventsStore";
 export const useEvent = () => {
   const eventStore = useEventsStore();
 
-  async function saveEvent(params: { event: NewEvent }): Promise<void> {
+  async function saveEvent(params: {
+    event: NewEvent;
+  }): Promise<{ id: string }> {
     const eventData = params.event;
     let event = {} as Event;
 
@@ -19,6 +21,8 @@ export const useEvent = () => {
         })
       ).event;
       eventStore.addEvent({ event });
+
+      return { id: event.id };
     } catch (error: any) {
       throw new Error(error);
     }

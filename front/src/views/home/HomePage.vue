@@ -395,7 +395,6 @@ function setDaysToWeek(params: { days: Array<Day> }) {
 const dates2 = computed(() => {
   const schedule = useSchedule().getSchedule();
   if (!schedule) return;
-  console.log(schedule)
 
   const eventsByDayOfWeek: { [day: string]: ScheduleElement[] } = {
     sunday: [],

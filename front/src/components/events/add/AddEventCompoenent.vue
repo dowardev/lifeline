@@ -494,6 +494,7 @@ import CalendarComponent from "./calendar/CalendarComponent.vue";
 
 // composables
 import { useEvent } from "@/composables/useEvent";
+import { useSchedule } from "@/composables/useSchedule";
 
 const isOpenPopoverReminders = ref(false);
 const timeZones = Intl.supportedValuesOf("timeZone").map(
@@ -583,9 +584,11 @@ const saveEvent = async () => {
     description: event.description.value,
     availability: event.availability.value,
   };
-  await useEvent().saveEvent({
+  const { id } = await useEvent().saveEvent({
     event: JSON.parse(JSON.stringify(eventFormated)),
   });
+  await useSchedule().generateEventSchedule({ eventId: id });
+  await useSchedule().loadSchedule();
   router.go(-1);
 };
 </script>

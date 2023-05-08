@@ -144,23 +144,23 @@ export async function updateEvent(event: Record<string, any>) {
 //   });
 // }
 
-export async function getEvent(id: number) {
-  // const token = await userService()
-  //   .getUserToken()
-  //   .then((response) => {
-  //     return response;
-  //   });
-  // return axios.post(
-  //   "http://localhost:8000/api/auth/get-event",
-  //   { id },
-  //   {
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       Authorization: "Bearer " + token,
-  //     },
-  //   }
-  // );
-}
+// export async function getEvent(id: number) {
+// const token = await userService()
+//   .getUserToken()
+//   .then((response) => {
+//     return response;
+//   });
+// return axios.post(
+//   "http://localhost:8000/api/auth/get-event",
+//   { id },
+//   {
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: "Bearer " + token,
+//     },
+//   }
+// );
+// }
 export async function getEventLocal(id: number) {
   const events = await storage.get("events");
 
@@ -242,4 +242,12 @@ export async function saveLocalEvent(params: {
 
 export async function getEvents(): Promise<Array<Event> | null> {
   return await store.get("events");
+}
+
+export async function getEvent(params: { id: string }): Promise<Event | null> {
+  const id = params.id;
+  const event = (await store.get("events")).filter(
+    (event: Event) => event.id == id
+  );
+  return event[0];
 }

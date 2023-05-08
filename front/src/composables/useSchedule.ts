@@ -1,9 +1,9 @@
 import { useDocument } from "@/composables/useDocument";
 import { useScheduleStore } from "@/store/scheduleStore";
-import { Schedule } from "@/utils/interfaces";
+import { Schedule, Event } from "@/utils/interfaces";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { format } from "date-fns";
-import { getEvents as getEventsService } from "../services/event";
+import { getEvent, getEvents as getEventsService } from "../services/event";
 import {
   getSchedule as getScheduleService,
   storeSchedule,
@@ -106,45 +106,82 @@ export const useSchedule = () => {
   async function generateEventsSchedule(): Promise<void> {
     const events = await getEventsService();
 
-    if (events == null) return;
+    if (!events) return;
+
+    await Promise.all(
+      events.map(async (event) => {
+        const id = new Date().getTime().toString();
+        const idElement = event.id;
+        const title = event.name;
+        const message = "Recordatorio";
+        const startDate = new Date(event.reminders?.start as string);
+        const endDate = new Date(event.reminders?.end as string);
+
+        const scheduleElement = generateSchedule({
+          id,
+          idElement,
+          title,
+          message,
+          startDate,
+          endDate,
+          type: "Event",
+        });
+
+        await storeSchedule({ schedule: scheduleElement });
+      })
+    );
+  }
+
+  function generateSchedule(params: {
+    id: string;
+    idElement: string;
+    title: string;
+    message: string;
+    startDate: Date;
+    endDate: Date;
+    type: string;
+  }) {
+    const id = params.id;
+    const idElement = params.idElement;
+    const title = params.title;
+    const message = params.message;
+    const startDate = params.startDate;
+    const endDate = params.endDate;
+    const type = params.type;
 
     const eventsByDate: Schedule = {};
 
-    events.forEach((event) => {
-      const startDate = new Date(event.reminders?.start as string);
-      const endDate = new Date(event.reminders?.end as string);
+    for (
+      let date = startDate;
+      date <= endDate;
+      date.setDate(date.getDate() + 1)
+    ) {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
 
-      // Iteramos sobre los días entre el inicio y fin del evento
-      for (
-        let date = startDate;
-        date <= endDate;
-        date.setDate(date.getDate() + 1)
-      ) {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const day = date.getDate();
-
-        if (!eventsByDate[year]) {
-          eventsByDate[year] = {};
-        }
-
-        if (!eventsByDate[year][month]) {
-          eventsByDate[year][month] = {};
-        }
-
-        if (!eventsByDate[year][month][day]) {
-          eventsByDate[year][month][day] = [];
-        }
-
-        eventsByDate[year][month][day].push({
-          id: event.id + new Date().getTime(),
-          title: event.name,
-          message: "Recordatorio",
-          date: event.reminders?.start,
-        });
+      if (!eventsByDate[year]) {
+        eventsByDate[year] = {};
       }
-    });
-    storeSchedule({ schedule: eventsByDate });
+
+      if (!eventsByDate[year][month]) {
+        eventsByDate[year][month] = {};
+      }
+
+      if (!eventsByDate[year][month][day]) {
+        eventsByDate[year][month][day] = [];
+      }
+
+      eventsByDate[year][month][day].push({
+        id: id + new Date().getTime(),
+        idElement,
+        title,
+        message,
+        date: startDate.toISOString(),
+        type,
+      });
+    }
+    return eventsByDate;
   }
 
   async function loadSchedule(): Promise<void> {
@@ -160,6 +197,34 @@ export const useSchedule = () => {
     return schedule != null ? schedule : undefined;
   }
 
+  async function generateEventSchedule(params: {
+    eventId: string;
+  }): Promise<void> {
+    const eventId = params.eventId;
+    const event = await getEvent({ id: eventId });
+
+    if (event == null) return;
+
+    const id = new Date().getTime().toString();
+    const idElement = event.id;
+    const title = event.name;
+    const message = "Recordatorio";
+    const startDate = new Date(event.reminders?.start as string);
+    const endDate = new Date(event.reminders?.end as string);
+
+    const scheduleElement = generateSchedule({
+      id,
+      idElement,
+      title,
+      message,
+      startDate,
+      endDate,
+      type: "Event",
+    });
+
+    await storeSchedule({ schedule: scheduleElement });
+  }
+
   return {
     loadReminders,
     setReminders,
@@ -168,5 +233,6 @@ export const useSchedule = () => {
     generateEventsSchedule,
     loadSchedule,
     getSchedule,
+    generateEventSchedule,
   };
 };
