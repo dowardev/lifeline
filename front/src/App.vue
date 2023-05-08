@@ -1,6 +1,6 @@
 <template>
   <ion-app>
-    <ion-split-pane when="md" content-id="menu-content">
+    <ion-split-pane when="lg" content-id="menu-content">
       <ion-menu
         content-id="menu-content"
         menu-id="mainMenu"

@@ -145,23 +145,28 @@
                   <td v-for="day in days" :key="day.date.toString()">
                     <div>
                       <div
-                        v-for="date in dates2[
+                        v-for="schedule in generateSchedule[
                           daysOfWeek[new Date(day.date).getDay()]
                         ]"
-                        :key="date.date.toString()"
+                        :key="schedule.date.toString()"
                       >
                         <template
                           v-if="
-                            new Date(date.date).getHours() === parseInt(hour)
+                            new Date(schedule.date).getHours() ===
+                              parseInt(hour) &&
+                            new Date(schedule.date).getDate() ===
+                              day.date.getDate()
                           "
                         >
                           <ion-card class="card-event">
                             <ion-card-header>
-                              <ion-card-title>{{ date.title }}</ion-card-title>
+                              <ion-card-title>{{
+                                schedule.title
+                              }}</ion-card-title>
                             </ion-card-header>
 
                             <ion-card-content>{{
-                              format(new Date(date.date), "Pp")
+                              format(new Date(schedule.date), "Pp")
                             }}</ion-card-content>
                           </ion-card>
                         </template>
@@ -364,16 +369,39 @@ function getDaysForCurrentWeek(params: { date: Date }): Day[] {
 }
 
 function previousWeek() {
-  if (currentDate.getMonth() === 0 && currentDate.getDate() <= 7) {
+  const currentMonth = currentDate.getMonth();
+  if (currentMonth === 0 && currentDate.getDate() <= 7) {
     return;
   }
-  const date = new Date().setDate(currentDate.getDate() - 7);
-  loadDaysWeek({ date });
+  const date = new Date(currentDate);
+  if (date.getDate() <= 7) {
+    date.setMonth(currentMonth - 1);
+    date.setDate(
+      new Date(date.getFullYear(), currentMonth, 0).getDate() -
+        (7 - date.getDate())
+    );
+  } else {
+    date.setDate(date.getDate() - 7);
+  }
+  loadDaysWeek({ date: date.getTime() });
 }
 
 function nextWeek() {
-  const date = new Date().setDate(currentDate.getDate() + 7);
-  loadDaysWeek({ date });
+  const currentMonth = currentDate.getMonth();
+  const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+  const lastDayOfMonth = new Date(
+    currentDate.getFullYear(),
+    nextMonth,
+    0
+  ).getDate();
+  const date = new Date(currentDate);
+  if (date.getDate() + 7 > lastDayOfMonth) {
+    date.setMonth(nextMonth);
+    date.setDate(7 - (lastDayOfMonth - date.getDate()));
+  } else {
+    date.setDate(date.getDate() + 7);
+  }
+  loadDaysWeek({ date: date.getTime() });
 }
 
 function today() {
@@ -392,7 +420,7 @@ function setDaysToWeek(params: { days: Array<Day> }) {
   days.value = params.days;
 }
 
-const dates2 = computed(() => {
+const generateSchedule = computed(() => {
   const schedule = useSchedule().getSchedule();
   if (!schedule) return;
 
@@ -496,7 +524,13 @@ table.schedule-table th:first-child {
 }
 
 table.schedule-table td:nth-child(n + 2) {
-  min-width: 100px;
+  min-width: 210px;
+}
+
+@media only screen and (min-width: 768px) {
+  table.schedule-table td:nth-child(n + 2) {
+    min-width: 180px;
+  }
 }
 
 .card-event {
