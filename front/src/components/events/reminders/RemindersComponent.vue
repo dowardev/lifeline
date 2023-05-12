@@ -2,7 +2,7 @@
   <ion-header :translucent="true" mode="ios" class="ion-no-border">
     <!-- buttons mobile -->
     <ion-toolbar>
-      <ion-buttons v-if="!isPlatform('desktop')" slot="start">
+      <ion-buttons slot="start">
         <ion-button @click="closPage()">
           <ion-icon :icon="closeOutline"></ion-icon>
         </ion-button>
@@ -18,12 +18,17 @@
     </ion-toolbar>
 
     <ion-toolbar>
+      <!-- segment buttons -->
       <ion-segment
         v-model="reminderSegment"
         :mode="isPlatform('ios') ? 'ios' : 'md'"
+        :scrollable="true"
+        class="ion-padding-start ion-padding-end"
       >
         <ion-segment-button value="date-start">Inicio</ion-segment-button>
         <ion-segment-button value="date-end">Final</ion-segment-button>
+        <ion-segment-button value="reminders">Recordatorios</ion-segment-button>
+        <ion-segment-button value="repeats">Repetir</ion-segment-button>
       </ion-segment>
     </ion-toolbar>
   </ion-header>
@@ -36,8 +41,8 @@
           ref="datetimeStart"
           class="transparent"
           :min="new Date().toISOString().split('T')[0]"
-          :value="dateReminderStart"
-          @ion-change="dateReminderStart = $event.detail.value as string"
+          :value="formatISO(new Date(dates.start))"
+          @ion-change="dates.start = $event.detail.value as string"
         >
         </ion-datetime>
       </div>
@@ -59,8 +64,9 @@
         <ion-datetime
           ref="datetimeEnd"
           class="transparent"
-          :value="dateReminderEnd"
-          @ion-change="dateReminderEnd = $event.detail.value as string"
+          :min="new Date().toISOString().split('T')[0]"
+          :value="formatISO(new Date(dates.end))"
+          @ion-change="dates.end = $event.detail.value as string"
         >
         </ion-datetime>
       </div>
@@ -74,6 +80,31 @@
           >Reiniciar</ion-button
         >
       </div>
+    </section>
+
+    <!-- notifications -->
+    <section
+      v-if="reminderSegment == 'reminders'"
+      class="ion-padding"
+      style="overflow: scroll; height: 70vh"
+    >
+      <ion-item v-for="reminder in notificationsData" :key="reminder.name">
+        <ion-checkbox
+          label-placement="start"
+          :checked="reminder.checked"
+          @ion-change="reminder.checked = !reminder.checked"
+          >{{ reminder.text }}</ion-checkbox
+        >
+      </ion-item>
+    </section>
+
+    <!-- repeat -->
+    <section
+      v-if="reminderSegment == 'repeats'"
+      class="ion-padding"
+      style="overflow: scroll; height: 70vh"
+    >
+      <RepeatsComponent @update-data="dataRepeat = $event" />
     </section>
   </ion-content>
 </template>
@@ -90,25 +121,33 @@ import {
   IonSegmentButton,
   IonButton,
   IonDatetime,
+  IonCheckbox,
   popoverController,
 } from "@ionic/vue";
-import { add, format } from "date-fns";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+
+import RepeatsComponent from "./repeat/RepeatsComponent.vue";
+import { formatISO } from "date-fns";
 
 const props = defineProps({
-  dataReminders: {
+  dates: {
     type: Object,
-    default: function () {
+    default: () => {
       return {
         start: "",
         end: "",
       };
     },
   },
+  segmentOption: { default: "date-start", type: String },
+  notifications: {
+    type: Array,
+    default: () => [],
+  },
 });
 
-const emitEvent = defineEmits(["reminders"]);
+const emitEvent = defineEmits(["updateDataReminders"]);
 
 const datetimeStart = ref();
 const resetStart = () => datetimeStart.value.$el.reset();
@@ -119,30 +158,124 @@ const resetEnd = () => datetimeEnd.value.$el.reset();
 const reminderSegment = ref("date-start");
 const pageTitle = "Recordatorios";
 
-const dateReminderStart = ref(props.dataReminders.start);
+const dates = ref({
+  start: props.dates.start,
+  end: props.dates.end,
+});
 
-const dateReminderEnd = ref(props.dataReminders.end);
+const notificationsData = ref([
+  {
+    name: "5mb",
+    text: "5 minutos antes",
+    checked: false,
+  },
+  {
+    name: "10mb",
+    text: "10 minutos antes",
+    checked: false,
+  },
+  {
+    name: "15mb",
+    text: "15 minutos antes",
+    checked: false,
+  },
+  {
+    name: "30mb",
+    text: "30 minutos antes",
+    checked: false,
+  },
+  {
+    name: "1hb",
+    text: "1 hora antes",
+    checked: false,
+  },
+  {
+    name: "2hb",
+    text: "2 horas antes",
+    checked: false,
+  },
+  {
+    name: "1db",
+    text: "1 dia antes",
+    checked: false,
+  },
+  {
+    name: "2db",
+    text: "2 dias antes",
+    checked: false,
+  },
+  {
+    name: "1wb",
+    text: "1 semana antes",
+    checked: false,
+  },
+  {
+    name: "1mtb",
+    text: "1 mes antes",
+    checked: false,
+  },
+]);
+
+const dataRepeat = ref({ type: "unique" } as {
+  frecuency: number;
+  type: "unique" | "daily" | "weekly" | "monthly" | "annually";
+  daysWeek?: string[];
+});
+
+const endDate = computed(() => {
+  return dates.value.end;
+});
 
 // watch
-watch(props.dataReminders.start, (newValue, oldValue) => {
-  dateReminderStart.value = newValue.toISOString();
+watch(endDate, (newValue, oldValue) => {
+  const dateStart = new Date(dates.value.start);
+  const dateEnd = new Date(newValue as string);
+  if (dateStart > dateEnd) dates.value.start = dateEnd.toISOString();
 });
-watch(props.dataReminders.end, (newValue, oldValue) => {
-  dateReminderEnd.value = newValue.toISOString();
+
+// mouted
+onMounted(() => {
+  reminderSegment.value = props.segmentOption as string;
+  notificationsData.value.forEach((notification) => {
+    if (props.notifications.includes(notification.name)) {
+      notification.checked = true;
+    }
+  });
 });
 
 // functions
-const closPage = () => {
-  modalController.dismiss();
-};
-
-const saveReminder = async () => {
-  const dateStart = dateReminderStart.value;
-  const dateEnd = dateReminderEnd.value;
-  emitEvent("reminders", { data: { start: dateStart, end: dateEnd } });
-
+const closPage = async () => {
   const modal = await modalController.getTop();
   if (modal) await modalController.dismiss();
   else await popoverController.dismiss();
 };
+
+const saveReminder = async () => {
+  const dateStart = dates.value.start;
+  const dateEnd = dates.value.end;
+  const remindersChecked = getCheckedReminders();
+  const dateRepeat = dataRepeat;
+
+  emitEvent("updateDataReminders", {
+    data: { start: dateStart, end: dateEnd, remindersChecked, dateRepeat },
+  });
+  closPage();
+};
+
+function getCheckedReminders() {
+  return notificationsData.value
+    .filter((reminder) => reminder.checked)
+    .map((day) => day.name);
+}
 </script>
+
+<style scoped>
+ion-content {
+  --offset-bottom: auto !important;
+  --overflow: hidden;
+  overflow: auto;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+</style>

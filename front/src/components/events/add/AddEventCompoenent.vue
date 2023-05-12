@@ -57,8 +57,8 @@
                           ref="inputName"
                           label="Nombre"
                           placeholder="Visita al dentista"
-                          label-placement="fixed"
-                          fill="outline"
+                          label-placement="floating"
+                          fill="solid"
                           autocomplete="on"
                           autocorrect="on"
                           type="text"
@@ -107,9 +107,9 @@
                       <div style="width: 100%">
                         <ion-textarea
                           placeholder="Visita rutinaria"
-                          fill="outline"
+                          fill="solid"
                           label="Descripcion"
-                          label-placement="fixed"
+                          label-placement="floating"
                           :auto-grow="true"
                           autocomplete="on"
                           autocorrect="on"
@@ -124,39 +124,73 @@
                     </div>
                   </ion-col>
                 </ion-row>
+              </ion-list>
 
-                <br />
+              <br />
 
-                <!-- dates -->
+              <!-- time -->
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Tiempo</ion-label>
+                </ion-list-header>
                 <ion-row>
                   <ion-col size-xs="11" size="10">
                     <div style="display: flex">
-                      <div style="display: flex; align-items: center">
+                      <div>
                         <ion-button fill="clear" :disabled="true"
                           ><ion-icon :icon="globeOutline"></ion-icon
                         ></ion-button>
                       </div>
 
                       <div style="width: 100%">
-                        <ion-item
-                          fill="outline"
-                          lines="none"
-                          @click="isOpenPopoverReminders = true"
+                        <!-- dates -->
+                        <ion-textarea
+                          label="Tiempo"
+                          label-placement="floating"
+                          fill="solid"
+                          :value="
+                            format(
+                              new Date(event.reminders.value.start),
+                              'Pp'
+                            ) +
+                            '\n' +
+                            format(new Date(event.reminders.value.end), 'Pp')
+                          "
+                          @click="
+                            popoverRemindersSegment = 'date-start';
+                            isOpenPopoverReminders = true;
+                          "
+                        ></ion-textarea>
+
+                        <!-- notifications -->
+                        <section
+                          v-if="event.reminders.value.notifications.length > 0"
                         >
-                          <ion-label>Tiempo</ion-label>
-                          <ion-label slot="end" class="ion-text-wrap"
-                            >{{
-                              format(
-                                new Date(event.reminders.value.start),
-                                "Pp"
-                              )
-                            }}
-                            -
-                            {{
-                              format(new Date(event.reminders.value.end), "Pp")
-                            }}</ion-label
-                          >
-                        </ion-item>
+                          <ion-textarea
+                            label="Notificaciones"
+                            label-placement="floating"
+                            fill="solid"
+                            :value="formatTextNotifications()"
+                            @click="
+                              popoverRemindersSegment = 'reminders';
+                              isOpenPopoverReminders = true;
+                            "
+                          ></ion-textarea>
+                        </section>
+
+                        <!-- repeat -->
+                        <section v-if="event.reminders.value.repeat">
+                          <ion-textarea
+                            label="Repetir"
+                            label-placement="floating"
+                            fill="solid"
+                            :value="formatTextRepeat()"
+                            @click="
+                              popoverRemindersSegment = 'repeats';
+                              isOpenPopoverReminders = true;
+                            "
+                          ></ion-textarea>
+                        </section>
                       </div>
                     </div>
                   </ion-col>
@@ -176,7 +210,7 @@
 
                       <div style="width: 100%">
                         <ion-item
-                          fill="outline"
+                          fill="solid"
                           lines="none"
                           @click="isOpenPopoverTimezones = true"
                         >
@@ -221,8 +255,8 @@
                         <ion-input
                           ref="inputGuest"
                           label="Invitados"
-                          label-placement="fixed"
-                          fill="outline"
+                          label-placement="floating"
+                          fill="solid"
                           placeholder="Correo electronico"
                           autocomplete="on"
                           autocorrect="on"
@@ -301,7 +335,7 @@
                       </div>
 
                       <div style="width: 100%">
-                        <ion-item>
+                        <ion-item fill="solid">
                           <ion-select
                             placeholder="Disponibilidad"
                             ok-text="Confirmar"
@@ -352,17 +386,22 @@
       <ion-popover
         style="--width: 22rem"
         :is-open="isOpenPopoverReminders"
+        :backdrop-dismiss="false"
         @will-dismiss="isOpenPopoverReminders = false"
       >
         <RemindersComponent
-          :data-reminders="{
+          :dates="{
             start: event.reminders.value.start,
             end: event.reminders.value.end,
           }"
-          @reminders="
+          :segment-option="popoverRemindersSegment"
+          :notifications="event.reminders.value.notifications"
+          @update-data-reminders="
             event.reminders.value = {
               start: $event.data.start,
               end: $event.data.end,
+              notifications: $event.data.remindersChecked,
+              repeat: $event.data.dateRepeat,
             }
           "
         />
@@ -469,7 +508,7 @@ import {
 } from "@ionic/vue";
 import { onMounted, ref } from "vue";
 import RemindersComponent from "../reminders/RemindersComponent.vue";
-import { format } from "date-fns";
+import { format, yearsToMonths } from "date-fns";
 import {
   addOutline,
   briefcaseOutline,
@@ -512,11 +551,18 @@ const event = {
   reminders: ref({
     start: new Date().toISOString(),
     end: new Date().toISOString(),
+    notifications: Array<string>(),
+    repeat: { type: "unique" } as {
+      frecuency: number;
+      type: "unique" | "daily" | "weekly" | "monthly" | "annually";
+      daysWeek?: string[];
+    },
   }),
   timezone: ref(Intl.DateTimeFormat().resolvedOptions().timeZone),
   guests: ref(Array<{ email: string }>()),
   availability: ref("available"),
 };
+
 // validation
 const messageError = {
   email: "Correo electronico no valido",
@@ -542,6 +588,7 @@ const inputName = ref(null);
 const inputGuest = ref(null);
 
 const pageTitle = "Agregar evento";
+const popoverRemindersSegment = "date-start";
 
 // mounted
 onMounted(() => {
@@ -580,10 +627,13 @@ const saveEvent = async () => {
     reminders: {
       start: event.reminders.value.start,
       end: event.reminders.value.end,
+      notification: event.reminders.value.notifications,
+      repeat: event.reminders.value.repeat,
     },
     description: event.description.value,
     availability: event.availability.value,
   };
+
   const { id } = await useEvent().saveEvent({
     event: JSON.parse(JSON.stringify(eventFormated)),
   });
@@ -591,6 +641,81 @@ const saveEvent = async () => {
   await useSchedule().loadSchedule();
   router.go(-1);
 };
+
+function formatTextNotifications() {
+  let text = "";
+  const len = event.reminders.value.notifications.length - 1;
+  let index = 0;
+
+  event.reminders.value.notifications.forEach((notification) => {
+    if (len > index) text += translateNotifications({ notification }) + ", ";
+    else text += translateNotifications({ notification });
+    index++;
+  });
+  return text;
+}
+
+function formatTextRepeat() {
+  const type = event.reminders.value.repeat.type;
+  let text = translateRepeat({
+    repeat: type,
+  });
+  const len = event.reminders.value.repeat.daysWeek?.length! - 1;
+  let index = 0;
+  let days = "";
+
+  event.reminders.value.repeat.daysWeek?.forEach((day) => {
+    if (len > index) days += translateDaysWeekRepear({ day }) + ", ";
+    else days += translateDaysWeekRepear({ day });
+    index++;
+  });
+  if (days != "") text = `${text}(${days})`;
+
+  return text;
+}
+
+function translateRepeat(params: { repeat: string }) {
+  let repeat = params.repeat;
+
+  if (repeat == "unique") repeat = "Unico";
+  if (repeat == "daily") repeat = "Diario";
+  if (repeat == "weekly") repeat = "Semanal";
+  if (repeat == "monthly") repeat = "Mensual";
+  if (repeat == "annually") repeat = "Anual";
+
+  return repeat;
+}
+
+function translateDaysWeekRepear(params: { day: string }) {
+  let day = params.day;
+
+  if (day == "sunday") day = "Domingo";
+  if (day == "monday") day = "Lunes";
+  if (day == "tuesday") day = "Martes";
+  if (day == "wednesday") day = "Miercoles";
+  if (day == "thursday") day = "Jueves";
+  if (day == "friday") day = "Viernes";
+  if (day == "saturday") day = "Sabado";
+
+  return day;
+}
+
+function translateNotifications(params: { notification: string }) {
+  let notification = params.notification;
+
+  if (notification == "5mb") notification = "5 minutos antes";
+  if (notification == "10mb") notification = "10 minutos antes";
+  if (notification == "15mb") notification = "15 minutos antes";
+  if (notification == "30mb") notification = "30 minutos antes";
+  if (notification == "1hb") notification = "1 hora antes";
+  if (notification == "2hb") notification = "2 hora antes";
+  if (notification == "1db") notification = "1 dia antes";
+  if (notification == "2db") notification = "2 dia antes";
+  if (notification == "2wb") notification = "1 semana antes";
+  if (notification == "1mtb") notification = "1 mes antes";
+
+  return notification;
+}
 </script>
 
 <style scoped>

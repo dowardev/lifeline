@@ -40,6 +40,7 @@ export const useEvent = () => {
 
   function getEvents(): Array<Event> | undefined {
     const events = eventStore.getEvents();
+
     return events != null ? JSON.parse(JSON.stringify(events)) : undefined;
   }
 

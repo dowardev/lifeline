@@ -77,8 +77,16 @@ export interface NewEvent {
   name?: string;
   // calendar?: string;
   guests?: Array<{ email: string }>;
-  reminders?: { start: string; end: string };
-  // repeats?: { name: string; frequency: string; data: {} };
+  reminders?: {
+    start: string;
+    end: string;
+    notifications: string[];
+    repeat: {
+      frecuency: number;
+      type: "unique" | "daily" | "weekly" | "monthly" | "annually";
+      daysWeek?: string[];
+    };
+  };
   // tags?: Array<string>;
   timeZone?: string;
   description: string;
@@ -200,4 +208,13 @@ export interface System {
   theme: {
     selected: Theme;
   };
+}
+
+export interface EventDataReminder {
+  start: string;
+  end: string;
+  frecuency: number;
+  type: "unique" | "daily" | "weekly" | "monthly" | "annually";
+  daysWeek?: string[];
+  reminders?: string[];
 }
