@@ -341,6 +341,9 @@
                             ok-text="Confirmar"
                             cancel-text="Cancelar"
                             :value="event.availability.value"
+                            :interface="
+                              isPlatform('desktop') ? 'popover' : 'alert'
+                            "
                             @ion-change="
                               event.availability.value = $event.target
                                 .value as string
@@ -411,7 +414,7 @@
       <ion-popover
         style="--width: 22rem"
         :is-open="isOpenPopoverTimezones"
-        @will-dismiss="isOpenPopoverTimezones = false"
+        :backdrop-dismiss="false"
       >
         <ion-header
           :translucent="true"
@@ -420,6 +423,11 @@
           class="ion-no-border"
         >
           <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="isOpenPopoverTimezones = false">
+                <ion-icon :icon="closeOutline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
             <ion-title>Zona horaria</ion-title>
           </ion-toolbar>
 
@@ -508,7 +516,7 @@ import {
 } from "@ionic/vue";
 import { onMounted, ref } from "vue";
 import RemindersComponent from "../reminders/RemindersComponent.vue";
-import { format, yearsToMonths } from "date-fns";
+import { format } from "date-fns";
 import {
   addOutline,
   briefcaseOutline,
@@ -534,6 +542,11 @@ import CalendarComponent from "./calendar/CalendarComponent.vue";
 // composables
 import { useEvent } from "@/composables/useEvent";
 import { useSchedule } from "@/composables/useSchedule";
+import { useSystem } from "@/composables/useSystem";
+import {
+  EventReminderNotification,
+  EventReminderRepeat,
+} from "@/utils/interfaces";
 
 const isOpenPopoverReminders = ref(false);
 const timeZones = Intl.supportedValuesOf("timeZone").map(
@@ -675,46 +688,32 @@ function formatTextRepeat() {
 }
 
 function translateRepeat(params: { repeat: string }) {
-  let repeat = params.repeat;
+  let repeat = params.repeat as keyof EventReminderRepeat;
 
-  if (repeat == "unique") repeat = "Unico";
-  if (repeat == "daily") repeat = "Diario";
-  if (repeat == "weekly") repeat = "Semanal";
-  if (repeat == "monthly") repeat = "Mensual";
-  if (repeat == "annually") repeat = "Anual";
-
-  return repeat;
+  let result = useSystem().translateEventReminderRepeat({
+    typeRepeat: repeat,
+  });
+  result = result.charAt(0).toUpperCase() + result.slice(1);
+  return result;
 }
 
 function translateDaysWeekRepear(params: { day: string }) {
-  let day = params.day;
+  let day = params.day as any;
 
-  if (day == "sunday") day = "Domingo";
-  if (day == "monday") day = "Lunes";
-  if (day == "tuesday") day = "Martes";
-  if (day == "wednesday") day = "Miercoles";
-  if (day == "thursday") day = "Jueves";
-  if (day == "friday") day = "Viernes";
-  if (day == "saturday") day = "Sabado";
-
-  return day;
+  let result = useSystem().translateDay({
+    dayName: day,
+  });
+  result = result.charAt(0).toUpperCase() + result.slice(1);
+  return result;
 }
 
 function translateNotifications(params: { notification: string }) {
-  let notification = params.notification;
+  let notification = params.notification as keyof EventReminderNotification;
 
-  if (notification == "5mb") notification = "5 minutos antes";
-  if (notification == "10mb") notification = "10 minutos antes";
-  if (notification == "15mb") notification = "15 minutos antes";
-  if (notification == "30mb") notification = "30 minutos antes";
-  if (notification == "1hb") notification = "1 hora antes";
-  if (notification == "2hb") notification = "2 hora antes";
-  if (notification == "1db") notification = "1 dia antes";
-  if (notification == "2db") notification = "2 dia antes";
-  if (notification == "2wb") notification = "1 semana antes";
-  if (notification == "1mtb") notification = "1 mes antes";
-
-  return notification;
+  let result = useSystem().translateEventReminderNotification({
+    notificationName: notification,
+  });
+  return result;
 }
 </script>
 

@@ -5,6 +5,7 @@
         <ion-item fill="solid">
           <ion-select
             :value="optionRepearSelected"
+            :interface="isPlatform('desktop') ? 'popover' : 'alert'"
             ok-text="Confirmar"
             cancel-text="Cancelar"
             @ion-change="
@@ -250,10 +251,10 @@ import {
   IonInput,
   IonItem,
   IonButton,
+  isPlatform,
 } from "@ionic/vue";
 import useVuelidate from "@vuelidate/core";
 import { helpers, numeric, required } from "@vuelidate/validators";
-import { format, getWeek } from "date-fns";
 import { onMounted, ref } from "vue";
 
 const emits = defineEmits(["updateData"]);

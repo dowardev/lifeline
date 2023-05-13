@@ -24,7 +24,7 @@
               </ion-item>
             </div>
 
-            <div style="height: 90vh; overflow: auto; overflow-x: auto">
+            <div style="height: 82vh; overflow: auto; overflow-x: auto">
               <RescheduleComponent />
             </div>
           </section>
@@ -61,7 +61,13 @@
                     fill="clear"
                     size="small"
                     @click="isOpenpopoverMainCalendar = true"
-                    >{{ months[getMonth(currentDate) - 1] }}
+                  >
+                    <!-- {{ months[getMonth(currentDate) - 1] }} -->
+                    {{
+                      translateMonth({
+                        monthName: months[getMonth(currentDate) - 1],
+                      })
+                    }}
                   </ion-button>
 
                   <!-- next button -->
@@ -101,7 +107,7 @@
           </div>
 
           <!-- table -->
-          <div style="height: 90vh; overflow: auto; overflow-x: auto">
+          <div style="height: 82vh; overflow: auto; overflow-x: auto">
             <table class="schedule-table">
               <thead>
                 <tr>
@@ -116,7 +122,11 @@
                           day.date.getFullYear() == new Date().getFullYear(),
                       }"
                     >
-                      {{ daysOfWeek[day.date.getDay()] }}
+                      {{
+                        translateDayHeaderTable({
+                          dayName: daysOfWeek[day.date.getDay()],
+                        })
+                      }}
                     </div>
 
                     <!-- day number -->
@@ -182,18 +192,20 @@
 
       <!-- popovers -->
       <ion-popover
+        id="prueba"
+        :class="{ 'popover-main-calendar-ios': isPlatform('ios') }"
         :is-open="isOpenpopoverMainCalendar"
         @did-dismiss="isOpenpopoverMainCalendar = false"
       >
         <ion-content>
           <ion-datetime
             presentation="date"
+            :value="currentDate.toISOString()"
             @ion-change="
               loadDaysWeek({
                 date: new Date($event.target.value as string).getTime(),
               })
             "
-            :value="currentDate.toISOString()"
           ></ion-datetime>
         </ion-content>
       </ion-popover>
@@ -254,19 +266,16 @@ import {
   stopwatchOutline,
   todayOutline,
 } from "ionicons/icons";
+import { Months, ScheduleElement } from "@/utils/interfaces";
+
+// components
 import RescheduleComponent from "../../components/events/schedule-elements/RescheduleElements.vue";
-import { ScheduleElement } from "@/utils/interfaces";
+
+// composables
+import { useSystem } from "../../composables/useSystem";
 
 interface Day {
   date: Date;
-}
-interface Dates {
-  [key: string]: Array<{
-    id: string;
-    title: string;
-    message: string;
-    date: string;
-  }>;
 }
 
 const pageTitle = "Inicio";
@@ -309,44 +318,25 @@ const currentDate = new Date();
 const days = ref(Array<Day>());
 const isOpenpopoverMainCalendar = ref(false);
 const months = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
 ];
 const modalRescheduleElements = ref(null);
-const dates = ref({
-  monday: [],
-  tuesday: [],
-  wednesday: [],
-  thursday: [],
-  friday: [],
-  saturday: [],
-  sunday: [],
-} as Dates);
 
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  // setSchedule({ schedule: useSchedule().getSchedule() });
 });
-
-// watch(
-//   async () => {
-//     return await useSchedule().getSchedule();
-//   },
-//   (newVal, oldVal) => {
-//     console.log(newVal);
-//   }
-// );
 
 // funtions
 function getDaysForCurrentWeek(params: { date: Date }): Day[] {
@@ -453,36 +443,23 @@ const generateSchedule = computed(() => {
   return eventsByDayOfWeek as any;
 });
 
-async function setSchedule(params: { schedule: Schedule }) {
-  const schedule = params.schedule;
+function translateDayHeaderTable(params: { dayName: string }) {
+  const dayName = params.dayName as any;
+  let result = useSystem().translateDay({
+    dayName,
+  });
+  result = result.charAt(0).toUpperCase() + result.slice(1);
+  return result;
+}
 
-  const eventsByDayOfWeek: { [day: string]: ScheduleElement[] } = {
-    sunday: [],
-    monday: [],
-    tuesday: [],
-    wednesday: [],
-    thursday: [],
-    friday: [],
-    saturday: [],
-  };
+function translateMonth(params: { monthName: string }) {
+  const monthName = params.monthName as keyof Months;
 
-  for (const day of daysOfWeek) {
-    eventsByDayOfWeek[day] = [];
-  }
-
-  for (const year in schedule) {
-    for (const month in schedule[parseInt(year)]) {
-      for (const day in schedule[parseInt(year)][month]) {
-        for (const event of schedule[parseInt(year)][month][day]) {
-          const date = new Date(event.date);
-          const dayOfWeek = daysOfWeek[date.getDay()];
-          eventsByDayOfWeek[dayOfWeek].push(event);
-        }
-      }
-    }
-  }
-
-  dates.value = eventsByDayOfWeek as any;
+  let result = useSystem().translateMonth({
+    monthName,
+  });
+  result = result.charAt(0).toUpperCase() + result.slice(1);
+  return result;
 }
 </script>
 
@@ -551,5 +528,9 @@ ion-content::-webkit-scrollbar {
 
 .today {
   color: var(--ion-color-primary);
+}
+
+.popover-main-calendar-ios {
+  --width: 66vw;
 }
 </style>

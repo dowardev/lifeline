@@ -218,3 +218,49 @@ export interface EventDataReminder {
   daysWeek?: string[];
   reminders?: string[];
 }
+
+export interface Days {
+  monday: string;
+  tuesday: string;
+  wednesday: string;
+  thursday: string;
+  friday: string;
+  saturday: string;
+  sunday: string;
+}
+
+export interface EventReminderRepeat {
+  unique: string;
+  daily: string;
+  weekly: string;
+  monthly: string;
+  annually: string;
+}
+
+export interface EventReminderNotification {
+  "5mb": string;
+  "10mb": string;
+  "15mb": string;
+  "30mb": string;
+  "1hb": string;
+  "2hb": string;
+  "1db": string;
+  "2db": string;
+  "1wb": string;
+  "1mtb": string;
+}
+
+export interface Months {
+  january: string;
+  february: string;
+  march: string;
+  april: string;
+  may: string;
+  june: string;
+  july: string;
+  august: string;
+  september: string;
+  october: string;
+  november: string;
+  december: string;
+}

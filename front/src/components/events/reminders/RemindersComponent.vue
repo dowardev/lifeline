@@ -98,7 +98,7 @@
       </ion-item>
     </section>
 
-    <!-- repeat -->
+    <!-- repeat component -->
     <section
       v-if="reminderSegment == 'repeats'"
       class="ion-padding"
