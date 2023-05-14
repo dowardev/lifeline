@@ -31,30 +31,19 @@
         <tr v-for="hour in hours" :key="hour">
           <td>{{ hour }}</td>
           <td>
-            <template v-if="filterEvents.length">
-              <div
-                v-for="(event, eventIndex) in filterEvents"
-                :key="eventIndex"
-              >
-                <template
-                  v-if="new Date(event.reminders!.start).getHours() == parseInt(hour)"
-                >
-                  <ion-card>
-                    <ion-card-header>
-                      <ion-card-title>
-                        {{ event.name }}
-                      </ion-card-title>
-                    </ion-card-header>
-                    <ion-card-content>
-                      {{ format(new Date(event.reminders!.start), "Pp") }}
-                    </ion-card-content>
-                  </ion-card>
-                </template>
-              </div>
-            </template>
-            <template v-else>
-              <div class="empty-cell"></div>
-            </template>
+            <div
+              v-for="event in filteredEvents({ hour: parseInt(hour) })"
+              :key="event.id"
+            >
+              <ion-card class="card-event">
+                <ion-card-header>
+                  <ion-card-title>{{ event.title }}</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                  {{ format(new Date(event.date), "Pp") }}
+                </ion-card-content>
+              </ion-card>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -89,7 +78,8 @@ import { IonDatetime, IonPopover } from "@ionic/vue";
 import { computed, ref } from "vue";
 import { add, format, subDays } from "date-fns";
 import { chevronBackOutline, chevronForwardOutline } from "ionicons/icons";
-import { Event } from "@/utils/interfaces";
+import { Event, ScheduleElement } from "@/utils/interfaces";
+import { useSchedule } from "@/composables/useSchedule";
 
 const props = defineProps({
   events: { type: Array as () => Event[], default: () => [] },
@@ -102,17 +92,18 @@ const hours = Array.from(
 );
 const miniCalendar = ref(null);
 
-const filterEvents = computed(() => {
-  return props.events.filter((event) => {
-    if (
-      new Date(event.reminders!.start).getDay() == currentDate.value.getDay() &&
-      new Date(event.reminders!.start).getMonth() ==
-        currentDate.value.getMonth() &&
-      new Date(event.reminders!.start).getFullYear() ==
-        currentDate.value.getFullYear()
-    )
-      return event;
-  });
+// computed
+const generateSchedule = computed(() => {
+  const schedule = useSchedule().getSchedule();
+  if (!schedule) return [];
+
+  const year = currentDate.value.getFullYear();
+  const month = currentDate.value.getMonth();
+  const day = currentDate.value.getDate();
+
+  const events = schedule[year]?.[month]?.[day];
+  if (!events) return [];
+  return events;
 });
 
 // functions
@@ -127,6 +118,16 @@ const previousDay = () => {
   const date = currentDate;
   currentDate.value = subDays(new Date(date.value), 1);
 };
+
+function filteredEvents(params: { hour: number }) {
+  return generateSchedule.value.filter((event) => {
+    const eventHour = new Date(event.date).getHours();
+    if (eventHour === params.hour) {
+      return true;
+    }
+    return false;
+  });
+}
 </script>
 
 <style scoped>
@@ -143,7 +144,7 @@ table.schedule-table th {
   font-weight: bold;
   border: none;
   position: sticky;
-  top: 0;
+  top: -16px;
   background-color: var(--ion-background-color);
   z-index: 2;
 }

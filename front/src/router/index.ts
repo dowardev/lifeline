@@ -8,7 +8,6 @@ import PruebaPage from "@/views/prueba/PruebaPage.vue";
 import DocumentPage from "@/components/documents/add_document/AddDocumentComponent.vue";
 import PoliciesPage from "@/views/policies/PoliciesPage.vue";
 import DocumentsPage from "@/views/documents/DocumentsPage.vue";
-import AdminEvent from "@/components/events/add/AddEventCompoenent.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -49,11 +48,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/documents",
     name: "DocumentsPage",
     component: DocumentsPage,
-  },
-  {
-    path: "/admin-event",
-    name: "AdminEvent",
-    component: AdminEvent,
   },
 ];
 

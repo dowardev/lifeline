@@ -245,9 +245,7 @@ onMounted(() => {
 
 // functions
 const closPage = async () => {
-  const modal = await modalController.getTop();
-  if (modal) await modalController.dismiss();
-  else await popoverController.dismiss();
+  await popoverController.dismiss();
 };
 
 const saveReminder = async () => {

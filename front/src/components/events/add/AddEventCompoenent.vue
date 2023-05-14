@@ -8,18 +8,20 @@
     >
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
+          <ion-button @click="closePage()">
+            <ion-icon :icon="closeOutline"></ion-icon>
+          </ion-button>
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="end">
-          <ion-button :disabled="v$.$invalid" @click="saveEvent()"
-            ><ion-icon :icon="saveOutline"></ion-icon
-          ></ion-button>
-
           <ion-button v-if="!isPlatform('desktop')" id="open-modal-calendar"
             ><ion-icon :icon="calendarOutline"></ion-icon
+          ></ion-button>
+          
+          <ion-button :disabled="v$.$invalid" @click="saveEvent()"
+            ><ion-icon :icon="saveOutline"></ion-icon
           ></ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -35,7 +37,7 @@
       <div>
         <section>
           <ion-row>
-            <ion-col size-lg="7" size-xl="6">
+            <ion-col size-lg="7" size-xl="8">
               <!-- basic -->
               <ion-list>
                 <ion-list-header>
@@ -370,12 +372,12 @@
         <section
           v-if="isPlatform('desktop')"
           style="
-            height: 90vh;
+            height: 72vh;
             overflow: auto;
             overflow-x: auto;
             position: fixed;
             top: 11vh;
-            right: 0;
+            right: 1rem;
             width: 32%;
           "
           class="ion-padding hidde-scroll"
@@ -652,7 +654,7 @@ const saveEvent = async () => {
   });
   await useSchedule().generateEventSchedule({ eventId: id });
   await useSchedule().loadSchedule();
-  router.go(-1);
+  closePage();
 };
 
 function formatTextNotifications() {
@@ -714,6 +716,10 @@ function translateNotifications(params: { notification: string }) {
     notificationName: notification,
   });
   return result;
+}
+
+function closePage() {
+  modalController.dismiss();
 }
 </script>
 

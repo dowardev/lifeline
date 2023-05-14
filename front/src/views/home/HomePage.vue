@@ -96,11 +96,9 @@
               </div>
             </div>
 
-            <!-- add element button -->
+            <!-- add event button -->
             <div>
-              <ion-button
-                size="small"
-                @click="$router.push({ name: 'AdminEvent' })"
+              <ion-button id="modal-add-event" size="small"
                 ><ion-icon :icon="addOutline"></ion-icon
               ></ion-button>
             </div>
@@ -192,7 +190,6 @@
 
       <!-- popovers -->
       <ion-popover
-        id="prueba"
         :class="{ 'popover-main-calendar-ios': isPlatform('ios') }"
         :is-open="isOpenpopoverMainCalendar"
         @did-dismiss="isOpenpopoverMainCalendar = false"
@@ -212,6 +209,7 @@
       <!-- end popovers -->
 
       <!-- modals -->
+      <!-- modal reschedule elements -->
       <ion-modal
         ref="modalRescheduleElements"
         trigger="modal-reschedule-elements"
@@ -236,6 +234,16 @@
           </ion-content>
         </ion-page>
       </ion-modal>
+
+      <!-- modal add event -->
+      <ion-modal
+        ref="modalAddEvent"
+        trigger="modal-add-event"
+        class="modal-add-event"
+        :backdrop-dismiss="false"
+      >
+        <AdminEventComponent />
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -255,7 +263,7 @@ import {
   IonDatetime,
   IonModal,
 } from "@ionic/vue";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useSchedule } from "@/composables/useSchedule";
 import { format, getMonth } from "date-fns";
 import {
@@ -269,7 +277,8 @@ import {
 import { Months, ScheduleElement } from "@/utils/interfaces";
 
 // components
-import RescheduleComponent from "../../components/events/schedule-elements/RescheduleElements.vue";
+import RescheduleComponent from "@/components/events/schedule-elements/RescheduleElements.vue";
+import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
 
 // composables
 import { useSystem } from "../../composables/useSystem";
@@ -332,13 +341,48 @@ const months = [
   "december",
 ];
 const modalRescheduleElements = ref(null);
+const modalAddEvent = ref(null);
 
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
 });
 
-// funtions
+// computed
+const generateSchedule = computed(() => {
+  const schedule = useSchedule().getSchedule();
+  if (!schedule) return;
+
+  const eventsByDayOfWeek: { [day: string]: ScheduleElement[] } = {
+    sunday: [],
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+  };
+
+  for (const day of daysOfWeek) {
+    eventsByDayOfWeek[day] = [];
+  }
+
+  for (const year in schedule) {
+    for (const month in schedule[parseInt(year)]) {
+      for (const day in schedule[parseInt(year)][month]) {
+        for (const event of schedule[parseInt(year)][month][day]) {
+          const date = new Date(event.date);
+          const dayOfWeek = daysOfWeek[date.getDay()];
+          eventsByDayOfWeek[dayOfWeek].push(event);
+        }
+      }
+    }
+  }
+
+  return eventsByDayOfWeek as any;
+});
+
+// functions
 function getDaysForCurrentWeek(params: { date: Date }): Day[] {
   const date = params.date;
   const days = [];
@@ -409,39 +453,6 @@ function loadDaysWeek(params: { date: number }) {
 function setDaysToWeek(params: { days: Array<Day> }) {
   days.value = params.days;
 }
-
-const generateSchedule = computed(() => {
-  const schedule = useSchedule().getSchedule();
-  if (!schedule) return;
-
-  const eventsByDayOfWeek: { [day: string]: ScheduleElement[] } = {
-    sunday: [],
-    monday: [],
-    tuesday: [],
-    wednesday: [],
-    thursday: [],
-    friday: [],
-    saturday: [],
-  };
-
-  for (const day of daysOfWeek) {
-    eventsByDayOfWeek[day] = [];
-  }
-
-  for (const year in schedule) {
-    for (const month in schedule[parseInt(year)]) {
-      for (const day in schedule[parseInt(year)][month]) {
-        for (const event of schedule[parseInt(year)][month][day]) {
-          const date = new Date(event.date);
-          const dayOfWeek = daysOfWeek[date.getDay()];
-          eventsByDayOfWeek[dayOfWeek].push(event);
-        }
-      }
-    }
-  }
-
-  return eventsByDayOfWeek as any;
-});
 
 function translateDayHeaderTable(params: { dayName: string }) {
   const dayName = params.dayName as any;
@@ -532,5 +543,12 @@ ion-content::-webkit-scrollbar {
 
 .popover-main-calendar-ios {
   --width: 66vw;
+}
+
+@media only screen and (min-width: 992px) {
+  .modal-add-event {
+    --width: 80vw;
+    --height: 90vh;
+  }
 }
 </style>
