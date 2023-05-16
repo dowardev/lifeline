@@ -19,8 +19,8 @@
           <ion-button v-if="!isPlatform('desktop')" id="open-modal-calendar"
             ><ion-icon :icon="calendarOutline"></ion-icon
           ></ion-button>
-          
-          <ion-button :disabled="v$.$invalid" @click="saveEvent()"
+
+          <ion-button :disabled="v$.$invalid" @click="save()"
             ><ion-icon :icon="saveOutline"></ion-icon
           ></ion-button>
         </ion-buttons>
@@ -538,6 +538,10 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
+const props = defineProps({
+  idEvent: { type: String, default: "" },
+});
+
 // components
 import CalendarComponent from "./calendar/CalendarComponent.vue";
 
@@ -545,9 +549,11 @@ import CalendarComponent from "./calendar/CalendarComponent.vue";
 import { useEvent } from "@/composables/useEvent";
 import { useSchedule } from "@/composables/useSchedule";
 import { useSystem } from "@/composables/useSystem";
+
 import {
   EventReminderNotification,
   EventReminderRepeat,
+  Event,
 } from "@/utils/interfaces";
 
 const isOpenPopoverReminders = ref(false);
@@ -602,13 +608,18 @@ const v2$ = useVuelidate(rulesGuest, { emailGuest });
 const inputName = ref(null);
 const inputGuest = ref(null);
 
-const pageTitle = "Agregar evento";
+const pageTitle = ref("Agregar evento");
 const popoverRemindersSegment = "date-start";
 
 // mounted
-onMounted(() => {
-  // getEvents({ date: new Date() });
-  useEvent().loadEvents();
+onMounted(async () => {
+  if (props.idEvent != "") {
+    await useEvent().loadEvents();
+    pageTitle.value = "Actualizar evento";
+    const event = useEvent().getEvent({ idEvent: props.idEvent });
+    if (!event) return;
+    setEvent({ event });
+  }
 });
 
 // functions
@@ -635,27 +646,65 @@ const removeGuest = (params: { index: number }) => {
   event.guests.value.splice(index, 1);
 };
 
-const saveEvent = async () => {
+async function save() {
+  let eventId = "";
+  try {
+    if (props.idEvent == "") {
+      eventId = (await saveEvent()).id;
+    } else {
+      await updateEvent();
+      eventId = props.idEvent;
+    }
+
+    await useSchedule().generateEventSchedule({ eventId: eventId });
+    await useSchedule().loadSchedule();
+    closePage();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function saveEvent(): Promise<{ id: string }> {
   const eventFormated = {
     name: event.name.value,
     guests: event.guests.value,
     reminders: {
       start: event.reminders.value.start,
       end: event.reminders.value.end,
-      notification: event.reminders.value.notifications,
+      notifications: event.reminders.value.notifications,
       repeat: event.reminders.value.repeat,
     },
     description: event.description.value,
     availability: event.availability.value,
+    timezone: event.timezone.value,
   };
 
   const { id } = await useEvent().saveEvent({
     event: JSON.parse(JSON.stringify(eventFormated)),
   });
-  await useSchedule().generateEventSchedule({ eventId: id });
-  await useSchedule().loadSchedule();
-  closePage();
-};
+  return { id };
+}
+
+async function updateEvent() {
+  const eventFormated = {
+    id:props.idEvent,
+    name: event.name.value,
+    guests: event.guests.value,
+    reminders: {
+      start: event.reminders.value.start,
+      end: event.reminders.value.end,
+      notifications: event.reminders.value.notifications,
+      repeat: event.reminders.value.repeat,
+    },
+    description: event.description.value,
+    availability: event.availability.value,
+    timezone: event.timezone.value,
+  };
+
+  await useEvent().updateEvent({
+    event: JSON.parse(JSON.stringify(eventFormated)),
+  });
+}
 
 function formatTextNotifications() {
   let text = "";
@@ -720,6 +769,20 @@ function translateNotifications(params: { notification: string }) {
 
 function closePage() {
   modalController.dismiss();
+}
+
+function setEvent(params: { event: Event }) {
+  const eventData = params.event;
+  event.name.value = eventData.name!;
+  event.description.value = eventData.description;
+  event.reminders.value.start = eventData.reminders!.start;
+  event.reminders.value.end = eventData.reminders!.end;
+  event.reminders.value.notifications =
+    eventData.reminders!.notifications ?? [];
+  event.reminders.value.repeat = eventData.reminders!.repeat;
+  event.timezone.value = eventData.timezone!;
+  event.guests.value = eventData.guests!;
+  event.availability.value = eventData.availability!;
 }
 </script>
 

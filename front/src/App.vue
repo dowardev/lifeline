@@ -70,7 +70,7 @@ const start = async () => {
   await useSystem().updateThemeSelected({ theme });
 
   const schedule = useSchedule().getSchedule();
-  if (!schedule) await useSchedule().generateEventsSchedule();
+   await useSchedule().generateEventsSchedule();
   await useSchedule().loadSchedule();
 };
 </script>

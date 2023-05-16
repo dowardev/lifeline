@@ -2,6 +2,7 @@ import { NewEvent, Event } from "@/utils/interfaces";
 import {
   saveLocalEvent as saveLocalEventService,
   getEvents as getEventsService,
+  updateLocalEvent,
 } from "../services/event";
 import { useEventsStore } from "../store/eventsStore";
 
@@ -28,14 +29,22 @@ export const useEvent = () => {
     }
   }
 
+  async function updateEvent(params: { event: Event }): Promise<void> {
+    const eventData = params.event;
+
+    try {
+      await updateLocalEvent({
+        event: eventData,
+      });
+      eventStore.updateEvent({ event: eventData });
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
   async function loadEvents(): Promise<void> {
-    const events = await getEventsService();
-
-    if (events == null) return;
-
-    events.forEach((event) => {
-      eventStore.addEvent({ event: event });
-    });
+    const events = (await getEventsService()) ?? [];
+    eventStore.updateEvents({ events });
   }
 
   function getEvents(): Array<Event> | undefined {
@@ -44,9 +53,18 @@ export const useEvent = () => {
     return events != null ? JSON.parse(JSON.stringify(events)) : undefined;
   }
 
+  function getEvent(params: { idEvent: string }): Event | undefined {
+    const idEvent = params.idEvent;
+    const event = eventStore.getEvent({ idEvent });
+
+    return event != null ? JSON.parse(JSON.stringify(event)) : undefined;
+  }
+
   return {
     saveEvent,
     loadEvents,
     getEvents,
+    getEvent,
+    updateEvent,
   };
 };

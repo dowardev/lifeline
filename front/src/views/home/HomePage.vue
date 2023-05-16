@@ -62,7 +62,6 @@
                     size="small"
                     @click="isOpenpopoverMainCalendar = true"
                   >
-                    <!-- {{ months[getMonth(currentDate) - 1] }} -->
                     {{
                       translateMonth({
                         monthName: months[getMonth(currentDate) - 1],
@@ -166,7 +165,13 @@
                               day.date.getDate()
                           "
                         >
-                          <ion-card class="card-event">
+                          <ion-card
+                            class="card-event"
+                            style="cursor: pointer"
+                            @click="
+                              updateEvent({ idEvent: schedule.idElement })
+                            "
+                          >
                             <ion-card-header>
                               <ion-card-title>{{
                                 schedule.title
@@ -239,10 +244,23 @@
       <ion-modal
         ref="modalAddEvent"
         trigger="modal-add-event"
-        class="modal-add-event"
+        class="modal-event"
         :backdrop-dismiss="false"
       >
         <AdminEventComponent />
+      </ion-modal>
+
+      <!-- modal update event -->
+      <ion-modal
+        class="modal-event"
+        :backdrop-dismiss="false"
+        :is-open="isOpenModalUpdateEvent"
+        @did-dismiss="
+          isOpenModalUpdateEvent = false;
+          idEvent = '';
+        "
+      >
+        <AdminEventComponent :id-event="idEvent" />
       </ion-modal>
     </ion-content>
   </ion-page>
@@ -341,7 +359,8 @@ const months = [
   "december",
 ];
 const modalRescheduleElements = ref(null);
-const modalAddEvent = ref(null);
+const idEvent = ref("");
+const isOpenModalUpdateEvent = ref(false);
 
 // mounted
 onMounted(async () => {
@@ -472,6 +491,12 @@ function translateMonth(params: { monthName: string }) {
   result = result.charAt(0).toUpperCase() + result.slice(1);
   return result;
 }
+
+function updateEvent(params: { idEvent: string }) {
+  const id = params.idEvent;
+  idEvent.value = id;
+  isOpenModalUpdateEvent.value = true;
+}
 </script>
 
 <style scoped>
@@ -546,7 +571,7 @@ ion-content::-webkit-scrollbar {
 }
 
 @media only screen and (min-width: 992px) {
-  .modal-add-event {
+  .modal-event {
     --width: 80vw;
     --height: 90vh;
   }

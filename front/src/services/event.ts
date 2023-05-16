@@ -240,6 +240,18 @@ export async function saveLocalEvent(params: {
   return { event: eventData as Event };
 }
 
+export async function updateLocalEvent(params: {
+  event: Event;
+}): Promise<void> {
+  const eventData = params.event;
+  let events = (await getEvents()) ?? [];
+  events = events?.map((event) => {
+    if (event.id == eventData.id) event = eventData;
+    return event;
+  });
+  await store.set("events", events);
+}
+
 export async function getEvents(): Promise<Array<Event> | null> {
   return await store.get("events");
 }

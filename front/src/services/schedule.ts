@@ -29,11 +29,15 @@ export async function storeSchedule(params: { schedule: Schedule }) {
             newSchedule[year][month][day] = [];
           }
           obj[year][month][day].forEach((element) => {
-            if (
-              !newSchedule[year][month][day].some(
-                (e) => e.idElement === element.idElement
-              )
-            ) {
+            const existingElement = newSchedule[year][month][day].find(
+              (e) => e.idElement === element.idElement
+            );
+
+            if (existingElement) {
+              // Si el elemento ya existe, actualizamos sus propiedades
+              Object.assign(existingElement, element);
+            } else {
+              // Si el elemento no existe, lo agregamos al arreglo
               newSchedule[year][month][day].push(element);
             }
           });
@@ -47,6 +51,7 @@ export async function storeSchedule(params: { schedule: Schedule }) {
   } else {
     schedule = newSchedule;
   }
+
   await store.set("schedule", schedule);
 }
 

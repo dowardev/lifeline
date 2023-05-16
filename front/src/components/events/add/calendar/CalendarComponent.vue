@@ -1,53 +1,52 @@
 <template>
   <!-- calendar -->
-  <section>
-    <table class="schedule-table">
-      <thead>
-        <tr>
-          <th>Hora</th>
-          <th>
-            <div class="center">
-              <ion-item lines="none">
-                <ion-button fill="clear" @click="previousDay()"
-                  ><ion-icon :icon="chevronBackOutline"></ion-icon
-                ></ion-button>
+  <section class="calendar-section">
+    <div class="calendar-header">
+      <ion-button fill="clear" @click="previousDay()">
+        <ion-icon :icon="chevronBackOutline"></ion-icon>
+      </ion-button>
 
-                <ion-button id="popoverDateSelector" fill="clear">{{
-                  format(new Date(currentDate), "P")
-                }}</ion-button>
+      <ion-button id="popoverDateSelector" fill="clear">{{
+        format(new Date(currentDate), "P")
+      }}</ion-button>
 
-                <ion-button fill="clear" @click="nextDay()"
-                  ><ion-icon :icon="chevronForwardOutline"></ion-icon
-                ></ion-button>
-              </ion-item>
-            </div>
+      <ion-button fill="clear" @click="nextDay()">
+        <ion-icon :icon="chevronForwardOutline"></ion-icon>
+      </ion-button>
+    </div>
 
-            <div>Eventos</div>
-          </th>
-        </tr>
-      </thead>
+    <div class="calendar-body">
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th class="hour-column">Hora</th>
+            <th class="event-column">Eventos</th>
+          </tr>
+        </thead>
 
-      <tbody>
-        <tr v-for="hour in hours" :key="hour">
-          <td>{{ hour }}</td>
-          <td>
-            <div
-              v-for="event in filteredEvents({ hour: parseInt(hour) })"
-              :key="event.id"
-            >
-              <ion-card class="card-event">
-                <ion-card-header>
-                  <ion-card-title>{{ event.title }}</ion-card-title>
-                </ion-card-header>
-                <ion-card-content>
-                  {{ format(new Date(event.date), "Pp") }}
-                </ion-card-content>
-              </ion-card>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        <tbody>
+          <tr v-for="hour in hours" :key="hour">
+            <td class="hour-cell">{{ hour }}</td>
+            <td class="event-cell">
+              <div
+                v-for="event in filteredEvents({ hour: parseInt(hour) })"
+                :key="event.id"
+                class="event-item"
+              >
+                <ion-card class="card-event">
+                  <ion-card-header>
+                    <ion-card-title>{{ event.title }}</ion-card-title>
+                  </ion-card-header>
+                  <ion-card-content>
+                    {{ format(new Date(event.date), "Pp") }}
+                  </ion-card-content>
+                </ion-card>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <!-- popovers -->
@@ -131,32 +130,69 @@ function filteredEvents(params: { hour: number }) {
 </script>
 
 <style scoped>
-table.schedule-table {
-  border-collapse: collapse;
+.calendar-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-table.schedule-table td {
+.calendar-header {
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.calendar-body {
+  flex: 1;
+  overflow: auto;
+}
+
+.schedule-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.schedule-table td,
+.schedule-table th {
   padding: 10px;
   border: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
-table.schedule-table th {
+.schedule-table th {
   font-weight: bold;
-  border: none;
   position: sticky;
-  top: -16px;
+  top: 0px;
   background-color: var(--ion-background-color);
   z-index: 2;
 }
 
-table.schedule-table tr td:first-child,
-table.schedule-table th:first-child {
-  border: none;
+.schedule-table .hour-column {
+  width: 10%;
   background-color: var(--ion-background-color);
 }
 
-table.schedule-table td:nth-child(2) {
-  min-width: 100%;
+.schedule-table .event-column {
+  width: 90%;
+  background-color: var(--ion-background-color);
+}
+
+.schedule-table .hour-cell {
+  background-color: var(--ion-background-color);
+}
+
+.schedule-table .event-cell {
+  position: relative;
+  min-height: 50px;
+}
+
+.schedule-table .event-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 .card-event {
