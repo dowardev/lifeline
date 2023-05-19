@@ -69,8 +69,9 @@ const start = async () => {
   setTheme({ theme: theme, currentTheme: theme });
   await useSystem().updateThemeSelected({ theme });
 
-  const schedule = useSchedule().getSchedule();
-   await useSchedule().generateEventsSchedule();
+  // const schedule = useSchedule().getSchedule();
+  // if (!schedule) await useSchedule().generateEventsSchedule();
+  await useSchedule().generateEventsSchedule()
   await useSchedule().loadSchedule();
 };
 </script>

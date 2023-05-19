@@ -77,5 +77,11 @@ export const useEventsStore = defineStore("events", {
 
       this.events = combinedArray;
     },
+
+    removeEvent(params: { eventId: string }) {
+      const id = params.eventId;
+      const index = this.events.findIndex((element) => element.id == id);
+      if (index != undefined) this.events?.splice(index, 1);
+    },
   },
 });

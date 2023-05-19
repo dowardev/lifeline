@@ -23,6 +23,10 @@
           <ion-button :disabled="v$.$invalid" @click="save()"
             ><ion-icon :icon="saveOutline"></ion-icon
           ></ion-button>
+
+          <ion-button v-if="props.eventData" @click="deleteEvent()"
+            ><ion-icon :icon="trashOutline" color="danger"></ion-icon
+          ></ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -539,7 +543,7 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 
 const props = defineProps({
-  idEvent: { type: String, default: "" },
+  eventData: { type: Object as () => Event, default: () => null },
 });
 
 // components
@@ -554,6 +558,7 @@ import {
   EventReminderNotification,
   EventReminderRepeat,
   Event,
+  Schedule,
 } from "@/utils/interfaces";
 
 const isOpenPopoverReminders = ref(false);
@@ -613,13 +618,17 @@ const popoverRemindersSegment = "date-start";
 
 // mounted
 onMounted(async () => {
-  if (props.idEvent != "") {
-    await useEvent().loadEvents();
+  if (props.eventData) {
     pageTitle.value = "Actualizar evento";
-    const event = useEvent().getEvent({ idEvent: props.idEvent });
-    if (!event) return;
-    setEvent({ event });
+    setEvent({ event: props.eventData });
   }
+  // if (props.idEvent != "") {
+  //   await useEvent().loadEvents();
+  //   pageTitle.value = "Actualizar evento";
+  //   const event = useEvent().getEvent({ idEvent: props.idEvent });
+  //   if (!event) return;
+  //   setEvent({ event });
+  // }
 });
 
 // functions
@@ -647,16 +656,37 @@ const removeGuest = (params: { index: number }) => {
 };
 
 async function save() {
-  let eventId = "";
+  let eventId = props.eventData?.id;
+  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+
   try {
-    if (props.idEvent == "") {
+    if (!eventId) {
       eventId = (await saveEvent()).id;
     } else {
       await updateEvent();
-      eventId = props.idEvent;
     }
 
-    await useSchedule().generateEventSchedule({ eventId: eventId });
+    const scheduleElement = useSchedule().generateScheduleElement({
+      id: new Date().getTime().toString(),
+      idElement: eventId,
+      title: event.name.value,
+      message: "prueba",
+      startDate: new Date(event.reminders.value.start),
+      endDate: new Date(event.reminders.value.end),
+      type: "Event",
+    });
+
+    if (eventId)
+      schedule = useSchedule().removeElementSchedule({
+        id: eventId,
+        schedule,
+      });
+
+    schedule = useSchedule().generateEventSchedule({
+      scheduleElement,
+      schedule,
+    });
+    await useSchedule().saveSchedule({ schedule });
     await useSchedule().loadSchedule();
     closePage();
   } catch (error) {
@@ -687,7 +717,7 @@ async function saveEvent(): Promise<{ id: string }> {
 
 async function updateEvent() {
   const eventFormated = {
-    id:props.idEvent,
+    id: props.eventData.id,
     name: event.name.value,
     guests: event.guests.value,
     reminders: {
@@ -767,8 +797,8 @@ function translateNotifications(params: { notification: string }) {
   return result;
 }
 
-function closePage() {
-  modalController.dismiss();
+async function closePage() {
+  await modalController.dismiss();
 }
 
 function setEvent(params: { event: Event }) {
@@ -783,6 +813,19 @@ function setEvent(params: { event: Event }) {
   event.timezone.value = eventData.timezone!;
   event.guests.value = eventData.guests!;
   event.availability.value = eventData.availability!;
+}
+
+async function deleteEvent() {
+  const { id } = props.eventData;
+  await useEvent().deleteEvent({ eventId: id });
+  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+  schedule = useSchedule().removeElementSchedule({
+    id,
+    schedule,
+  });
+  await useSchedule().saveSchedule({ schedule });
+  await useSchedule().loadSchedule();
+  await closePage();
 }
 </script>
 

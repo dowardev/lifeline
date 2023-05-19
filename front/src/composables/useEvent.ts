@@ -3,6 +3,7 @@ import {
   saveLocalEvent as saveLocalEventService,
   getEvents as getEventsService,
   updateLocalEvent,
+  deleteEvent as deleteEventService,
 } from "../services/event";
 import { useEventsStore } from "../store/eventsStore";
 
@@ -60,11 +61,18 @@ export const useEvent = () => {
     return event != null ? JSON.parse(JSON.stringify(event)) : undefined;
   }
 
+  async function deleteEvent(params: { eventId: string }) {
+    const eventId = params.eventId;
+    await deleteEventService({ eventId });
+    eventStore.removeEvent({ eventId });
+  }
+
   return {
     saveEvent,
     loadEvents,
     getEvents,
     getEvent,
     updateEvent,
+    deleteEvent,
   };
 };

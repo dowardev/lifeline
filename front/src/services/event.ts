@@ -204,23 +204,23 @@ export async function getUserCalendars(
     });
   });
 }
-export async function removeEvent(id: string | number) {
-  // const token = await userService()
-  //   .getUserToken()
-  //   .then((response) => {
-  //     return response;
-  //   });
-  // return axios.post(
-  //   "http://localhost:8000/api/auth/remove-event",
-  //   { id },
-  //   {
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       Authorization: "Bearer " + token,
-  //     },
-  //   }
-  // );
-}
+// export async function removeEvent(id: string | number) {
+// const token = await userService()
+//   .getUserToken()
+//   .then((response) => {
+//     return response;
+//   });
+// return axios.post(
+//   "http://localhost:8000/api/auth/remove-event",
+//   { id },
+//   {
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: "Bearer " + token,
+//     },
+//   }
+// );
+// }
 
 export async function saveLocalEvent(params: {
   event: NewEvent;
@@ -262,4 +262,15 @@ export async function getEvent(params: { id: string }): Promise<Event | null> {
     (event: Event) => event.id == id
   );
   return event[0];
+}
+
+export async function deleteEvent(params: { eventId: string }): Promise<void> {
+  const id = params.eventId;
+  const events = (await getEvents()) ?? [];
+
+  const index = events?.findIndex((element) => element.id == id);
+  if (index != undefined) {
+    events?.splice(index, 1);
+    await store.set("events", events);
+  }
 }

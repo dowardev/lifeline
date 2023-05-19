@@ -171,6 +171,18 @@
                             @click="
                               updateEvent({ idEvent: schedule.idElement })
                             "
+                            @contextmenu.prevent="
+                              openPopoverRightEventMenu({
+                                ev: $event,
+                                eventId: schedule.idElement,
+                              })
+                            "
+                            @press="
+                              openPopoverRightEventMenu({
+                                ev: $event,
+                                eventId: schedule.idElement,
+                              })
+                            "
                           >
                             <ion-card-header>
                               <ion-card-title>{{
@@ -255,12 +267,9 @@
         class="modal-event"
         :backdrop-dismiss="false"
         :is-open="isOpenModalUpdateEvent"
-        @did-dismiss="
-          isOpenModalUpdateEvent = false;
-          idEvent = '';
-        "
+        @did-dismiss="isOpenModalUpdateEvent = false"
       >
-        <AdminEventComponent :id-event="idEvent" />
+        <AdminEventComponent :event-data="useEvent().getEvent({ idEvent })" />
       </ion-modal>
     </ion-content>
   </ion-page>
@@ -280,6 +289,7 @@ import {
   isPlatform,
   IonDatetime,
   IonModal,
+  popoverController,
 } from "@ionic/vue";
 import { computed, onMounted, ref } from "vue";
 import { useSchedule } from "@/composables/useSchedule";
@@ -292,14 +302,16 @@ import {
   stopwatchOutline,
   todayOutline,
 } from "ionicons/icons";
-import { Months, ScheduleElement } from "@/utils/interfaces";
+import { Months, Schedule, ScheduleElement } from "@/utils/interfaces";
 
 // components
 import RescheduleComponent from "@/components/events/schedule-elements/RescheduleElements.vue";
 import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
+import RightMenuEventComponent from "./RightMenuEventComponent.vue";
 
 // composables
 import { useSystem } from "../../composables/useSystem";
+import { useEvent } from "@/composables/useEvent";
 
 interface Day {
   date: Date;
@@ -365,6 +377,7 @@ const isOpenModalUpdateEvent = ref(false);
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
+  await useEvent().loadEvents();
 });
 
 // computed
@@ -496,6 +509,38 @@ function updateEvent(params: { idEvent: string }) {
   const id = params.idEvent;
   idEvent.value = id;
   isOpenModalUpdateEvent.value = true;
+}
+
+async function openPopoverRightEventMenu(params: {
+  ev: Event;
+  eventId: string;
+}) {
+  const eventId = params.eventId;
+  const ev = params.ev;
+
+  const popover = await popoverController.create({
+    component: RightMenuEventComponent,
+    event: ev,
+    showBackdrop: false,
+  });
+  await popover.present();
+
+  const { role, data } = await popover.onDidDismiss();
+  if (role == "confirm" && data.option == "delete") {
+    await deleteEvent({ eventId });
+  }
+
+  async function deleteEvent(params: { eventId: string }) {
+    const { eventId } = params;
+    await useEvent().deleteEvent({ eventId });
+    let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+    schedule = useSchedule().removeElementSchedule({
+      id: eventId,
+      schedule,
+    });
+    await useSchedule().saveSchedule({ schedule });
+    await useSchedule().loadSchedule();
+  }
 }
 </script>
 

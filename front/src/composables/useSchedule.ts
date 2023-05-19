@@ -1,6 +1,6 @@
 import { useDocument } from "@/composables/useDocument";
 import { useScheduleStore } from "@/store/scheduleStore";
-import { Schedule, Event } from "@/utils/interfaces";
+import { Schedule, Event, ScheduleElement } from "@/utils/interfaces";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { format } from "date-fns";
 import { getEvent, getEvents as getEventsService } from "../services/event";
@@ -108,6 +108,8 @@ export const useSchedule = () => {
 
     if (!events) return;
 
+    const newSchedule: Schedule = {};
+
     await Promise.all(
       events.map(async (event) => {
         const id = new Date().getTime().toString();
@@ -117,7 +119,7 @@ export const useSchedule = () => {
         const startDate = new Date(event.reminders?.start as string);
         const endDate = new Date(event.reminders?.end as string);
 
-        const scheduleElement = generateSchedule({
+        const scheduleElement = generateScheduleElement({
           id,
           idElement,
           title,
@@ -127,12 +129,55 @@ export const useSchedule = () => {
           type: "Event",
         });
 
-        await storeSchedule({ schedule: scheduleElement });
+        let schedule = (await getScheduleService()) ?? ({} as Schedule);
+
+        let year: number, month: number, day: number;
+
+        [schedule, scheduleElement].forEach((obj) => {
+          Object.keys(obj).forEach((yearStr) => {
+            year = parseInt(yearStr);
+            if (!newSchedule.hasOwnProperty(year)) {
+              newSchedule[year] = {};
+            }
+            Object.keys(obj[year]).forEach((monthStr) => {
+              month = parseInt(monthStr);
+              if (!newSchedule[year].hasOwnProperty(month)) {
+                newSchedule[year][month] = {};
+              }
+              Object.keys(obj[year][month]).forEach((dayStr) => {
+                day = parseInt(dayStr);
+                if (!newSchedule[year][month].hasOwnProperty(day)) {
+                  newSchedule[year][month][day] = [];
+                }
+                obj[year][month][day].forEach((element) => {
+                  const existingElement = newSchedule[year][month][day].find(
+                    (e) => e.idElement === element.idElement
+                  );
+
+                  if (existingElement) {
+                    // Si el elemento ya existe, actualizamos sus propiedades
+                    Object.assign(existingElement, element);
+                  } else {
+                    // Si el elemento no existe, lo agregamos al arreglo
+                    newSchedule[year][month][day].push(element);
+                  }
+                });
+              });
+            });
+          });
+        });
+
+        if (Object.keys(schedule).length == 0) {
+          schedule = scheduleElement;
+        } else {
+          schedule = newSchedule;
+        }
       })
     );
+    await storeSchedule({ schedule: newSchedule });
   }
 
-  function generateSchedule(params: {
+  function generateScheduleElement(params: {
     id: string;
     idElement: string;
     title: string;
@@ -140,7 +185,7 @@ export const useSchedule = () => {
     startDate: Date;
     endDate: Date;
     type: string;
-  }) {
+  }): Schedule {
     const id = params.id;
     const idElement = params.idElement;
     const title = params.title;
@@ -150,10 +195,9 @@ export const useSchedule = () => {
     const type = params.type;
 
     const eventsByDate: Schedule = {};
-
     for (
       let date = startDate;
-      date <= endDate;
+      date.getDate() <= endDate.getDate();
       date.setDate(date.getDate() + 1)
     ) {
       const year = date.getFullYear();
@@ -197,32 +241,94 @@ export const useSchedule = () => {
     return schedule != null ? schedule : undefined;
   }
 
-  async function generateEventSchedule(params: {
-    eventId: string;
-  }): Promise<void> {
-    const eventId = params.eventId;
-    const event = await getEvent({ id: eventId });
-
-    if (event == null) return;
-
-    const id = new Date().getTime().toString();
-    const idElement = event.id;
-    const title = event.name;
-    const message = "Recordatorio";
-    const startDate = new Date(event.reminders?.start as string);
-    const endDate = new Date(event.reminders?.end as string);
-
-    const scheduleElement = generateSchedule({
-      id,
-      idElement,
-      title,
-      message,
-      startDate,
-      endDate,
-      type: "Event",
+  function generateEventSchedule(params: {
+    scheduleElement: Schedule;
+    schedule: Schedule;
+  }): Schedule {
+    const { scheduleElement, schedule } = params;
+    return generateSchedule({
+      schedule,
+      scheduleElement,
     });
+  }
 
-    await storeSchedule({ schedule: scheduleElement });
+  function removeElementSchedule(params: {
+    id: string;
+    schedule: Schedule;
+  }): Schedule {
+    const { id, schedule } = params;
+
+    for (const year in schedule) {
+      for (const month in schedule[year]) {
+        for (const day in schedule[year][month]) {
+          const scheduleElements = schedule[year][month][day];
+          const updatedElements: ScheduleElement[] = [];
+
+          for (const key in scheduleElements) {
+            if (scheduleElements.hasOwnProperty(key)) {
+              const element = scheduleElements[key];
+              if (element.idElement !== id) {
+                updatedElements.push(element);
+              }
+            }
+          }
+
+          if (updatedElements.length === 0) {
+            delete schedule[year][month][day];
+
+            if (Object.keys(schedule[year][month]).length === 0) {
+              delete schedule[year][month];
+
+              if (Object.keys(schedule[year]).length === 0) {
+                delete schedule[year];
+              }
+            }
+          } else {
+            schedule[year][month][day] = updatedElements;
+          }
+        }
+      }
+    }
+    return schedule;
+  }
+
+  function generateSchedule(params: {
+    schedule: Schedule;
+    scheduleElement: any;
+  }) {
+    const { schedule, scheduleElement } = params;
+    const newSchedule: Schedule = {};
+    let year: number, month: number, day: number;
+
+    [schedule, scheduleElement].forEach((obj) => {
+      Object.keys(obj).forEach((yearStr) => {
+        year = parseInt(yearStr);
+        if (!newSchedule.hasOwnProperty(year)) {
+          newSchedule[year] = {};
+        }
+        Object.keys(obj[year]).forEach((monthStr) => {
+          month = parseInt(monthStr);
+          if (!newSchedule[year].hasOwnProperty(month)) {
+            newSchedule[year][month] = {};
+          }
+          Object.keys(obj[year][month]).forEach((dayStr) => {
+            day = parseInt(dayStr);
+            if (!newSchedule[year][month].hasOwnProperty(day)) {
+              newSchedule[year][month][day] = [];
+            }
+            obj[year][month][day].forEach((element: any) => {
+              newSchedule[year][month][day].push(element);
+            });
+          });
+        });
+      });
+    });
+    return newSchedule;
+  }
+
+  async function saveSchedule(params: { schedule: Schedule }) {
+    const { schedule } = params;
+    await storeSchedule({ schedule });
   }
 
   return {
@@ -234,5 +340,9 @@ export const useSchedule = () => {
     loadSchedule,
     getSchedule,
     generateEventSchedule,
+    saveSchedule,
+    generateEventSchedule,
+    generateScheduleElement,
+    removeElementSchedule,
   };
 };
