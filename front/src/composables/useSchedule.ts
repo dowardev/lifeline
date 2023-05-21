@@ -12,32 +12,32 @@ import {
 export const useSchedule = () => {
   const scheduleStore = useScheduleStore();
 
-  function loadReminders() {
-    // const documents = useDocument().getUserDocuments();
-    // if (!documents) return;
-    //
-    // documents.forEach(async (document) => {
-    //   document.elements?.forEach((element) => {
-    //     if (!element.data || !element.data.reminder) return;
-    //
-    //     const date = {
-    //       start: format(
-    //         new Date(element.data.reminder.reminderStart),
-    //         "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-    //       ),
-    //       end: format(
-    //         new Date(element.data.reminder.reminderStart),
-    //         "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-    //       ),
-    //     };
-    //
-    //     const id = new Date().getTime();
-    //     const reminder = { title: "", message: "", id, date } as Schedule;
-    //
-    //     reminderStore.addNotification({ reminder });
-    //   });
-    // });
-  }
+  // function loadReminders() {
+  // const documents = useDocument().getUserDocuments();
+  // if (!documents) return;
+  //
+  // documents.forEach(async (document) => {
+  //   document.elements?.forEach((element) => {
+  //     if (!element.data || !element.data.reminder) return;
+  //
+  //     const date = {
+  //       start: format(
+  //         new Date(element.data.reminder.reminderStart),
+  //         "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
+  //       ),
+  //       end: format(
+  //         new Date(element.data.reminder.reminderStart),
+  //         "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
+  //       ),
+  //     };
+  //
+  //     const id = new Date().getTime();
+  //     const reminder = { title: "", message: "", id, date } as Schedule;
+  //
+  //     reminderStore.addNotification({ reminder });
+  //   });
+  // });
+  // }
   // function loadReminders() {
   //   const documents = useDocument().getUserDocuments() ?? [];
   //
@@ -61,28 +61,111 @@ export const useSchedule = () => {
   //   });
   // }
 
-  async function setReminders(params: { reminder: string; id: number }) {
-    const reminder = params.reminder;
-    const id = params.id;
+  async function loadReminders(): Promise<ScheduleElement[]> {
+    const schedule = getSchedule() ?? [];
+    const millisecondsInDay = 24 * 60 * 60 * 1000;
+    const next7Days = new Date().getTime() + 7 * millisecondsInDay;
+
+    const next7DaysElements: ScheduleElement[] = [];
+
+    for (const year in schedule) {
+      for (const month in schedule[year]) {
+        for (const day in schedule[year][month]) {
+          const scheduleElements = schedule[year][month][day];
+          const date = new Date(Number(year), Number(month) - 1, Number(day));
+
+          if (date.getTime() <= next7Days) {
+            next7DaysElements.push(...scheduleElements);
+          }
+        }
+      }
+    }
+    return next7DaysElements;
+  }
+
+  async function generateScheduleReminders(): Promise<
+    { id: number; title: string; message: string; date: string }[]
+  > {
+    const schedule = getSchedule() ?? [];
+    const currentDate = new Date();
+    const next7Days = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const scheduledItemsByDate: Map<string, ScheduleElement[]> = new Map();
+
+    // Construye el índice de elementos programados por fecha
+    for (const year in schedule) {
+      for (const month in schedule[year]) {
+        for (const day in schedule[year][month]) {
+          const scheduleElements = schedule[year][month][day];
+          const date = new Date(Number(year), Number(month) - 1, Number(day));
+
+          for (const element of scheduleElements) {
+            if (element.reminder) {
+              const dateString = date.toISOString().substring(0, 10); // Usar la fecha como clave en formato 'yyyy-mm-dd'
+              const scheduledItems = scheduledItemsByDate.get(dateString) || [];
+              scheduledItems.push(element);
+              scheduledItemsByDate.set(dateString, scheduledItems);
+            }
+          }
+        }
+      }
+    }
+
+    // Filtra los elementos que están dentro de los próximos 7 días y crea un nuevo objeto con las propiedades requeridas
+    const next7DaysElements: {
+      id: number;
+      title: string;
+      message: string;
+      date: string;
+    }[] = [];
+
+    for (const [dateString, scheduledItems] of scheduledItemsByDate) {
+      const date = new Date(dateString);
+
+      if (date <= next7Days) {
+        for (const element of scheduledItems) {
+          next7DaysElements.push({
+            id: new Date().getTime(),
+            title: element.title,
+            message: element.message,
+            date: element.date,
+          });
+        }
+      }
+    }
+
+    return next7DaysElements;
+  }
+
+  async function setReminders(params: {
+    reminder: Date;
+    id: number;
+    title: string;
+    message: string;
+    extraInfo?: string;
+  }) {
+    const { id, reminder, title, message, extraInfo } = params;
     const permission = await checkNotificationsPermissions();
     if (permission == false) return;
 
     await LocalNotifications.schedule({
       notifications: [
         {
-          title: "My notification",
-          body: "This is my notification",
+          title,
+          body: message,
           id,
           schedule: {
-            at: new Date(reminder),
+            at: reminder,
           },
           sound: null,
           attachments: null,
           actionTypeId: "",
-          extra: null,
+          extra: extraInfo,
           channelId: null,
         },
       ],
+    }).catch((e) => {
+      console.error(e);
     });
   }
 
@@ -115,9 +198,11 @@ export const useSchedule = () => {
         const id = new Date().getTime().toString();
         const idElement = event.id;
         const title = event.name;
-        const message = "Recordatorio";
+        const message = event.description;
         const startDate = new Date(event.reminders?.start as string);
         const endDate = new Date(event.reminders?.end as string);
+        const reminder =
+          event.reminders!.notifications.length > 0 ? true : false;
 
         const scheduleElement = generateScheduleElement({
           id,
@@ -127,6 +212,7 @@ export const useSchedule = () => {
           startDate,
           endDate,
           type: "Event",
+          reminder,
         });
 
         let schedule = (await getScheduleService()) ?? ({} as Schedule);
@@ -185,14 +271,18 @@ export const useSchedule = () => {
     startDate: Date;
     endDate: Date;
     type: string;
+    reminder: boolean;
   }): Schedule {
-    const id = params.id;
-    const idElement = params.idElement;
-    const title = params.title;
-    const message = params.message;
-    const startDate = params.startDate;
-    const endDate = params.endDate;
-    const type = params.type;
+    const {
+      id,
+      idElement,
+      title,
+      message,
+      startDate,
+      endDate,
+      type,
+      reminder,
+    } = params;
 
     const eventsByDate: Schedule = {};
     for (
@@ -223,6 +313,7 @@ export const useSchedule = () => {
         message,
         date: startDate.toISOString(),
         type,
+        reminder,
       });
     }
     return eventsByDate;
@@ -238,7 +329,7 @@ export const useSchedule = () => {
 
   function getSchedule(): Schedule | undefined {
     const schedule = scheduleStore.getSchedule();
-    return schedule != null ? schedule : undefined;
+    return Object.keys(schedule).length > 0 ? schedule : undefined;
   }
 
   function generateEventSchedule(params: {
@@ -341,8 +432,8 @@ export const useSchedule = () => {
     getSchedule,
     generateEventSchedule,
     saveSchedule,
-    generateEventSchedule,
     generateScheduleElement,
     removeElementSchedule,
+    generateScheduleReminders,
   };
 };

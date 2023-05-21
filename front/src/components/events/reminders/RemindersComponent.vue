@@ -165,6 +165,11 @@ const dates = ref({
 
 const notificationsData = ref([
   {
+    name: "just",
+    text: "Justo a tiempo",
+    checked: false,
+  },
+  {
     name: "5mb",
     text: "5 minutos antes",
     checked: false,

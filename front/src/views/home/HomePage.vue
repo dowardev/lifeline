@@ -378,12 +378,17 @@ const isOpenModalUpdateEvent = ref(false);
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
   await useEvent().loadEvents();
+  // await useSchedule().checkNotificationsPermissions();
+  // await useSchedule().setReminders({
+  //   id: 1,
+  //   reminder: "ss",
+  // });
 });
 
 // computed
 const generateSchedule = computed(() => {
   const schedule = useSchedule().getSchedule();
-  if (!schedule) return;
+  if (!schedule) return {};
 
   const eventsByDayOfWeek: { [day: string]: ScheduleElement[] } = {
     sunday: [],

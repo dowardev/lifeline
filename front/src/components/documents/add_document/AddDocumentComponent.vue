@@ -406,7 +406,7 @@ const setNoteReminders = async (params: {
   const index = params.index;
   const documentId = params.documentId;
   await useDocument().updateNoteReminder({ data, index, documentId });
-  useReminders().loadReminders();
+  // useReminders().loadReminders();
 };
 
 // mountded

@@ -46,6 +46,9 @@ dependencies:
   '@vuelidate/validators':
     specifier: ^2.0.2
     version: 2.0.2(vue@3.2.47)
+  cordova-sqlite-storage:
+    specifier: ^6.1.0
+    version: 6.1.0
   core:
     specifier: link:@apollo/client/core
     version: link:@apollo/client/core
@@ -67,6 +70,9 @@ dependencies:
   ionicons:
     specifier: ^7.1.0
     version: 7.1.0
+  localforage-cordovasqlitedriver:
+    specifier: ^1.8.0
+    version: 1.8.0
   mitt:
     specifier: ^3.0.0
     version: 3.0.0
@@ -1630,6 +1636,16 @@ packages:
       proto-list: 1.2.4
     dev: true
 
+  /cordova-sqlite-storage-dependencies@4.1.0:
+    resolution: {integrity: sha512-D0ZXfNkS3z9GO+Ha2rC2odvOOMcx/moL8lpVDFxXqcsCEZbJimuki4wZfdrQrGlNd/d7r4DNodljRmO20v6Ntg==}
+    dev: false
+
+  /cordova-sqlite-storage@6.1.0:
+    resolution: {integrity: sha512-ko/edy+u9MJVYrXdB6OXUklH0eIRWpa/Rvang7YkvQvsswc9vZr0pM/Ty6eX0MJtLOMJuCXIOiiHZZZbZSZikw==}
+    dependencies:
+      cordova-sqlite-storage-dependencies: 4.1.0
+    dev: false
+
   /core-util-is@1.0.2:
     resolution: {integrity: sha512-3lqz5YjWTYnW6dlDa5TLaTCcShfar1e40rmcJVwCBJC6mWlFuj0eCHIElmG1g5kyuJ/GD+8Wn4FFCcz4gJPfaQ==}
     dev: true
@@ -2805,6 +2821,12 @@ packages:
     resolution: {integrity: sha512-SFppqq5p42fe2qcZQqqEOiVRXl+WCP1MdT6k7BDEW1j++sp5fIY+/fdRQitvKgB5BrBcmrs5m/L0v2FrU5MY1g==}
     engines: {node: '>=14'}
     dev: true
+
+  /localforage-cordovasqlitedriver@1.8.0:
+    resolution: {integrity: sha512-AeYiVPURow8gPAGHNOiGMS9rlgv81wUuQLtnyCP6Eh1mq+IsqNl9fwAOP+RiTi6aO/Wfy3TTWiW2WtbTdJaUnQ==}
+    dependencies:
+      localforage: 1.10.0
+    dev: false
 
   /localforage@1.10.0:
     resolution: {integrity: sha512-14/H1aX7hzBBmmh7sGPd+AOMkkIrHM3Z1PAyGgZigA1H1p5O5ANnMyWzvpAETtG68/dC4pC0ncy3+PPGzXZHPg==}

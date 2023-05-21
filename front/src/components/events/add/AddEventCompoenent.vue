@@ -553,6 +553,7 @@ import CalendarComponent from "./calendar/CalendarComponent.vue";
 import { useEvent } from "@/composables/useEvent";
 import { useSchedule } from "@/composables/useSchedule";
 import { useSystem } from "@/composables/useSystem";
+import { useReminder } from "@/composables/useReminder";
 
 import {
   EventReminderNotification,
@@ -560,6 +561,8 @@ import {
   Event,
   Schedule,
 } from "@/utils/interfaces";
+import { userRegister } from "@/services/session";
+import { LocalNotifications } from "@capacitor/local-notifications";
 
 const isOpenPopoverReminders = ref(false);
 const timeZones = Intl.supportedValuesOf("timeZone").map(
@@ -666,28 +669,7 @@ async function save() {
       await updateEvent();
     }
 
-    const scheduleElement = useSchedule().generateScheduleElement({
-      id: new Date().getTime().toString(),
-      idElement: eventId,
-      title: event.name.value,
-      message: "prueba",
-      startDate: new Date(event.reminders.value.start),
-      endDate: new Date(event.reminders.value.end),
-      type: "Event",
-    });
-
-    if (eventId)
-      schedule = useSchedule().removeElementSchedule({
-        id: eventId,
-        schedule,
-      });
-
-    schedule = useSchedule().generateEventSchedule({
-      scheduleElement,
-      schedule,
-    });
-    await useSchedule().saveSchedule({ schedule });
-    await useSchedule().loadSchedule();
+    await postCreateEvent({ eventId, schedule });
     closePage();
   } catch (error) {
     console.error(error);
@@ -826,6 +808,55 @@ async function deleteEvent() {
   await useSchedule().saveSchedule({ schedule });
   await useSchedule().loadSchedule();
   await closePage();
+}
+
+async function postCreateEvent(params: {
+  eventId: string;
+  schedule: Schedule;
+}) {
+  const { eventId } = params;
+  let { schedule } = params;
+
+  const scheduleElement = useSchedule().generateScheduleElement({
+    id: new Date().getTime().toString(),
+    idElement: eventId,
+    title: event.name.value,
+    message: event.description.value,
+    startDate: new Date(event.reminders.value.start),
+    endDate: new Date(event.reminders.value.end),
+    type: "Event",
+    reminder: event.reminders.value.notifications.length > 0 ? true : false,
+  });
+
+  if (eventId)
+    schedule = useSchedule().removeElementSchedule({
+      id: eventId,
+      schedule,
+    });
+
+  schedule = useSchedule().generateEventSchedule({
+    scheduleElement,
+    schedule,
+  });
+  await useSchedule().saveSchedule({ schedule });
+  await useSchedule().loadSchedule();
+  const notifications = useReminder().getEventReminders({
+    dateStart: event.reminders.value.start,
+    notifications: event.reminders.value.notifications,
+  });
+
+  if (notifications) {
+    await Promise.all(
+      notifications.map(async (notification) => {
+        await useSchedule().setReminders({
+          id: new Date().getTime(),
+          reminder: notification,
+          title: event.name.value,
+          message: event.description.value,
+        });
+      })
+    );
+  }
 }
 </script>
 

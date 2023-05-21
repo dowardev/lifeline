@@ -69,9 +69,26 @@ const start = async () => {
   setTheme({ theme: theme, currentTheme: theme });
   await useSystem().updateThemeSelected({ theme });
 
-  // const schedule = useSchedule().getSchedule();
-  // if (!schedule) await useSchedule().generateEventsSchedule();
-  await useSchedule().generateEventsSchedule()
   await useSchedule().loadSchedule();
+  const schedule = useSchedule().getSchedule();
+  if (!schedule) await load();
 };
+
+async function load() {
+  // load schedule
+  await useSchedule().generateEventsSchedule();
+
+  // load reminders
+  const reminders = await useSchedule().generateScheduleReminders();
+  await Promise.all(
+    reminders.map(async (reminder) => {
+      await useSchedule().setReminders({
+        id: new Date().getTime(),
+        reminder: new Date(reminder.date),
+        title: reminder.title,
+        message: reminder.message,
+      });
+    })
+  );
+}
 </script>

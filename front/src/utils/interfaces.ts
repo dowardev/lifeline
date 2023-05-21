@@ -202,6 +202,7 @@ export interface ScheduleElement {
   message: string;
   date: string;
   type: string;
+  reminder: boolean;
 }
 
 export interface Schedule {
