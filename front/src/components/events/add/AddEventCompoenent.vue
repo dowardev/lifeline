@@ -521,7 +521,6 @@ import {
   modalController,
 } from "@ionic/vue";
 import { onMounted, ref } from "vue";
-import RemindersComponent from "../reminders/RemindersComponent.vue";
 import { format } from "date-fns";
 import {
   addOutline,
@@ -548,6 +547,7 @@ const props = defineProps({
 
 // components
 import CalendarComponent from "./calendar/CalendarComponent.vue";
+import RemindersComponent from "../reminders/RemindersComponent.vue";
 
 // composables
 import { useEvent } from "@/composables/useEvent";
@@ -581,9 +581,9 @@ const event = {
     start: new Date().toISOString(),
     end: new Date().toISOString(),
     notifications: Array<string>(),
-    repeat: { type: "unique" } as {
+    repeat: { type: "daily", frecuency: 1 } as {
       frecuency: number;
-      type: "unique" | "daily" | "weekly" | "monthly" | "annually";
+      type: "daily" | "weekly" | "monthly" | "annually";
       daysWeek?: string[];
     },
   }),
@@ -690,7 +690,6 @@ async function saveEvent(): Promise<{ id: string }> {
     availability: event.availability.value,
     timezone: event.timezone.value,
   };
-
   const { id } = await useEvent().saveEvent({
     event: JSON.parse(JSON.stringify(eventFormated)),
   });
@@ -817,6 +816,21 @@ async function postCreateEvent(params: {
   const { eventId } = params;
   let { schedule } = params;
 
+  console.log(
+    JSON.parse(
+      JSON.stringify({
+        id: new Date().getTime().toString(),
+        idElement: eventId,
+        title: event.name.value,
+        message: event.description.value,
+        startDate: new Date(event.reminders.value.start),
+        endDate: new Date(event.reminders.value.end),
+        type: "Event",
+        reminder: event.reminders.value.notifications.length > 0 ? true : false,
+        repeat: event.reminders.value.repeat,
+      })
+    )
+  );
   const scheduleElement = useSchedule().generateScheduleElement({
     id: new Date().getTime().toString(),
     idElement: eventId,
@@ -826,7 +840,9 @@ async function postCreateEvent(params: {
     endDate: new Date(event.reminders.value.end),
     type: "Event",
     reminder: event.reminders.value.notifications.length > 0 ? true : false,
+    repeat: event.reminders.value.repeat,
   });
+  console.log(scheduleElement);
 
   if (eventId)
     schedule = useSchedule().removeElementSchedule({
@@ -840,6 +856,7 @@ async function postCreateEvent(params: {
   });
   await useSchedule().saveSchedule({ schedule });
   await useSchedule().loadSchedule();
+
   const notifications = useReminder().getEventReminders({
     dateStart: event.reminders.value.start,
     notifications: event.reminders.value.notifications,

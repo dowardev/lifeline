@@ -41,6 +41,11 @@
           ref="datetimeStart"
           class="transparent"
           :min="new Date().toISOString().split('T')[0]"
+          :max="
+            add(new Date(), {
+              years: 10,
+            }).toISOString()
+          "
           :value="formatISO(new Date(dates.start))"
           @ion-change="dates.start = $event.detail.value as string"
         >
@@ -65,6 +70,11 @@
           ref="datetimeEnd"
           class="transparent"
           :min="new Date().toISOString().split('T')[0]"
+          :max="
+            add(new Date(), {
+              years: 10,
+            }).toISOString()
+          "
           :value="formatISO(new Date(dates.end))"
           @ion-change="dates.end = $event.detail.value as string"
         >
@@ -127,8 +137,10 @@ import {
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { computed, onMounted, ref, watch } from "vue";
 
+// components
 import RepeatsComponent from "./repeat/RepeatsComponent.vue";
-import { formatISO } from "date-fns";
+
+import { add, formatISO } from "date-fns";
 
 const props = defineProps({
   dates: {
@@ -221,7 +233,7 @@ const notificationsData = ref([
   },
 ]);
 
-const dataRepeat = ref({ type: "unique" } as {
+const dataRepeat = ref({ type: "daily", frecuency: 1 } as {
   frecuency: number;
   type: "unique" | "daily" | "weekly" | "monthly" | "annually";
   daysWeek?: string[];

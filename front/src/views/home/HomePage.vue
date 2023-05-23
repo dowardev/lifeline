@@ -64,7 +64,7 @@
                   >
                     {{
                       translateMonth({
-                        monthName: months[getMonth(currentDate) - 1],
+                        monthName: months[getMonth(currentDate)],
                       })
                     }}
                   </ion-button>
@@ -215,6 +215,11 @@
           <ion-datetime
             presentation="date"
             :value="currentDate.toISOString()"
+            :max="
+              add(new Date(), {
+                years: 10,
+              }).toISOString()
+            "
             @ion-change="
               loadDaysWeek({
                 date: new Date($event.target.value as string).getTime(),
@@ -293,7 +298,7 @@ import {
 } from "@ionic/vue";
 import { computed, onMounted, ref } from "vue";
 import { useSchedule } from "@/composables/useSchedule";
-import { format, getMonth } from "date-fns";
+import { add, format, getMonth } from "date-fns";
 import {
   addOutline,
   chevronBackOutline,

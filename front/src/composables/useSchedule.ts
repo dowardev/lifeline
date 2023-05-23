@@ -203,6 +203,7 @@ export const useSchedule = () => {
         const endDate = new Date(event.reminders?.end as string);
         const reminder =
           event.reminders!.notifications.length > 0 ? true : false;
+        const repeat = event.reminders?.repeat ?? {};
 
         const scheduleElement = generateScheduleElement({
           id,
@@ -213,6 +214,7 @@ export const useSchedule = () => {
           endDate,
           type: "Event",
           reminder,
+          repeat,
         });
 
         let schedule = (await getScheduleService()) ?? ({} as Schedule);
@@ -272,6 +274,11 @@ export const useSchedule = () => {
     endDate: Date;
     type: string;
     reminder: boolean;
+    repeat: {
+      frecuency?: number;
+      type?: "daily" | "weekly" | "monthly" | "annually";
+      daysWeek?: string[];
+    };
   }): Schedule {
     const {
       id,
@@ -282,17 +289,48 @@ export const useSchedule = () => {
       endDate,
       type,
       reminder,
+      repeat: { frecuency = 1, type: repeatType = "daily", daysWeek = [] },
     } = params;
 
+    const normalizedDaysWeek = daysWeek.map((day) => day.toLowerCase()); // Normalize day names to lowercase
+
     const eventsByDate: Schedule = {};
-    for (
-      let date = startDate;
-      date.getDate() <= endDate.getDate();
-      date.setDate(date.getDate() + 1)
-    ) {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const day = date.getDate();
+    let currentDate = new Date(startDate);
+    let lastDate = new Date(currentDate);
+    lastDate.setFullYear(lastDate.getFullYear() + frecuency);
+
+    while (currentDate <= endDate || lastDate <= endDate) {
+      if (repeatType === "weekly") {
+        const dayOfWeek = currentDate.getDay();
+        const currentDayName = getDayName(dayOfWeek);
+        if (!normalizedDaysWeek.includes(currentDayName.toLowerCase())) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          lastDate.setDate(lastDate.getDate() + 1);
+          continue; // Skip the current iteration if the day of the week is not included
+        }
+      } else if (repeatType === "monthly") {
+        const dayOfMonth = currentDate.getDate();
+        if (dayOfMonth !== startDate.getDate()) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          lastDate.setDate(lastDate.getDate() + 1);
+          continue; // Skip the current iteration if it's not the same day as the start date
+        }
+      } else if (repeatType === "annually") {
+        const month = currentDate.getMonth();
+        const dayOfMonth = currentDate.getDate();
+        if (
+          month !== startDate.getMonth() ||
+          dayOfMonth !== startDate.getDate()
+        ) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          lastDate.setDate(lastDate.getDate() + 1);
+          continue; // Skip the current iteration if it's not the same month and day as the start date
+        }
+      }
+
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const day = currentDate.getDate();
 
       if (!eventsByDate[year]) {
         eventsByDate[year] = {};
@@ -311,12 +349,37 @@ export const useSchedule = () => {
         idElement,
         title,
         message,
-        date: startDate.toISOString(),
-        type,
+        date: currentDate.toISOString(),
+        type: repeatType,
         reminder,
       });
+
+      if (repeatType === "annually") {
+        currentDate.setFullYear(currentDate.getFullYear() + frecuency);
+        lastDate.setFullYear(lastDate.getFullYear() + frecuency);
+      } else if (repeatType === "monthly") {
+        currentDate.setMonth(currentDate.getMonth() + frecuency);
+        lastDate.setMonth(lastDate.getMonth() + frecuency);
+      } else {
+        currentDate.setDate(currentDate.getDate() + 1);
+        lastDate.setDate(lastDate.getDate() + 1);
+      }
     }
+
     return eventsByDate;
+  }
+
+  function getDayName(dayOfWeek: number): string {
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    return days[dayOfWeek];
   }
 
   async function loadSchedule(): Promise<void> {

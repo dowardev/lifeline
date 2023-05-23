@@ -223,7 +223,7 @@ export interface EventDataReminder {
   start: string;
   end: string;
   frecuency: number;
-  type: "unique" | "daily" | "weekly" | "monthly" | "annually";
+  type: "daily" | "weekly" | "monthly" | "annually";
   daysWeek?: string[];
   reminders?: string[];
 }

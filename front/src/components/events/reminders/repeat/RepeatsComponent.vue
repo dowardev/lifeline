@@ -267,10 +267,6 @@ const inputAnnualyFrecuency = ref(null);
 
 const repeatOptions = ref([
   {
-    name: "unique",
-    text: "No repetir",
-  },
-  {
     name: "daily",
     text: "Diariamente",
   },
@@ -287,7 +283,7 @@ const repeatOptions = ref([
     text: "Anualmente",
   },
 ]);
-const optionRepearSelected = ref("unique");
+const optionRepearSelected = ref("daily");
 
 const formDaily = {
   frecuency: ref(1),

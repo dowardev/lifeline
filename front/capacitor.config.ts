@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   server: {
-    url: "http://192.168.1.68:8101",
+    url: "http://192.168.1.69:8101",
     cleartext: true,
   },
   plugins: {
