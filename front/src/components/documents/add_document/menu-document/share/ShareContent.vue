@@ -141,12 +141,12 @@ import {
   linkOutline,
   mailOutline,
 } from "ionicons/icons";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { copyToClipboard as copyToClipboardService } from "../../../../../services/system";
 
 const props = defineProps({ url: { type: String, default: "" } });
 
-const mainSegment = "url";
+const mainSegment = ref("url");
 
 // computed
 const generateQR = computed(() => {

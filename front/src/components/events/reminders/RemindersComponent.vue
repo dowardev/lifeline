@@ -283,14 +283,3 @@ function getCheckedReminders() {
     .map((day) => day.name);
 }
 </script>
-
-<style scoped>
-ion-content {
-  --offset-bottom: auto !important;
-  --overflow: hidden;
-  overflow: auto;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-</style>

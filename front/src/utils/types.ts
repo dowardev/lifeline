@@ -19,4 +19,4 @@ export type OptionsMainMenuDocument =
   | "share"
   | "none";
 
-export type Theme = "light" | "nord" | "gruvbox";
+export type Theme = "light" | "nord" | "gruvbox" | "cherry";

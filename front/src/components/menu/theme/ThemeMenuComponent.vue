@@ -43,7 +43,7 @@ import { checkmarkOutline, chevronBackOutline } from "ionicons/icons";
 import { Theme } from "@/utils/types";
 import { useSystem } from "@/composables/useSystem";
 
-const availableThemes: Theme[] = ["light", "nord", "gruvbox"];
+const availableThemes: Theme[] = ["light", "nord", "gruvbox", "cherry"];
 
 const pageTitle = "Selector de tema";
 

@@ -617,7 +617,7 @@ const inputName = ref(null);
 const inputGuest = ref(null);
 
 const pageTitle = ref("Agregar evento");
-const popoverRemindersSegment = "date-start";
+const popoverRemindersSegment = ref("date-start");
 
 // mounted
 onMounted(async () => {

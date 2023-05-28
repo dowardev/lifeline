@@ -114,7 +114,7 @@ const resetCalendar = async () => {
 const selectDay = (e: any) => {
   const date = e.detail.value;
   eventsStore.date = date;
-  eventsStore.loadEvents({ refetch: false });
+  // eventsStore.loadEvents({ refetch: false });
 };
 
 const addDocument = async () => {

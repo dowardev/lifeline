@@ -29,12 +29,13 @@ import { IonTextarea } from "@ionic/vue";
 import Markdown from "vue3-markdown-it";
 import "highlight.js/styles/monokai.css";
 import { closeOutline, createOutline } from "ionicons/icons";
+import { ref } from "vue";
 
 const props = defineProps({
   contentEditable: { type: Boolean, default: false },
 });
 
-const content = "# e";
+const content = ref("# e");
 let isContentEditable = false;
 
 // mounted
