@@ -71,8 +71,7 @@ const start = async () => {
 
   await useSchedule().loadSchedule();
   const schedule = useSchedule().getSchedule();
-  // if (!schedule) await load();
-  load()
+  if (!schedule) await load();
 };
 
 async function load() {

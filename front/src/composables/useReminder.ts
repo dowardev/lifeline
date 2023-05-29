@@ -1,7 +1,7 @@
 export const useReminder = () => {
   function getEventReminders(params: {
     notifications: string[];
-    dateStart: string;
+    dateStart: Date;
   }) {
     const { notifications, dateStart } = params;
 
@@ -23,7 +23,7 @@ export const useReminder = () => {
       return [];
     }
 
-    const startDate = new Date(dateStart);
+    const startDate = dateStart;
     const notificationDates: Date[] = [];
 
     for (const notification of notifications) {

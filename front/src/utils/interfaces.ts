@@ -67,12 +67,12 @@ export interface Event {
   // calendar?: string;
   guests?: Array<{ email: string }>;
   reminders?: {
-    start: string;
-    end: string;
+    start: Date;
+    end: Date;
     notifications: string[];
     repeat: {
       frecuency: number;
-      type: "unique" | "daily" | "weekly" | "monthly" | "annually";
+      type: "daily" | "weekly" | "monthly" | "annually";
       daysWeek?: string[];
     };
   };

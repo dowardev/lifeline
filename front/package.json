@@ -31,6 +31,7 @@
     "core": "link:@apollo/client/core",
     "date-fns": "^2.29.3",
     "date-fns-tz": "^2.0.0",
+    "fs-extra": "^11.1.1",
     "graphql": "^16.6.0",
     "graphql-tag": "^2.12.6",
     "highlight.js": "^11.7.0",
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "4.7.3",
+    "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-vue": "^4.1.0",
     "@vue/eslint-config-typescript": "^11.0.2",
     "@vue/test-utils": "^2.3.2",
@@ -53,6 +55,7 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-vue": "^9.10.0",
+    "eslint_d": "^12.2.1",
     "jsdom": "^21.1.1",
     "prettier": "^2.8.7",
     "typescript": "^5.0.4",

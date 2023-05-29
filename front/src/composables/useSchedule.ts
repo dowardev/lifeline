@@ -306,14 +306,14 @@ export const useSchedule = () => {
         if (!normalizedDaysWeek.includes(currentDayName.toLowerCase())) {
           currentDate.setDate(currentDate.getDate() + 1);
           lastDate.setDate(lastDate.getDate() + 1);
-          continue; // Skip the current iteration if the day of the week is not included
+          continue;
         }
       } else if (repeatType === "monthly") {
         const dayOfMonth = currentDate.getDate();
         if (dayOfMonth !== startDate.getDate()) {
           currentDate.setDate(currentDate.getDate() + 1);
           lastDate.setDate(lastDate.getDate() + 1);
-          continue; // Skip the current iteration if it's not the same day as the start date
+          continue;
         }
       } else if (repeatType === "annually") {
         const month = currentDate.getMonth();
@@ -324,7 +324,7 @@ export const useSchedule = () => {
         ) {
           currentDate.setDate(currentDate.getDate() + 1);
           lastDate.setDate(lastDate.getDate() + 1);
-          continue; // Skip the current iteration if it's not the same month and day as the start date
+          continue;
         }
       }
 
@@ -350,7 +350,7 @@ export const useSchedule = () => {
         title,
         message,
         date: currentDate.toISOString(),
-        type: repeatType,
+        type,
         reminder,
       });
 

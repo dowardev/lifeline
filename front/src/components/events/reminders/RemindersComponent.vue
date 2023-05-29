@@ -40,15 +40,18 @@
         <ion-datetime
           ref="datetimeStart"
           class="transparent"
-          :min="new Date().toISOString().split('T')[0]"
+          :min="formatISO(new Date()).split('T')[0]"
           :max="
             add(new Date(), {
               years: 10,
             }).toISOString()
           "
-          :value="formatISO(new Date(dates.start))"
-          @ion-change="dates.start = $event.detail.value as string"
+          :value="formatISO(dates.start)"
+          :first-day-of-week="1"
+          :locale="currentLocale"
+          @ion-change="dates.start = new Date($event.detail.value as string)"
         >
+          <span slot="time-label">Tiempo</span>
         </ion-datetime>
       </div>
 
@@ -69,15 +72,17 @@
         <ion-datetime
           ref="datetimeEnd"
           class="transparent"
-          :min="new Date().toISOString().split('T')[0]"
+          :min="formatISO(new Date()).split('T')[0]"
           :max="
             add(new Date(), {
               years: 10,
             }).toISOString()
           "
-          :value="formatISO(new Date(dates.end))"
-          @ion-change="dates.end = $event.detail.value as string"
+          :value="formatISO(dates.end)"
+          :first-day-of-week="1"
+          @ion-change="dates.end = new Date($event.detail.value as string)"
         >
+          <span slot="time-label">Tiempo</span>
         </ion-datetime>
       </div>
 
@@ -147,8 +152,8 @@ const props = defineProps({
     type: Object,
     default: () => {
       return {
-        start: "",
-        end: "",
+        start: new Date(),
+        end: new Date(),
       };
     },
   },
@@ -232,22 +237,31 @@ const notificationsData = ref([
     checked: false,
   },
 ]);
-
 const dataRepeat = ref({ type: "daily", frecuency: 1 } as {
   frecuency: number;
   type: "unique" | "daily" | "weekly" | "monthly" | "annually";
   daysWeek?: string[];
 });
+const currentLocale = navigator.language;
 
+// computed
 const endDate = computed(() => {
   return dates.value.end;
 });
+const startDate = computed(() => {
+  return dates.value.start;
+});
 
 // watch
+watch(startDate, (newValue, oldValue) => {
+  const dateStart = new Date(newValue);
+  const dateEnd = new Date(dates.value.end);
+  if (dateStart > dateEnd) dates.value.end = dateStart;
+});
 watch(endDate, (newValue, oldValue) => {
   const dateStart = new Date(dates.value.start);
-  const dateEnd = new Date(newValue as string);
-  if (dateStart > dateEnd) dates.value.start = dateEnd.toISOString();
+  const dateEnd = new Date(newValue);
+  if (dateEnd < dateStart) dates.value.start = dateEnd;
 });
 
 // mouted

@@ -16,16 +16,16 @@
         <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="end">
+          <ion-button v-if="props.eventData" @click="deleteEvent()"
+            ><ion-icon :icon="trashOutline" color="danger"></ion-icon
+          ></ion-button>
+
           <ion-button v-if="!isPlatform('desktop')" id="open-modal-calendar"
             ><ion-icon :icon="calendarOutline"></ion-icon
           ></ion-button>
 
           <ion-button :disabled="v$.$invalid" @click="save()"
             ><ion-icon :icon="saveOutline"></ion-icon
-          ></ion-button>
-
-          <ion-button v-if="props.eventData" @click="deleteEvent()"
-            ><ion-icon :icon="trashOutline" color="danger"></ion-icon
           ></ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -422,12 +422,7 @@
         :is-open="isOpenPopoverTimezones"
         :backdrop-dismiss="false"
       >
-        <ion-header
-          :translucent="true"
-          collapse="fade"
-          mode="ios"
-          class="ion-no-border"
-        >
+        <ion-header mode="ios">
           <ion-toolbar>
             <ion-buttons slot="start">
               <ion-button @click="isOpenPopoverTimezones = false">
@@ -561,13 +556,11 @@ import {
   Event,
   Schedule,
 } from "@/utils/interfaces";
-import { userRegister } from "@/services/session";
-import { LocalNotifications } from "@capacitor/local-notifications";
 
 const isOpenPopoverReminders = ref(false);
-const timeZones = Intl.supportedValuesOf("timeZone").map(
-  (timeZone) => timeZone
-);
+const timeZones = (Intl as any)
+  .supportedValuesOf("timeZone")
+  .map((timeZone: string) => timeZone);
 let isOpenPopoverTimezones = ref(false);
 const filteredZones = ref(Array<string>());
 const showButtonsOptionGuest = ref(-1);
@@ -578,8 +571,8 @@ const event = {
   name: ref(""),
   description: ref(""),
   reminders: ref({
-    start: new Date().toISOString(),
-    end: new Date().toISOString(),
+    start: new Date() as Date,
+    end: new Date() as Date,
     notifications: Array<string>(),
     repeat: { type: "daily", frecuency: 1 } as {
       frecuency: number;
@@ -815,24 +808,10 @@ async function postCreateEvent(params: {
 }) {
   const { eventId } = params;
   let { schedule } = params;
+  const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
 
-  console.log(
-    JSON.parse(
-      JSON.stringify({
-        id: new Date().getTime().toString(),
-        idElement: eventId,
-        title: event.name.value,
-        message: event.description.value,
-        startDate: new Date(event.reminders.value.start),
-        endDate: new Date(event.reminders.value.end),
-        type: "Event",
-        reminder: event.reminders.value.notifications.length > 0 ? true : false,
-        repeat: event.reminders.value.repeat,
-      })
-    )
-  );
   const scheduleElement = useSchedule().generateScheduleElement({
-    id: new Date().getTime().toString(),
+    id: scheduleId,
     idElement: eventId,
     title: event.name.value,
     message: event.description.value,
@@ -842,7 +821,6 @@ async function postCreateEvent(params: {
     reminder: event.reminders.value.notifications.length > 0 ? true : false,
     repeat: event.reminders.value.repeat,
   });
-  console.log(scheduleElement);
 
   if (eventId)
     schedule = useSchedule().removeElementSchedule({
@@ -866,7 +844,7 @@ async function postCreateEvent(params: {
     await Promise.all(
       notifications.map(async (notification) => {
         await useSchedule().setReminders({
-          id: new Date().getTime(),
+          id: parseInt(scheduleId),
           reminder: notification,
           title: event.name.value,
           message: event.description.value,
