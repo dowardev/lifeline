@@ -119,7 +119,7 @@
       class="ion-padding"
       style="overflow: scroll; height: 70vh"
     >
-      <RepeatsComponent @update-data="dataRepeat = $event" />
+      <RepeatsComponent :data="dataRepeat" @update-data="dataRepeat = $event" />
     </section>
   </ion-content>
 </template>
@@ -141,13 +141,13 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { computed, onMounted, ref, watch } from "vue";
+import { add, formatISO } from "date-fns";
 
 // components
 import RepeatsComponent from "./repeat/RepeatsComponent.vue";
 
-import { add, formatISO } from "date-fns";
-
 const props = defineProps({
+  segmentOption: { default: "date-start", type: String },
   dates: {
     type: Object,
     default: () => {
@@ -157,10 +157,19 @@ const props = defineProps({
       };
     },
   },
-  segmentOption: { default: "date-start", type: String },
   notifications: {
     type: Array,
     default: () => [],
+  },
+  repeat: {
+    type: Object,
+    default: () => {
+      return {
+        frecuency: 1,
+        type: "daily",
+        daysWeek: [],
+      };
+    },
   },
 });
 
@@ -272,6 +281,7 @@ onMounted(() => {
       notification.checked = true;
     }
   });
+  dataRepeat.value = props.repeat as any;
 });
 
 // functions

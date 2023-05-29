@@ -257,6 +257,19 @@ import useVuelidate from "@vuelidate/core";
 import { helpers, numeric, required } from "@vuelidate/validators";
 import { onMounted, ref } from "vue";
 
+const props = defineProps({
+  data: {
+    type: Object,
+    default: () => {
+      return {
+        frecuency: 1,
+        type: "daily",
+        daysWeek: [],
+      };
+    },
+  },
+});
+
 const emits = defineEmits(["updateData"]);
 
 // inputs
@@ -356,6 +369,26 @@ const vAnnualy$ = useVuelidate(rulesAnnualy, { formAnnualy });
 // mounted
 onMounted(() => {
   setCurrentDateWeek();
+  optionRepearSelected.value = props.data.type;
+  if (props.data.type == "daily")
+    formDaily.frecuency.value = props.data.frecuency;
+
+  if (props.data.type == "weekly") {
+    formWeekly.frecuency.value = props.data.frecuency;
+    formWeekly.days.value = formWeekly.days.value.map((element) => {
+      const result = props.data.daysWeek.find((item: string) => {
+        if (item == element.name) return item;
+      });
+      if (result) element.selected = true;
+      return element;
+    });
+  }
+
+  if (props.data.type == "monthly")
+    formMontly.frecuency.value = props.data.frecuency;
+
+  if (props.data.type == "annually")
+    formAnnualy.frecuency.value = props.data.frecuency;
 });
 
 // functions

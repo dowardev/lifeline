@@ -405,6 +405,7 @@
           }"
           :segment-option="popoverRemindersSegment"
           :notifications="event.reminders.value.notifications"
+          :repeat="event.reminders.value.repeat"
           @update-data-reminders="
             event.reminders.value = {
               start: $event.data.start,

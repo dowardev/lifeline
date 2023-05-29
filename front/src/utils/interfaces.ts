@@ -247,6 +247,7 @@ export interface EventReminderRepeat {
 }
 
 export interface EventReminderNotification {
+  just: string;
   "5mb": string;
   "10mb": string;
   "15mb": string;

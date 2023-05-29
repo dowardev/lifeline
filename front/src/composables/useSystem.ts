@@ -73,6 +73,7 @@ export const useSystem = () => {
     const notificationName = params.notificationName;
 
     const notificationsName: EventReminderNotification = {
+      just: "A tiempo",
       "5mb": "5 minutos antes",
       "10mb": "10 minutos antes",
       "15mb": "15 minutos antes",
