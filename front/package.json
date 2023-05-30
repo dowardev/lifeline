@@ -1,7 +1,7 @@
 {
   "name": "lifeline-app",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -45,6 +45,7 @@
     "vue3-markdown-it": "^1.0.10"
   },
   "devDependencies": {
+    "@capacitor/assets": "^2.0.4",
     "@capacitor/cli": "4.7.3",
     "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-vue": "^4.1.0",

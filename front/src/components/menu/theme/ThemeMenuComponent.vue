@@ -17,11 +17,16 @@
     <!-- theme selector -->
     <ion-row v-for="(theme, index) in availableThemes" :key="index">
       <ion-col size="12">
-        <ion-item lines="none"
+        <ion-item
+          lines="none"
+          button
+          @click="applyTheme({ name: theme as Theme })"
           ><ion-label>{{ theme }}</ion-label>
-          <ion-button fill="clear" @click="applyTheme({ name: theme as Theme })"
-            ><ion-icon :icon="checkmarkOutline"></ion-icon></ion-button
-        ></ion-item>
+          <ion-icon
+            v-if="currentTheme == theme"
+            :icon="checkmarkOutline"
+          ></ion-icon>
+        </ion-item>
       </ion-col>
     </ion-row>
   </ion-content>
@@ -42,10 +47,15 @@ import {
 import { checkmarkOutline, chevronBackOutline } from "ionicons/icons";
 import { Theme } from "@/utils/types";
 import { useSystem } from "@/composables/useSystem";
+import { onMounted, ref } from "vue";
 
 const availableThemes: Theme[] = ["light", "nord", "gruvbox", "cherry"];
-
 const pageTitle = "Selector de tema";
+const currentTheme = ref("" as Theme);
+
+onMounted(() => {
+  currentTheme.value = useSystem().getTheme();
+});
 
 // funtions
 const closeModal = () => {
@@ -55,6 +65,7 @@ const closeModal = () => {
 async function applyTheme(params: { name: Theme }) {
   const theme = params.name;
   useSystem().applyTheme({ theme });
-  useSystem().updateThemeSelected({ theme });
+  await useSystem().updateThemeSelected({ theme });
+  currentTheme.value = theme;
 }
 </script>
