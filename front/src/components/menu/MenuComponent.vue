@@ -32,9 +32,7 @@
           ></ion-icon>
         </div>
 
-        <ion-label class="labelOptionMenu">
-          {{ capitalizeFirstLetter($t("message.start")) }}
-        </ion-label>
+        <ion-label class="labelOptionMenu"> Inicio </ion-label>
       </ion-item>
 
       <!-- module -->
@@ -62,7 +60,13 @@
         @click="$router.push({ name: 'DocumentsPage' })"
       >
         <div slot="start">
-          <ion-icon :icon="documentOutline"></ion-icon>
+          <ion-icon
+            :icon="documentOutline"
+            :class="{
+              iconOptionSelected: $route.path == '/documents',
+              iconOptionNoSelected: $route.path != '/documents',
+            }"
+          ></ion-icon>
         </div>
 
         <ion-label class="labelOptionMenu"> Documentos </ion-label>
@@ -73,11 +77,16 @@
         lines="none"
         class="transparent"
         button
-        disabled
-        @click="openRoute('/')"
+        @click="openRoute('/tasks')"
       >
         <div slot="start">
-          <ion-icon :icon="checkboxOutline"></ion-icon>
+          <ion-icon
+            :icon="checkboxOutline"
+            :class="{
+              iconOptionSelected: $route.path == '/tasks',
+              iconOptionNoSelected: $route.path != '/tasks',
+            }"
+          ></ion-icon>
         </div>
 
         <ion-label class="labelOptionMenu">

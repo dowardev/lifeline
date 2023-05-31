@@ -8,6 +8,7 @@ import PruebaPage from "@/views/prueba/PruebaPage.vue";
 import DocumentPage from "@/components/documents/add_document/AddDocumentComponent.vue";
 import PoliciesPage from "@/views/policies/PoliciesPage.vue";
 import DocumentsPage from "@/views/documents/DocumentsPage.vue";
+import TasksPage from "../views/tasks/TasksPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -48,6 +49,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/documents",
     name: "DocumentsPage",
     component: DocumentsPage,
+  },
+  {
+    path: "/tasks",
+    name: "TasksPage",
+    component: TasksPage,
   },
 ];
 

@@ -8,7 +8,7 @@
       @mouseleave="showButtonsOptionTODO = -1"
       @click="showButtonsOptionTODO = indexTask"
     >
-      <ion-label>{{ task.title }} {{ indexTask +1 }}</ion-label>
+      <ion-label>{{ task.title }} {{ indexTask + 1 }}</ion-label>
       <!-- reschedule element -->
       <ion-button v-if="showButtonsOptionTODO === indexTask" fill="clear"
         ><ion-icon :icon="stopwatchOutline"></ion-icon
