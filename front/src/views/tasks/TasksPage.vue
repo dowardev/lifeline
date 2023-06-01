@@ -22,14 +22,12 @@
       </ion-header>
 
       <div
-        style="
-          position: sticky;
-          top: 0;
-          z-index: 3;
-          ref=refPrueba
-        "
+        style="position: sticky; top: 0; z-index: 3"
         class="ion-padding-start ion-padding-end"
-        :class="{ prueba1: positionScroll == 0, prueba2: positionScroll > 0 }"
+        :class="{
+          'background1-main-section': positionScroll == 0,
+          'background2-main-section': positionScroll > 0,
+        }"
       >
         <ion-row :class="{ center: screenWidth >= 768 }">
           <ion-col size-xs="12" size-md="6">
@@ -39,12 +37,16 @@
                   label="Agregar tarea"
                   placeholder="Comprar pan"
                   :fill="positionScroll > 10 ? 'outline' : 'solid'"
+                  :value="inputTaskValue"
                   label-placement="floating"
+                  @ion-input="inputTaskValue = $event.detail.value as string"
                 ></ion-input>
               </div>
 
               <div class="center-vertical ion-padding-start">
-                <ion-button slot="end"
+                <ion-button
+                  slot="end"
+                  @click="addTask({ name: inputTaskValue })"
                   ><ion-icon :icon="addOutline"></ion-icon
                 ></ion-button>
               </div>
@@ -74,28 +76,100 @@
         </ion-row>
       </div>
 
+      <!-- tasks -->
       <ion-row
         :class="{ center: screenWidth >= 768 }"
         class="ion-padding-start ion-padding-end"
       >
         <ion-col size-xs="12" size-md="6">
-          <ion-item
-            v-for="(task, indexTask) in tasks"
-            :key="task.name"
-            class="ion-padding-start"
-            button
-            lines="full"
-            @mouseenter="showButtonsOptionTODO = indexTask"
-            @mouseleave="showButtonsOptionTODO = -1"
-            @click="showButtonsOptionTODO = indexTask"
-          >
-            <ion-label>{{ task.name }} </ion-label>
-            <ion-button v-if="showButtonsOptionTODO === indexTask" fill="clear"
-              ><ion-icon :icon="trashOutline"></ion-icon
-            ></ion-button>
-          </ion-item>
+          <ion-list>
+            <ion-list-header>
+              <ion-label>Pendiente</ion-label>
+            </ion-list-header>
+
+            <ion-item
+              v-for="task in listTasks.incomplete"
+              :key="task.name"
+              class="ion-padding-start"
+              lines="full"
+              @mouseenter="showButtonsOptionsTask = task.index"
+              @mouseleave="showButtonsOptionsTask = -1"
+              @click="showButtonsOptionsTask = task.index"
+            >
+              <ion-checkbox
+                :checked="task.checked"
+                label-placement="end"
+                justify="start"
+                @click="tasks[task.index].checked = !task.checked"
+                >{{ task.name }}</ion-checkbox
+              >
+
+              <ion-button
+                v-if="showButtonsOptionsTask === task.index"
+                @click="isOpenModalAddTask = true"
+                ><ion-icon :icon="createOutline"></ion-icon
+              ></ion-button>
+
+              <ion-button
+                v-if="showButtonsOptionsTask === task.index"
+                fill="clear"
+                color="danger"
+                @click="removeTask({ index: task.index })"
+                ><ion-icon :icon="trashOutline"></ion-icon
+              ></ion-button>
+            </ion-item>
+          </ion-list>
+
+          <ion-list>
+            <ion-list-header>
+              <ion-label>Completado</ion-label>
+            </ion-list-header>
+
+            <ion-item
+              v-for="task in listTasks.complete"
+              :key="task.name"
+              class="ion-padding-start"
+              lines="full"
+              @mouseenter="showButtonsOptionsTask = task.index"
+              @mouseleave="showButtonsOptionsTask = -1"
+              @click="showButtonsOptionsTask = task.index"
+            >
+              <ion-checkbox
+                :checked="task.checked"
+                label-placement="end"
+                justify="start"
+                @click="tasks[task.index].checked = !task.checked"
+                >{{ task.name }}</ion-checkbox
+              >
+
+              <ion-button
+                v-if="showButtonsOptionsTask === task.index"
+                @click="isOpenModalAddTask = true"
+                ><ion-icon :icon="createOutline"></ion-icon
+              ></ion-button>
+
+              <ion-button
+                v-if="showButtonsOptionsTask === task.index"
+                fill="clear"
+                color="danger"
+                @click="removeTask({ index: task.index })"
+                ><ion-icon :icon="trashOutline"></ion-icon
+              ></ion-button>
+            </ion-item>
+          </ion-list>
         </ion-col>
       </ion-row>
+      <!-- end tasks -->
+
+      <!-- modals -->
+      <ion-modal
+        ref="modalAddTask"
+        class="modal-event"
+        :is-open="isOpenModalAddTask"
+        @did-dismiss="isOpenModalAddTask = false"
+      >
+        <AddTaskComponent />
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -111,26 +185,33 @@ import {
   IonSelectOption,
   IonItem,
   IonInput,
+  IonModal,
+  IonCheckbox,
+  IonLabel,
 } from "@ionic/vue";
 import {
   addOutline,
   albumsOutline,
   appsOutline,
+  createOutline,
   trashOutline,
 } from "ionicons/icons";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+// components
+import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
 
 const pageTitle = "Tareas";
 const listSelected = ref("tray");
-const tasks = ref(Array<{ name: string }>());
-const showButtonsOptionTODO = ref(-1);
+const tasks = ref(Array<{ name: string; checked: boolean }>());
+const showButtonsOptionsTask = ref(-1);
 
-const fillPrueba = ref("solid" as "solid" | "outline" | undefined);
 const positionScroll = ref(0);
 const handleScroll = (event: CustomEvent) => {
   positionScroll.value = event.detail.scrollTop;
 };
 const screenWidth = ref(window.innerWidth);
+const inputTaskValue = ref("");
+const isOpenModalAddTask = ref(false);
 
 // mounted
 onMounted(() => {
@@ -141,13 +222,49 @@ onMounted(() => {
 const handleResize = () => {
   screenWidth.value = window.innerWidth;
 };
+
+// computed
+const listTasks = computed(() => {
+  const list = {
+    complete: Array<{ index: number; name: string; checked: boolean }>(),
+    incomplete: Array<{ index: number; name: string; checked: boolean }>(),
+  };
+  let index = 0;
+  tasks.value.forEach((task) => {
+    if (task.checked)
+      list.complete.push({ index, name: task.name, checked: task.checked });
+    if (!task.checked)
+      list.incomplete.push({ index, name: task.name, checked: task.checked });
+    index++;
+  });
+  return list;
+});
+
+// functions
+function addTask(params: { name: string }) {
+  const { name } = params;
+  if (!name) return;
+  tasks.value.push({ name, checked: false });
+  inputTaskValue.value = "";
+}
+
+function removeTask(params: { index: number }) {
+  const { index } = params;
+  tasks.value.splice(index, 1);
+}
 </script>
 
 <style scoped>
-.prueba1 {
+.background1-main-section {
   background: var(--ion-background-color);
 }
-.prueba2 {
+.background2-main-section {
   background: var(--ion-color-step-50);
+}
+@media only screen and (min-width: 992px) {
+  .modal-event {
+    --width: 80vw;
+    --height: 90vh;
+  }
 }
 </style>

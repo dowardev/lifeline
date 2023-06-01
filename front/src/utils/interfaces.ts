@@ -274,3 +274,25 @@ export interface Months {
   november: string;
   december: string;
 }
+
+export interface TaskReminderNotification {
+  just: string;
+  "5mb": string;
+  "10mb": string;
+  "15mb": string;
+  "30mb": string;
+  "1hb": string;
+  "2hb": string;
+  "1db": string;
+  "2db": string;
+  "1wb": string;
+  "1mtb": string;
+}
+
+export interface TaskReminderRepeat {
+  unique: string;
+  daily: string;
+  weekly: string;
+  monthly: string;
+  annually: string;
+}
