@@ -46,6 +46,7 @@
               <div class="center-vertical ion-padding-start">
                 <ion-button
                   slot="end"
+                  :disabled="!inputTaskValue"
                   @click="addTask({ name: inputTaskValue })"
                   ><ion-icon :icon="addOutline"></ion-icon
                 ></ion-button>
@@ -243,7 +244,6 @@ const listTasks = computed(() => {
 // functions
 function addTask(params: { name: string }) {
   const { name } = params;
-  if (!name) return;
   tasks.value.push({ name, checked: false });
   inputTaskValue.value = "";
 }

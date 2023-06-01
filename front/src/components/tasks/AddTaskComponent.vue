@@ -24,45 +24,98 @@
       </ion-header>
 
       <!-- basic -->
-      <ion-list>
-        <ion-list-header>
-          <ion-label>Basico</ion-label>
-        </ion-list-header>
+      <ion-row class="center">
+        <ion-col size="6">
+          <ion-list>
+            <ion-list-header>
+              <ion-label>Basico</ion-label>
+            </ion-list-header>
 
-        <ion-row class="ion-padding">
-          <ion-col>
-            <ion-input
-              label="Titulo"
-              label-placement="floating"
-              fill="solid"
-            ></ion-input>
+            <ion-row class="ion-padding">
+              <ion-col>
+                <ion-input
+                  label="Titulo"
+                  label-placement="floating"
+                  fill="solid"
+                ></ion-input>
 
-            <br />
+                <br />
 
-            <ion-textarea
-              label="Descripcion"
-              label-placement="floating"
-              fill="solid"
-            ></ion-textarea>
-          </ion-col>
-        </ion-row>
-      </ion-list>
+                <ion-textarea
+                  label="Descripcion"
+                  label-placement="floating"
+                  fill="solid"
+                ></ion-textarea>
+              </ion-col>
+            </ion-row>
+
+            <!-- subtasks -->
+            <ion-row class="ion-padding">
+              <ion-col size-xs="11" size-md="12">
+                <div style="display: flex">
+                  <div style="width: 100%">
+                    <ion-input
+                      label="Subtareas"
+                      label-placement="floating"
+                      fill="solid"
+                      autocomplete="on"
+                      autocorrect="on"
+                      type="text"
+                      :value="subTask"
+                      @ion-input="subTask = $event.target.value as string"
+                    ></ion-input>
+
+                    <!-- list subtasks -->
+                    <ion-item
+                      v-for="(task, indexTask) in event.subtasks.value"
+                      :key="indexTask"
+                      lines="full"
+                      @mouseenter="showButtonsOptionSubtask = indexTask"
+                      @mouseleave="showButtonsOptionSubtask = -1"
+                    >
+                      <ion-checkbox justify="start" label-placement="end">{{
+                        task.name
+                      }}</ion-checkbox>
+
+                      <ion-button
+                        v-if="showButtonsOptionSubtask === indexTask"
+                        fill="clear"
+                        color="danger"
+                        @click="removeSubTask({ index: indexTask })"
+                        ><ion-icon :icon="trashOutline"></ion-icon
+                      ></ion-button>
+                    </ion-item>
+                  </div>
+
+                  <div>
+                    <div
+                      style="display: flex; align-items: center; height: 50px"
+                    >
+                      <ion-button
+                        fill="clear"
+                        :disabled="!subTask"
+                        @click="addSubtask()"
+                        ><ion-icon :icon="addOutline"></ion-icon
+                      ></ion-button>
+                    </div>
+                  </div>
+                </div>
+              </ion-col>
+            </ion-row>
+          </ion-list>
+        </ion-col>
+      </ion-row>
 
       <!-- time -->
-      <ion-list>
-        <ion-list-header>
-          <ion-label>Tiempo</ion-label>
-        </ion-list-header>
-        <ion-row>
-          <ion-col size-xs="11" size="10">
-            <div style="display: flex">
-              <div>
-                <ion-button fill="clear" :disabled="true"
-                  ><ion-icon :icon="globeOutline"></ion-icon
-                ></ion-button>
-              </div>
+      <ion-row class="center">
+        <ion-col size="6">
+          <ion-list>
+            <ion-list-header>
+              <ion-label>Tiempo</ion-label>
+            </ion-list-header>
 
-              <div style="width: 100%">
+            <ion-row class="ion-padding">
+              <ion-col>
                 <!-- dates -->
                 <ion-textarea
                   label="Tiempo"
@@ -106,24 +159,12 @@
                     "
                   ></ion-textarea>
                 </section>
-              </div>
-            </div>
-          </ion-col>
-        </ion-row>
+              </ion-col>
+            </ion-row>
 
-        <br />
-
-        <!-- time zone -->
-        <ion-row>
-          <ion-col size-xs="11" size="10">
-            <div style="display: flex">
-              <div style="display: flex; align-items: center">
-                <ion-button fill="clear" :disabled="true"
-                  ><ion-icon :icon="timeOutline"></ion-icon
-                ></ion-button>
-              </div>
-
-              <div style="width: 100%">
+            <!-- time zone -->
+            <ion-row class="ion-padding">
+              <ion-col>
                 <ion-item
                   fill="solid"
                   lines="none"
@@ -134,11 +175,91 @@
                     >{{ event.timezone.value }}
                   </ion-label>
                 </ion-item>
-              </div>
-            </div>
-          </ion-col>
-        </ion-row>
-      </ion-list>
+              </ion-col>
+            </ion-row>
+          </ion-list>
+        </ion-col>
+      </ion-row>
+
+      <ion-row class="center">
+        <ion-col size="6">
+          <ion-list>
+            <ion-list-header>
+              <ion-label>Extra</ion-label>
+            </ion-list-header>
+
+            <!-- collaborators -->
+            <ion-row class="ion-padding">
+              <ion-col size-xs="11" size-md="12">
+                <div style="display: flex">
+                  <div style="width: 100%">
+                    <ion-input
+                      ref="inputGuest"
+                      label="Invitados"
+                      label-placement="floating"
+                      fill="solid"
+                      placeholder="Correo electronico"
+                      autocomplete="on"
+                      autocorrect="on"
+                      type="email"
+                      :error-text="v2$.emailGuest.$errors[0]?.$message as string"
+                      :class="[
+                        v2$.emailGuest.$errors.length == 0
+                          ? 'ion-valid'
+                          : 'ion-invalid',
+                      ]"
+                      :value="emailGuest"
+                      @ion-input="emailGuest = $event.target.value as string"
+                      @ion-focus="
+                        ($refs.inputGuest as any).$el.classList.add(
+                          'ion-touched'
+                        )
+                      "
+                      @ion-blur="
+                        ($refs.inputGuest as any).$el.classList.remove(
+                          'ion-touched'
+                        );
+                        v2$.emailGuest.$touch();
+                      "
+                    ></ion-input>
+
+                    <ion-item
+                      v-for="(guest, indexGuest) in event.guests.value"
+                      :key="indexGuest"
+                      lines="full"
+                      @mouseenter="showButtonsOptionGuest = indexGuest"
+                      @mouseleave="showButtonsOptionGuest = -1"
+                    >
+                      <ion-label>{{ guest.email }}</ion-label>
+
+                      <ion-button
+                        v-if="showButtonsOptionGuest === indexGuest"
+                        fill="clear"
+                        color="danger"
+                        @click="removeGuest({ index: indexGuest })"
+                        ><ion-icon :icon="trashOutline"></ion-icon
+                      ></ion-button>
+                    </ion-item>
+                  </div>
+
+                  <div>
+                    <div
+                      style="display: flex; align-items: center; height: 50px"
+                    >
+                      <ion-button
+                        fill="clear"
+                        :disabled="v2$.$invalid"
+                        @click="addGuest()"
+                        ><ion-icon :icon="addOutline"></ion-icon
+                      ></ion-button>
+                    </div>
+                  </div>
+                </div>
+              </ion-col>
+            </ion-row>
+          </ion-list>
+        </ion-col>
+      </ion-row>
 
       <!-- popovers -->
       <!-- popover reminders -->
@@ -239,19 +360,26 @@ import {
   IonTextarea,
   IonPopover,
   modalController,
+  IonCheckbox,
 } from "@ionic/vue";
 import { format } from "date-fns";
 import {
+  addOutline,
   closeOutline,
   globeOutline,
+  peopleOutline,
   saveOutline,
   timeOutline,
+  trashOutline,
 } from "ionicons/icons";
 import { ref } from "vue";
+import { email, helpers, required } from "@vuelidate/validators";
+import useVuelidate from "@vuelidate/core";
 
 // components
 import RemindersComponent from "./reminders/RemindersComponent.vue";
 
+// vars
 const pageTitle = "Agregar tarea";
 const popoverRemindersSegment = ref("date-start");
 const isOpenPopoverReminders = ref(false);
@@ -272,11 +400,36 @@ const event = {
   timezone: ref(Intl.DateTimeFormat().resolvedOptions().timeZone),
   guests: ref(Array<{ email: string }>()),
   availability: ref("available"),
+  subtasks: ref(Array<{ name: string; checked: boolean }>()),
 };
 const filteredZones = ref(Array<string>());
 const timeZones = (Intl as any)
   .supportedValuesOf("timeZone")
   .map((timeZone: string) => timeZone);
+let emailGuest = ref("");
+const showButtonsOptionGuest = ref(-1);
+let subTask = ref("");
+const showButtonsOptionSubtask = ref(-1);
+
+const messageError = {
+  email: "Correo electronico no valido",
+  required: "Campo requerido",
+};
+const rules = {
+  event: {
+    name: {
+      required: helpers.withMessage(messageError.required, required),
+    },
+  },
+};
+const rulesGuest = {
+  emailGuest: {
+    required: helpers.withMessage(messageError.required, required),
+    email: helpers.withMessage(messageError.email, email),
+  },
+};
+const v$ = useVuelidate(rules, { event });
+const v2$ = useVuelidate(rulesGuest, { emailGuest });
 
 // functions
 function formatTextNotifications() {
@@ -340,15 +493,37 @@ function translateRepeat(params: { repeat: string }) {
   return result;
 }
 
-const filterZones = (query: string) => {
+function filterZones(query: string) {
   filteredZones.value = timeZones.filter((zone: string) =>
     zone.toLowerCase().includes(query.toLowerCase())
   );
-};
+}
 
-const selectZone = (params: { zone: string }) => {
+function selectZone(params: { zone: string }) {
   const zone = params.zone;
   event.timezone.value = zone;
   isOpenPopoverTimezones.value = false;
-};
+}
+
+function removeGuest(params: { index: number }) {
+  const index = params.index;
+  event.guests.value.splice(index, 1);
+}
+
+function addGuest() {
+  const email = emailGuest.value;
+  event.guests.value.push({ email });
+  emailGuest.value = "";
+}
+
+function addSubtask() {
+  const taskElement = subTask.value;
+  event.subtasks.value.push({ name: taskElement, checked: false });
+  subTask.value = "";
+}
+
+function removeSubTask(params: { index: number }) {
+  const index = params.index;
+  event.subtasks.value.splice(index, 1);
+}
 </script>
