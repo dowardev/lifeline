@@ -106,7 +106,7 @@
 
               <ion-button
                 v-if="showButtonsOptionsTask === parseInt(task.id)"
-                @click="isOpenModalAddTask = true"
+                @click="updateTask({ idTask: task.id })"
                 ><ion-icon :icon="createOutline"></ion-icon
               ></ion-button>
 
@@ -143,7 +143,7 @@
 
               <ion-button
                 v-if="showButtonsOptionsTask === parseInt(task.id)"
-                @click="isOpenModalAddTask = true"
+                @click="updateTask({ idTask: task.id })"
                 ><ion-icon :icon="createOutline"></ion-icon
               ></ion-button>
 
@@ -168,6 +168,16 @@
         @did-dismiss="isOpenModalAddTask = false"
       >
         <AddTaskComponent />
+      </ion-modal>
+
+      <!-- modal update task -->
+      <ion-modal
+        class="modal-event"
+        :backdrop-dismiss="false"
+        :is-open="isOpenModalUpdateTask"
+        @did-dismiss="isOpenModalUpdateTask = false"
+      >
+        <AddTaskComponent :task-data="useTask().getTask({ idTask })" />
       </ion-modal>
     </ion-content>
   </ion-page>
@@ -197,12 +207,13 @@ import {
   createOutline,
   trashOutline,
 } from "ionicons/icons";
-import { computed, onMounted, ref, watch } from "vue";
-// components
-import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
+import { onMounted, ref, watch } from "vue";
 import { useTasksStore } from "@/store/tasksStore";
 import { useTask } from "@/composables/useTask";
-import { Task } from "@/utils/interfaces";
+import { NewTask, Task } from "@/utils/interfaces";
+
+// components
+import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
 
 const pageTitle = "Tareas";
 const listSelected = ref("tray");
@@ -215,10 +226,13 @@ const handleScroll = (event: CustomEvent) => {
 const screenWidth = ref(window.innerWidth);
 const inputTaskValue = ref("");
 const isOpenModalAddTask = ref(false);
+const idTask = ref("");
+const isOpenModalUpdateTask = ref(false);
 
 // mounted
 onMounted(() => {
   window.addEventListener("resize", handleResize);
+  useTask().loadTasks();
 });
 
 // watch
@@ -238,17 +252,9 @@ watch(
 
     tasks.forEach((task) => {
       if (task.checked) {
-        listTasks.value.complete.push({
-          id: task.id,
-          name: task.name,
-          checked: task.checked,
-        });
+        listTasks.value.complete.push(task);
       } else {
-        listTasks.value.incomplete.push({
-          id: task.id,
-          name: task.name,
-          checked: task.checked,
-        });
+        listTasks.value.incomplete.push(task);
       }
     });
   }
@@ -257,9 +263,20 @@ watch(
 // functions
 async function addTask(params: { name: string }) {
   const { name } = params;
-  // tasks.value.push({ name, checked: false });
-  const taskName = inputTaskValue.value;
-  await useTask().saveTask({ task: { name, checked: false } });
+  const task = {
+    name,
+    checked: false,
+    guests: [],
+    reminders: {
+      start: null,
+      end: null,
+      notifications: [],
+      repeat: { frecuency: 1, type: "daily", daysWeek: [] },
+    },
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    subtasks: [],
+  } as NewTask;
+  await useTask().saveTask({ task });
   inputTaskValue.value = "";
 }
 
@@ -274,6 +291,12 @@ function toggleCheckTask(params: { task: Task }) {
   useTask().updateTask({
     task: { id: task.id, name: task.name, checked: task.checked },
   });
+}
+
+function updateTask(params: { idTask: string }) {
+  const { idTask: id } = params;
+  idTask.value = id;
+  isOpenModalUpdateTask.value = true;
 }
 </script>
 

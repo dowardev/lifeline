@@ -322,8 +322,8 @@ export interface NewTask {
   checked: boolean;
   guests?: Array<{ email: string }>;
   reminders?: {
-    start: Date;
-    end: Date;
+    start: Date | null;
+    end: Date | null;
     notifications: string[];
     repeat: {
       frecuency: number;

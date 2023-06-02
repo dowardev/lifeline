@@ -11,7 +11,9 @@
         <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="end">
-          <ion-button><ion-icon :icon="saveOutline"></ion-icon></ion-button>
+          <ion-button @click="save()"
+            ><ion-icon :icon="saveOutline"></ion-icon
+          ></ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -37,6 +39,8 @@
                   label="Titulo"
                   label-placement="floating"
                   fill="solid"
+                  :value="task.name.value"
+                  @ion-input="task.name.value = $event.target.value as string"
                 ></ion-input>
 
                 <br />
@@ -45,6 +49,10 @@
                   label="Descripcion"
                   label-placement="floating"
                   fill="solid"
+                  :value="task.description.value"
+                  @ion-input="
+                    task.description.value = $event.target.value as string
+                  "
                 ></ion-textarea>
               </ion-col>
             </ion-row>
@@ -112,71 +120,95 @@
           <ion-list>
             <ion-list-header>
               <ion-label>Tiempo</ion-label>
+              <ion-button
+                v-if="task.reminders.value.start == null"
+                @click="
+                  popoverRemindersSegment = 'date-start';
+                  isOpenPopoverReminders = true;
+                "
+                >Agregar tiempo</ion-button
+              >
+              <ion-button
+                v-if="task.reminders.value.start != null"
+                @click="
+                  task.reminders.value.start = null;
+                  task.reminders.value.end = null;
+                "
+                >Quitar tiempo</ion-button
+              >
             </ion-list-header>
 
-            <ion-row class="ion-padding">
-              <ion-col>
-                <!-- dates -->
-                <ion-textarea
-                  label="Tiempo"
-                  label-placement="floating"
-                  fill="solid"
-                  :value="
-                    format(new Date(task.reminders.value.start), 'Pp') +
-                    '\n' +
-                    format(new Date(task.reminders.value.end), 'Pp')
-                  "
-                  @click="
-                    popoverRemindersSegment = 'date-start';
-                    isOpenPopoverReminders = true;
-                  "
-                ></ion-textarea>
-
-                <!-- notifications -->
-                <section v-if="task.reminders.value.notifications.length > 0">
+            <section v-if="task.reminders.value.start != null">
+              <ion-row class="ion-padding">
+                <ion-col>
+                  <!-- dates -->
                   <ion-textarea
-                    label="Notificaciones"
+                    label="Tiempo"
                     label-placement="floating"
                     fill="solid"
-                    :value="formatTextNotifications()"
+                    :value="
+                      format(
+                        new Date(task.reminders.value.start ?? new Date()),
+                        'Pp'
+                      ) +
+                      '\n' +
+                      format(
+                        new Date(task.reminders.value.end ?? new Date()),
+                        'Pp'
+                      )
+                    "
                     @click="
-                      popoverRemindersSegment = 'reminders';
+                      popoverRemindersSegment = 'date-start';
                       isOpenPopoverReminders = true;
                     "
                   ></ion-textarea>
-                </section>
 
-                <!-- repeat -->
-                <section v-if="task.reminders.value.repeat">
-                  <ion-textarea
-                    label="Repetir"
-                    label-placement="floating"
+                  <!-- notifications -->
+                  <section v-if="task.reminders.value.notifications.length > 0">
+                    <ion-textarea
+                      label="Notificaciones"
+                      label-placement="floating"
+                      fill="solid"
+                      :value="formatTextNotifications()"
+                      @click="
+                        popoverRemindersSegment = 'reminders';
+                        isOpenPopoverReminders = true;
+                      "
+                    ></ion-textarea>
+                  </section>
+
+                  <!-- repeat -->
+                  <section v-if="task.reminders.value.repeat">
+                    <ion-textarea
+                      label="Repetir"
+                      label-placement="floating"
+                      fill="solid"
+                      :value="formatTextRepeat()"
+                      @click="
+                        popoverRemindersSegment = 'repeats';
+                        isOpenPopoverReminders = true;
+                      "
+                    ></ion-textarea>
+                  </section>
+                </ion-col>
+              </ion-row>
+
+              <!-- time zone -->
+              <ion-row class="ion-padding">
+                <ion-col>
+                  <ion-item
                     fill="solid"
-                    :value="formatTextRepeat()"
-                    @click="
-                      popoverRemindersSegment = 'repeats';
-                      isOpenPopoverReminders = true;
-                    "
-                  ></ion-textarea>
-                </section>
-              </ion-col>
-            </ion-row>
-
-            <!-- time zone -->
-            <ion-row class="ion-padding">
-              <ion-col>
-                <ion-item
-                  fill="solid"
-                  lines="none"
-                  @click="isOpenPopoverTimezones = true"
-                >
-                  <ion-label>Zona horaria</ion-label>
-                  <ion-label slot="end" class="ion-text-wrap"
-                    >{{ task.timezone.value }}
-                  </ion-label>
-                </ion-item>
-              </ion-col>
-            </ion-row>
+                    lines="none"
+                    @click="isOpenPopoverTimezones = true"
+                  >
+                    <ion-label>Zona horaria</ion-label>
+                    <ion-label slot="end" class="ion-text-wrap"
+                      >{{ task.timezone.value }}
+                    </ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            </section>
           </ion-list>
         </ion-col>
       </ion-row>
@@ -271,8 +303,8 @@
       >
         <RemindersComponent
           :dates="{
-            start: task.reminders.value.start,
-            end: task.reminders.value.end,
+            start: task.reminders.value.start ?? new Date(),
+            end: task.reminders.value.end ?? new Date(),
           }"
           :segment-option="popoverRemindersSegment"
           :notifications="task.reminders.value.notifications"
@@ -346,6 +378,8 @@
 <script setup lang="ts">
 import { useSystem } from "@/composables/useSystem";
 import {
+  Schedule,
+  Task,
   TaskReminderNotification,
   TaskReminderRepeat,
 } from "@/utils/interfaces";
@@ -369,15 +403,22 @@ import {
   saveOutline,
   trashOutline,
 } from "ionicons/icons";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { email, helpers, required } from "@vuelidate/validators";
 import useVuelidate from "@vuelidate/core";
 
 // components
 import RemindersComponent from "./reminders/RemindersComponent.vue";
+import { useSchedule } from "@/composables/useSchedule";
+import { useTask } from "@/composables/useTask";
+import { useReminder } from "@/composables/useReminder";
+
+const props = defineProps({
+  taskData: { type: Object as () => Task, default: () => null },
+});
 
 // vars
-const pageTitle = "Agregar tarea";
+const pageTitle = ref("Agregar tarea");
 const popoverRemindersSegment = ref("date-start");
 const isOpenPopoverReminders = ref(false);
 let isOpenPopoverTimezones = ref(false);
@@ -385,8 +426,8 @@ const task = {
   name: ref(""),
   description: ref(""),
   reminders: ref({
-    start: new Date() as Date,
-    end: new Date() as Date,
+    start: new Date() as Date | null,
+    end: new Date() as Date | null,
     notifications: Array<string>(),
     repeat: { type: "daily", frecuency: 1 } as {
       frecuency: number;
@@ -396,7 +437,6 @@ const task = {
   }),
   timezone: ref(Intl.DateTimeFormat().resolvedOptions().timeZone),
   guests: ref(Array<{ email: string }>()),
-  availability: ref("available"),
   subtasks: ref(Array<{ name: string; checked: boolean }>()),
 };
 const filteredZones = ref(Array<string>());
@@ -427,6 +467,13 @@ const rulesGuest = {
 };
 const v$ = useVuelidate(rules, { event: task });
 const v2$ = useVuelidate(rulesGuest, { emailGuest });
+
+onMounted(async () => {
+  if (props.taskData) {
+    pageTitle.value = "Actualizar tarea";
+    setTask({ task: props.taskData });
+  }
+});
 
 // functions
 function formatTextNotifications() {
@@ -522,5 +569,108 @@ function addSubtask() {
 function removeSubTask(params: { index: number }) {
   const index = params.index;
   task.subtasks.value.splice(index, 1);
+}
+
+function setTask(params: { task: Task }) {
+  const { task: taskData } = params;
+  task.name.value = taskData.name!;
+  task.description.value = taskData.description ?? "";
+  task.reminders.value.start = taskData.reminders!.start;
+  task.reminders.value.end = taskData.reminders!.end;
+  task.reminders.value.notifications = taskData.reminders!.notifications ?? [];
+  task.reminders.value.repeat = taskData.reminders!.repeat;
+  task.timezone.value = taskData.timezone!;
+  task.guests.value = taskData.guests!;
+  task.subtasks.value = taskData.subtasks ?? Array<any>();
+}
+
+async function save() {
+  let taskId = props.taskData?.id;
+  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+
+  try {
+    await updateTask();
+
+    if (task.reminders.value.start)
+      await postCreateTask({ taskId: taskId, schedule });
+    closePage();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function updateTask() {
+  const taskFormated = {
+    id: props.taskData.id,
+    name: task.name.value,
+    guests: task.guests.value,
+    reminders: {
+      start: task.reminders.value.start,
+      end: task.reminders.value.end,
+      notifications: task.reminders.value.notifications,
+      repeat: task.reminders.value.repeat,
+    },
+    description: task.description.value,
+    subtasks: task.subtasks.value,
+    timezone: task.timezone.value,
+  };
+
+  console.log(taskFormated);
+  await useTask().updateTask({
+    task: JSON.parse(JSON.stringify(taskFormated)),
+  });
+}
+
+async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
+  const { taskId } = params;
+  let { schedule } = params;
+  const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
+
+  const scheduleElement = useSchedule().generateScheduleElement({
+    id: scheduleId,
+    idElement: taskId,
+    title: task.name.value,
+    message: task.description.value,
+    startDate: new Date(task.reminders.value.start),
+    endDate: new Date(task.reminders.value.end),
+    type: "task",
+    reminder: task.reminders.value.notifications.length > 0 ? true : false,
+    repeat: task.reminders.value.repeat,
+  });
+
+  if (taskId)
+    schedule = useSchedule().removeElementSchedule({
+      id: taskId,
+      schedule,
+    });
+
+  schedule = useSchedule().generateEventSchedule({
+    scheduleElement,
+    schedule,
+  });
+  await useSchedule().saveSchedule({ schedule });
+  await useSchedule().loadSchedule();
+
+  const notifications = useReminder().getEventReminders({
+    dateStart: task.reminders.value.start,
+    notifications: task.reminders.value.notifications,
+  });
+
+  if (notifications) {
+    await Promise.all(
+      notifications.map(async (notification) => {
+        await useSchedule().setReminders({
+          id: parseInt(scheduleId),
+          reminder: notification,
+          title: task.name.value,
+          message: task.description.value,
+        });
+      })
+    );
+  }
+}
+
+async function closePage() {
+  await modalController.dismiss();
 }
 </script>
