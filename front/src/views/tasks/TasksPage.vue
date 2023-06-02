@@ -93,29 +93,28 @@
               :key="task.name"
               class="ion-padding-start"
               lines="full"
-              @mouseenter="showButtonsOptionsTask = task.index"
+              @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
               @mouseleave="showButtonsOptionsTask = -1"
-              @click="showButtonsOptionsTask = task.index"
             >
               <ion-checkbox
                 :checked="task.checked"
                 label-placement="end"
                 justify="start"
-                @click="tasks[task.index].checked = !task.checked"
+                @ion-change="toggleCheckTask({ task })"
                 >{{ task.name }}</ion-checkbox
               >
 
               <ion-button
-                v-if="showButtonsOptionsTask === task.index"
+                v-if="showButtonsOptionsTask === parseInt(task.id)"
                 @click="isOpenModalAddTask = true"
                 ><ion-icon :icon="createOutline"></ion-icon
               ></ion-button>
 
               <ion-button
-                v-if="showButtonsOptionsTask === task.index"
+                v-if="showButtonsOptionsTask === parseInt(task.id)"
                 fill="clear"
                 color="danger"
-                @click="removeTask({ index: task.index })"
+                @click="removeTask({ id: task.id })"
                 ><ion-icon :icon="trashOutline"></ion-icon
               ></ion-button>
             </ion-item>
@@ -131,29 +130,28 @@
               :key="task.name"
               class="ion-padding-start"
               lines="full"
-              @mouseenter="showButtonsOptionsTask = task.index"
+              @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
               @mouseleave="showButtonsOptionsTask = -1"
-              @click="showButtonsOptionsTask = task.index"
             >
               <ion-checkbox
                 :checked="task.checked"
                 label-placement="end"
                 justify="start"
-                @click="tasks[task.index].checked = !task.checked"
+                @ion-change="toggleCheckTask({ task })"
                 >{{ task.name }}</ion-checkbox
               >
 
               <ion-button
-                v-if="showButtonsOptionsTask === task.index"
+                v-if="showButtonsOptionsTask === parseInt(task.id)"
                 @click="isOpenModalAddTask = true"
                 ><ion-icon :icon="createOutline"></ion-icon
               ></ion-button>
 
               <ion-button
-                v-if="showButtonsOptionsTask === task.index"
+                v-if="showButtonsOptionsTask === parseInt(task.id)"
                 fill="clear"
                 color="danger"
-                @click="removeTask({ index: task.index })"
+                @click="removeTask({ id: task.id })"
                 ><ion-icon :icon="trashOutline"></ion-icon
               ></ion-button>
             </ion-item>
@@ -189,6 +187,8 @@ import {
   IonModal,
   IonCheckbox,
   IonLabel,
+  IonButton,
+  IonButtons,
 } from "@ionic/vue";
 import {
   addOutline,
@@ -200,10 +200,12 @@ import {
 import { computed, onMounted, ref, watch } from "vue";
 // components
 import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
+import { useTasksStore } from "@/store/tasksStore";
+import { useTask } from "@/composables/useTask";
+import { Task } from "@/utils/interfaces";
 
 const pageTitle = "Tareas";
 const listSelected = ref("tray");
-const tasks = ref(Array<{ name: string; checked: boolean }>());
 const showButtonsOptionsTask = ref(-1);
 
 const positionScroll = ref(0);
@@ -223,34 +225,55 @@ onMounted(() => {
 const handleResize = () => {
   screenWidth.value = window.innerWidth;
 };
-
-// computed
-const listTasks = computed(() => {
-  const list = {
-    complete: Array<{ index: number; name: string; checked: boolean }>(),
-    incomplete: Array<{ index: number; name: string; checked: boolean }>(),
-  };
-  let index = 0;
-  tasks.value.forEach((task) => {
-    if (task.checked)
-      list.complete.push({ index, name: task.name, checked: task.checked });
-    if (!task.checked)
-      list.incomplete.push({ index, name: task.name, checked: task.checked });
-    index++;
-  });
-  return list;
+const listTasks = ref({
+  complete: [] as Task[],
+  incomplete: [] as Task[],
 });
+watch(
+  () => useTask().getTasks(),
+  (tasks) => {
+    if (!tasks) return;
+    listTasks.value.complete = [];
+    listTasks.value.incomplete = [];
+
+    tasks.forEach((task) => {
+      if (task.checked) {
+        listTasks.value.complete.push({
+          id: task.id,
+          name: task.name,
+          checked: task.checked,
+        });
+      } else {
+        listTasks.value.incomplete.push({
+          id: task.id,
+          name: task.name,
+          checked: task.checked,
+        });
+      }
+    });
+  }
+);
 
 // functions
-function addTask(params: { name: string }) {
+async function addTask(params: { name: string }) {
   const { name } = params;
-  tasks.value.push({ name, checked: false });
+  // tasks.value.push({ name, checked: false });
+  const taskName = inputTaskValue.value;
+  await useTask().saveTask({ task: { name, checked: false } });
   inputTaskValue.value = "";
 }
 
-function removeTask(params: { index: number }) {
-  const { index } = params;
-  tasks.value.splice(index, 1);
+async function removeTask(params: { id: string }) {
+  const { id } = params;
+  await useTask().deleteTask({ taskId: id });
+}
+
+function toggleCheckTask(params: { task: Task }) {
+  const { task } = params;
+  task.checked = !task.checked;
+  useTask().updateTask({
+    task: { id: task.id, name: task.name, checked: task.checked },
+  });
 }
 </script>
 

@@ -296,3 +296,42 @@ export interface TaskReminderRepeat {
   monthly: string;
   annually: string;
 }
+
+export interface Task {
+  id: string;
+  name: string;
+  checked: boolean;
+  guests?: Array<{ email: string }>;
+  reminders?: {
+    start: Date;
+    end: Date;
+    notifications: string[];
+    repeat: {
+      frecuency: number;
+      type: "daily" | "weekly" | "monthly" | "annually";
+      daysWeek?: string[];
+    };
+  };
+  timezone?: string;
+  description?: string;
+  subtasks?: Array<{ name: string; cheked: boolean }>;
+}
+
+export interface NewTask {
+  name: string;
+  checked: boolean;
+  guests?: Array<{ email: string }>;
+  reminders?: {
+    start: Date;
+    end: Date;
+    notifications: string[];
+    repeat: {
+      frecuency: number;
+      type: "daily" | "weekly" | "monthly" | "annually";
+      daysWeek?: string[];
+    };
+  };
+  timezone?: string;
+  description?: string;
+  subtasks?: Array<{ name: string; cheked: boolean }>;
+}

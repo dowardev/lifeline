@@ -67,14 +67,14 @@
 
                     <!-- list subtasks -->
                     <ion-item
-                      v-for="(task, indexTask) in event.subtasks.value"
+                      v-for="(taskElement, indexTask) in task.subtasks.value"
                       :key="indexTask"
                       lines="full"
                       @mouseenter="showButtonsOptionSubtask = indexTask"
                       @mouseleave="showButtonsOptionSubtask = -1"
                     >
                       <ion-checkbox justify="start" label-placement="end">{{
-                        task.name
+                        taskElement.name
                       }}</ion-checkbox>
 
                       <ion-button
@@ -122,9 +122,9 @@
                   label-placement="floating"
                   fill="solid"
                   :value="
-                    format(new Date(event.reminders.value.start), 'Pp') +
+                    format(new Date(task.reminders.value.start), 'Pp') +
                     '\n' +
-                    format(new Date(event.reminders.value.end), 'Pp')
+                    format(new Date(task.reminders.value.end), 'Pp')
                   "
                   @click="
                     popoverRemindersSegment = 'date-start';
@@ -133,7 +133,7 @@
                 ></ion-textarea>
 
                 <!-- notifications -->
-                <section v-if="event.reminders.value.notifications.length > 0">
+                <section v-if="task.reminders.value.notifications.length > 0">
                   <ion-textarea
                     label="Notificaciones"
                     label-placement="floating"
@@ -147,7 +147,7 @@
                 </section>
 
                 <!-- repeat -->
-                <section v-if="event.reminders.value.repeat">
+                <section v-if="task.reminders.value.repeat">
                   <ion-textarea
                     label="Repetir"
                     label-placement="floating"
@@ -172,7 +172,7 @@
                 >
                   <ion-label>Zona horaria</ion-label>
                   <ion-label slot="end" class="ion-text-wrap"
-                    >{{ event.timezone.value }}
+                    >{{ task.timezone.value }}
                   </ion-label>
                 </ion-item>
               </ion-col>
@@ -224,7 +224,7 @@
                     ></ion-input>
 
                     <ion-item
-                      v-for="(guest, indexGuest) in event.guests.value"
+                      v-for="(guest, indexGuest) in task.guests.value"
                       :key="indexGuest"
                       lines="full"
                       @mouseenter="showButtonsOptionGuest = indexGuest"
@@ -271,14 +271,14 @@
       >
         <RemindersComponent
           :dates="{
-            start: event.reminders.value.start,
-            end: event.reminders.value.end,
+            start: task.reminders.value.start,
+            end: task.reminders.value.end,
           }"
           :segment-option="popoverRemindersSegment"
-          :notifications="event.reminders.value.notifications"
-          :repeat="event.reminders.value.repeat"
+          :notifications="task.reminders.value.notifications"
+          :repeat="task.reminders.value.repeat"
           @update-data-reminders="
-            event.reminders.value = {
+            task.reminders.value = {
               start: $event.data.start,
               end: $event.data.end,
               notifications: $event.data.remindersChecked,
@@ -366,10 +366,7 @@ import { format } from "date-fns";
 import {
   addOutline,
   closeOutline,
-  globeOutline,
-  peopleOutline,
   saveOutline,
-  timeOutline,
   trashOutline,
 } from "ionicons/icons";
 import { ref } from "vue";
@@ -384,7 +381,7 @@ const pageTitle = "Agregar tarea";
 const popoverRemindersSegment = ref("date-start");
 const isOpenPopoverReminders = ref(false);
 let isOpenPopoverTimezones = ref(false);
-const event = {
+const task = {
   name: ref(""),
   description: ref(""),
   reminders: ref({
@@ -428,16 +425,16 @@ const rulesGuest = {
     email: helpers.withMessage(messageError.email, email),
   },
 };
-const v$ = useVuelidate(rules, { event });
+const v$ = useVuelidate(rules, { event: task });
 const v2$ = useVuelidate(rulesGuest, { emailGuest });
 
 // functions
 function formatTextNotifications() {
   let text = "";
-  const len = event.reminders.value.notifications.length - 1;
+  const len = task.reminders.value.notifications.length - 1;
   let index = 0;
 
-  event.reminders.value.notifications.forEach((notification) => {
+  task.reminders.value.notifications.forEach((notification) => {
     if (len > index) text += translateNotifications({ notification }) + ", ";
     else text += translateNotifications({ notification });
     index++;
@@ -446,15 +443,15 @@ function formatTextNotifications() {
 }
 
 function formatTextRepeat() {
-  const type = event.reminders.value.repeat.type;
+  const type = task.reminders.value.repeat.type;
   let text = translateRepeat({
     repeat: type,
   });
-  const len = event.reminders.value.repeat.daysWeek?.length! - 1;
+  const len = task.reminders.value.repeat.daysWeek?.length! - 1;
   let index = 0;
   let days = "";
 
-  event.reminders.value.repeat.daysWeek?.forEach((day) => {
+  task.reminders.value.repeat.daysWeek?.forEach((day) => {
     if (len > index) days += translateDaysWeekRepear({ day }) + ", ";
     else days += translateDaysWeekRepear({ day });
     index++;
@@ -501,29 +498,29 @@ function filterZones(query: string) {
 
 function selectZone(params: { zone: string }) {
   const zone = params.zone;
-  event.timezone.value = zone;
+  task.timezone.value = zone;
   isOpenPopoverTimezones.value = false;
 }
 
 function removeGuest(params: { index: number }) {
   const index = params.index;
-  event.guests.value.splice(index, 1);
+  task.guests.value.splice(index, 1);
 }
 
 function addGuest() {
   const email = emailGuest.value;
-  event.guests.value.push({ email });
+  task.guests.value.push({ email });
   emailGuest.value = "";
 }
 
 function addSubtask() {
   const taskElement = subTask.value;
-  event.subtasks.value.push({ name: taskElement, checked: false });
+  task.subtasks.value.push({ name: taskElement, checked: false });
   subTask.value = "";
 }
 
 function removeSubTask(params: { index: number }) {
   const index = params.index;
-  event.subtasks.value.splice(index, 1);
+  task.subtasks.value.splice(index, 1);
 }
 </script>
