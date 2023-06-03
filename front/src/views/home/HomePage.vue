@@ -539,18 +539,18 @@ async function openPopoverRightEventMenu(params: {
   if (role == "confirm" && data.option == "delete") {
     await deleteEvent({ eventId });
   }
+}
 
-  async function deleteEvent(params: { eventId: string }) {
-    const { eventId } = params;
-    await useEvent().deleteEvent({ eventId });
-    let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
-    schedule = useSchedule().removeElementSchedule({
-      id: eventId,
-      schedule,
-    });
-    await useSchedule().saveSchedule({ schedule });
-    await useSchedule().loadSchedule();
-  }
+async function deleteEvent(params: { eventId: string }) {
+  const { eventId } = params;
+  await useEvent().deleteEvent({ eventId });
+  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+  schedule = useSchedule().removeElementSchedule({
+    id: eventId,
+    schedule,
+  });
+  await useSchedule().saveSchedule({ schedule });
+  await useSchedule().loadSchedule();
 }
 </script>
 

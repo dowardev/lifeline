@@ -95,6 +95,18 @@
               lines="full"
               @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
               @mouseleave="showButtonsOptionsTask = -1"
+              @contextmenu.prevent="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: task.id,
+                })
+              "
+              @press="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: task.id,
+                })
+              "
             >
               <ion-checkbox
                 :checked="task.checked"
@@ -132,6 +144,18 @@
               lines="full"
               @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
               @mouseleave="showButtonsOptionsTask = -1"
+              @contextmenu.prevent="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: task.id,
+                })
+              "
+              @press="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: task.id,
+                })
+              "
             >
               <ion-checkbox
                 :checked="task.checked"
@@ -199,6 +223,7 @@ import {
   IonLabel,
   IonButton,
   IonButtons,
+  popoverController,
 } from "@ionic/vue";
 import {
   addOutline,
@@ -214,6 +239,7 @@ import { NewTask, Task } from "@/utils/interfaces";
 
 // components
 import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
+import RightMenuTaskComponent from "./RightMenuTaskComponent.vue";
 
 const pageTitle = "Tareas";
 const listSelected = ref("tray");
@@ -297,6 +323,28 @@ function updateTask(params: { idTask: string }) {
   const { idTask: id } = params;
   idTask.value = id;
   isOpenModalUpdateTask.value = true;
+}
+
+async function openPopoverRightTaskMenu(params: {
+  ev: CustomEvent;
+  taskId: string;
+}) {
+  const taskId = params.taskId;
+  const ev = params.ev;
+
+  const popover = await popoverController.create({
+    component: RightMenuTaskComponent,
+    event: ev,
+    showBackdrop: false,
+  });
+  await popover.present();
+
+  const { role, data } = await popover.onDidDismiss();
+  if (role == "confirm" && data.option == "delete")
+    await removeTask({ id: taskId });
+
+  if (role == "confirm" && data.option == "edit")
+    updateTask({ idTask: taskId });
 }
 </script>
 

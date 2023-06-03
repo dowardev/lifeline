@@ -27,7 +27,7 @@
 
       <!-- basic -->
       <ion-row class="center">
-        <ion-col size="6">
+        <ion-col size-xs="12" size-md="10" size-lg="6">
           <ion-list>
             <ion-list-header>
               <ion-label>Basico</ion-label>
@@ -59,7 +59,7 @@
 
             <!-- subtasks -->
             <ion-row class="ion-padding">
-              <ion-col size-xs="11" size-md="12">
+              <ion-col size="12">
                 <div style="display: flex">
                   <div style="width: 100%">
                     <ion-input
@@ -116,7 +116,7 @@
 
       <!-- time -->
       <ion-row class="center">
-        <ion-col size="6">
+        <ion-col size-xs="12" size-md="10" size-lg="6">
           <ion-list>
             <ion-list-header>
               <ion-label>Tiempo</ion-label>
@@ -214,7 +214,7 @@
       </ion-row>
 
       <ion-row class="center">
-        <ion-col size="6">
+        <ion-col size-xs="12" size-md="10" size-lg="6">
           <ion-list>
             <ion-list-header>
               <ion-label>Extra</ion-label>
@@ -222,7 +222,7 @@
 
             <!-- collaborators -->
             <ion-row class="ion-padding">
-              <ion-col size-xs="11" size-md="12">
+              <ion-col size="12">
                 <div style="display: flex">
                   <div style="width: 100%">
                     <ion-input
@@ -631,8 +631,8 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
     idElement: taskId,
     title: task.name.value,
     message: task.description.value,
-    startDate: new Date(task.reminders.value.start),
-    endDate: new Date(task.reminders.value.end),
+    startDate: new Date(task.reminders.value.start!),
+    endDate: new Date(task.reminders.value.end!),
     type: "task",
     reminder: task.reminders.value.notifications.length > 0 ? true : false,
     repeat: task.reminders.value.repeat,
@@ -652,7 +652,7 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
   await useSchedule().loadSchedule();
 
   const notifications = useReminder().getEventReminders({
-    dateStart: task.reminders.value.start,
+    dateStart: task.reminders.value.start!,
     notifications: task.reminders.value.notifications,
   });
 
