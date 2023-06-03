@@ -78,111 +78,12 @@
       </div>
 
       <!-- tasks -->
-      <ion-row
-        :class="{ center: screenWidth >= 768 }"
-        class="ion-padding-start ion-padding-end"
-      >
-        <ion-col size-xs="12" size-md="6">
-          <ion-list>
-            <ion-list-header>
-              <ion-label>Pendiente</ion-label>
-            </ion-list-header>
-
-            <ion-item
-              v-for="task in listTasks.incomplete"
-              :key="task.name"
-              class="ion-padding-start"
-              lines="full"
-              @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
-              @mouseleave="showButtonsOptionsTask = -1"
-              @contextmenu.prevent="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: task.id,
-                })
-              "
-              @press="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: task.id,
-                })
-              "
-            >
-              <ion-checkbox
-                :checked="task.checked"
-                label-placement="end"
-                justify="start"
-                @ion-change="toggleCheckTask({ task })"
-                >{{ task.name }}</ion-checkbox
-              >
-
-              <ion-button
-                v-if="showButtonsOptionsTask === parseInt(task.id)"
-                @click="updateTask({ idTask: task.id })"
-                ><ion-icon :icon="createOutline"></ion-icon
-              ></ion-button>
-
-              <ion-button
-                v-if="showButtonsOptionsTask === parseInt(task.id)"
-                fill="clear"
-                color="danger"
-                @click="removeTask({ id: task.id })"
-                ><ion-icon :icon="trashOutline"></ion-icon
-              ></ion-button>
-            </ion-item>
-          </ion-list>
-
-          <ion-list>
-            <ion-list-header>
-              <ion-label>Completado</ion-label>
-            </ion-list-header>
-
-            <ion-item
-              v-for="task in listTasks.complete"
-              :key="task.name"
-              class="ion-padding-start"
-              lines="full"
-              @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
-              @mouseleave="showButtonsOptionsTask = -1"
-              @contextmenu.prevent="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: task.id,
-                })
-              "
-              @press="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: task.id,
-                })
-              "
-            >
-              <ion-checkbox
-                :checked="task.checked"
-                label-placement="end"
-                justify="start"
-                @ion-change="toggleCheckTask({ task })"
-                >{{ task.name }}</ion-checkbox
-              >
-
-              <ion-button
-                v-if="showButtonsOptionsTask === parseInt(task.id)"
-                @click="updateTask({ idTask: task.id })"
-                ><ion-icon :icon="createOutline"></ion-icon
-              ></ion-button>
-
-              <ion-button
-                v-if="showButtonsOptionsTask === parseInt(task.id)"
-                fill="clear"
-                color="danger"
-                @click="removeTask({ id: task.id })"
-                ><ion-icon :icon="trashOutline"></ion-icon
-              ></ion-button>
-            </ion-item>
-          </ion-list>
-        </ion-col>
-      </ion-row>
-      <!-- end tasks -->
+      <listTasks
+        :task-data="useTask().getTasks()"
+        @update="updateTask({ idTask: $event.idTask })"
+        @remove="removeTask({ id: $event.idTask })"
+        @toggle-check="toggleCheckTask({ id: $event.idTask })"
+      />
 
       <!-- modals -->
       <ion-modal
@@ -219,31 +120,20 @@ import {
   IonItem,
   IonInput,
   IonModal,
-  IonCheckbox,
-  IonLabel,
   IonButton,
   IonButtons,
-  popoverController,
 } from "@ionic/vue";
-import {
-  addOutline,
-  albumsOutline,
-  appsOutline,
-  createOutline,
-  trashOutline,
-} from "ionicons/icons";
-import { onMounted, ref, watch } from "vue";
-import { useTasksStore } from "@/store/tasksStore";
+import { addOutline, albumsOutline, appsOutline } from "ionicons/icons";
+import { onMounted, ref } from "vue";
 import { useTask } from "@/composables/useTask";
-import { NewTask, Task } from "@/utils/interfaces";
+import { NewTask } from "@/utils/interfaces";
 
 // components
 import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
-import RightMenuTaskComponent from "./RightMenuTaskComponent.vue";
+import listTasks from "@/components/tasks/list/taskList.vue";
 
 const pageTitle = "Tareas";
 const listSelected = ref("tray");
-const showButtonsOptionsTask = ref(-1);
 
 const positionScroll = ref(0);
 const handleScroll = (event: CustomEvent) => {
@@ -257,34 +147,8 @@ const isOpenModalUpdateTask = ref(false);
 
 // mounted
 onMounted(() => {
-  window.addEventListener("resize", handleResize);
   useTask().loadTasks();
 });
-
-// watch
-const handleResize = () => {
-  screenWidth.value = window.innerWidth;
-};
-const listTasks = ref({
-  complete: [] as Task[],
-  incomplete: [] as Task[],
-});
-watch(
-  () => useTask().getTasks(),
-  (tasks) => {
-    if (!tasks) return;
-    listTasks.value.complete = [];
-    listTasks.value.incomplete = [];
-
-    tasks.forEach((task) => {
-      if (task.checked) {
-        listTasks.value.complete.push(task);
-      } else {
-        listTasks.value.incomplete.push(task);
-      }
-    });
-  }
-);
 
 // functions
 async function addTask(params: { name: string }) {
@@ -311,40 +175,22 @@ async function removeTask(params: { id: string }) {
   await useTask().deleteTask({ taskId: id });
 }
 
-function toggleCheckTask(params: { task: Task }) {
-  const { task } = params;
-  task.checked = !task.checked;
-  useTask().updateTask({
-    task: { id: task.id, name: task.name, checked: task.checked },
-  });
-}
-
 function updateTask(params: { idTask: string }) {
   const { idTask: id } = params;
   idTask.value = id;
   isOpenModalUpdateTask.value = true;
 }
 
-async function openPopoverRightTaskMenu(params: {
-  ev: CustomEvent;
-  taskId: string;
-}) {
-  const taskId = params.taskId;
-  const ev = params.ev;
+function toggleCheckTask(params: { id: string }) {
+  const { id } = params;
+  const task = useTask().getTask({ idTask: id });
+  if (!task) return;
 
-  const popover = await popoverController.create({
-    component: RightMenuTaskComponent,
-    event: ev,
-    showBackdrop: false,
+  task.checked = !task.checked;
+
+  useTask().updateTask({
+    task: { id: task.id, name: task.name, checked: task.checked },
   });
-  await popover.present();
-
-  const { role, data } = await popover.onDidDismiss();
-  if (role == "confirm" && data.option == "delete")
-    await removeTask({ id: taskId });
-
-  if (role == "confirm" && data.option == "edit")
-    updateTask({ idTask: taskId });
 }
 </script>
 
