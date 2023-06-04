@@ -3,8 +3,10 @@ import {
   getTheme as getThemeService,
   setTheme as setThemeService,
   saveTheme as saveThemeService,
+  setTasksViewMode as setTasksViewModeService,
+  getTasksViewMode as getTasksViewModeService 
 } from "@/services/system";
-import { Theme } from "@/utils/types";
+import { Theme, ViewMode } from "@/utils/types";
 import {
   Days,
   EventReminderNotification,
@@ -108,6 +110,15 @@ export const useSystem = () => {
     return months[monthName];
   }
 
+  async function setTasksViewMode(params: { viewMode: ViewMode }) {
+    const { viewMode } = params;
+    await setTasksViewModeService({ viewMode });
+  }
+
+  async function getTasksViewMode(): Promise<ViewMode> {
+    return await getTasksViewModeService();
+  }
+
   return {
     loadThemeSelected,
     getTheme,
@@ -117,5 +128,7 @@ export const useSystem = () => {
     translateEventReminderRepeat,
     translateEventReminderNotification,
     translateMonth,
+    setTasksViewMode,
+    getTasksViewMode,
   };
 };

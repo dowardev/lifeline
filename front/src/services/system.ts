@@ -5,7 +5,7 @@ import { toastController } from "@ionic/vue";
 import timeZones from "../assets/files/timezones.json";
 import { SystemMessage } from "@/utils/interfaces";
 import { Clipboard } from "@capacitor/clipboard";
-import { Theme } from "@/utils/types";
+import { Theme, ViewMode } from "@/utils/types";
 
 export async function getTheme(): Promise<Theme> {
   return await storage.get("theme");
@@ -79,4 +79,15 @@ export async function copyToClipboard(params: { phrase: string }) {
   await Clipboard.write({
     string: phrase,
   });
+}
+
+export async function setTasksViewMode(params: { viewMode: ViewMode }) {
+  const { viewMode } = params;
+  await storage.set("tasksViewMode", viewMode);
+}
+
+export async function getTasksViewMode(): Promise<ViewMode> {
+  const viewMode = await storage.get("tasksViewMode");
+  if (!viewMode) return "list";
+  return viewMode;
 }

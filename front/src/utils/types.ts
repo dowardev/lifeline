@@ -20,3 +20,5 @@ export type OptionsMainMenuDocument =
   | "none";
 
 export type Theme = "light" | "nord" | "gruvbox" | "cherry";
+
+export type ViewMode = "list" | "kanban";

@@ -60,6 +60,8 @@ export interface SystemMessage {
   color?: string;
 }
 
+// end system
+
 // events
 export interface Event {
   id: string;
@@ -315,6 +317,7 @@ export interface Task {
   timezone?: string;
   description?: string;
   subtasks?: Array<{ name: string; cheked: boolean }>;
+  kanbanColumn: "pending" | "progress" | "finalized";
 }
 
 export interface NewTask {

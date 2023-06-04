@@ -68,7 +68,12 @@
                 <ion-button fill="clear"
                   ><ion-icon :icon="appsOutline"></ion-icon
                 ></ion-button>
-                <ion-button fill="clear"
+                <ion-button
+                  :fill="viewMode == 'list' ? 'clear' : 'solid'"
+                  @click="
+                    viewMode = viewMode == 'list' ? 'kanban' : 'list';
+                    setTasksViewMode({ viewMode });
+                  "
                   ><ion-icon :icon="albumsOutline"></ion-icon
                 ></ion-button>
               </div>
@@ -78,7 +83,16 @@
       </div>
 
       <!-- tasks -->
-      <listTasks
+      <listTasksComponent
+        v-show="viewMode == 'list'"
+        :task-data="useTask().getTasks()"
+        @update="updateTask({ idTask: $event.idTask })"
+        @remove="removeTask({ id: $event.idTask })"
+        @toggle-check="toggleCheckTask({ id: $event.idTask })"
+      />
+
+      <kanbanComponent
+        v-show="viewMode == 'kanban'"
         :task-data="useTask().getTasks()"
         @update="updateTask({ idTask: $event.idTask })"
         @remove="removeTask({ id: $event.idTask })"
@@ -125,12 +139,19 @@ import {
 } from "@ionic/vue";
 import { addOutline, albumsOutline, appsOutline } from "ionicons/icons";
 import { onMounted, ref } from "vue";
+
+// composable
 import { useTask } from "@/composables/useTask";
+import { useSystem } from "@/composables/useSystem";
+
+// interface
 import { NewTask } from "@/utils/interfaces";
 
 // components
 import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
-import listTasks from "@/components/tasks/list/taskList.vue";
+import listTasksComponent from "@/components/tasks/list/TaskListComponent.vue";
+import kanbanComponent from "@/components/tasks/kanban/KanbanComponent.vue";
+import { ViewMode } from "@/utils/types";
 
 const pageTitle = "Tareas";
 const listSelected = ref("tray");
@@ -144,10 +165,12 @@ const inputTaskValue = ref("");
 const isOpenModalAddTask = ref(false);
 const idTask = ref("");
 const isOpenModalUpdateTask = ref(false);
+const viewMode = ref("list" as "list" | "kanban");
 
 // mounted
 onMounted(() => {
   useTask().loadTasks();
+  getTasksViewMode();
 });
 
 // functions
@@ -191,6 +214,15 @@ function toggleCheckTask(params: { id: string }) {
   useTask().updateTask({
     task: { id: task.id, name: task.name, checked: task.checked },
   });
+}
+
+function setTasksViewMode(params: { viewMode: ViewMode }) {
+  const { viewMode } = params;
+  useSystem().setTasksViewMode({ viewMode });
+}
+
+async function getTasksViewMode() {
+  viewMode.value = await useSystem().getTasksViewMode();
 }
 </script>
 
