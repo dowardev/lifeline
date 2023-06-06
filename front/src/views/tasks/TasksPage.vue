@@ -30,7 +30,7 @@
         }"
       >
         <ion-row :class="{ center: screenWidth >= 768 }">
-          <ion-col size-xs="12" size-md="6">
+          <ion-col size-xs="12" size-md="9" size-lg="6">
             <div style="display: flex; justify-content: space-between">
               <div style="width: 100%">
                 <ion-input
@@ -56,7 +56,7 @@
         </ion-row>
 
         <ion-row :class="{ center: screenWidth >= 768 }">
-          <ion-col size-xs="12" size-md="6">
+          <ion-col size-xs="12" size-md="9" size-lg="6">
             <ion-item lines="none" style="--background: transparent">
               <ion-select interface="popover" :value="listSelected">
                 <ion-select-option value="tray"
@@ -91,20 +91,24 @@
         @toggle-check="toggleCheckTask({ id: $event.idTask })"
       />
 
-      <kanbanComponent
-        v-show="viewMode == 'kanban'"
-        :task-data="useTask().getTasks()"
-        @update="updateTask({ idTask: $event.idTask })"
-        @delete="removeTask({ id: $event.idTask })"
-        @toggle-check="toggleCheckTask({ id: $event.idTask })"
-        @kanban-update="
-          kanbanUpdate({
-            columnName: $event.columnName,
-            id: $event.id,
-            position: $event.position,
-          })
-        "
-      />
+      <ion-row :class="{ center: screenWidth >= 768 }">
+        <ion-col size-xs="12" size-md="12" size-lg="8">
+          <kanbanComponent
+            v-show="viewMode == 'kanban'"
+            :task-data="useTask().getTasks()"
+            @update="updateTask({ idTask: $event.idTask })"
+            @delete="removeTask({ id: $event.idTask })"
+            @toggle-check="toggleCheckTask({ id: $event.idTask })"
+            @kanban-update="
+              kanbanUpdate({
+                columnName: $event.columnName,
+                id: $event.id,
+                position: $event.position,
+              })
+            "
+          />
+        </ion-col>
+      </ion-row>
 
       <!-- modals -->
       <ion-modal
@@ -197,7 +201,7 @@ async function addTask(params: { name: string }) {
     subtasks: [],
     kanban: {
       columnName: "pending",
-      position: useTask().getTasks()!.length ,
+      position: useTask().getTasks()!.length,
     },
   } as NewTask;
   await useTask().saveTask({ task });

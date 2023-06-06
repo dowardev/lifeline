@@ -3,8 +3,9 @@
     :class="{ center: screenWidth >= 768 }"
     class="ion-padding-start ion-padding-end"
   >
-    <ion-col size="4">
+    <ion-col size-xs="12" size-md="3" sizw-lg="2">
       <h3>Pendiente</h3>
+      <div class="border-column"></div>
       <draggable
         class="list-group"
         :list="pending"
@@ -21,12 +22,14 @@
                 openPopoverRightTaskMenu({
                   ev: $event,
                   taskId: element.id,
+                  columnName: 'pending',
                 })
               "
               @press="
                 openPopoverRightTaskMenu({
                   ev: $event,
                   taskId: element.id,
+                  columnName: 'pending',
                 })
               "
             >
@@ -55,8 +58,9 @@
       </draggable>
     </ion-col>
 
-    <ion-col size="4">
+    <ion-col size-xs="12" size-md="3" sizw-lg="2">
       <h3>En progreso</h3>
+      <div class="border-column"></div>
       <draggable
         class="list-group"
         :list="progress"
@@ -66,16 +70,52 @@
       >
         <template #item="{ element }">
           <div class="list-group-item">
-            <ion-card>
-              <ion-card-content>{{ element.name }} </ion-card-content>
+            <ion-card
+              @mouseover="showButtonsOptionsTask = element.id"
+              @mouseleave="showButtonsOptionsTask = -1"
+              @contextmenu.prevent="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: element.id,
+                  columnName: 'progress',
+                })
+              "
+              @press="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: element.id,
+                  columnName: 'progress',
+                })
+              "
+            >
+              <ion-card-content
+                >{{ element.name }}
+                <div
+                  v-show="showButtonsOptionsTask == element.id"
+                  class="hover-overlay"
+                >
+                  <ion-button
+                    @click="updateTask({ idTask: element.id.toString() })"
+                    ><ion-icon :icon="createOutline"></ion-icon
+                  ></ion-button>
+
+                  <ion-button
+                    fill="clear"
+                    color="danger"
+                    @click="removeTask({ id: element.id.toString() })"
+                    ><ion-icon :icon="trashOutline"></ion-icon
+                  ></ion-button>
+                </div>
+              </ion-card-content>
             </ion-card>
           </div>
         </template>
       </draggable>
     </ion-col>
 
-    <ion-col size="4">
+    <ion-col size-xs="12" size-md="3" sizw-lg="2">
       <h3>Finalizado</h3>
+      <div class="border-column"></div>
       <draggable
         class="list-group"
         :list="finalized"
@@ -85,8 +125,43 @@
       >
         <template #item="{ element }">
           <div class="list-group-item">
-            <ion-card>
-              <ion-card-content>{{ element.name }} </ion-card-content>
+            <ion-card
+              @mouseover="showButtonsOptionsTask = element.id"
+              @mouseleave="showButtonsOptionsTask = -1"
+              @contextmenu.prevent="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: element.id,
+                  columnName: 'finalized',
+                })
+              "
+              @press="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: element.id,
+                  columnName: 'finalized',
+                })
+              "
+            >
+              <ion-card-content
+                >{{ element.name }}
+                <div
+                  v-show="showButtonsOptionsTask == element.id"
+                  class="hover-overlay"
+                >
+                  <ion-button
+                    @click="updateTask({ idTask: element.id.toString() })"
+                    ><ion-icon :icon="createOutline"></ion-icon
+                  ></ion-button>
+
+                  <ion-button
+                    fill="clear"
+                    color="danger"
+                    @click="removeTask({ id: element.id.toString() })"
+                    ><ion-icon :icon="trashOutline"></ion-icon
+                  ></ion-button>
+                </div>
+              </ion-card-content>
             </ion-card>
           </div>
         </template>
@@ -137,27 +212,27 @@ watch(
     finalized.value = [];
 
     tasks.forEach((task) => {
-      if (task.kanban.columnName == "pending") {
+      if (task.kanban!.columnName == "pending") {
         pending.value.push({
           id: task.id,
           name: task.name,
-          position: task.kanban.position,
+          position: task.kanban!.position,
         });
       }
 
-      if (task.kanban.columnName == "progress") {
+      if (task.kanban!.columnName == "progress") {
         progress.value.push({
           id: task.id,
           name: task.name,
-          position: task.kanban.position,
+          position: task.kanban!.position,
         });
       }
 
-      if (task.kanban.columnName == "finalized") {
+      if (task.kanban!.columnName == "finalized") {
         finalized.value.push({
           id: task.id,
           name: task.name,
-          position: task.kanban.position,
+          position: task.kanban!.position,
         });
       }
     });
@@ -176,14 +251,15 @@ onMounted(() => {
 async function openPopoverRightTaskMenu(params: {
   ev: CustomEvent;
   taskId: string;
+  columnName: string;
 }) {
-  const taskId = params.taskId;
-  const ev = params.ev;
+  const { taskId, ev, columnName } = params;
 
   const popover = await popoverController.create({
     component: RightMenuTaskComponent,
     event: ev,
     showBackdrop: false,
+    componentProps: { currentColumn: columnName },
   });
   await popover.present();
 
@@ -192,6 +268,19 @@ async function openPopoverRightTaskMenu(params: {
 
   if (role == "confirm" && data.option == "edit")
     updateTask({ idTask: taskId });
+
+  if (role == "confirm" && data.option == "moveElement") {
+    let position = 0;
+    if (data.newcolumn == "pending") position = pending.value.length;
+    if (data.newcolumn == "progress") position = progress.value.length;
+    if (data.newcolumn == "finalized") position = finalized.value.length;
+    const data2 = { columnName: data.newcolumn, position, id: taskId } as {
+      position: number;
+      columnName: string;
+      id: string;
+    };
+    emits("kanbanUpdate", data2);
+  }
 }
 
 function updateTask(params: { idTask: string }) {
@@ -280,5 +369,9 @@ function eventKanban(params: { evt: any; columnName: string }) {
 
 .centered-button {
   text-align: center;
+}
+
+.border-column {
+  border-bottom: 1px solid var(--ion-color-primary);
 }
 </style>

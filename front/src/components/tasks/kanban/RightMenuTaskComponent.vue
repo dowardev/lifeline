@@ -8,6 +8,41 @@
       </ion-item>
     </section>
 
+    <!-- move other space-->
+    <section>
+      <ion-item lines="none" button>
+        <ion-icon slot="start" :icon="arrowForwardOutline"> </ion-icon>
+
+        <ion-select
+          placeholder="Mover a"
+          ok-text="Confirmar"
+          cancel-text="Cancelar"
+          @ion-change="
+            selectOption({
+              option: 'moveElement',
+              newcolumn: $event.detail.value,
+            })
+          "
+        >
+          <ion-select-option
+            v-if="props.currentColumn != 'pending'"
+            value="pending"
+            >Pendiente</ion-select-option
+          >
+          <ion-select-option
+            v-if="props.currentColumn != 'progress'"
+            value="progress"
+            >En proceso</ion-select-option
+          >
+          <ion-select-option
+            v-if="props.currentColumn != 'finalized'"
+            value="finalized"
+            >Finalizado</ion-select-option
+          >
+        </ion-select>
+      </ion-item>
+    </section>
+
     <!-- delete -->
     <section>
       <ion-item
@@ -37,12 +72,22 @@ import {
   IonItem,
   IonButton,
   IonLabel,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/vue";
-import { createOutline, trashOutline } from "ionicons/icons";
+import {
+  arrowForwardOutline,
+  createOutline,
+  trashOutline,
+} from "ionicons/icons";
 import { ref } from "vue";
 
-type Option = "delete" | "edit";
+type Option = "delete" | "edit" | "moveElement";
 type Role = "confirm" | "cancel";
+
+const props = defineProps({
+  currentColumn: { default: "pending", type: String, required: true },
+});
 
 let progress = ref(0);
 
@@ -50,10 +95,14 @@ const showDeleteOption = ref(true);
 const intervalDeleteId = ref(null as any);
 
 // funtions
-function selectOption(params: { option: Option }) {
-  const option = params.option;
+function selectOption(params: {
+  option: Option;
+  newcolumn?: "pending" | "progress" | "finalized";
+}) {
+  const { option, newcolumn } = params;
   if (option == "delete") deleteOption();
   if (option == "edit") editOption();
+  if (option == "moveElement") moveElementOption({ columnName: newcolumn });
 }
 
 function deleteOption() {
@@ -78,15 +127,29 @@ async function cancelDelete() {
   await closeModal({ data: { option: "delete" }, role: "cancel" });
 }
 
-async function closeModal(params: { data: { option: Option }; role: Role }) {
-  const data = params.data;
-  const role = params.role;
+async function closeModal(params: {
+  data: { option: Option; newcolumn?: "pending" | "progress" | "finalized" };
+  role: Role;
+}) {
+  const { data, role } = params;
+
   await popoverController.dismiss(data, role);
 }
 
 async function editOption() {
   await closeModal({
     data: { option: "edit" },
+    role: "confirm",
+  });
+}
+
+async function moveElementOption(params: {
+  columnName?: "pending" | "progress" | "finalized";
+}) {
+  const { columnName } = params;
+
+  await closeModal({
+    data: { option: "moveElement", newcolumn: columnName },
     role: "confirm",
   });
 }
