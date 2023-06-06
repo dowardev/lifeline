@@ -3,83 +3,126 @@
     :class="{ center: screenWidth >= 768 }"
     class="ion-padding-start ion-padding-end"
   >
-    <ion-col size-xs="12" size-md="6">
-      <div class="drag-drop-container">
-        <div
-          v-for="column in columns"
-          :key="column.id"
-          class="column"
-          :data-column-id="column.id"
-        >
-          <h2>{{ column.title }}</h2>
-          <ion-card
-            v-for="item in column.items"
-            :key="item.id"
-            class="item"
-            :draggable="true"
-            @dragstart="dragStart(item, column.id)"
-          >
-            <ion-card-content>{{ item.title }}</ion-card-content>
-          </ion-card>
-        </div>
-      </div>
+    <ion-col size="4">
+      <h3>Pendiente</h3>
+      <draggable
+        class="list-group"
+        :list="pending"
+        group="people"
+        item-key="name"
+        @change="eventKanban({ evt: $event, columnName: 'pending' })"
+      >
+        <template #item="{ element }">
+          <div class="list-group-item">
+            <ion-card
+              @mouseover="showButtonsOptionsTask = element.id"
+              @mouseleave="showButtonsOptionsTask = -1"
+              @contextmenu.prevent="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: element.id,
+                })
+              "
+              @press="
+                openPopoverRightTaskMenu({
+                  ev: $event,
+                  taskId: element.id,
+                })
+              "
+            >
+              <ion-card-content
+                >{{ element.name }}
+                <div
+                  v-show="showButtonsOptionsTask == element.id"
+                  class="hover-overlay"
+                >
+                  <ion-button
+                    @click="updateTask({ idTask: element.id.toString() })"
+                    ><ion-icon :icon="createOutline"></ion-icon
+                  ></ion-button>
+
+                  <ion-button
+                    fill="clear"
+                    color="danger"
+                    @click="removeTask({ id: element.id.toString() })"
+                    ><ion-icon :icon="trashOutline"></ion-icon
+                  ></ion-button>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </div>
+        </template>
+      </draggable>
+    </ion-col>
+
+    <ion-col size="4">
+      <h3>En progreso</h3>
+      <draggable
+        class="list-group"
+        :list="progress"
+        group="people"
+        item-key="name"
+        @change="eventKanban({ evt: $event, columnName: 'progress' })"
+      >
+        <template #item="{ element }">
+          <div class="list-group-item">
+            <ion-card>
+              <ion-card-content>{{ element.name }} </ion-card-content>
+            </ion-card>
+          </div>
+        </template>
+      </draggable>
+    </ion-col>
+
+    <ion-col size="4">
+      <h3>Finalizado</h3>
+      <draggable
+        class="list-group"
+        :list="finalized"
+        group="people"
+        item-key="name"
+        @change="eventKanban({ evt: $event, columnName: 'finalized' })"
+      >
+        <template #item="{ element }">
+          <div class="list-group-item">
+            <ion-card>
+              <ion-card-content>{{ element.name }} </ion-card-content>
+            </ion-card>
+          </div>
+        </template>
+      </draggable>
     </ion-col>
   </ion-row>
-  <!-- end tasks -->
 </template>
 
 <script setup lang="ts">
-import { IonCheckbox, IonLabel, popoverController } from "@ionic/vue";
+import { popoverController } from "@ionic/vue";
 import { createOutline, trashOutline } from "ionicons/icons";
 import { onMounted, ref, watch } from "vue";
+import draggable from "vuedraggable/src/vuedraggable";
 
 // interface
 import { Task } from "@/utils/interfaces";
-interface Column {
-  id: number;
-  title: string;
-  items: Item[];
-}
 
 interface Item {
-  id: number;
-  title: string;
+  id: string;
+  name: string;
+  position: number;
 }
 
 // components
 import RightMenuTaskComponent from "./RightMenuTaskComponent.vue";
 
-const emits = defineEmits(["update", "remove", "toggleCheck"]);
+const emits = defineEmits(["update", "delete", "toggleCheck", "kanbanUpdate"]);
 const props = defineProps({
   taskData: { type: Array<Task>, default: () => [] },
 });
 
 const showButtonsOptionsTask = ref(-1);
 const screenWidth = ref(window.innerWidth);
-const listTasks = ref({
-  complete: [] as Task[],
-  incomplete: [] as Task[],
-});
-const columns = ref<Column[]>([
-  {
-    id: 1,
-    title: "Pendiente",
-    items: [],
-  },
-  {
-    id: 2,
-    title: "En Progreso",
-    items: [],
-  },
-  {
-    id: 3,
-    title: "Finalizado",
-    items: [],
-  },
-]);
-
-let draggedItem: Item | null = null;
-let sourceColumnId: number | null = null;
+const pending = ref([] as Item[]);
+const progress = ref([] as Item[]);
+const finalized = ref([] as Item[]);
 
 // watch
 const handleResize = () => {
@@ -89,44 +132,47 @@ watch(
   () => props.taskData,
   (tasks) => {
     if (!tasks) return;
-    columns.value[0].items = [];
-    columns.value[1].items = [];
-    columns.value[2].items = [];
+    pending.value = [];
+    progress.value = [];
+    finalized.value = [];
 
     tasks.forEach((task) => {
-      if (task.kanbanColumn == undefined || task.kanbanColumn == "pending") {
-        columns.value[0].items.push({
-          id: parseInt(task.id),
-          title: task.name,
+      if (task.kanban.columnName == "pending") {
+        pending.value.push({
+          id: task.id,
+          name: task.name,
+          position: task.kanban.position,
+        });
+      }
+
+      if (task.kanban.columnName == "progress") {
+        progress.value.push({
+          id: task.id,
+          name: task.name,
+          position: task.kanban.position,
+        });
+      }
+
+      if (task.kanban.columnName == "finalized") {
+        finalized.value.push({
+          id: task.id,
+          name: task.name,
+          position: task.kanban.position,
         });
       }
     });
+    pending.value.sort((a, b) => a.position - b.position);
+    progress.value.sort((a, b) => a.position - b.position);
+    finalized.value.sort((a, b) => a.position - b.position);
   }
 );
 
 // mounted
 onMounted(() => {
   window.addEventListener("resize", handleResize);
-  const containers = document.querySelectorAll(".drag-drop-container .column");
-
-  containers.forEach((container) => {
-    container.addEventListener("dragover", (event: Event) => {
-      allowDrop(event as DragEvent);
-    });
-
-    container.addEventListener("drop", (event: Event) => {
-      const columnId = parseInt(container.getAttribute("data-column-id")!);
-      dragOver(event as DragEvent, columnId);
-    });
-  });
 });
 
 // functions
-function toggleCheckTask(params: { id: string }) {
-  const { id } = params;
-  emits("toggleCheck", { idTask: id });
-}
-
 async function openPopoverRightTaskMenu(params: {
   ev: CustomEvent;
   taskId: string;
@@ -155,46 +201,51 @@ function updateTask(params: { idTask: string }) {
 
 function removeTask(params: { id: string }) {
   const { id } = params;
-  emits("remove", { id });
+  emits("delete", { id });
 }
 
-function dragStart(item: Item, columnId: number) {
-  draggedItem = item;
-  sourceColumnId = columnId;
-}
+function eventKanban(params: { evt: any; columnName: string }) {
+  const { evt, columnName } = params;
 
-function dragOver(event: DragEvent, columnId: number) {
-  if (draggedItem && sourceColumnId !== null) {
-    event.preventDefault();
-    const sourceColumnIndex = columns.value.findIndex(
-      (column) => column.id === sourceColumnId
-    );
-    const targetColumnIndex = columns.value.findIndex(
-      (column) => column.id === columnId
-    );
+  const data = { columnName } as {
+    position: number;
+    columnName: string;
+    id: string;
+  };
 
-    if (sourceColumnIndex === -1 || targetColumnIndex === -1) {
-      return;
-    }
-
-    const sourceColumn = columns.value[sourceColumnIndex];
-    const targetColumn = columns.value[targetColumnIndex];
-
-    const itemIndex = sourceColumn.items.findIndex(
-      (item) => item.id === draggedItem!.id
-    );
-
-    if (itemIndex !== -1) {
-      sourceColumn.items.splice(itemIndex, 1);
-      targetColumn.items.push(draggedItem);
-      draggedItem = null;
-      sourceColumnId = null;
-    }
+  if (evt.added) {
+    data.id = evt.added.element.id;
+    if (columnName == "pending")
+      data.position = pending.value.findIndex(
+        (element) => element.id == data.id
+      );
+    if (columnName == "progress")
+      data.position = progress.value.findIndex(
+        (element) => element.id == data.id
+      );
+    if (columnName == "finalized")
+      data.position = finalized.value.findIndex(
+        (element) => element.id == data.id
+      );
+    emits("kanbanUpdate", data);
   }
-}
 
-function allowDrop(event: DragEvent) {
-  event.preventDefault();
+  if (evt.moved) {
+    data.id = evt.moved.element.id;
+    if (columnName == "pending")
+      data.position = pending.value.findIndex(
+        (element) => element.id == data.id
+      );
+    if (columnName == "progress")
+      data.position = progress.value.findIndex(
+        (element) => element.id == data.id
+      );
+    if (columnName == "finalized")
+      data.position = finalized.value.findIndex(
+        (element) => element.id == data.id
+      );
+    emits("kanbanUpdate", data);
+  }
 }
 </script>
 
@@ -212,5 +263,22 @@ function allowDrop(event: DragEvent) {
 .item {
   margin-bottom: 10px;
   padding: 5px;
+  cursor: move;
+}
+
+.hover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.centered-button {
+  text-align: center;
 }
 </style>

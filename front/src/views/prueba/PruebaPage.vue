@@ -1,137 +1,59 @@
 <template>
-  <div class="drag-drop-container">
-    <div
-      class="column"
-      v-for="column in columns"
-      :key="column.id"
-      :data-column-id="column.id"
-    >
-      <h2>{{ column.title }}</h2>
-      <div
-        class="item"
-        v-for="item in column.items"
-        :key="item.id"
-        :draggable="true"
-        @dragstart="dragStart(item, column.id)"
+  <div class="row">
+    <div class="col-3">
+      <h3>Draggable 1</h3>
+      <draggable
+        class="list-group"
+        :list="list1"
+        group="people"
+        @change="log"
+        itemKey="name"
       >
-        {{ item.title }}
-      </div>
+        <template #item="{ element, index }">
+          <div class="list-group-item">
+            <ion-button>{{ element.name }} {{ index }}</ion-button>
+          </div>
+        </template>
+      </draggable>
     </div>
+
+    <div class="col-3">
+      <h3>Draggable 2</h3>
+      <draggable
+        class="list-group"
+        :list="list2"
+        group="people"
+        @change="log"
+        itemKey="name"
+      >
+        <template #item="{ element, index }">
+          <div class="list-group-item">{{ element.name }} {{ index }}</div>
+        </template>
+      </draggable>
+    </div>
+
+    <!-- <rawDisplayer class="col-3" :value="list1" title="List 1" /> -->
+    <!---->
+    <!-- <rawDisplayer class="col-3" :value="list2" title="List 2" /> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import draggable from "vuedraggable/src/vuedraggable";
+import {  ref } from "vue";
 
-interface Column {
-  id: number;
-  title: string;
-  items: Item[];
-}
-
-interface Item {
-  id: number;
-  title: string;
-}
-
-const columns = ref<Column[]>([
-  {
-    id: 1,
-    title: "Pendiente",
-    items: [
-      { id: 1, title: "Tarea 1" },
-      { id: 2, title: "Tarea 2" },
-      { id: 3, title: "Tarea 3" },
-    ],
-  },
-  {
-    id: 2,
-    title: "En Progreso",
-    items: [
-      { id: 4, title: "Tarea 4" },
-      { id: 5, title: "Tarea 5" },
-    ],
-  },
-  {
-    id: 3,
-    title: "Finalizado",
-    items: [{ id: 6, title: "Tarea 6" }],
-  },
+const list1 = ref([
+  { name: "John", id: 1 },
+  { name: "Joao", id: 2 },
+  { name: "Jean", id: 3 },
+  { name: "Gerard", id: 4 },
 ]);
-
-let draggedItem: Item | null = null;
-let sourceColumnId: number | null = null;
-
-function dragStart(item: Item, columnId: number) {
-  draggedItem = item;
-  sourceColumnId = columnId;
+const list2 = ref([
+  { name: "Juan", id: 5 },
+  { name: "Edgard", id: 6 },
+  { name: "Johnson", id: 7 },
+]);
+function log(evt) {
+  window.console.log(evt);
 }
-
-function dragOver(event: DragEvent, columnId: number) {
-  if (draggedItem && sourceColumnId !== null) {
-    event.preventDefault();
-    const sourceColumnIndex = columns.value.findIndex(
-      (column) => column.id === sourceColumnId
-    );
-    const targetColumnIndex = columns.value.findIndex(
-      (column) => column.id === columnId
-    );
-
-    if (sourceColumnIndex === -1 || targetColumnIndex === -1) {
-      return;
-    }
-
-    const sourceColumn = columns.value[sourceColumnIndex];
-    const targetColumn = columns.value[targetColumnIndex];
-
-    const itemIndex = sourceColumn.items.findIndex(
-      (item) => item.id === draggedItem!.id
-    );
-
-    if (itemIndex !== -1) {
-      sourceColumn.items.splice(itemIndex, 1);
-      targetColumn.items.push(draggedItem);
-      draggedItem = null;
-      sourceColumnId = null;
-    }
-  }
-}
-
-function allowDrop(event: DragEvent) {
-  event.preventDefault();
-}
-
-onMounted(() => {
-  const containers = document.querySelectorAll(".drag-drop-container .column");
-
-  containers.forEach((container) => {
-    container.addEventListener("dragover", (event: Event) => {
-      allowDrop(event as DragEvent);
-    });
-
-    container.addEventListener("drop", (event: Event) => {
-      const columnId = parseInt(container.getAttribute("data-column-id")!);
-      dragOver(event as DragEvent, columnId);
-    });
-  });
-});
 </script>
-
-<style scoped>
-.drag-drop-container {
-  display: flex;
-  justify-content: space-between;
-}
-
-.column {
-  flex-basis: 30%;
-  border: 1px solid #ccc;
-  padding: 10px;
-}
-
-.item {
-  margin-bottom: 10px;
-  padding: 5px;
-  background-color: #f0f0f0;
-}
-</style>

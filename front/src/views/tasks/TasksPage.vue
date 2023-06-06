@@ -95,8 +95,15 @@
         v-show="viewMode == 'kanban'"
         :task-data="useTask().getTasks()"
         @update="updateTask({ idTask: $event.idTask })"
-        @remove="removeTask({ id: $event.idTask })"
+        @delete="removeTask({ id: $event.idTask })"
         @toggle-check="toggleCheckTask({ id: $event.idTask })"
+        @kanban-update="
+          kanbanUpdate({
+            columnName: $event.columnName,
+            id: $event.id,
+            position: $event.position,
+          })
+        "
       />
 
       <!-- modals -->
@@ -188,6 +195,10 @@ async function addTask(params: { name: string }) {
     },
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     subtasks: [],
+    kanban: {
+      columnName: "pending",
+      position: useTask().getTasks()!.length ,
+    },
   } as NewTask;
   await useTask().saveTask({ task });
   inputTaskValue.value = "";
@@ -223,6 +234,18 @@ function setTasksViewMode(params: { viewMode: ViewMode }) {
 
 async function getTasksViewMode() {
   viewMode.value = await useSystem().getTasksViewMode();
+}
+
+async function kanbanUpdate(params: {
+  position: number;
+  id: string;
+  columnName: "pending" | "progress" | "finalized";
+}) {
+  const { id, columnName, position } = params;
+  const task = useTask().getTask({ idTask: id })!;
+  task.kanban.columnName = columnName;
+  task.kanban.position = position;
+  useTask().updateTask({ task });
 }
 </script>
 

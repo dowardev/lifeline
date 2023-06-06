@@ -317,7 +317,10 @@ export interface Task {
   timezone?: string;
   description?: string;
   subtasks?: Array<{ name: string; cheked: boolean }>;
-  kanbanColumn: "pending" | "progress" | "finalized";
+  kanban?: {
+    columnName: "pending" | "progress" | "finalized";
+    position: number;
+  };
 }
 
 export interface NewTask {
@@ -337,4 +340,8 @@ export interface NewTask {
   timezone?: string;
   description?: string;
   subtasks?: Array<{ name: string; cheked: boolean }>;
+  kanban: {
+    columnName: "pending" | "progress" | "finalized";
+    position: number;
+  };
 }
