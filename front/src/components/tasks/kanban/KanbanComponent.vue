@@ -171,7 +171,13 @@
 </template>
 
 <script setup lang="ts">
-import { popoverController } from "@ionic/vue";
+import {
+  popoverController,
+  IonCard,
+  IonCardContent,
+  IonRow,
+  IonCol,
+} from "@ionic/vue";
 import { createOutline, trashOutline } from "ionicons/icons";
 import { onMounted, ref, watch } from "vue";
 import draggable from "vuedraggable/src/vuedraggable";
