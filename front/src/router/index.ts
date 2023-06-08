@@ -10,6 +10,7 @@ import DocumentPage from "@/components/documents/add_document/AddDocumentCompone
 import PoliciesPage from "@/views/policies/PoliciesPage.vue";
 import DocumentsPage from "@/views/documents/DocumentsPage.vue";
 import TasksPage from "../views/tasks/TasksPage.vue";
+import IntegrationsPage from "../views/integrations/IntegrationsPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -60,6 +61,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/tasks",
     name: "TasksPage",
     component: TasksPage,
+  },
+  {
+    path: "/integrations",
+    name: "IntegrationsPage",
+    component: IntegrationsPage,
   },
 ];
 

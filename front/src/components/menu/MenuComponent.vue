@@ -55,6 +55,38 @@
         <ion-label class="labelOptionMenu"> Calendario</ion-label>
       </ion-item>
 
+      <!-- integrations -->
+      <ion-accordion-group>
+        <ion-accordion>
+          <ion-item slot="header">
+            <div slot="start">
+              <ion-icon
+                :icon="extensionPuzzleOutline"
+                :class="{
+                  iconOptionSelected: $route.path == '/integrations',
+                  iconOptionNoSelected: $route.path != '/integrations',
+                }"
+              ></ion-icon>
+            </div>
+            <ion-label>Integraciones</ion-label>
+          </ion-item>
+
+          <div slot="content" class="ion-padding-start">
+            <ion-item lines="none" button>
+              <ion-icon slot="start" :icon="hourglassOutline"></ion-icon>
+              <ion-label>Wakatime</ion-label>
+            </ion-item>
+          </div>
+
+          <div slot="content" class="ion-padding-start">
+            <ion-item lines="full" button @click="openRoute('/integrations')">
+              <ion-icon slot="start" :icon="addOutline"></ion-icon>
+              <ion-label>Agregar</ion-label>
+            </ion-item>
+          </div>
+        </ion-accordion>
+      </ion-accordion-group>
+
       <!-- module -->
       <ion-item
         lines="none"
@@ -238,10 +270,14 @@ import {
   IonFooter,
 } from "@ionic/vue";
 import {
+  addOutline,
   brushOutline,
   calendarOutline,
   documentTextOutline,
   exitOutline,
+  extensionPuzzleOutline,
+  hourglass,
+  hourglassOutline,
 } from "ionicons/icons";
 import { computed, onMounted, ref } from "vue";
 import {

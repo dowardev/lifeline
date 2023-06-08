@@ -26,7 +26,7 @@
         <ion-col size="12">
           <div style="width: 100%">
             <ion-button fill="clear" style="float: right">
-              Integraciones
+              <ion-icon :icon="brushOutline"></ion-icon>
             </ion-button>
           </div>
         </ion-col>
@@ -108,7 +108,7 @@ import {
 import { useSystem } from "@/composables/useSystem";
 import { onMounted, ref } from "vue";
 
-import { logOutOutline, refreshOutline } from "ionicons/icons";
+import { brushOutline, logOutOutline, refreshOutline } from "ionicons/icons";
 // components
 import CalendarComponent from "./calendar/CalendarComponent.vue";
 import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
