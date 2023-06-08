@@ -1,10 +1,15 @@
-import { userSystemStore } from "@/store/system";
+import { useSystemStore } from "@/store/system";
 import {
   getTheme as getThemeService,
   setTheme as setThemeService,
   saveTheme as saveThemeService,
   setTasksViewMode as setTasksViewModeService,
-  getTasksViewMode as getTasksViewModeService 
+  getTasksViewMode as getTasksViewModeService,
+  storeWakaTimeApiKey as storeWakaTimeApiKeyService,
+  getWakaTimeApiKey as getWakaTimeApiKeyService,
+  testWakaTimeApiKey as testWakaTimeApiKeyService,
+  getWakaTimeDurations as getWakaTimeDurationsService,
+  deleteWakaTimeApiKey as deleteWakaTimeApiKeyService,
 } from "@/services/system";
 import { Theme, ViewMode } from "@/utils/types";
 import {
@@ -15,7 +20,7 @@ import {
 } from "@/utils/interfaces";
 
 export const useSystem = () => {
-  const systemStore = userSystemStore();
+  const systemStore = useSystemStore();
 
   async function loadThemeSelected() {
     const theme =
@@ -119,6 +124,54 @@ export const useSystem = () => {
     return await getTasksViewModeService();
   }
 
+  async function storeWakaTimeApiKey(params: {
+    apiKey: string;
+  }): Promise<void> {
+    const { apiKey } = params;
+    await storeWakaTimeApiKeyService({ apiKey });
+  }
+
+  function getWakaTimeApiKey(): string {
+    return systemStore.getWakaTimeApiKey;
+  }
+
+  async function testWakaTimeApiKey(params: {
+    apiKey: string;
+    date: string;
+  }): Promise<boolean> {
+    const { apiKey, date } = params;
+    return await testWakaTimeApiKeyService({ apiKey, date });
+  }
+
+  async function loadWakaTimeApiKey(): Promise<void> {
+    const apiKey = await getWakaTimeApiKeyService();
+    systemStore.setWakaTimeApiKey({ apiKey });
+  }
+
+  async function loadWakaTimeToday(params: { apiKey: string }) {
+    // const { apiKey } = params;
+    // const response = await getWakaTimeDurations({ apiKey });
+    // console.log(response);
+  }
+
+  async function getWakaTimeDayTotal(params: {
+    apiKey: string;
+    date: string;
+  }): Promise<number> {
+    const { apiKey, date } = params;
+    const response = await getWakaTimeDurationsService({ apiKey, date });
+    let sum = 0;
+    response.data.forEach((element) => {
+      sum += element.duration;
+    });
+    return sum;
+  }
+
+  async function clearWakaTimeApiKey(): Promise<void> {
+    await deleteWakaTimeApiKeyService();
+    systemStore.removeWakaTimeApiKey();
+  }
+
   return {
     loadThemeSelected,
     getTheme,
@@ -130,5 +183,12 @@ export const useSystem = () => {
     translateMonth,
     setTasksViewMode,
     getTasksViewMode,
+    storeWakaTimeApiKey,
+    getWakaTimeApiKey,
+    testWakaTimeApiKey,
+    loadWakaTimeApiKey,
+    loadWakaTimeToday,
+    getWakaTimeDayTotal,
+    clearWakaTimeApiKey,
   };
 };

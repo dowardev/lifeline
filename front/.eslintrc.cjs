@@ -7,7 +7,7 @@ module.exports = {
   extends: [
     "plugin:vue/vue3-recommended",
     // "eslint:recommended",
-    // "@vue/typescript/recommended",
+    "@vue/typescript/recommended",
     "plugin:prettier/recommended",
   ],
 
@@ -24,6 +24,7 @@ module.exports = {
     "vue/no-deprecated-slot-attribute": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "prettier/prettier": "error",
+    "@typescript-eslint/explicit-function-return-type": "error",
   },
 
   plugins: ["prettier"],

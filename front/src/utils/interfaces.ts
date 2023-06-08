@@ -219,6 +219,12 @@ export interface System {
   theme: {
     selected: Theme;
   };
+  wakaTime: {
+    wakaTimeApiKey: string;
+    today: {
+      time: string;
+    };
+  };
 }
 
 export interface EventDataReminder {

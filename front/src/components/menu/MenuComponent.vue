@@ -35,6 +35,26 @@
         <ion-label class="labelOptionMenu"> Inicio </ion-label>
       </ion-item>
 
+      <!-- calendar -->
+      <ion-item
+        lines="none"
+        class="transparent"
+        button
+        @click="openRoute('/calendar')"
+      >
+        <div slot="start">
+          <ion-icon
+            :icon="calendarOutline"
+            :class="{
+              iconOptionSelected: $route.path == '/calendar',
+              iconOptionNoSelected: $route.path != '/calendar',
+            }"
+          ></ion-icon>
+        </div>
+
+        <ion-label class="labelOptionMenu"> Calendario</ion-label>
+      </ion-item>
+
       <!-- module -->
       <ion-item
         lines="none"
@@ -217,7 +237,12 @@ import {
   modalController,
   IonFooter,
 } from "@ionic/vue";
-import { brushOutline, documentTextOutline, exitOutline } from "ionicons/icons";
+import {
+  brushOutline,
+  calendarOutline,
+  documentTextOutline,
+  exitOutline,
+} from "ionicons/icons";
 import { computed, onMounted, ref } from "vue";
 import {
   settingsOutline,
