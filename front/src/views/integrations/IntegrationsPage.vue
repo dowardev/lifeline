@@ -25,7 +25,11 @@
       <ion-row>
         <ion-col size="12">
           <div style="width: 100%">
-            <ion-button fill="clear" style="float: right" id='open-modal-help-integrations'>
+            <ion-button
+              id="open-modal-help-integrations"
+              fill="clear"
+              style="float: right"
+            >
               <ion-icon :icon="helpCircleOutline"></ion-icon>
             </ion-button>
           </div>
@@ -69,10 +73,12 @@
 
       <!-- modals -->
       <ion-modal ref="modal" trigger="open-modal-help-integrations">
-        <ion-header mode=ios class="ion-bo-border">
+        <ion-header mode="ios" class="ion-bo-border">
           <ion-toolbar>
             <ion-buttons slot="start">
-              <ion-button @click="modalController.dismiss()"><ion-icon :icon='closeOutline'></ion-icon></ion-button>
+              <ion-button @click="modalController.dismiss()"
+                ><ion-icon :icon="closeOutline"></ion-icon
+              ></ion-button>
             </ion-buttons>
             <ion-title>Integraciones</ion-title>
           </ion-toolbar>
@@ -100,7 +106,9 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  IonModal,IonButton, modalController
+  IonModal,
+  IonButton,
+  modalController,
 } from "@ionic/vue";
 import { closeOutline, helpCircleOutline } from "ionicons/icons";
 

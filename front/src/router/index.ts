@@ -11,6 +11,7 @@ import PoliciesPage from "@/views/policies/PoliciesPage.vue";
 import DocumentsPage from "@/views/documents/DocumentsPage.vue";
 import TasksPage from "../views/tasks/TasksPage.vue";
 import IntegrationsPage from "../views/integrations/IntegrationsPage.vue";
+import AboutPage from "../views/about/AboutPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -66,6 +67,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/integrations",
     name: "IntegrationsPage",
     component: IntegrationsPage,
+  },
+  {
+    path: "/about",
+    name: "AboutPage",
+    component: AboutPage,
   },
 ];
 

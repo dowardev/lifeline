@@ -87,43 +87,6 @@
         </ion-accordion>
       </ion-accordion-group>
 
-      <!-- module -->
-      <ion-item
-        lines="none"
-        class="transparent"
-        button
-        disabled
-        @click="openRoute('/')"
-      >
-        <div slot="start">
-          <ion-icon :icon="cloudDownloadOutline"></ion-icon>
-        </div>
-
-        <ion-label class="labelOptionMenu">
-          {{ capitalizeFirstLetter($tc("message.module", 2)) }}
-        </ion-label>
-      </ion-item>
-
-      <!-- documents -->
-      <ion-item
-        lines="none"
-        class="transparent"
-        button
-        @click="$router.push({ name: 'DocumentsPage' })"
-      >
-        <div slot="start">
-          <ion-icon
-            :icon="documentOutline"
-            :class="{
-              iconOptionSelected: $route.path == '/documents',
-              iconOptionNoSelected: $route.path != '/documents',
-            }"
-          ></ion-icon>
-        </div>
-
-        <ion-label class="labelOptionMenu"> Documentos </ion-label>
-      </ion-item>
-
       <!-- tareas -->
       <ion-item
         lines="none"
@@ -145,75 +108,35 @@
           {{ capitalizeFirstLetter($tc("message.task", 2)) }}
         </ion-label>
       </ion-item>
-
-      <!-- programming -->
-      <ion-item
-        lines="none"
-        class="transparent"
-        button
-        disabled
-        @click="openRoute('/')"
-      >
-        <div slot="start">
-          <ion-icon :icon="cogOutline"></ion-icon>
-        </div>
-
-        <ion-label class="labelOptionMenu">
-          {{ capitalizeFirstLetter($t("message.programming")) }}
-        </ion-label>
-      </ion-item>
-
-      <!-- projects -->
-      <ion-item
-        lines="none"
-        class="transparent"
-        button
-        disabled
-        @click="openRoute('/')"
-      >
-        <div slot="start">
-          <ion-icon :icon="briefcaseOutline"></ion-icon>
-        </div>
-
-        <ion-label class="labelOptionMenu">
-          {{ capitalizeFirstLetter($tc("message.projects", 2)) }}
-        </ion-label>
-      </ion-item>
-
-      <!-- support -->
-      <ion-item
-        lines="none"
-        class="transparent"
-        button
-        disabled
-        @click="openRoute('/')"
-      >
-        <div slot="start">
-          <ion-icon :icon="helpOutline"></ion-icon>
-        </div>
-
-        <ion-label class="labelOptionMenu">
-          {{ capitalizeFirstLetter($t("message.support")) }}
-        </ion-label>
-      </ion-item>
-
-      <ion-item
-        lines="none"
-        class="transparent"
-        button
-        @click="openRoute('/policies')"
-      >
-        <div slot="start">
-          <ion-icon :icon="documentTextOutline"></ion-icon>
-        </div>
-
-        <ion-label class="labelOptionMenu"> Politicas </ion-label>
-      </ion-item>
     </ion-content>
 
     <ion-footer class="ion-no-border">
       <ion-toolbar>
-        <ion-buttons slot="end">
+        <ion-buttons slot="end" disabled>
+          <!-- about -->
+          <ion-button fill="clear" color="primary" @click="openRoute('/about')">
+            <ion-icon :icon="informationOutline"></ion-icon>
+          </ion-button>
+
+          <!-- policies -->
+          <ion-button
+            fill="clear"
+            color="primary"
+            @click="openRoute('/policies')"
+          >
+            <ion-icon :icon="documentTextOutline"></ion-icon>
+          </ion-button>
+
+          <!-- support -->
+          <ion-button
+            disabled
+            fill="clear"
+            color="primary"
+            @click="openRoute('/about')"
+          >
+            <ion-icon :icon="helpOutline"></ion-icon>
+          </ion-button>
+
           <ion-button
             v-if="isPlatform('desktop')"
             fill="clear"
@@ -278,6 +201,7 @@ import {
   extensionPuzzleOutline,
   hourglass,
   hourglassOutline,
+  informationOutline,
 } from "ionicons/icons";
 import { computed, onMounted, ref } from "vue";
 import {
