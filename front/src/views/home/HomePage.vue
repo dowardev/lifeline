@@ -26,7 +26,7 @@
         <ion-col size="12">
           <div style="width: 100%">
             <ion-button fill="clear" style="float: right">
-              <ion-icon :icon="brushOutline"></ion-icon>
+              <!-- <ion-icon :icon="brushOutline"></ion-icon> -->
             </ion-button>
           </div>
         </ion-col>

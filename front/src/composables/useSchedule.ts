@@ -156,12 +156,10 @@ export const useSchedule = () => {
           id,
           schedule: {
             at: reminder,
+            allowWhileIdle: true,
           },
-          sound: null,
-          attachments: null,
           actionTypeId: "",
           extra: extraInfo,
-          channelId: null,
         },
       ],
     }).catch((e) => {
