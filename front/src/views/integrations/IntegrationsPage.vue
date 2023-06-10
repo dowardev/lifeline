@@ -27,56 +27,65 @@
         <ion-col
           v-for="integration in integrations"
           :key="integration.name"
-          size-lg="4"
+          size-xs="12"
+          size-lg="12"
         >
-          <ion-card>
-            <ion-card-header>
-              <section style="display: flex; justify-content: space-between">
-                <div>
-                  <ion-card-title>{{ integration.name }}</ion-card-title>
-                </div>
+          <ion-row class="center">
+            <ion-col size-xs="12" size-md="6" size-lg="4">
+              <ion-card>
+                <ion-card-header>
+                  <section
+                    style="display: flex; justify-content: space-between"
+                  >
+                    <div>
+                      <ion-card-title>{{ integration.name }}</ion-card-title>
+                    </div>
 
-                <div v-if="integration.state == 'available'">
-                  <ion-button size="small">Instalar</ion-button>
-                </div>
+                    <div v-if="integration.state == 'available'">
+                      <ion-button size="small">Instalar</ion-button>
+                    </div>
 
-                <div v-if="integration.state == 'installed'">
-                  <ion-button size="small" color="danger">Remover</ion-button>
-                </div>
-              </section>
-
-              <section
-                v-for="category in integration.categories"
-                :key="category"
-                style="display: flex"
-              >
-                <ion-chip>{{ category }}</ion-chip>
-              </section>
-            </ion-card-header>
-
-            <ion-card-content>
-              <ion-accordion-group>
-                <ion-accordion>
-                  <ion-item slot="header">
-                    <ion-label>Descripcion</ion-label>
-                  </ion-item>
-
-                  <div slot="content" class="ion-padding">
-                    <p>{{ integration.description }}</p>
-                    <ion-item lines="none">
-                      <ion-button
-                        v-if="integration.url"
-                        slot="end"
-                        fill="clear"
-                        @click="openUrl({ url: integration.url })"
-                        >Mas informacion.</ion-button
+                    <div v-if="integration.state == 'installed'">
+                      <ion-button size="small" color="danger"
+                        >Remover</ion-button
                       >
-                    </ion-item>
-                  </div>
-                </ion-accordion>
-              </ion-accordion-group>
-            </ion-card-content>
-          </ion-card>
+                    </div>
+                  </section>
+
+                  <section
+                    v-for="category in integration.categories"
+                    :key="category"
+                    style="display: flex"
+                  >
+                    <ion-chip>{{ category }}</ion-chip>
+                  </section>
+                </ion-card-header>
+
+                <ion-card-content>
+                  <ion-accordion-group>
+                    <ion-accordion>
+                      <ion-item slot="header">
+                        <ion-label>Descripcion</ion-label>
+                      </ion-item>
+
+                      <div slot="content" class="ion-padding">
+                        <p>{{ integration.description }}</p>
+                        <ion-item lines="none">
+                          <ion-button
+                            v-if="integration.url"
+                            slot="end"
+                            fill="clear"
+                            @click="openUrl({ url: integration.url })"
+                            >Mas informacion.</ion-button
+                          >
+                        </ion-item>
+                      </div>
+                    </ion-accordion>
+                  </ion-accordion-group>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+          </ion-row>
         </ion-col>
       </ion-row>
 
@@ -111,12 +120,12 @@
       <ion-popover
         :is-open="isOpenPopOverMainOptions"
         :event="eventPopOverMainOptions"
-        :dismiss-on-select=true
+        :dismiss-on-select="true"
         @did-dismiss="isOpenPopOverMainOptions = false"
       >
         <ion-content>
           <!-- button modal help integrations -->
-          <ion-item id="open-modal-help-integrations" button lines="none" >
+          <ion-item id="open-modal-help-integrations" button lines="none">
             <ion-icon slot="start" :icon="helpCircleOutline"></ion-icon>
             <ion-label class="ion-text-wrap">Ayuda</ion-label>
           </ion-item>

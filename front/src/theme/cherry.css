@@ -34,12 +34,12 @@
   --ion-color-warning-shade: #e0ac08;
   --ion-color-warning-tint: #ffca22;
 
---ion-color-danger: #db4155;
-	--ion-color-danger-rgb: 219,65,85;
-	--ion-color-danger-contrast: #ffffff;
-	--ion-color-danger-contrast-rgb: 255,255,255;
-	--ion-color-danger-shade: #c1394b;
-	--ion-color-danger-tint: #df5466;
+  --ion-color-danger: #db4155;
+  --ion-color-danger-rgb: 219, 65, 85;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #c1394b;
+  --ion-color-danger-tint: #df5466;
 
   --ion-color-medium: #92949c;
   --ion-color-medium-rgb: 146, 148, 156;

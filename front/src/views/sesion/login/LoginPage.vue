@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true" class="ion-no-border">
+    <ion-header class="ion-no-border" mode="ios">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button
@@ -8,7 +8,7 @@
             :smode="modeDesingElements"
           ></ion-menu-button>
         </ion-buttons>
-        <ion-title>{{ $t("message.login") }}</ion-title>
+        <ion-title>Iniciar sesion</ion-title>
       </ion-toolbar>
     </ion-header>
 

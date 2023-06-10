@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header collapse="fade" mode="ios" class="ion-no-border">
+    <ion-header mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
@@ -15,12 +15,6 @@
       :scroll-events="true"
       @ion-scroll="handleScroll"
     >
-      <ion-header collapse="condense" mode="ios">
-        <ion-toolbar>
-          <ion-title size="large">{{ pageTitle }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
       <div
         style="position: sticky; top: 0; z-index: 3"
         class="ion-padding-start ion-padding-end"
