@@ -1,41 +1,28 @@
 <template>
   <ion-page>
-    <ion-header
-      :translucent="true"
-      collapse="fade"
-      mode="ios"
-      class="ion-no-border"
-    >
+    <ion-header mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
+
+        <ion-buttons slot="end">
+          <!-- button popover  main options -->
+          <ion-button
+            @click="
+              eventPopOverMainOptions = isPlatform('mobile') ? null : $event;
+              isOpenPopOverMainOptions = true;
+            "
+          >
+            <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense" mode="ios">
-        <ion-toolbar>
-          <ion-title size="large">{{ pageTitle }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
-      <ion-row>
-        <ion-col size="12">
-          <div style="width: 100%">
-            <ion-button
-              id="open-modal-help-integrations"
-              fill="clear"
-              style="float: right"
-            >
-              <ion-icon :icon="helpCircleOutline"></ion-icon>
-            </ion-button>
-          </div>
-        </ion-col>
-      </ion-row>
-
+    <ion-content>
       <ion-row>
         <ion-col
           v-for="integration in integrations"
@@ -44,15 +31,27 @@
         >
           <ion-card>
             <ion-card-header>
-              <div style="display: flex; justify-content: space-between">
+              <section style="display: flex; justify-content: space-between">
                 <div>
                   <ion-card-title>{{ integration.name }}</ion-card-title>
                 </div>
 
-                <div>
-                  <ion-button size="small" fill="clear">Instalar</ion-button>
+                <div v-if="integration.state == 'available'">
+                  <ion-button size="small">Instalar</ion-button>
                 </div>
-              </div>
+
+                <div v-if="integration.state == 'installed'">
+                  <ion-button size="small" color="danger">Remover</ion-button>
+                </div>
+              </section>
+
+              <section
+                v-for="category in integration.categories"
+                :key="category"
+                style="display: flex"
+              >
+                <ion-chip>{{ category }}</ion-chip>
+              </section>
             </ion-card-header>
 
             <ion-card-content>
@@ -61,8 +60,18 @@
                   <ion-item slot="header">
                     <ion-label>Descripcion</ion-label>
                   </ion-item>
+
                   <div slot="content" class="ion-padding">
                     <p>{{ integration.description }}</p>
+                    <ion-item lines="none">
+                      <ion-button
+                        v-if="integration.url"
+                        slot="end"
+                        fill="clear"
+                        @click="openUrl({ url: integration.url })"
+                        >Mas informacion.</ion-button
+                      >
+                    </ion-item>
                   </div>
                 </ion-accordion>
               </ion-accordion-group>
@@ -95,6 +104,25 @@
           </p>
         </ion-content>
       </ion-modal>
+      <!-- end modals -->
+
+      <!-- popovers -->
+      <!-- popover main options -->
+      <ion-popover
+        :is-open="isOpenPopOverMainOptions"
+        :event="eventPopOverMainOptions"
+        :dismiss-on-select=true
+        @did-dismiss="isOpenPopOverMainOptions = false"
+      >
+        <ion-content>
+          <!-- button modal help integrations -->
+          <ion-item id="open-modal-help-integrations" button lines="none" >
+            <ion-icon slot="start" :icon="helpCircleOutline"></ion-icon>
+            <ion-label class="ion-text-wrap">Ayuda</ion-label>
+          </ion-item>
+        </ion-content>
+      </ion-popover>
+      <!-- end popovers -->
     </ion-content>
   </ion-page>
 </template>
@@ -109,17 +137,63 @@ import {
   IonModal,
   IonButton,
   modalController,
+  isPlatform,
 } from "@ionic/vue";
-import { closeOutline, helpCircleOutline } from "ionicons/icons";
+import {
+  closeOutline,
+  ellipsisVerticalOutline,
+  helpCircleOutline,
+} from "ionicons/icons";
+import { ref } from "vue";
+
+interface Element {
+  name: string;
+  url?: string;
+  description: string;
+  state: "installed" | "available";
+  categories: string[];
+}
 
 const pageTitle = "Integraciones";
 const integrations = [
   {
     name: "WakaTime",
-    url: "",
+    url: "https://wakatime.com/",
     description:
-      "Lorem ipsum dolor sit amet, qui minim labore adipisicing minim sint cillum sint consectetur cupidatat.",
-    state: "Integrada",
+      "Wakatime es una herramienta que se integra con tu editor de código y te permite hacer un seguimiento automático del tiempo que pasas escribiendo código. Wakatime te muestra cuánto tiempo pasas en cada proyecto y en cada archivo, así como cuánto tiempo pasas escribiendo en cada lenguaje de programación.",
+    state: "installed",
+    categories: ["Productividad"],
   },
-];
+  {
+    name: "Todoist",
+    url: "https://todoist.com",
+    description:
+      "Todoist es una herramienta de productividad que te permite organizar tus proyectos profesionales y personales. Puedes recopilar tareas, organizar proyectos y planificar tu día. Todoist te permite organizar tus tareas por proyectos y asignar tareas y subtareas a cada uno. Puedes usarlo tanto a nivel personal, con proyectos como “compras” o “recordatorios”, pero también puedes gestionar tus proyectos profesionales, compartiendo las tareas con otros usuarios.",
+    state: "available",
+    categories: ["Productividad"],
+  },
+  {
+    name: "Google Calendar",
+    url: "https://calendar.google.com",
+    description:
+      "Google Calendar es un calendario online que ofrece Google gratuitamente a sus usuarios y que combina agenda, calendario electrónico, creador de eventos y otras funciones que nos facilita mejorar la productividad y compartirlos con nuestros contactos. Permite sincronizarlo con los contactos de Gmail de manera que podamos invitarlos y compartir eventos..",
+    state: "available",
+    categories: ["Productividad"],
+  },
+  {
+    name: "Google Fit",
+    description:
+      "Google Fit es una aplicación oficial de Google destinada a mejorar nuestra salud de una forma muy simple: informándonos de la actividad física que llevamos a cabo a diario. Los usuarios tendrán que marcarse una serie de objetivos diarios o semanales. La aplicación registra la actividad física que realizamos y nos proporciona datos como calorías, distancia recorrida y pasos realizados. También podemos ver nuestras estadísticas y marcarnos objetivos diarios.",
+    state: "available",
+    categories: ["Salud"],
+  },
+] as Array<Element>;
+const isOpenPopOverMainOptions = ref(false);
+const eventPopOverMainOptions = ref(null as CustomEvent | null);
+
+// functions
+function openUrl(params: { url: string }): void {
+  const { url } = params;
+  window.open(url, "_blank");
+}
 </script>
