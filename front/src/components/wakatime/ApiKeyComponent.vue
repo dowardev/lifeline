@@ -30,7 +30,7 @@ import { reactive, ref } from "vue";
 import { useSystem } from "@/composables/useSystem";
 import { saveOutline } from "ionicons/icons";
 
-const inputApiKeyValue = ref("waka_881bbfc9-e189-4cfd-af0a-5f411fdb6e7c");
+const inputApiKeyValue = ref("");
 const spinners = reactive({ testApiKey: false });
 
 // functions
