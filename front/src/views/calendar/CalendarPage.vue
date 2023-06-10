@@ -7,32 +7,31 @@
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
+
+        <ion-buttons slot="end">
+          <!-- add event button -->
+          <ion-button id="modal-add-event"
+            ><ion-icon :icon="addOutline"></ion-icon
+          ></ion-button>
+
+          <!-- button popover  main options -->
+          <ion-button
+            @click="
+              eventPopOverMainOptions = isPlatform('mobile') ? null : $event;
+              isOpenPopOverMainOptions = true;
+            "
+          >
+            <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
       <ion-row>
-        <ion-col v-if="isPlatform('desktop')" size-lg="3">
-          <section>
-            <div>
-              <ion-item lines="full">
-                <ion-label>Elementos vencidos</ion-label>
-                <!-- reschedule all elements -->
-                <ion-button slot="end">
-                  <ion-icon :icon="stopwatchOutline"></ion-icon>
-                </ion-button>
-              </ion-item>
-            </div>
-
-            <div style="height: 82vh; overflow: auto; overflow-x: auto">
-              <RescheduleComponent />
-            </div>
-          </section>
-        </ion-col>
-
         <!-- week calendar -->
         <!-- button options -->
-        <ion-col size-xs="12" size-lg="9">
+        <ion-col size-xs="12" size-lg="12">
           <!-- button week navigation -->
           <div
             style="
@@ -56,24 +55,26 @@
                     ><ion-icon :icon="chevronBackOutline"></ion-icon
                   ></ion-button>
 
-                  <!-- button date selector -->
-                  <ion-button
-                    fill="clear"
-                    size="small"
-                    @click="isOpenpopoverMainCalendar = true"
-                  >
-                    {{
-                      translateMonth({
-                        monthName: months[getMonth(currentDate)],
-                      })
-                    }}
-                  </ion-button>
-
                   <!-- next button -->
                   <ion-button fill="clear" size="small" @click="nextWeek()"
                     ><ion-icon :icon="chevronForwardOutline"></ion-icon
                   ></ion-button>
                 </ion-item>
+              </div>
+
+              <!-- button date selector -->
+              <div class="space-button-date-selector">
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  @click="isOpenpopoverMainCalendar = true"
+                >
+                  {{
+                    translateMonth({
+                      monthName: months[getMonth(currentDate)],
+                    })
+                  }}
+                </ion-button>
               </div>
 
               <!-- today button -->
@@ -82,24 +83,6 @@
                   <ion-icon :icon="todayOutline"></ion-icon>
                 </ion-button>
               </div>
-
-              <!-- button modal reschedule tasks -->
-              <div v-if="!isPlatform('desktop')">
-                <ion-button
-                  id="modal-reschedule-elements"
-                  slot="end"
-                  fill="clear"
-                >
-                  <ion-icon :icon="stopwatchOutline"></ion-icon>
-                </ion-button>
-              </div>
-            </div>
-
-            <!-- add event button -->
-            <div>
-              <ion-button id="modal-add-event" size="small"
-                ><ion-icon :icon="addOutline"></ion-icon
-              ></ion-button>
             </div>
           </div>
 
@@ -206,6 +189,7 @@
       </ion-row>
 
       <!-- popovers -->
+      <!-- popover main calendar -->
       <ion-popover
         :class="{ 'popover-main-calendar-ios': isPlatform('ios') }"
         :is-open="isOpenpopoverMainCalendar"
@@ -228,6 +212,74 @@
           ></ion-datetime>
         </ion-content>
       </ion-popover>
+
+      <!-- popover main options -->
+      <ion-popover
+        :is-open="isOpenPopOverMainOptions"
+        :event="eventPopOverMainOptions"
+        @did-dismiss="isOpenPopOverMainOptions = false"
+      >
+        <ion-content>
+          <ion-list>
+            <ion-list-header>
+              <ion-label>General</ion-label>
+            </ion-list-header>
+
+            <ion-row>
+              <ion-col>
+                <!-- button modal reschedule tasks -->
+                <ion-item
+                  button
+                  lines="none"
+                  @click="
+                    isOpenModalRecheduleTasks = true;
+                    isOpenPopOverMainOptions = false;
+                  "
+                >
+                  <ion-icon slot="start" :icon="stopwatchOutline"></ion-icon>
+                  <ion-label class="ion-text-wrap"
+                    >Reagendar elementos vencidos</ion-label
+                  >
+                </ion-item>
+              </ion-col>
+            </ion-row>
+          </ion-list>
+
+          <!-- views -->
+          <ion-list>
+            <ion-list-header>
+              <ion-label>Vista</ion-label>
+            </ion-list-header>
+
+            <ion-row>
+              <ion-col>
+                <ion-radio-group value="weekly">
+                  <!-- diary view -->
+                  <ion-item lines="none" disabled>
+                    <ion-radio value="diary" label-placement="end"
+                      >Diario</ion-radio
+                    >
+                  </ion-item>
+
+                  <!-- weekly view -->
+                  <ion-item lines="none">
+                    <ion-radio value="weekly" label-placement="end"
+                      >Semanal</ion-radio
+                    >
+                  </ion-item>
+
+                  <!-- annual view -->
+                  <ion-item lines="none" disabled>
+                    <ion-radio value="annual" label-placement="end"
+                      >Anual</ion-radio
+                    >
+                  </ion-item>
+                </ion-radio-group>
+              </ion-col>
+            </ion-row>
+          </ion-list>
+        </ion-content>
+      </ion-popover>
       <!-- end popovers -->
 
       <!-- modals -->
@@ -235,6 +287,8 @@
       <ion-modal
         ref="modalRescheduleElements"
         trigger="modal-reschedule-elements"
+        :is-open="isOpenModalRecheduleTasks"
+        @did-dismiss="isOpenModalRecheduleTasks = false"
       >
         <ion-page>
           <ion-header :translucent="true" mode="ios" class="ion-no-border">
@@ -245,7 +299,7 @@
                   ><ion-icon :icon="closeOutline"></ion-icon
                 ></ion-button>
               </ion-buttons>
-              <ion-title>Elementos vencidos</ion-title>
+              <ion-title>Reagendar elementos vencidos</ion-title>
             </ion-toolbar>
           </ion-header>
 
@@ -276,6 +330,7 @@
       >
         <AdminEventComponent :event-data="useEvent().getEvent({ idEvent })" />
       </ion-modal>
+      <!-- end modals -->
     </ion-content>
   </ion-page>
 </template>
@@ -295,6 +350,8 @@ import {
   IonDatetime,
   IonModal,
   popoverController,
+  IonRadio,
+  IonRadioGroup,
 } from "@ionic/vue";
 import { computed, onMounted, ref } from "vue";
 import { useSchedule } from "@/composables/useSchedule";
@@ -304,6 +361,7 @@ import {
   chevronBackOutline,
   chevronForwardOutline,
   closeOutline,
+  ellipsisVerticalOutline,
   stopwatchOutline,
   todayOutline,
 } from "ionicons/icons";
@@ -322,7 +380,7 @@ interface Day {
   date: Date;
 }
 
-const pageTitle = "Inicio";
+const pageTitle = "Calendario";
 const daysOfWeek = [
   "sunday",
   "monday",
@@ -378,6 +436,9 @@ const months = [
 const modalRescheduleElements = ref(null);
 const idEvent = ref("");
 const isOpenModalUpdateEvent = ref(false);
+const isOpenModalRecheduleTasks = ref(false);
+const isOpenPopOverMainOptions = ref(false);
+const eventPopOverMainOptions = ref(null as CustomEvent | null);
 
 // mounted
 onMounted(async () => {
@@ -444,7 +505,7 @@ function getDaysForCurrentWeek(params: { date: Date }): Day[] {
   return days;
 }
 
-function previousWeek() {
+function previousWeek(): void {
   const currentMonth = currentDate.getMonth();
   if (currentMonth === 0 && currentDate.getDate() <= 7) {
     return;
@@ -462,7 +523,7 @@ function previousWeek() {
   loadDaysWeek({ date: date.getTime() });
 }
 
-function nextWeek() {
+function nextWeek(): void {
   const currentMonth = currentDate.getMonth();
   const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
   const lastDayOfMonth = new Date(
@@ -480,23 +541,23 @@ function nextWeek() {
   loadDaysWeek({ date: date.getTime() });
 }
 
-function today() {
+function today(): void {
   const date = new Date(Date.now()).getTime();
   loadDaysWeek({ date });
 }
 
-function loadDaysWeek(params: { date: number }) {
+function loadDaysWeek(params: { date: number }): void {
   const date = params.date;
   currentDate.setTime(date);
   const days = getDaysForCurrentWeek({ date: currentDate });
   setDaysToWeek({ days });
 }
 
-function setDaysToWeek(params: { days: Array<Day> }) {
+function setDaysToWeek(params: { days: Array<Day> }): void {
   days.value = params.days;
 }
 
-function translateDayHeaderTable(params: { dayName: string }) {
+function translateDayHeaderTable(params: { dayName: string }): string {
   const dayName = params.dayName as any;
   let result = useSystem().translateDay({
     dayName,
@@ -505,7 +566,7 @@ function translateDayHeaderTable(params: { dayName: string }) {
   return result;
 }
 
-function translateMonth(params: { monthName: string }) {
+function translateMonth(params: { monthName: string }): string {
   const monthName = params.monthName as keyof Months;
 
   let result = useSystem().translateMonth({
@@ -515,7 +576,7 @@ function translateMonth(params: { monthName: string }) {
   return result;
 }
 
-function updateEvent(params: { idEvent: string }) {
+function updateEvent(params: { idEvent: string }): void {
   const id = params.idEvent;
   idEvent.value = id;
   isOpenModalUpdateEvent.value = true;
@@ -524,7 +585,7 @@ function updateEvent(params: { idEvent: string }) {
 async function openPopoverRightEventMenu(params: {
   ev: Event;
   eventId: string;
-}) {
+}): Promise<void> {
   const eventId = params.eventId;
   const ev = params.ev;
 
@@ -541,7 +602,7 @@ async function openPopoverRightEventMenu(params: {
   }
 }
 
-async function deleteEvent(params: { eventId: string }) {
+async function deleteEvent(params: { eventId: string }): Promise<void> {
   const { eventId } = params;
   await useEvent().deleteEvent({ eventId });
   let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
@@ -625,10 +686,40 @@ ion-content::-webkit-scrollbar {
   --width: 66vw;
 }
 
+.space-button-date-selector {
+  width: 7rem;
+  display: flex;
+  justify-content: center;
+}
+
 @media only screen and (min-width: 992px) {
   .modal-event {
     --width: 80vw;
     --height: 90vh;
   }
+  .space-button-date-selector {
+    width: 7rem;
+    display: flex;
+    justify-content: center;
+  }
+}
+ion-radio {
+  --border-radius: 4px;
+  --inner-border-radius: 4px;
+
+  --color: #ddd;
+  --color-checked: #6815ec;
+}
+
+ion-radio.ios::part(container) {
+  width: 20px;
+  height: 20px;
+
+  border: 2px solid #ddd;
+  border-radius: 4px;
+}
+
+.radio-checked.ios::part(container) {
+  border-color: #6815ec;
 }
 </style>

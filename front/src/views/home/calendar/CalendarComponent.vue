@@ -1,21 +1,34 @@
 <template>
   <!-- calendar -->
   <section class="calendar-section">
-    <div class="calendar-header">
-      <ion-button fill="clear" @click="previousDay()">
-        <ion-icon :icon="chevronBackOutline"></ion-icon>
-      </ion-button>
+    <section style="display: flex; justify-content: space-between">
+      <div class="calendar-header">
+        <div class="day-header-container">
+          <span class="day-header" style="color: var(--ion-color-primary)">{{
+            new Date().getDate()
+          }}</span>
+        </div>
 
-      <ion-button id="popoverDateSelector" fill="clear">{{
-        format(new Date(currentDate), "P")
-      }}</ion-button>
+        <div
+          style="display: flex; flex-direction: column; align-items: stretch"
+        >
+          <div style="display: flex">
+            <span class="month-header">{{ new Date().getMonth() }}</span>
+          </div>
+          <div>
+            <span class="year-header">{{ new Date().getFullYear() }}</span>
+          </div>
+        </div>
+      </div>
 
-      <ion-button fill="clear" @click="nextDay()">
-        <ion-icon :icon="chevronForwardOutline"></ion-icon>
-      </ion-button>
-    </div>
+      <div class="center-vertical">
+        <ion-button id="modal-add-event" fill="clear"
+          ><ion-icon :icon="addOutline"></ion-icon
+        ></ion-button>
+      </div>
+    </section>
 
-    <div class="calendar-body">
+    <section class="calendar-body">
       <table class="schedule-table">
         <thead>
           <tr>
@@ -31,7 +44,6 @@
               <div
                 v-for="event in filteredEvents({ hour: parseInt(hour) })"
                 :key="event.id"
-                class="event-item"
               >
                 <ion-card class="card-event">
                   <ion-card-header>
@@ -46,7 +58,7 @@
           </tr>
         </tbody>
       </table>
-    </div>
+    </section>
   </section>
 
   <!-- popovers -->
@@ -70,19 +82,29 @@
       </ion-buttons>
     </ion-datetime>
   </ion-popover>
+  <!-- end popovers -->
+
+  <!-- modals -->
+  <ion-modal
+    ref="modalAddEvent"
+    trigger="modal-add-event"
+    class="modal-event"
+    :backdrop-dismiss="false"
+  >
+    <AdminEventComponent />
+  </ion-modal>
 </template>
 
 <script setup lang="ts">
 import { IonDatetime, IonPopover } from "@ionic/vue";
 import { computed, ref } from "vue";
-import { add, format, subDays } from "date-fns";
-import { chevronBackOutline, chevronForwardOutline } from "ionicons/icons";
-import { Event, ScheduleElement } from "@/utils/interfaces";
+import { format } from "date-fns";
+import { ScheduleElement } from "@/utils/interfaces";
 import { useSchedule } from "@/composables/useSchedule";
+import { addOutline } from "ionicons/icons";
 
-const props = defineProps({
-  events: { type: Array as () => Event[], default: () => [] },
-});
+// components
+import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
 
 const currentDate = ref(new Date());
 const hours = Array.from(
@@ -106,19 +128,7 @@ const generateSchedule = computed(() => {
 });
 
 // functions
-const nextDay = () => {
-  const date = currentDate;
-  currentDate.value = add(new Date(date.value), {
-    days: 1,
-  });
-};
-
-const previousDay = () => {
-  const date = currentDate;
-  currentDate.value = subDays(new Date(date.value), 1);
-};
-
-function filteredEvents(params: { hour: number }) {
+function filteredEvents(params: { hour: number }): ScheduleElement[] {
   return generateSchedule.value.filter((event) => {
     const eventHour = new Date(event.date).getHours();
     if (eventHour === params.hour) {
@@ -139,9 +149,9 @@ function filteredEvents(params: { hour: number }) {
 .calendar-header {
   display: flex;
   justify-content: center;
-  position: sticky;
-  top: 0;
-  z-index: 3;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 .calendar-body {
@@ -188,16 +198,33 @@ function filteredEvents(params: { hour: number }) {
   min-height: 50px;
 }
 
-.schedule-table .event-item {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-}
-
 .card-event {
   border-style: solid;
   border-width: 1px;
   border-color: #ffb4b4;
+}
+
+.day-header {
+  font-size: 70px;
+  font-weight: bold;
+}
+
+.day-header-container {
+  padding-right: 16px;
+}
+
+.month-header {
+  font-size: 20px;
+}
+
+.year-header {
+  font-size: 20px;
+}
+
+@media only screen and (min-width: 992px) {
+  .modal-event {
+    --width: 80vw;
+    --height: 90vh;
+  }
 }
 </style>

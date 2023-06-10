@@ -1,15 +1,11 @@
 <template>
-  <ion-row>
-    <ion-col size="12">
-      <ion-item lines="none">
-        <ion-label>Tiempo invertido hoy</ion-label>
+  <ion-item lines="none">
+    <ion-label class="ion-text-wrap">Tiempo invertido hoy</ion-label>
 
-        <ion-label slot="end">{{
-          convertSeconds({ seconds: todayTime })
-        }}</ion-label>
-      </ion-item>
-    </ion-col>
-  </ion-row>
+    <ion-label slot="end">{{
+      convertSeconds({ seconds: todayTime })
+    }}</ion-label>
+  </ion-item>
 </template>
 
 <script setup lang="ts">

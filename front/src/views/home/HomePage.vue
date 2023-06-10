@@ -1,94 +1,116 @@
 <template>
   <ion-page>
-    <ion-header
-      :translucent="true"
-      collapse="fade"
-      mode="ios"
-      class="ion-no-border"
-    >
+    <ion-header mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
+
+        <ion-buttons slot="end">
+          <!-- button popover  main options -->
+          <ion-button
+            @click="
+              eventPopOverMainOptions = isPlatform('mobile') ? null : $event;
+              isOpenPopOverMainOptions = true;
+            "
+          >
+            <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense" mode="ios">
-        <ion-toolbar>
-          <ion-title size="large">{{ pageTitle }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
+      <section>
+        <ion-row class="scroll-horizontal">
+          <ion-col size-xs="12" size-md="6" size-lg="4">
+            <ion-card class="scroll-card-calendar">
+              <div
+                class="card-calendar-content ion-padding-start ion-padding-end"
+              >
+                <CalendarComponent />
+              </div>
+            </ion-card>
+          </ion-col>
 
-      <ion-row>
-        <ion-col size="12">
-          <div style="width: 100%">
-            <ion-button fill="clear" style="float: right">
-              <!-- <ion-icon :icon="brushOutline"></ion-icon> -->
-            </ion-button>
-          </div>
-        </ion-col>
-      </ion-row>
+          <ion-col size-xs="12" size-md="6" size-lg="6">
+            <ion-row>
+              <ion-col size-lg="8">
+                <ion-card>
+                  <ion-card-header>
+                    <div style="display: flex; justify-content: space-between">
+                      <div class="center-vertical">
+                        <ion-card-title>Wakatime</ion-card-title>
+                      </div>
 
-      <ion-row class="scroll">
-        <ion-col size-xs="12" size-md="6" size-lg="4">
-          <ion-card style="height: 100vh">
-            <ion-card-content>
-              <CalendarComponent />
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
+                      <div>
+                        <ion-button
+                          fill="clear"
+                          size="small"
+                          @click="refreshTodayComponent()"
+                          ><ion-icon :icon="refreshOutline"></ion-icon
+                        ></ion-button>
 
-        <ion-col size-xs="12" size-md="6" size-lg="6">
-          <ion-row>
-            <ion-col size-lg="8">
-              <ion-card>
-                <ion-card-header>
-                  <div style="display: flex; justify-content: space-between">
-                    <div class="center-vertical">
-                      <ion-card-title>Wakatime</ion-card-title>
+                        <ion-button
+                          fill="clear"
+                          size="small"
+                          @click="logoutWakaTime()"
+                          ><ion-icon :icon="logOutOutline"></ion-icon
+                        ></ion-button>
+                      </div>
                     </div>
+                  </ion-card-header>
 
-                    <div>
-                      <ion-button
-                        fill="clear"
-                        size="small"
-                        @click="refreshTodayComponent()"
-                        ><ion-icon :icon="refreshOutline"></ion-icon
-                      ></ion-button>
-
-                      <ion-button
-                        fill="clear"
-                        size="small"
-                        @click="logoutWakaTime()"
-                        ><ion-icon :icon="logOutOutline"></ion-icon
-                      ></ion-button>
+                  <div>
+                    <!-- input api key -->
+                    <div
+                      v-if="!useSystem().getWakaTimeApiKey()"
+                      class="ion-padding"
+                    >
+                      <WakaTimeApiKeyComponent />
+                    </div>
+                    <div v-if="useSystem().getWakaTimeApiKey()">
+                      <WakaTimeToday
+                        ref="todayComponentRef"
+                        :api-key="useSystem().getWakaTimeApiKey()"
+                      />
                     </div>
                   </div>
-                </ion-card-header>
+                </ion-card>
+              </ion-col>
+            </ion-row>
+          </ion-col>
+        </ion-row>
+      </section>
 
-                <ion-card-content>
-                  <!-- input api key -->
-                  <div
-                    v-if="!useSystem().getWakaTimeApiKey()"
-                    class="ion-padding"
-                  >
-                    <WakaTimeApiKeyComponent />
-                  </div>
-                  <div v-if="useSystem().getWakaTimeApiKey()">
-                    <WakaTimeToday
-                      ref="todayComponentRef"
-                      :api-key="useSystem().getWakaTimeApiKey()"
-                    />
-                  </div>
-                </ion-card-content>
-              </ion-card>
-            </ion-col>
-          </ion-row>
-        </ion-col>
-      </ion-row>
+      <!-- popovers -->
+      <!-- popover main options -->
+      <ion-popover
+        :is-open="isOpenPopOverMainOptions"
+        :event="eventPopOverMainOptions"
+        @did-dismiss="isOpenPopOverMainOptions = false"
+      >
+        <ion-content>
+          <ion-list>
+            <ion-list-header>
+              <ion-label>General</ion-label>
+            </ion-list-header>
+
+            <ion-row>
+              <ion-col>
+                <!-- button modal reschedule tasks -->
+                <ion-item button lines="none">
+                  <ion-icon slot="start" :icon="brushOutline"></ion-icon>
+                  <ion-label class="ion-text-wrap">Personalizar</ion-label>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+          </ion-list>
+        </ion-content>
+      </ion-popover>
+      <!-- end popovers -->
     </ion-content>
   </ion-page>
 </template>
@@ -103,12 +125,17 @@ import {
   IonButton,
   IonCard,
   IonCardTitle,
-  IonCardContent,
+  isPlatform,
 } from "@ionic/vue";
 import { useSystem } from "@/composables/useSystem";
 import { onMounted, ref } from "vue";
 
-import { brushOutline, logOutOutline, refreshOutline } from "ionicons/icons";
+import {
+  brushOutline,
+  ellipsisVerticalOutline,
+  logOutOutline,
+  refreshOutline,
+} from "ionicons/icons";
 // components
 import CalendarComponent from "./calendar/CalendarComponent.vue";
 import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
@@ -116,6 +143,8 @@ import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 
 const pageTitle = "Inicio";
 const todayComponentRef = ref();
+const isOpenPopOverMainOptions = ref(false);
+const eventPopOverMainOptions = ref(null as CustomEvent | null);
 
 onMounted(() => {
   useSystem().loadWakaTimeApiKey();
@@ -131,13 +160,15 @@ function logoutWakaTime(): void {
 </script>
 
 <style scoped>
-.scroll {
+.scroll-horizontal {
   flex-wrap: nowrap;
   overflow-x: scroll !important;
   overflow-y: hidden;
   overflow-x: hidden;
+  width: 100%;
 }
-::-webkit-scrollbar {
-  display: none;
+
+.card-calendar-content {
+  height: 86vh;
 }
 </style>
