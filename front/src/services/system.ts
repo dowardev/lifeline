@@ -7,6 +7,9 @@ import { SystemMessage } from "@/utils/interfaces";
 import { Clipboard } from "@capacitor/clipboard";
 import { Theme, ViewMode } from "@/utils/types";
 import axios from "axios";
+import { DocumentNode } from "graphql";
+import gql from "graphql-tag";
+import { useQuery } from "@vue/apollo-composable";
 
 interface WakaTimeDuration {
   data: {
@@ -158,4 +161,45 @@ export async function getWakaTimeDurations(params: {
 
 export async function deleteWakaTimeApiKey(): Promise<void> {
   await storage.remove("wakaTimeApiKey");
+}
+
+export function graphqlQueryBuilder(params: {
+  name: DocumentNode;
+  fragment: string;
+}): DocumentNode {
+  const { name, fragment } = params;
+
+  const query = gql`
+        query GetUser {
+          userAuth {
+           ...${fragment}
+          }
+        }
+        ${name}
+      `;
+  return query;
+}
+
+export function executeGrapQuery(params: {
+  query: any;
+  options: { refetch: boolean };
+}): Promise<any> {
+  const { query, options } = params;
+  const { refetch, onResult, onError } = useQuery(query, null, {
+    fetchPolicy: "cache-first",
+  });
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (options.refetch) await refetch();
+    } catch (error) {
+      reject(error);
+    }
+
+    onResult((response) => resolve(response));
+
+    onError((error) => {
+      reject(error);
+    });
+  });
 }

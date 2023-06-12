@@ -4,22 +4,24 @@ store.create();
 
 import apolloClient from "../Apollo";
 import gql from "graphql-tag";
-import { useQuery, useMutation } from "@vue/apollo-composable";
+import { useMutation } from "@vue/apollo-composable";
 import { provideApolloClient } from "@vue/apollo-composable";
 provideApolloClient(apolloClient);
 
 import {
-  GetUserAuth,
-  GetUserAuthResponse,
   SetUserToken,
   ResendEmailConfirmation,
-} from "./interfaces";
+  Graphql,
+  User,
+} from "../utils/interfaces";
+import { executeGrapQuery, graphqlQueryBuilder } from "./system";
+import { errorBuilder } from "@/utils/errors";
 
-export async function setUserToken(params: SetUserToken) {
+export async function setUserToken(params: SetUserToken): Promise<void> {
   document.cookie = "token=" + params.token;
 }
 
-export function getUserToken() {
+export function getUserToken(): string {
   const name = "token=";
   const cDecoded = decodeURIComponent(document.cookie);
   const cArr = cDecoded.split("; ");
@@ -30,48 +32,34 @@ export function getUserToken() {
   return token;
 }
 
-export async function getUser(
-  params: GetUserAuth
-): Promise<GetUserAuthResponse> {
-  const { onError, onResult, result } = useQuery(
-    gql`
-      query userAuth {
-        userAuth {
-         ...${params.graphql.fragment}
-        }
-      }
-      ${params.graphql.name}
-    `,
-    null,
-    {
-      fetchPolicy: "cache-first",
-    }
-  );
+export async function getUser(params: Graphql): Promise<User> {
+  const { name, fragment, refetch = false } = params;
 
-  return new Promise((resolve, reject) => {
-    if (result.value && result.value.userAuth.user != undefined)
-      resolve({
-        id: result.value.userAuth.id,
-        name: result.value.userAuth.name,
-        user: result.value.userAuth.user,
-      });
-    else {
-      onResult((response) =>
-        resolve({
-          id: response.data.userAuth.id,
-          name: response.data.userAuth.name,
-          user: response.data.userAuth.user,
-        })
-      );
-    }
+  try {
+    const query = graphqlQueryBuilder({ name, fragment });
 
-    onError((error) => {
-      reject(error);
+    let response = await executeGrapQuery({
+      query,
+      options: { refetch },
     });
-  });
+    if (!response.data.userAuth) return {} as User;
+    response = {
+      id: response.data.userAuth.user.id,
+      name: response.data.userAuth.user.name,
+      email: response.data.userAuth.user.email,
+      user: response.data.userAuth.user.user,
+      imageProfile: response.data.userAuth.user.image_profile,
+      isAdmin: response.data.userAuth.user.is_admin,
+    };
+    return response;
+  } catch (error: any) {
+    if (error.message != "Unauthorized")
+      throw errorBuilder({ message: error.message, typeError: "authError" });
+    throw errorBuilder({ message: error.message });
+  }
 }
 
-export function getUserLang() {
+export function getUserLang(): Promise<any> {
   return store.get("lang");
 }
 

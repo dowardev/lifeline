@@ -1,17 +1,38 @@
 <template>
   <ion-page :class="{ 'component-container': isPlatform('desktop') }">
     <ion-content>
-      <ion-item v-if="logged == true" lines="none" class="transparent">
+      <!-- logged -->
+      <ion-item
+        v-if="useUser().isLogged.value == true"
+        lines="none"
+        class="transparent"
+      >
         <ion-avatar slot="start">
           <img :src="imageKeyPath" />
         </ion-avatar>
-        <ion-label class="labelOptionMenu">{{ userData.user }}</ion-label>
-        <ion-button slot="end" fill="clear">
-          <ion-icon :icon="settingsOutline"></ion-icon>
+
+        <ion-label class="labelOptionMenu">{{
+          useUser().user.value.user
+        }}</ion-label>
+
+        <ion-button
+          slot="end"
+          fill="clear"
+          @click="
+            eventOpenPopoverUserOptions = $event;
+            isOpenPopoverUserOptions = true;
+          "
+        >
+          <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
         </ion-button>
       </ion-item>
 
-      <ion-item v-if="logged == false" class="transparent" lines="none">
+      <!-- no logged -->
+      <ion-item
+        v-if="useUser().isLogged.value == false"
+        class="transparent"
+        lines="none"
+      >
         <ion-button fill="clear" @click="openRoute('/login')">{{
           capitalizeFirstLetter($t("message.login"))
         }}</ion-button>
@@ -108,6 +129,39 @@
           {{ capitalizeFirstLetter($tc("message.task", 2)) }}
         </ion-label>
       </ion-item>
+
+      <!-- popovers -->
+      <!-- <ion-popover -->
+      <!--   trigger="click-trigger" -->
+      <!--   trigger-action="click" -->
+      <!--   :dismiss-on-select="true" -->
+      <!-- > -->
+      <!--   <ion-content> -->
+      <!--     <ion-item button @click="changeLanguage('es')"> -->
+      <!--       <ion-label>Español</ion-label> -->
+      <!--     </ion-item> -->
+      <!--     <ion-item button @click="changeLanguage('en')"> -->
+      <!--       <ion-label>English</ion-label> -->
+      <!--     </ion-item> -->
+      <!--   </ion-content> -->
+      <!-- </ion-popover> -->
+
+      <ion-popover
+        :is-open="isOpenPopoverUserOptions"
+        :dismiss-on-select="true"
+        @did-dismiss="isOpenPopoverUserOptions = false"
+        :event="eventOpenPopoverUserOptions"
+      >
+        <ion-item lines="none" button disabled>
+          <ion-icon slot="start" :icon="personOutline"></ion-icon
+          ><ion-label>Panel usuario</ion-label>
+        </ion-item>
+
+        <ion-item lines="none" button @click="logout()">
+          <ion-icon slot="start" :icon="logOutOutline"></ion-icon
+          ><ion-label>Cerrar sesión</ion-label>
+        </ion-item>
+      </ion-popover>
     </ion-content>
 
     <ion-footer class="ion-no-border">
@@ -158,24 +212,6 @@
           <!-- <ion-button id="click-trigger" color="primary"> -->
           <!--   <ion-icon :icon="languageOutline"></ion-icon> -->
           <!-- </ion-button> -->
-          <ion-popover
-            trigger="click-trigger"
-            trigger-action="click"
-            :dismiss-on-select="true"
-          >
-            <ion-content>
-              <ion-item button @click="changeLanguage('es')">
-                <ion-label>Español</ion-label>
-              </ion-item>
-              <ion-item button @click="changeLanguage('en')">
-                <ion-label>English</ion-label>
-              </ion-item>
-            </ion-content>
-          </ion-popover>
-
-          <ion-button v-if="logged == true" fill="clear" color="primary">
-            <ion-icon :icon="exitOutline"></ion-icon>
-          </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-footer>
@@ -191,19 +227,23 @@ import {
   isPlatform,
   modalController,
   IonFooter,
+  IonPopover,
 } from "@ionic/vue";
 import {
   addOutline,
   brushOutline,
   calendarOutline,
   documentTextOutline,
+  ellipsisVerticalOutline,
   exitOutline,
   extensionPuzzleOutline,
   hourglass,
   hourglassOutline,
   informationOutline,
+  logOutOutline,
+  personOutline,
 } from "ionicons/icons";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import {
   settingsOutline,
   homeOutline,
@@ -230,14 +270,12 @@ import { useSystem } from "@/composables/useSystem";
 import userImage from "@/assets/otros/user.png";
 import userImageGruvbox from "@/assets/otros/user-gruvbox.png";
 import { useRouter } from "vue-router";
+import { useUser } from "@/composables/useUser";
 
 const router = useRouter();
-
-const logged = ref(false);
-const userData = {
-  img: userAvatar,
-  user: "Usuario",
-};
+const spinners = reactive({ buttonLogout: false });
+const isOpenPopoverUserOptions = ref(false);
+const eventOpenPopoverUserOptions = ref(CustomEvent);
 
 // computed
 const imageKeyPath = computed(() => {
@@ -259,18 +297,12 @@ const openRoute = (route: string) => {
   router.push(route);
 };
 
-const getUser = async () => {
+const getUser = async (): Promise<void> => {
   try {
-    const { user } = await getUserService({
+    useUser().loadUser({
       graphql: { name: USER_MENU, fragment: "UserMenu" },
     });
-    logged.value = true;
-    userData.user = user;
-  } catch (e: any) {
-    if (e.message == "Unauthorized") return;
-    // openToastErrror(e);
-    console.error(e);
-  }
+  } catch (error) {}
 };
 
 const openModalDesktop = async () => {
@@ -297,6 +329,13 @@ const changeLanguage = (language: string) => {
   // $i18n.locale = language;
   setLanguage(language);
 };
+
+async function logout(): Promise<void> {
+  spinners.buttonLogout = true;
+  await useUser().logout();
+  spinners.buttonLogout = false;
+  location.reload();
+}
 </script>
 
 <style scoped>

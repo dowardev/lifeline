@@ -60,10 +60,8 @@
                           ? 'ion-valid'
                           : 'ion-invalid',
                       ]"
-                      :value="form.name.value"
-                      @ion-input="
-                        form.name.value = $event.target.value as string
-                      "
+                      :value="form.name"
+                      @ion-input="form.name = $event.target.value as string"
                       @ion-focus="
                         ($refs.inputName as any).$el.classList.add(
                           'ion-touched'
@@ -104,10 +102,8 @@
                           ? 'ion-valid'
                           : 'ion-invalid',
                       ]"
-                      :value="form.user.value"
-                      @ion-input="
-                        form.user.value = $event.target.value as string
-                      "
+                      :value="form.user"
+                      @ion-input="form.user = $event.target.value as string"
                       @ion-focus="
                         ($refs.inputUser as any).$el.classList.add(
                           'ion-touched'
@@ -136,24 +132,22 @@
 
                   <div style="width: 100%">
                     <ion-input
-                      ref="inputmail"
+                      ref="inputMail"
                       fill="outline"
                       label="Correo electronico"
                       label-placement="floating"
-                      autocomplete="email"
-                      type="email"
+                      autocomplete="mail"
+                      type="mail"
                       :error-text="v$.form.email.$errors[0]?.$message as string"
                       :class="[
                         v$.form.email.$errors.length == 0
                           ? 'ion-valid'
                           : 'ion-invalid',
                       ]"
-                      :value="form.email.value"
-                      @ion-input="
-                        form.email.value = $event.target.value as string
-                      "
+                      :value="form.email"
+                      @ion-input="form.email = $event.target.value as string"
                       @ion-focus="
-                        ($refs.inputmail as any).$el.classlist.add(
+                        ($refs.inputMail as any).$el.classList.add(
                           'ion-touched'
                         );
                         v$.form.email.$touch();
@@ -192,10 +186,8 @@
                           ? 'ion-valid'
                           : 'ion-invalid',
                       ]"
-                      :value="form.password.value"
-                      @ion-input="
-                        form.password.value = $event.target.value as string
-                      "
+                      :value="form.password"
+                      @ion-input="form.password = $event.target.value as string"
                       @ion-focus="
                         ($refs.inputPassword as any).$el.classList.add(
                           'ion-touched'
@@ -259,9 +251,9 @@
                           ? 'ion-valid'
                           : 'ion-invalid',
                       ]"
-                      :value="form.password2.value"
+                      :value="form.password2"
                       @ion-input="
-                        form.password2.value = $event.target.value as string
+                        form.password2 = $event.target.value as string
                       "
                       @ion-focus="
                         ($refs.inputPassword2 as any).$el.classList.add(
@@ -298,20 +290,18 @@
               </ion-col>
             </ion-row>
 
-            <!-- button login -->
+            <!-- button signup -->
             <div class="center ion-padding-bottom">
               <ion-button
                 expand="block"
-                :disabled="
-                      (v$ as any).form.$invalid || spinners.buttonSignup.value == true
-                    "
+                :disabled="v$.$invalid || spinners.buttonSignup == true"
                 @click="addUser()"
               >
-                <ion-label v-if="spinners.buttonSignup.value == false">{{
+                <ion-label v-if="spinners.buttonSignup == false">{{
                   $t("message.signup")
                 }}</ion-label>
                 <ion-spinner
-                  v-if="spinners.buttonSignup.value == true"
+                  v-if="spinners.buttonSignup == true"
                   name="crescent"
                 ></ion-spinner>
               </ion-button>
@@ -324,14 +314,14 @@
                 <ion-button
                   class="options"
                   fill="clear"
-                  :disabled="spinners.buttonLogin.value"
+                  :disabled="spinners.buttonLogin"
                   @click="login"
                 >
-                  <ion-label v-if="spinners.buttonLogin.value == false"
+                  <ion-label v-if="spinners.buttonLogin == false"
                     >Iniciar sesión</ion-label
                   >
                   <ion-spinner
-                    v-if="spinners.buttonLogin.value"
+                    v-if="spinners.buttonLogin"
                     name="crescent"
                   ></ion-spinner>
                 </ion-button>
@@ -354,8 +344,11 @@ import {
   IonToolbar,
   IonInput,
 } from "@ionic/vue";
-import { computed, ref } from "vue";
-import { userRegister as userRegisterService } from "../../../services/session";
+import { computed, reactive, ref } from "vue";
+import {
+  userRegister,
+  userRegister as userRegisterService,
+} from "../../../services/session";
 import {
   eyeOutline,
   eyeOffOutline,
@@ -366,7 +359,10 @@ import {
 } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
 import { required, email, helpers, sameAs } from "@vuelidate/validators";
-import { openToast as openToastService } from "../../../services/system";
+import {
+  openToast,
+  openToast as openToastService,
+} from "../../../services/system";
 import { getUser as getUserService } from "../../../services/user";
 import { USER_NAME } from "../../../services/graphql";
 import { capitalizeFirstLetter } from "../../../services/system";
@@ -406,17 +402,18 @@ const loginImagePath = computed(() => {
   return image;
 });
 
-const form = {
-  user: ref(""),
-  name: ref(""),
-  email: ref(""),
-  password: ref(""),
-  password2: ref(""),
-};
-const spinners = {
-  buttonSignup: ref(false),
-  buttonLogin: ref(false),
-};
+const form = reactive({
+  user: "",
+  name: "",
+  email: "",
+  password: "",
+  password2: "",
+});
+
+const spinners = reactive({
+  buttonSignup: false,
+  buttonLogin: false,
+});
 const isPasswordVisible1 = ref(false);
 const isPasswordVisible2 = ref(false);
 
@@ -460,52 +457,51 @@ const rules = {
 const v$ = useVuelidate(rules, { form });
 
 // functions
-const addUser = async () => {
-  spinners.buttonSignup.value = true;
+const addUser = async (): Promise<void> => {
+  spinners.buttonSignup = true;
 
   const name = form.name;
   const user = form.user;
-  const email = form.email.value.replace(/\s+/g, "");
+  const email = form.email.replace(/\s+/g, "");
   const password = form.password;
   try {
-    await userRegisterService({
+    await userRegister({
       name,
       user,
       email,
       password,
     });
+    spinners.buttonSignup = false;
     alertConfirmaciónEmail();
     router.push("/login");
     clearInputs();
   } catch (e: any) {
-    spinners.buttonSignup.value = false;
+    spinners.buttonSignup = false;
     if (e.message == "The email has already been selected") {
-      openToastService({
+      openToast({
         message: "Correo ya en uso",
         color: "warning",
       });
       return;
     }
     if (e.message == "The user has already been selected") {
-      openToastService({
+      openToast({
         message: "Usuario ya en uso",
         color: "warning",
       });
       return;
     }
     console.error(e);
-    // systemService().openToastErrror(e);
-  } finally {
-    spinners.buttonSignup.value = false;
+    // useSystem().openToastError(e);
   }
 };
 
 const clearInputs = () => {
-  form.name.value = "";
-  form.user.value = "";
-  form.password.value = "";
-  form.password2.value = "";
-  form.email.value = "";
+  form.name = "";
+  form.user = "";
+  form.password = "";
+  form.password2 = "";
+  form.email = "";
 };
 
 const alertConfirmaciónEmail = async () => {
@@ -530,9 +526,9 @@ const alertConfirmaciónEmail = async () => {
 };
 
 const login = async () => {
-  spinners.buttonLogin.value = true;
+  spinners.buttonLogin = true;
   await router.push("/login");
-  spinners.buttonLogin.value = false;
+  spinners.buttonLogin = false;
 };
 </script>
 

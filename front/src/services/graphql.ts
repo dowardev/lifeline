@@ -2,8 +2,11 @@ import gql from "graphql-tag";
 
 // user
 export const USER_MENU = gql`
-  fragment UserMenu on User {
-    user
+  fragment UserMenu on UserAuthPayload {
+    user {
+      user
+      image_profile
+    }
   }
 `;
 

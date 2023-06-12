@@ -58,10 +58,8 @@
                             ? 'ion-valid'
                             : 'ion-invalid',
                         ]"
-                        :value="form.email.value"
-                        @ion-input="
-                          form.email.value = $event.target.value as string
-                        "
+                        :value="form.email"
+                        @ion-input="form.email = $event.target.value as string"
                         @ion-focus="
                           ($refs.inputMail as any).$el.classList.add(
                             'ion-touched'
@@ -102,9 +100,9 @@
                             ? 'ion-valid'
                             : 'ion-invalid',
                         ]"
-                        :value="form.password.value"
+                        :value="form.password"
                         @ion-input="
-                          form.password.value = $event.target.value as string
+                          form.password = $event.target.value as string
                         "
                         @ion-focus="
                           ($refs.inputPassword as any).$el.classList.add(
@@ -144,14 +142,14 @@
               <!-- button login -->
               <section class="center">
                 <ion-button
-                  :disabled="v$.$invalid || spinners.buttonLogin.value"
+                  :disabled="v$.$invalid || spinners.buttonLogin"
                   @click="login()"
                 >
-                  <ion-label v-if="spinners.buttonLogin.value == false">
+                  <ion-label v-if="spinners.buttonLogin == false">
                     Iniciar sesión</ion-label
                   >
                   <ion-spinner
-                    v-if="spinners.buttonLogin.value"
+                    v-if="spinners.buttonLogin"
                     name="crescent"
                   ></ion-spinner>
                 </ion-button>
@@ -165,17 +163,14 @@
                 <ion-button
                   class="options"
                   fill="clear"
-                  :disabled="spinners.buttonForgotPassword.value"
+                  :disabled="spinners.buttonForgotPassword"
                   @click="forgotPassword()"
                 >
-                  <ion-label
-                    v-if="spinners.buttonForgotPassword.value == false"
-                    >{{
-                      capitalizeFirstLetter($t("message.recoverPassword"))
-                    }}</ion-label
-                  >
+                  <ion-label v-if="spinners.buttonForgotPassword == false">{{
+                    capitalizeFirstLetter($t("message.recoverPassword"))
+                  }}</ion-label>
                   <ion-spinner
-                    v-if="spinners.buttonForgotPassword.value"
+                    v-if="spinners.buttonForgotPassword"
                     name="crescent"
                   ></ion-spinner>
                 </ion-button>
@@ -187,18 +182,15 @@
                 <ion-button
                   class="options"
                   fill="clear"
-                  :disabled="spinners.buttonCreateAccount.value"
+                  :disabled="spinners.buttonCreateAccount"
                   expand="full"
                   @click="createAccount()"
                 >
-                  <ion-label
-                    v-if="spinners.buttonCreateAccount.value == false"
-                    >{{
-                      capitalizeFirstLetter($t("message.createAccount"))
-                    }}</ion-label
-                  >
+                  <ion-label v-if="spinners.buttonCreateAccount == false">{{
+                    capitalizeFirstLetter($t("message.createAccount"))
+                  }}</ion-label>
                   <ion-spinner
-                    v-if="spinners.buttonCreateAccount.value"
+                    v-if="spinners.buttonCreateAccount"
                     name="crescent"
                     color="primary"
                   ></ion-spinner>
@@ -233,7 +225,7 @@ import {
   IonButton,
   isPlatform,
 } from "@ionic/vue";
-import { computed, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import {
   eyeOffOutline,
   eyeOutline,
@@ -270,13 +262,13 @@ onBeforeRouteUpdate((to, from, next) => {
 });
 
 // refs
-const form = { email: ref(""), password: ref("") };
+const form = reactive({ email: "", password: "" });
 // spinners
-const spinners = {
-  buttonLogin: ref(false),
-  buttonForgotPassword: ref(false),
-  buttonCreateAccount: ref(false),
-};
+const spinners = reactive({
+  buttonLogin: false,
+  buttonForgotPassword: false,
+  buttonCreateAccount: false,
+});
 
 // input ref
 const inputMail = ref(null);
@@ -323,7 +315,7 @@ const loginImagePath = computed(() => {
 });
 
 // funcions
-const presentToast = async (message: string, color: string) => {
+const presentToast = async (message: string, color: string): Promise<void> => {
   const toast = await toastController.create({
     message,
     duration: 3000,
@@ -333,11 +325,11 @@ const presentToast = async (message: string, color: string) => {
   toast.present();
 };
 
-const login = async () => {
-  spinners.buttonLogin.value = true;
+async function login(): Promise<void> {
+  spinners.buttonLogin = true;
 
-  const user = form.email.value.replace(/\s+/g, "");
-  const password = form.password.value;
+  const user = form.email.replace(/\s+/g, "");
+  const password = form.password;
 
   try {
     const response = await userLogin({
@@ -349,11 +341,11 @@ const login = async () => {
     const token = "Bearer " + response.auth.access_token;
     setUserToken({ token });
 
-    spinners.buttonLogin.value = false;
+    spinners.buttonLogin = false;
     clearInputs();
     location.reload();
   } catch (e: any) {
-    spinners.buttonLogin.value = false;
+    spinners.buttonLogin = false;
     if (e.message == "Unauthorized" || e.message == "Not found") {
       presentToast("Usuario y/o contraseña incorrectos", "danger");
       return;
@@ -369,15 +361,14 @@ const login = async () => {
       );
       return;
     }
-
-    // openToastErrror(e);
+    // useSystem().openToastError(e);
     console.error(e.message);
   }
-};
+}
 
 const clearInputs = () => {
-  form.password.value = "";
-  form.email.value = "";
+  form.password = "";
+  form.email = "";
 };
 
 const alertConfirmationEmail = async () => {
@@ -404,11 +395,11 @@ const alertConfirmationEmail = async () => {
 };
 
 const forgotPassword = async () => {
-  spinners.buttonForgotPassword.value = true;
+  spinners.buttonForgotPassword = true;
 
   const alertResponse = await presentAlertRestorePassword();
   if (alertResponse.role == "cancel") {
-    spinners.buttonForgotPassword.value = false;
+    spinners.buttonForgotPassword = false;
     return;
   }
 
@@ -421,13 +412,13 @@ const forgotPassword = async () => {
   //   openToastErrror(e);
   // }
 
-  spinners.buttonForgotPassword.value = false;
+  spinners.buttonForgotPassword = false;
 };
 
 const createAccount = async () => {
-  spinners.buttonCreateAccount.value = true;
+  spinners.buttonCreateAccount = true;
   await router.push("/signup");
-  spinners.buttonCreateAccount.value = false;
+  spinners.buttonCreateAccount = false;
 };
 
 const presentAlertRestorePassword = async (): Promise<{

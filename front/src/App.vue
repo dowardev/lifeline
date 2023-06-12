@@ -31,6 +31,8 @@ import { useRoute } from "vue-router";
 import { useDocument } from "@/composables/useDocument";
 import { useSchedule } from "@/composables/useSchedule";
 import { useSystem } from "@/composables/useSystem";
+import { getUserToken } from "./services/user";
+import { useUser } from "./composables/useUser";
 
 const route = useRoute();
 
@@ -61,7 +63,9 @@ onMounted(() => {
 });
 
 // functions
-const start = async () => {
+const start = async (): Promise<void> => {
+  loadUserProps();
+
   await useDocument().loadUserDocuments();
 
   await useSystem().loadThemeSelected();
@@ -90,5 +94,13 @@ async function load() {
       });
     })
   );
+}
+
+function loadUserProps(): void {
+  const userToken = getUserToken();
+  if (userToken != "") {
+    useUser().updateUserLoggedProp(true);
+    useUser().updateUserToken(userToken);
+  }
 }
 </script>

@@ -1,7 +1,7 @@
 import { DocumentNode } from "graphql";
 import { DocumentElements, Theme, TypeDocumentElement } from "./types";
 
-interface Graphql {
+export interface Graphql {
   name: DocumentNode;
   fragment: string;
   refetch?: boolean;
@@ -14,11 +14,11 @@ export interface User {
   user?: string;
   password?: string;
   email?: string;
-  is_admin?: boolean;
+  isAdmin?: boolean;
   rol?: Array<any>;
-  is_email_verified?: boolean;
-  is_user_disabled?: boolean;
-  image_profile: string;
+  isEmailVerified?: boolean;
+  isDisabled?: boolean;
+  imageProfile?: string;
 }
 export interface UserRegister {
   name: User["name"];
