@@ -28,7 +28,7 @@
           <ion-card>
             <ion-card-header>
               <div class="center">
-                <img :src="imageKeyPath" alt="" class="imagen-usuario" />
+                <img :src="imageUserPath" alt="" class="imagen-usuario" />
               </div>
             </ion-card-header>
 
@@ -368,9 +368,13 @@ import { USER_NAME } from "../../../services/graphql";
 import { capitalizeFirstLetter } from "../../../services/system";
 import { useRouter, onBeforeRouteUpdate } from "vue-router";
 import { useSystem } from "@/composables/useSystem";
+
+// assets
 import userImage from "@/assets/otros/user.png";
 import userImageGruvbox from "@/assets/otros/user-gruvbox.png";
+import userImageCherry from "@/assets/otros/user-cherry.png";
 import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
+import loginImageCherry from "@/assets/otros/login-cherry.png";
 
 const router = useRouter();
 
@@ -384,11 +388,12 @@ onBeforeRouteUpdate((to, from, next) => {
     });
 });
 
-const imageKeyPath = computed(() => {
+const imageUserPath = computed(() => {
   const theme = useSystem().getTheme();
   let image = "";
   if (theme == "nord" || "light") image = userImage;
   if (theme == "gruvbox") image = userImageGruvbox;
+  if (theme == "cherry") image = userImageCherry;
   return image;
 });
 
@@ -399,6 +404,7 @@ const loginImagePath = computed(() => {
     image =
       "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
   if (theme == "gruvbox") image = loginImageGruvbox;
+  if (theme == "cherry") image = loginImageCherry;
   return image;
 });
 

@@ -244,10 +244,14 @@ import { required, helpers, email } from "@vuelidate/validators";
 import { USER_LOGIN, USER_NAME } from "../../../services/graphql";
 import { capitalizeFirstLetter } from "../../../services/system";
 import { useSystem } from "@/composables/useSystem";
+import { onBeforeRouteUpdate, useRouter } from "vue-router";
+
+// assets
 import keyImage from "@/assets/otros/key.svg";
 import keyImageGruvbox from "@/assets/otros/key-gruvbox.png";
+import keyImageCherry from "@/assets/otros/key-cherry.png";
 import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
-import { onBeforeRouteUpdate, useRouter } from "vue-router";
+import loginImageCherry from "@/assets/otros/login-cherry.png";
 
 const router = useRouter();
 
@@ -302,6 +306,7 @@ const imageKeyPath = computed(() => {
   let image = "";
   if (theme == "nord" || "light") image = keyImage;
   if (theme == "gruvbox") image = keyImageGruvbox;
+  if (theme == "cherry") image = keyImageCherry;
   return image;
 });
 const loginImagePath = computed(() => {
@@ -311,6 +316,7 @@ const loginImagePath = computed(() => {
     image =
       "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
   if (theme == "gruvbox") image = loginImageGruvbox;
+  if (theme == "cherry") image = loginImageCherry;
   return image;
 });
 
