@@ -12,6 +12,7 @@ import DocumentsPage from "@/views/documents/DocumentsPage.vue";
 import TasksPage from "../views/tasks/TasksPage.vue";
 import IntegrationsPage from "../views/integrations/IntegrationsPage.vue";
 import AboutPage from "../views/about/AboutPage.vue";
+import LandingPage from "../views/lading/LandingPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -72,6 +73,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/about",
     name: "AboutPage",
     component: AboutPage,
+  },
+  {
+    path: "/lading",
+    name: "LandingPage",
+    component: LandingPage,
   },
 ];
 

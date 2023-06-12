@@ -100,5 +100,5 @@ ion-card {
 }
 
 ion-toolbar{
-  --background:var(--ion-background-color-rgb)
+  --background:var(--ion-background-color)
 }
