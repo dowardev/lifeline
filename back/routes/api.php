@@ -5,6 +5,7 @@ use App\Http\Controllers\EventController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\WakaTimeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,9 @@ use App\Http\Controllers\CalendarController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
   return $request->user();
 });
+
+/* wakatime */
+Route::get('wakatime-durations', [WakaTimeController::class, 'durations']);
 
 Route::group(['prefix' => 'auth'], function () {
   Route::post('login', [AuthController::class, 'login']);
