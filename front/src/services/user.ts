@@ -54,7 +54,7 @@ export async function getUser(params: { refetch: boolean }): Promise<User> {
       name: response.data.userAuth.user.name,
       email: response.data.userAuth.user.email,
       user: response.data.userAuth.user.user,
-      imageProfile: response.data.userAuth.user.image_profile,
+      // imageProfile: response.data.userAuth.user.image_profile,
       isAdmin: response.data.userAuth.user.is_admin,
     };
     return response;
