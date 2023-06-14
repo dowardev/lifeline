@@ -39,7 +39,7 @@ type User {
   name: String!
   email: String!
   user: String!
-  # image_profile: String
+  image_profile: String
   calendars: [Calendar]
   events: [Event]
 }
