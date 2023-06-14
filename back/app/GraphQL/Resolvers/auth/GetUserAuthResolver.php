@@ -44,7 +44,7 @@ class GetUserAuthResolver
         'name' => $response->name,
         'user' => $response->user,
         'email' => $response->email,
-        'image_profile' => $image_source,
+        /* 'image_profile' => $image_source, */
         'calendars' => $calendars,
         'events' => $events,
       ];
