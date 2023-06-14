@@ -48,7 +48,7 @@
                       fill="outline"
                       label="Nombre"
                       label-placement="floating"
-                      autocomplete="name"
+                      autocomplete="given-name"
                       type="text"
                       :error-text="v$.form.name.$errors[0]?.$message as string"
                       :class="[

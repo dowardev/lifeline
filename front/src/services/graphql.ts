@@ -52,28 +52,31 @@ export function graphqlMutationBuilder(params: {
 
   return query;
 }
-export function executeGrapQuery(params: {
+export async function executeGrapQuery(params: {
   query: any;
   options: { refetch: boolean };
 }): Promise<any> {
   const { query, options } = params;
-  const { refetch, onResult, onError } = useQuery(query, null, {
+  const { refetch, onResult, onError, result } = useQuery(query, null, {
     fetchPolicy: "cache-first",
   });
+  if (options.refetch) await refetch();
 
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (options.refetch) await refetch();
-    } catch (error) {
-      reject(error);
-    }
+  return result;
 
-    onResult((response) => resolve(response));
-
-    onError((error) => {
-      reject(error);
-    });
-  });
+  // return new Promise(async (resolve, reject) => {
+  //   try {
+  //     if (options.refetch) await refetch();
+  //   } catch (error) {
+  //     reject(error);
+  //   }
+  //
+  //   onResult((response) => resolve(response));
+  //
+  //   onError((error) => {
+  //     reject(error);
+  //   });
+  // });
 }
 
 export function executeGrapMutation(params: {

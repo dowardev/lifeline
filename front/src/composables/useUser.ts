@@ -22,7 +22,7 @@ export const useUser = () => {
   async function loadUser(): Promise<void> {
     try {
       const user = await getUser({
-        refetch: false,
+        refetch: true,
       });
 
       updateUserProps({ user });

@@ -32,23 +32,29 @@ async function adminGuard(): Promise<true | "/"> {
 }
 
 async function userLoggedGuard(): Promise<true | "/lading"> {
+  let value = "lading" as true | "/lading";
   try {
     await loadUser();
     const user = useUser().user.value.user;
-    if (user) return true;
+    if (user) value = true;
   } catch (error) {
     console.error(error);
-    return "/lading";
+    value = "/lading";
+  } finally {
+    return value;
   }
 }
 
 async function userSignOutGuard(): Promise<true | "/" | undefined> {
+  let value = true as true | "/";
   try {
     await loadUser();
     const user = useUser().user.value.user;
-    if (user) return "/";
+    if (user) value = "/";
   } catch (error) {
-    return true;
+    value = true;
+  } finally {
+    return value;
   }
 }
 
