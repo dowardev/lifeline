@@ -1,5 +1,5 @@
 import { DocumentNode } from "graphql";
-import { DocumentElements, Theme, TypeDocumentElement } from "./types";
+import { DocumentElements, Theme } from "./types";
 
 export interface Graphql {
   name: DocumentNode;
@@ -35,7 +35,6 @@ export interface ResendEmailConfirmation {
 export interface UserLogin {
   user: User["user"];
   password: User["password"];
-  graphql: Graphql;
 }
 export interface GetUserAuth {
   graphql: Graphql;

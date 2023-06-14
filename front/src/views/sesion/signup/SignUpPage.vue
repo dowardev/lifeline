@@ -7,9 +7,7 @@
             <ion-icon :icon="chevronBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>{{
-          capitalizeFirstLetter($t("message.createAccount"))
-        }}</ion-title>
+        <ion-title>Crear cuenta</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -17,9 +15,7 @@
       <img :src="loginImagePath" class="img-fondo" style="opacity: 90%" />
       <ion-row class="ion-padding">
         <ion-col size="12">
-          <h1 style="color: white !important">
-            {{ capitalizeFirstLetter($t("message.welcomeMessageLogin")) }}
-          </h1>
+          <h1 style="color: white !important">Bienvenido</h1>
         </ion-col>
       </ion-row>
 
@@ -346,10 +342,6 @@ import {
 } from "@ionic/vue";
 import { computed, reactive, ref } from "vue";
 import {
-  userRegister,
-  userRegister as userRegisterService,
-} from "../../../services/session";
-import {
   eyeOutline,
   eyeOffOutline,
   chevronBackOutline,
@@ -359,15 +351,11 @@ import {
 } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
 import { required, email, helpers, sameAs } from "@vuelidate/validators";
-import {
-  openToast,
-  openToast as openToastService,
-} from "../../../services/system";
-import { getUser as getUserService } from "../../../services/user";
-import { USER_NAME } from "../../../services/graphql";
-import { capitalizeFirstLetter } from "../../../services/system";
-import { useRouter, onBeforeRouteUpdate } from "vue-router";
+import { useRouter } from "vue-router";
+
+// composables
 import { useSystem } from "@/composables/useSystem";
+import { useUser } from "@/composables/useUser";
 
 // assets
 import userImage from "@/assets/otros/user.png";
@@ -377,16 +365,6 @@ import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
 import loginImageCherry from "@/assets/otros/login-cherry.png";
 
 const router = useRouter();
-
-onBeforeRouteUpdate((to, from, next) => {
-  getUserService({ graphql: { name: USER_NAME, fragment: "UserName" } })
-    .then(() => {
-      next("/");
-    })
-    .catch(() => {
-      next();
-    });
-});
 
 const imageUserPath = computed(() => {
   const theme = useSystem().getTheme();
@@ -471,7 +449,7 @@ const addUser = async (): Promise<void> => {
   const email = form.email.replace(/\s+/g, "");
   const password = form.password;
   try {
-    await userRegister({
+    await useUser().register({
       name,
       user,
       email,
@@ -484,14 +462,14 @@ const addUser = async (): Promise<void> => {
   } catch (e: any) {
     spinners.buttonSignup = false;
     if (e.message == "The email has already been selected") {
-      openToast({
+      useSystem().openToast({
         message: "Correo ya en uso",
         color: "warning",
       });
       return;
     }
     if (e.message == "The user has already been selected") {
-      openToast({
+      useSystem().openToast({
         message: "Usuario ya en uso",
         color: "warning",
       });

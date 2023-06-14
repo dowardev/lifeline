@@ -33,12 +33,12 @@
         class="transparent"
         lines="none"
       >
-        <ion-button fill="clear" @click="openRoute('/login')">{{
-          capitalizeFirstLetter($t("message.login"))
-        }}</ion-button>
-        <ion-button fill="clear" @click="openRoute('/signup')">{{
-          capitalizeFirstLetter($t("message.signup"))
-        }}</ion-button>
+        <ion-button fill="clear" @click="openRoute('/login')">
+          Iniciar sesión
+        </ion-button>
+        <ion-button fill="clear" @click="openRoute('/signup')"
+          >Registrar</ion-button
+        >
       </ion-item>
 
       <!-- home -->
@@ -125,9 +125,7 @@
           ></ion-icon>
         </div>
 
-        <ion-label class="labelOptionMenu">
-          {{ capitalizeFirstLetter($tc("message.task", 2)) }}
-        </ion-label>
+        <ion-label class="labelOptionMenu"> Tareas </ion-label>
       </ion-item>
 
       <!-- popovers -->
@@ -149,8 +147,8 @@
       <ion-popover
         :is-open="isOpenPopoverUserOptions"
         :dismiss-on-select="true"
-        @did-dismiss="isOpenPopoverUserOptions = false"
         :event="eventOpenPopoverUserOptions"
+        @did-dismiss="isOpenPopoverUserOptions = false"
       >
         <ion-item lines="none" button disabled>
           <ion-icon slot="start" :icon="personOutline"></ion-icon
@@ -235,37 +233,18 @@ import {
   calendarOutline,
   documentTextOutline,
   ellipsisVerticalOutline,
-  exitOutline,
   extensionPuzzleOutline,
-  hourglass,
   hourglassOutline,
   informationOutline,
   logOutOutline,
   personOutline,
 } from "ionicons/icons";
 import { computed, onMounted, reactive, ref } from "vue";
-import {
-  settingsOutline,
-  homeOutline,
-  documentOutline,
-  checkboxOutline,
-  briefcaseOutline,
-  helpOutline,
-  cogOutline,
-  cloudDownloadOutline,
-} from "ionicons/icons/";
-import { getUser as getUserService } from "../../services/user";
-// import eventBus from "../../EventBus";
+import { homeOutline, checkboxOutline, helpOutline } from "ionicons/icons/";
 import { Storage } from "@ionic/storage";
 const store = new Storage();
 store.create();
 import ThemeSelectorComponent from "./theme/ThemeMenuComponent.vue";
-// import sesionService from "../../services/sesion";
-// import systemService from "../../services/system";
-import { USER_MENU } from "../../services/graphql";
-import userAvatar from "../../assets/otros/user.png";
-import { capitalizeFirstLetter } from "../../services/system";
-import { setLanguage } from "../../services/system";
 import { useSystem } from "@/composables/useSystem";
 import userImage from "@/assets/otros/user.png";
 import userImageGruvbox from "@/assets/otros/user-gruvbox.png";
@@ -288,7 +267,7 @@ const imageKeyPath = computed(() => {
 
 // mounted
 onMounted(() => {
-  getUser();
+  loadUser();
 });
 
 // functions
@@ -297,12 +276,12 @@ const openRoute = (route: string) => {
   router.push(route);
 };
 
-const getUser = async (): Promise<void> => {
+const loadUser = async (): Promise<void> => {
   try {
-    useUser().loadUser({
-      graphql: { name: USER_MENU, fragment: "UserMenu" },
-    });
-  } catch (error) {}
+    await useUser().loadUser();
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 const openModalDesktop = async () => {
@@ -332,9 +311,13 @@ const changeLanguage = (language: string) => {
 
 async function logout(): Promise<void> {
   spinners.buttonLogout = true;
-  await useUser().logout();
-  spinners.buttonLogout = false;
-  location.reload();
+  try {
+    await useUser().logout();
+    spinners.buttonLogout = false;
+    location.reload();
+  } catch (error) {
+    console.error(error);
+  }
 }
 </script>
 

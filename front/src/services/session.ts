@@ -1,99 +1,81 @@
-import { UserRegister, UserLogin, UserLoginResponse } from "./interfaces";
+import {
+  UserRegister,
+  UserLogin,
+  UserLoginResponse,
+} from "../utils/interfaces";
 
-import gql from "graphql-tag";
-import { useMutation } from "@vue/apollo-composable";
+import { errorBuilder } from "@/utils/errors";
+import { executeGrapMutation, graphqlMutationBuilder } from "./graphql";
+import { USER_LOGIN, USER_LOGOUT, USER_REGISTER } from "@/utils/graphql";
 
-export async function userRegister(params: UserRegister) {
-  const {
-    mutate: register,
-    onDone,
-    onError,
-  } = useMutation(
-    gql`
-      mutation register(
-        $name: String!
-        $user: String!
-        $email: String!
-        $password: String!
-      ) {
-        register(
-          input: {
-            name: $name
-            user: $user
-            email: $email
-            password: $password
-          }
-        )
-      }
-    `,
-    {
-      variables: {
-        name: params.name,
-        user: params.user,
-        email: params.email,
-        password: params.password,
-      },
-    }
-  );
-  register();
+export async function userRegister(params: UserRegister): Promise<void> {
+  const { name, email, user, password } = params;
 
-  return new Promise((resolve, reject) => {
-    onDone((response) => {
-      resolve(response.data);
+  try {
+    const query = graphqlMutationBuilder({
+      name: USER_REGISTER,
+      fragment: "UserRegister",
+      mutationName: "register",
+      inputName: "RegisterInput",
     });
 
-    onError((error) => reject(error));
-  });
+    await executeGrapMutation({
+      query,
+      input: { name, email, user, password },
+    });
+  } catch (error: any) {
+    if (error.message != "Unauthorized")
+      throw errorBuilder({ message: error.message, typeError: "authError" });
+    throw errorBuilder({ message: error.message });
+  }
 }
 
 export async function userLogin(params: UserLogin): Promise<UserLoginResponse> {
-  const {
-    mutate: login,
-    onDone,
-    onError,
-  } = useMutation(
-    gql`
-        mutation UserLogin($user: String!, $password: String!) {
-          login(input: { user: $user, password: $password }) {
-            ...${params.graphql.fragment}
-          }
-        }
-        ${params.graphql.name}
-      `,
-    {
-      variables: {
-        user: params.user,
-        password: params.password,
-      },
-    }
-  );
-  login();
+  const { user, password } = params;
 
-  return new Promise((resolve, reject) => {
-    onDone((response) => {
-      resolve({
-        user: response.data.login.user,
-        auth: {
-          access_token: response.data.login.auth.access_token,
-          token_type: response.data.login.auth.token_type,
-        },
-      });
+  try {
+    const query = graphqlMutationBuilder({
+      name: USER_LOGIN,
+      fragment: "UserLogin",
+      mutationName: "login",
+      inputName: "LoginInput",
     });
 
-    onError((error) => reject(error));
-  });
+    let response = await executeGrapMutation({
+      query,
+      input: { user, password },
+    });
+
+    if (!response.login.auth) return {} as UserLoginResponse;
+    response = {
+      user: response.login.user,
+      auth: {
+        access_token: response.login.auth.access_token,
+        token_type: response.login.auth.token_type,
+      },
+    };
+    return response;
+  } catch (error: any) {
+    if (error.message != "Unauthorized")
+      throw errorBuilder({ message: error.message, typeError: "authError" });
+    throw errorBuilder({ message: error.message });
+  }
 }
 
-export async function logout() {
-  // const token = await userService()
-  //   .getUserToken()
-  //   .then((response) => {
-  //     return response;
-  //   });
-  // return axios.get("http://localhost:8000/api/auth/logout", {
-  //   headers: {
-  //     Accept: "application/json",
-  //     Authorization: "Bearer " + token,
-  //   },
-  // });
+export async function logout(): Promise<void> {
+  try {
+    const query = graphqlMutationBuilder({
+      name: USER_LOGOUT,
+      fragment: "UserLogout",
+      mutationName: "userLogout",
+    });
+
+    await executeGrapMutation({
+      query,
+    });
+  } catch (error: any) {
+    if (error.message != "Unauthorized")
+      throw errorBuilder({ message: error.message, typeError: "authError" });
+    throw errorBuilder({ message: error.message });
+  }
 }

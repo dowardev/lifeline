@@ -9,7 +9,6 @@ import { Theme, ViewMode } from "@/utils/types";
 import axios from "axios";
 import { DocumentNode } from "graphql";
 import gql from "graphql-tag";
-import { useQuery } from "@vue/apollo-composable";
 
 interface WakaTimeDuration {
   data: {
@@ -41,11 +40,14 @@ export async function saveTheme(params: { theme: Theme }): Promise<void> {
   await storage.set("theme", theme);
 }
 
-export async function openToast(params: SystemMessage) {
-  const color = params.color != undefined ? params.color : "dark";
+export async function openToast(params: {
+  message: string;
+  color: string;
+}): Promise<void> {
+  const { color, message } = params;
 
   const toast = await toastController.create({
-    message: params.message,
+    message,
     duration: 2000,
     color,
     position: "bottom",
@@ -170,7 +172,7 @@ export function graphqlQueryBuilder(params: {
   const { name, fragment } = params;
 
   const query = gql`
-        query GetUser {
+        query GetUse {
           userAuth {
            ...${fragment}
           }
@@ -178,28 +180,4 @@ export function graphqlQueryBuilder(params: {
         ${name}
       `;
   return query;
-}
-
-export function executeGrapQuery(params: {
-  query: any;
-  options: { refetch: boolean };
-}): Promise<any> {
-  const { query, options } = params;
-  const { refetch, onResult, onError } = useQuery(query, null, {
-    fetchPolicy: "cache-first",
-  });
-
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (options.refetch) await refetch();
-    } catch (error) {
-      reject(error);
-    }
-
-    onResult((response) => resolve(response));
-
-    onError((error) => {
-      reject(error);
-    });
-  });
 }

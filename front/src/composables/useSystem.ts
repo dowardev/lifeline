@@ -10,6 +10,7 @@ import {
   testWakaTimeApiKey as testWakaTimeApiKeyService,
   getWakaTimeDurations as getWakaTimeDurationsService,
   deleteWakaTimeApiKey as deleteWakaTimeApiKeyService,
+  openToast as openToastService,
 } from "@/services/system";
 import { Theme, ViewMode } from "@/utils/types";
 import {
@@ -17,6 +18,7 @@ import {
   EventReminderNotification,
   EventReminderRepeat,
   Months,
+  SystemMessage,
 } from "@/utils/interfaces";
 
 export const useSystem = () => {
@@ -172,6 +174,11 @@ export const useSystem = () => {
     systemStore.removeWakaTimeApiKey();
   }
 
+  async function openToast(params: SystemMessage): Promise<void> {
+    const { color = "dark", message } = params;
+    openToastService({ color, message });
+  }
+
   return {
     loadThemeSelected,
     getTheme,
@@ -190,5 +197,6 @@ export const useSystem = () => {
     loadWakaTimeToday,
     getWakaTimeDayTotal,
     clearWakaTimeApiKey,
+    openToast
   };
 };

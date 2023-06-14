@@ -14,10 +14,11 @@ import {
   Graphql,
   User,
 } from "../utils/interfaces";
-import { executeGrapQuery, graphqlQueryBuilder } from "./system";
 import { errorBuilder } from "@/utils/errors";
+import { executeGrapQuery, graphqlQueryBuilder } from "./graphql";
+import { USER_MENU } from "@/utils/graphql";
 
-export async function setUserToken(params: SetUserToken): Promise<void> {
+export function setUserToken(params: SetUserToken): void {
   document.cookie = "token=" + params.token;
 }
 
@@ -32,11 +33,16 @@ export function getUserToken(): string {
   return token;
 }
 
-export async function getUser(params: Graphql): Promise<User> {
-  const { name, fragment, refetch = false } = params;
+export async function getUser(params: { refetch: boolean }): Promise<User> {
+  const { refetch } = params;
+  const graphql = { name: USER_MENU, fragment: "UserMenu" };
 
   try {
-    const query = graphqlQueryBuilder({ name, fragment });
+    const query = graphqlQueryBuilder({
+      name: graphql.name,
+      fragment: graphql.fragment,
+      mutationName: "userAuth",
+    });
 
     let response = await executeGrapQuery({
       query,

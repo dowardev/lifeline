@@ -17,7 +17,7 @@
       <ion-row class="ion-padding">
         <ion-col size="12">
           <h1 style="color: white !important">
-            {{ capitalizeFirstLetter($t("message.welcomeMessageLogin")) }}
+            Hola, es un gusto tenerte de vuelta.
           </h1>
         </ion-col>
       </ion-row>
@@ -166,9 +166,9 @@
                   :disabled="spinners.buttonForgotPassword"
                   @click="forgotPassword()"
                 >
-                  <ion-label v-if="spinners.buttonForgotPassword == false">{{
-                    capitalizeFirstLetter($t("message.recoverPassword"))
-                  }}</ion-label>
+                  <ion-label v-if="spinners.buttonForgotPassword == false">
+                    Recuperar contraseña
+                  </ion-label>
                   <ion-spinner
                     v-if="spinners.buttonForgotPassword"
                     name="crescent"
@@ -186,9 +186,9 @@
                   expand="full"
                   @click="createAccount()"
                 >
-                  <ion-label v-if="spinners.buttonCreateAccount == false">{{
-                    capitalizeFirstLetter($t("message.createAccount"))
-                  }}</ion-label>
+                  <ion-label v-if="spinners.buttonCreateAccount == false">
+                    Crear cuenta
+                  </ion-label>
                   <ion-spinner
                     v-if="spinners.buttonCreateAccount"
                     name="crescent"
@@ -232,19 +232,14 @@ import {
   fingerPrintOutline,
   personOutline,
 } from "ionicons/icons";
-import { userLogin } from "../../../services/session";
-import {
-  getUser,
-  setUserToken,
-  resendEmailConfirmation,
-} from "../../../services/user";
 import useVuelidate from "@vuelidate/core";
 import { required, helpers, email } from "@vuelidate/validators";
-// import { openToastErrror } from "../../../services/system";
-import { USER_LOGIN, USER_NAME } from "../../../services/graphql";
-import { capitalizeFirstLetter } from "../../../services/system";
+import { USER_LOGIN, USER_MENU } from "../../../utils/graphql";
 import { useSystem } from "@/composables/useSystem";
-import { onBeforeRouteUpdate, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
+
+// composabeles
+import { useUser } from "@/composables/useUser";
 
 // assets
 import keyImage from "@/assets/otros/key.svg";
@@ -254,16 +249,6 @@ import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
 import loginImageCherry from "@/assets/otros/login-cherry.png";
 
 const router = useRouter();
-
-onBeforeRouteUpdate((to, from, next) => {
-  getUser({ graphql: { name: USER_NAME, fragment: "UserName" } })
-    .then(() => {
-      next("/");
-    })
-    .catch(() => {
-      next();
-    });
-});
 
 // refs
 const form = reactive({ email: "", password: "" });
@@ -338,14 +323,13 @@ async function login(): Promise<void> {
   const password = form.password;
 
   try {
-    const response = await userLogin({
+    const response = await useUser().userLogin({
       user,
       password,
-      graphql: { name: USER_LOGIN, fragment: "UserLogin" },
     });
 
     const token = "Bearer " + response.auth.access_token;
-    setUserToken({ token });
+    useUser().storeUserToken({ token });
 
     spinners.buttonLogin = false;
     clearInputs();
@@ -466,6 +450,16 @@ const presentAlertRestorePassword = async (): Promise<{
   const response = await alert.onDidDismiss();
   // eslint-disable-next-line
   return { email: response.data.values.email, role: response.role! };
+};
+
+const loadUser = async (): Promise<void> => {
+  try {
+    useUser().loadUser({
+      graphql: { name: USER_MENU, fragment: "UserMenu" },
+    });
+  } catch (error) {
+    console.error(error);
+  }
 };
 </script>
 
