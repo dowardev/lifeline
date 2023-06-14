@@ -20,6 +20,7 @@ trait UserTrait
       $message
     ) use ($email) {
       $message->to($email);
+      $message->from('lifeline@dowar.xyz', 'Gonzalo Ponce(Dowar)');
       $message->subject('Email Verification Mail');
     });
   }

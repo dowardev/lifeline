@@ -25,14 +25,14 @@ class GetUserAuthResolver
         return Error::createLocatedError('Unauthorized');
       }
 
-      // $image_source = '';
-      // if ($response->image_id) {
-      //   $image_source = base64_encode(
-      //     Storage::disk('user_images_profile')->get(
-      //       Images::find($response->image_id)->name
-      //     )
-      //   );
-      // }
+      $image_source = '';
+      if ($response->image_id) {
+        $image_source = base64_encode(
+          Storage::disk('user_images_profile')->get(
+            Images::find($response->image_id)->name
+          )
+        );
+      }
 
       $user_id = Auth::user()->id;
 
@@ -43,12 +43,15 @@ class GetUserAuthResolver
         'id' => $response->id,
         'name' => $response->name,
         'user' => $response->user,
-        // 'image_source' => $image_source,
+        'email' => $response->email,
+        'image_profile' => $image_source,
         'calendars' => $calendars,
         'events' => $events,
       ];
 
-      return $user;
+      return [
+        'user' => $user,
+      ];
     } catch (Exception $e) {
       throw new Exception($e->getMessage());
     }
