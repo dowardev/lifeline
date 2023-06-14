@@ -48,7 +48,7 @@
                       fill="outline"
                       label="Nombre"
                       label-placement="floating"
-                      autocomplete="given-name"
+                      autocomplete="name"
                       type="text"
                       :error-text="v$.form.name.$errors[0]?.$message as string"
                       :class="[
@@ -132,8 +132,8 @@
                       fill="outline"
                       label="Correo electronico"
                       label-placement="floating"
-                      autocomplete="mail"
-                      type="mail"
+                      autocomplete="email"
+                      type="email"
                       :error-text="v$.form.email.$errors[0]?.$message as string"
                       :class="[
                         v$.form.email.$errors.length == 0
@@ -239,11 +239,10 @@
                       fill="outline"
                       label="Repetir contraseña"
                       label-placement="floating"
-                      autocomplete="new-password"
                       :type="isPasswordVisible2 ? 'text' : 'password'"
-                      :error-text="v$.form.password2.$errors[0]?.$message as string"
+                      :error-text="form.password2 != form.password ? 'Las contraseñas no coinciden' : ''"
                       :class="[
-                        v$.form.password2.$errors.length == 0
+                        form.password2 == form.password
                           ? 'ion-valid'
                           : 'ion-invalid',
                       ]"
@@ -251,12 +250,7 @@
                       @ion-input="
                         form.password2 = $event.target.value as string
                       "
-                      @ion-focus="
-                        ($refs.inputPassword2 as any).$el.classList.add(
-                          'ion-touched'
-                        );
-                        v$.form.password2.$touch();
-                      "
+                      @ion-focus="v$.form.password2.$touch()"
                     ></ion-input>
                   </div>
 

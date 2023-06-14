@@ -121,15 +121,11 @@
                           slot="end"
                           fill="clear"
                           style="margin-top: 20px"
-                          @click="
-                            isPasswordVisible = !isPasswordVisible.valueOf()
-                          "
+                          @click="isPasswordVisible = !isPasswordVisible"
                         >
                           <ion-icon
                             :icon="
-                              isPasswordVisible.valueOf()
-                                ? eyeOffOutline
-                                : eyeOutline
+                              isPasswordVisible ? eyeOffOutline : eyeOutline
                             "
                           ></ion-icon>
                         </ion-button>
