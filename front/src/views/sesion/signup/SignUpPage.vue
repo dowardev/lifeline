@@ -250,7 +250,6 @@
                       @ion-input="
                         form.password2 = $event.target.value as string
                       "
-                      @ion-focus="v$.form.password2.$touch()"
                     ></ion-input>
                   </div>
 
@@ -424,12 +423,12 @@ const rules = {
         helpers.regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
       ),
     },
-    password2: {
-      same: helpers.withMessage(
-        "Las contraseñas no coinciden",
-        sameAs(form.password)
-      ),
-    },
+    // password2: {
+    //   same: helpers.withMessage(
+    //     "Las contraseñas no coinciden",
+    //     sameAs(form.password)
+    //   ),
+    // },
   },
 };
 const v$ = useVuelidate(rules, { form });
