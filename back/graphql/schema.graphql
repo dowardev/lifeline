@@ -1,6 +1,3 @@
-scalar DateTime
-  @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
-
 type Query {
   userAuth: UserAuthPayload
     @field(
@@ -19,9 +16,6 @@ type Mutation {
 
   login(input: LoginInput @spread): LoginPayload
     @field(resolver: "App\\GraphQL\\Resolvers\\auth\\LoginResolver@resolve")
-
-  # prueba(input: RegisterInput @spread): String
-  #   @field(resolver: "App\\GraphQL\\Resolvers\\others\\TestResolver@resolve")
 
   createEvent(input: CreateEvent @spread): Boolean
     @field(
