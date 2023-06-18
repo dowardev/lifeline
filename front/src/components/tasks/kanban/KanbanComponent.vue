@@ -3,21 +3,22 @@
     :class="{ center: screenWidth >= 768 }"
     class="ion-padding-start ion-padding-end"
   >
-    <ion-col size-xs="12" size-md="3" sizw-lg="2">
+    <ion-col size-xs="12" size-md="3" size-lg="3">
       <h3>Pendiente</h3>
       <div class="border-column"></div>
-      <draggable
-        class="list-group"
-        :list="pending"
-        group="people"
-        item-key="name"
-        @change="eventKanban({ evt: $event, columnName: 'pending' })"
-      >
-        <template #item="{ element }">
-          <div class="list-group-item">
-            <ion-card
-              @mouseover="showButtonsOptionsTask = element.id"
-              @mouseleave="showButtonsOptionsTask = -1"
+      <ion-card class="card-elements">
+        <draggable
+          :list="pending"
+          group="people"
+          item-key="name"
+          @change="eventKanban({ evt: $event, columnName: 'pending' })"
+        >
+          <template #item="{ element }">
+            <ion-item
+              button
+              class="transparent"
+              lines="full"
+              style="cursor: move"
               @contextmenu.prevent="
                 openPopoverRightTaskMenu({
                   ev: $event,
@@ -33,46 +34,29 @@
                 })
               "
             >
-              <ion-card-content
-                >{{ element.name }}
-                <div
-                  v-show="showButtonsOptionsTask == element.id"
-                  class="hover-overlay"
-                >
-                  <ion-button
-                    @click="updateTask({ idTask: element.id.toString() })"
-                    ><ion-icon :icon="createOutline"></ion-icon
-                  ></ion-button>
-
-                  <ion-button
-                    fill="clear"
-                    color="danger"
-                    @click="removeTask({ id: element.id.toString() })"
-                    ><ion-icon :icon="trashOutline"></ion-icon
-                  ></ion-button>
-                </div>
-              </ion-card-content>
-            </ion-card>
-          </div>
-        </template>
-      </draggable>
+              <ion-label>{{ element.name }} </ion-label>
+            </ion-item>
+          </template>
+        </draggable>
+      </ion-card>
     </ion-col>
 
-    <ion-col size-xs="12" size-md="3" sizw-lg="2">
+    <ion-col size-xs="12" size-md="3" size-lg="3">
       <h3>En progreso</h3>
       <div class="border-column"></div>
-      <draggable
-        class="list-group"
-        :list="progress"
-        group="people"
-        item-key="name"
-        @change="eventKanban({ evt: $event, columnName: 'progress' })"
-      >
-        <template #item="{ element }">
-          <div class="list-group-item">
-            <ion-card
-              @mouseover="showButtonsOptionsTask = element.id"
-              @mouseleave="showButtonsOptionsTask = -1"
+      <ion-card class="card-elements">
+        <draggable
+          :list="progress"
+          group="people"
+          item-key="name"
+          @change="eventKanban({ evt: $event, columnName: 'progress' })"
+        >
+          <template #item="{ element }">
+            <ion-item
+              button
+              class="transparent"
+              lines="full"
+              style="cursor: move"
               @contextmenu.prevent="
                 openPopoverRightTaskMenu({
                   ev: $event,
@@ -88,46 +72,29 @@
                 })
               "
             >
-              <ion-card-content
-                >{{ element.name }}
-                <div
-                  v-show="showButtonsOptionsTask == element.id"
-                  class="hover-overlay"
-                >
-                  <ion-button
-                    @click="updateTask({ idTask: element.id.toString() })"
-                    ><ion-icon :icon="createOutline"></ion-icon
-                  ></ion-button>
-
-                  <ion-button
-                    fill="clear"
-                    color="danger"
-                    @click="removeTask({ id: element.id.toString() })"
-                    ><ion-icon :icon="trashOutline"></ion-icon
-                  ></ion-button>
-                </div>
-              </ion-card-content>
-            </ion-card>
-          </div>
-        </template>
-      </draggable>
+              <ion-label>{{ element.name }} </ion-label>
+            </ion-item>
+          </template>
+        </draggable>
+      </ion-card>
     </ion-col>
 
-    <ion-col size-xs="12" size-md="3" sizw-lg="2">
+    <ion-col size-xs="12" size-md="3" size-lg="3">
       <h3>Finalizado</h3>
       <div class="border-column"></div>
-      <draggable
-        class="list-group"
-        :list="finalized"
-        group="people"
-        item-key="name"
-        @change="eventKanban({ evt: $event, columnName: 'finalized' })"
-      >
-        <template #item="{ element }">
-          <div class="list-group-item">
-            <ion-card
-              @mouseover="showButtonsOptionsTask = element.id"
-              @mouseleave="showButtonsOptionsTask = -1"
+      <ion-card class="card-elements">
+        <draggable
+          :list="finalized"
+          group="people"
+          item-key="name"
+          @change="eventKanban({ evt: $event, columnName: 'finalized' })"
+        >
+          <template #item="{ element }">
+            <ion-item
+              button
+              class="transparent"
+              lines="full"
+              style="cursor: move"
               @contextmenu.prevent="
                 openPopoverRightTaskMenu({
                   ev: $event,
@@ -143,42 +110,17 @@
                 })
               "
             >
-              <ion-card-content
-                >{{ element.name }}
-                <div
-                  v-show="showButtonsOptionsTask == element.id"
-                  class="hover-overlay"
-                >
-                  <ion-button
-                    @click="updateTask({ idTask: element.id.toString() })"
-                    ><ion-icon :icon="createOutline"></ion-icon
-                  ></ion-button>
-
-                  <ion-button
-                    fill="clear"
-                    color="danger"
-                    @click="removeTask({ id: element.id.toString() })"
-                    ><ion-icon :icon="trashOutline"></ion-icon
-                  ></ion-button>
-                </div>
-              </ion-card-content>
-            </ion-card>
-          </div>
-        </template>
-      </draggable>
+              <ion-label>{{ element.name }} </ion-label>
+            </ion-item>
+          </template>
+        </draggable>
+      </ion-card>
     </ion-col>
   </ion-row>
 </template>
 
 <script setup lang="ts">
-import {
-  popoverController,
-  IonCard,
-  IonCardContent,
-  IonRow,
-  IonCol,
-} from "@ionic/vue";
-import { createOutline, trashOutline } from "ionicons/icons";
+import { popoverController, IonCard, IonRow, IonCol } from "@ionic/vue";
 import { onMounted, ref, watch } from "vue";
 import draggable from "vuedraggable/src/vuedraggable";
 
@@ -199,7 +141,6 @@ const props = defineProps({
   taskData: { type: Array<Task>, default: () => [] },
 });
 
-const showButtonsOptionsTask = ref(-1);
 const screenWidth = ref(window.innerWidth);
 const pending = ref([] as Item[]);
 const progress = ref([] as Item[]);
@@ -345,39 +286,15 @@ function eventKanban(params: { evt: any; columnName: string }) {
 </script>
 
 <style scoped>
-.drag-drop-container {
-  display: flex;
-  justify-content: space-between;
-}
-
-.column {
-  flex-basis: 30%;
-  padding: 10px;
-}
-
-.item {
-  margin-bottom: 10px;
-  padding: 5px;
-  cursor: move;
-}
-
-.hover-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
 .centered-button {
   text-align: center;
 }
 
 .border-column {
   border-bottom: 1px solid var(--ion-color-primary);
+}
+
+.card-elements {
+  min-height: 40vh;
 }
 </style>

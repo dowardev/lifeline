@@ -37,7 +37,6 @@
             style="
               display: flex;
               justify-content: space-between;
-              padding-bottom: 16px;
               align-items: center;
             "
           >
@@ -87,104 +86,110 @@
           </div>
 
           <!-- table -->
-          <div style="height: 82vh; overflow: auto; overflow-x: auto">
-            <table class="schedule-table">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th v-for="(day, index) in days" :key="index">
-                    <!-- day -->
-                    <div
-                      :class="{
-                        today:
-                          day.date.getDate() == new Date().getDate() &&
-                          day.date.getMonth() == new Date().getMonth() &&
-                          day.date.getFullYear() == new Date().getFullYear(),
-                      }"
-                    >
-                      {{
-                        translateDayHeaderTable({
-                          dayName: daysOfWeek[day.date.getDay()],
-                        })
-                      }}
-                    </div>
-
-                    <!-- day number -->
-                    <div
-                      :class="{
-                        today:
-                          day.date.getDate() == new Date().getDate() &&
-                          day.date.getMonth() == new Date().getMonth() &&
-                          day.date.getFullYear() == new Date().getFullYear(),
-                      }"
-                    >
-                      {{ day.date.getDate() }}
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="hour in hoursOfDay" :key="hour">
-                  <td
-                    :class="{
-                      today: parseInt(hour) == new Date().getHours(),
-                    }"
-                  >
-                    {{ hour }}
-                  </td>
-                  <td v-for="day in days" :key="day.date.toString()">
-                    <div>
-                      <div
-                        v-for="schedule in generateSchedule[
-                          daysOfWeek[new Date(day.date).getDay()]
-                        ]"
-                        :key="schedule.date.toString()"
-                      >
-                        <template
-                          v-if="
-                            new Date(schedule.date).getHours() ===
-                              parseInt(hour) &&
-                            new Date(schedule.date).getDate() ===
-                              day.date.getDate()
-                          "
+            <ion-card>
+              <ion-card-content>
+              <div style="height: 82vh; overflow: auto; overflow-x: auto">
+                <table class="schedule-table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th v-for="(day, index) in days" :key="index">
+                        <!-- day -->
+                        <div
+                          :class="{
+                            today:
+                              day.date.getDate() == new Date().getDate() &&
+                              day.date.getMonth() == new Date().getMonth() &&
+                              day.date.getFullYear() ==
+                                new Date().getFullYear(),
+                          }"
                         >
-                          <ion-card
-                            class="card-event"
-                            style="cursor: pointer"
-                            @click="
-                              updateEvent({ idEvent: schedule.idElement })
-                            "
-                            @contextmenu.prevent="
-                              openPopoverRightEventMenu({
-                                ev: $event,
-                                eventId: schedule.idElement,
-                              })
-                            "
-                            @press="
-                              openPopoverRightEventMenu({
-                                ev: $event,
-                                eventId: schedule.idElement,
-                              })
-                            "
-                          >
-                            <ion-card-header>
-                              <ion-card-title>{{
-                                schedule.title
-                              }}</ion-card-title>
-                            </ion-card-header>
+                          {{
+                            translateDayHeaderTable({
+                              dayName: daysOfWeek[day.date.getDay()],
+                            })
+                          }}
+                        </div>
 
-                            <ion-card-content>{{
-                              format(new Date(schedule.date), "Pp")
-                            }}</ion-card-content>
-                          </ion-card>
-                        </template>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                        <!-- day number -->
+                        <div
+                          :class="{
+                            today:
+                              day.date.getDate() == new Date().getDate() &&
+                              day.date.getMonth() == new Date().getMonth() &&
+                              day.date.getFullYear() ==
+                                new Date().getFullYear(),
+                          }"
+                        >
+                          {{ day.date.getDate() }}
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="hour in hoursOfDay" :key="hour">
+                      <td
+                        :class="{
+                          today: parseInt(hour) == new Date().getHours(),
+                        }"
+                      >
+                        {{ hour }}
+                      </td>
+                      <td v-for="day in days" :key="day.date.toString()">
+                        <div>
+                          <div
+                            v-for="schedule in generateSchedule[
+                              daysOfWeek[new Date(day.date).getDay()]
+                            ]"
+                            :key="schedule.date.toString()"
+                          >
+                            <template
+                              v-if="
+                                new Date(schedule.date).getHours() ===
+                                  parseInt(hour) &&
+                                new Date(schedule.date).getDate() ===
+                                  day.date.getDate()
+                              "
+                            >
+                              <ion-card
+                                class="card-event"
+                                style="cursor: pointer"
+                                @click="
+                                  updateEvent({ idEvent: schedule.idElement })
+                                "
+                                @contextmenu.prevent="
+                                  openPopoverRightEventMenu({
+                                    ev: $event,
+                                    eventId: schedule.idElement,
+                                  })
+                                "
+                                @press="
+                                  openPopoverRightEventMenu({
+                                    ev: $event,
+                                    eventId: schedule.idElement,
+                                  })
+                                "
+                              >
+                                <ion-card-header>
+                                  <ion-card-title>{{
+                                    schedule.title
+                                  }}</ion-card-title>
+                                </ion-card-header>
+
+                                <ion-card-content>{{
+                                  format(new Date(schedule.date), "Pp")
+                                }}</ion-card-content>
+                              </ion-card>
+                            </template>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              </ion-card-content>
+            </ion-card>
         </ion-col>
       </ion-row>
 
@@ -641,7 +646,6 @@ table.schedule-table thead {
   border: none !important;
   position: sticky;
   top: 0;
-  background-color: var(--ion-background-color);
   z-index: 2;
 }
 
@@ -649,7 +653,6 @@ table.schedule-table tr td:first-child,
 table.schedule-table th:first-child {
   border: none !important;
   z-index: 3;
-  background-color: var(--ion-background-color);
 }
 
 table.schedule-table td:nth-child(n + 2) {

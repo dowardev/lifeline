@@ -175,23 +175,17 @@ function filteredEvents(params: { hour: number }): ScheduleElement[] {
   font-weight: bold;
   position: sticky;
   top: 0px;
-  background-color: var(--ion-background-color);
   z-index: 2;
 }
 
 .schedule-table .hour-column {
   width: 10%;
-  background-color: var(--ion-background-color);
 }
 
 .schedule-table .event-column {
   width: 90%;
-  background-color: var(--ion-background-color);
 }
 
-.schedule-table .hour-cell {
-  background-color: var(--ion-background-color);
-}
 
 .schedule-table .event-cell {
   position: relative;

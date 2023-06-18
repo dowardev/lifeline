@@ -23,7 +23,7 @@ import {
   IonSplitPane,
   isPlatform,
 } from "@ionic/vue";
-import { nextTick, onMounted, watch } from "vue";
+import { onMounted } from "vue";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { setTheme } from "@/services/system";
 import { useRoute } from "vue-router";
@@ -36,30 +36,9 @@ import { useUser } from "./composables/useUser";
 
 const route = useRoute();
 
-if (isPlatform("desktop")) {
-  watch(route, (newValue, oldValue) => {
-    nextTick(() => {
-      const elementos = document.querySelectorAll(".split-pane-main .ion-page");
-
-      elementos.forEach(function (elemento) {
-        elemento.classList.add("component-container");
-      });
-    });
-  });
-}
-
 // mounted
 onMounted(() => {
   start();
-  if (isPlatform("desktop")) {
-    nextTick(() => {
-      const elementos = document.querySelectorAll(".split-pane-main .ion-page");
-
-      elementos.forEach(function (elemento) {
-        elemento.classList.add("component-container");
-      });
-    });
-  }
 });
 
 // functions

@@ -9,48 +9,50 @@
           <ion-label>Pendiente</ion-label>
         </ion-list-header>
 
-        <ion-item
-          v-for="task in listTasks.incomplete"
-          :key="task.name"
-          class="ion-padding-start"
-          lines="full"
-          @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
-          @mouseleave="showButtonsOptionsTask = -1"
-          @contextmenu.prevent="
-            openPopoverRightTaskMenu({
-              ev: $event,
-              taskId: task.id,
-            })
-          "
-          @press="
-            openPopoverRightTaskMenu({
-              ev: $event,
-              taskId: task.id,
-            })
-          "
-        >
-          <ion-checkbox
-            :checked="task.checked"
-            label-placement="end"
-            justify="start"
-            @ion-change="toggleCheckTask({ id: task.id })"
-            >{{ task.name }}</ion-checkbox
+        <ion-card v-if="listTasks.incomplete.length > 0">
+          <ion-item
+            v-for="task in listTasks.incomplete"
+            :key="task.name"
+            class="transparent"
+            lines="full"
+            @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
+            @mouseleave="showButtonsOptionsTask = -1"
+            @contextmenu.prevent="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: task.id,
+              })
+            "
+            @press="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: task.id,
+              })
+            "
           >
+            <ion-checkbox
+              :checked="task.checked"
+              label-placement="end"
+              justify="start"
+              @ion-change="toggleCheckTask({ id: task.id })"
+              >{{ task.name }}</ion-checkbox
+            >
 
-          <ion-button
-            v-if="showButtonsOptionsTask === parseInt(task.id)"
-            @click="updateTask({ idTask: task.id })"
-            ><ion-icon :icon="createOutline"></ion-icon
-          ></ion-button>
+            <ion-button
+              v-if="showButtonsOptionsTask === parseInt(task.id)"
+              @click="updateTask({ idTask: task.id })"
+              ><ion-icon :icon="createOutline"></ion-icon
+            ></ion-button>
 
-          <ion-button
-            v-if="showButtonsOptionsTask === parseInt(task.id)"
-            fill="clear"
-            color="danger"
-            @click="removeTask({ id: task.id })"
-            ><ion-icon :icon="trashOutline"></ion-icon
-          ></ion-button>
-        </ion-item>
+            <ion-button
+              v-if="showButtonsOptionsTask === parseInt(task.id)"
+              fill="clear"
+              color="danger"
+              @click="removeTask({ id: task.id })"
+              ><ion-icon :icon="trashOutline"></ion-icon
+            ></ion-button>
+          </ion-item>
+        </ion-card>
       </ion-list>
 
       <ion-list>
@@ -58,48 +60,50 @@
           <ion-label>Completado</ion-label>
         </ion-list-header>
 
-        <ion-item
-          v-for="task in listTasks.complete"
-          :key="task.name"
-          class="ion-padding-start"
-          lines="full"
-          @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
-          @mouseleave="showButtonsOptionsTask = -1"
-          @contextmenu.prevent="
-            openPopoverRightTaskMenu({
-              ev: $event,
-              taskId: task.id,
-            })
-          "
-          @press="
-            openPopoverRightTaskMenu({
-              ev: $event,
-              taskId: task.id,
-            })
-          "
-        >
-          <ion-checkbox
-            :checked="task.checked"
-            label-placement="end"
-            justify="start"
-            @ion-change="toggleCheckTask({ id: task.id })"
-            >{{ task.name }}</ion-checkbox
+        <ion-card v-if="listTasks.complete.length > 0">
+          <ion-item
+            v-for="task in listTasks.complete"
+            :key="task.name"
+            class="transparent"
+            lines="full"
+            @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
+            @mouseleave="showButtonsOptionsTask = -1"
+            @contextmenu.prevent="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: task.id,
+              })
+            "
+            @press="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: task.id,
+              })
+            "
           >
+            <ion-checkbox
+              :checked="task.checked"
+              label-placement="end"
+              justify="start"
+              @ion-change="toggleCheckTask({ id: task.id })"
+              >{{ task.name }}</ion-checkbox
+            >
 
-          <ion-button
-            v-if="showButtonsOptionsTask === parseInt(task.id)"
-            @click="updateTask({ idTask: task.id })"
-            ><ion-icon :icon="createOutline"></ion-icon
-          ></ion-button>
+            <ion-button
+              v-if="showButtonsOptionsTask === parseInt(task.id)"
+              @click="updateTask({ idTask: task.id })"
+              ><ion-icon :icon="createOutline"></ion-icon
+            ></ion-button>
 
-          <ion-button
-            v-if="showButtonsOptionsTask === parseInt(task.id)"
-            fill="clear"
-            color="danger"
-            @click="removeTask({ id: task.id })"
-            ><ion-icon :icon="trashOutline"></ion-icon
-          ></ion-button>
-        </ion-item>
+            <ion-button
+              v-if="showButtonsOptionsTask === parseInt(task.id)"
+              fill="clear"
+              color="danger"
+              @click="removeTask({ id: task.id })"
+              ><ion-icon :icon="trashOutline"></ion-icon
+            ></ion-button>
+          </ion-item>
+        </ion-card>
       </ion-list>
     </ion-col>
   </ion-row>
