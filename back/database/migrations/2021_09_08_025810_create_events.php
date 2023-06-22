@@ -16,15 +16,16 @@ class CreateEvents extends Migration
     Schema::create('events', function (Blueprint $table) {
       $table->increments('id');
       $table->integer('user_id')->unsigned();
+      $table->integer('calendar_id')->unsigned()->default(1);
       $table->string('title');
-      $table->integer('calendar_id')->unsigned();
-      $table->datetime('time_start')->nullable();
-      $table->datetime('time_end')->nullable();
-      $table->string('reminders')->nullable();
-      $table->string('repeats')->nullable();
+      $table->datetime('date_start')->nullable();
+      $table->datetime('date_end')->nullable();
+      $table->string('notifications')->nullable();
+      $table->string('repeat')->nullable();
       $table->string('time_zone')->nullable();
       $table->string('guests')->nullable();
-      $table->longText('notes')->nullable();
+      $table->longText('description')->nullable();
+      $table->longText('availability')->nullable();
       $table->timestamps();
 
       $table

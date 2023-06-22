@@ -17,7 +17,7 @@ type Mutation {
   login(input: LoginInput @spread): LoginPayload
     @field(resolver: "App\\GraphQL\\Resolvers\\auth\\LoginResolver@resolve")
 
-  createEvent(input: CreateEvent @spread): Boolean
+  createEvent(input: CreateEventInput @spread): CreateEventPayload
     @field(
       resolver: "App\\GraphQL\\Resolvers\\events\\CreateEventResolver@resolve"
     )
@@ -25,6 +25,11 @@ type Mutation {
   userLogout: UserLogoutPayload
     @field(
       resolver: "App\\GraphQL\\Resolvers\\auth\\UserLogoutResolver@resolve"
+    )
+
+  syncEvents(input: SyncEventsInput @spread): SyncEventsPayload
+    @field(
+      resolver: "App\\GraphQL\\Resolvers\\events\\SyncEventsResolver@resolve"
     )
 }
 
@@ -50,15 +55,16 @@ type Event {
   id: ID!
   user_id: ID!
   title: String!
-  calendar: Calendar!
-  time_start: String!
-  time_end: String!
+  date_start: String!
+  date_end: String!
   guests: String!
   notes: String!
-  reminders: String!
-  repeats: String!
+  repeat: String!
   tags: String!
   time_zone: String!
+  description: String!
+  notifications: String!
+  availability: String!
 }
 
 # inputs
@@ -72,20 +78,34 @@ input LoginInput {
   user: String!
   password: String!
 }
-input CreateEvent {
-  title: String
-  calendar: String
-  time_start: String
-  time_end: String
+input CreateEventInput {
+  id: String
+  name: String!
   guests: String
-  notes: String
-  reminders: String
-  repeats: String
-  tags: String
-  timeZone: String
+  dateStart: String!
+  dateEnd: String!
+  notifications: String
+  repeat: String
+  timeZone: String!
+  description: String
+  availability: String!
+  syncStatus: Boolean
 }
 input GetEvents {
   date: String!
+}
+input SyncEventsInput {
+  id: String
+  name: String!
+  guests: String
+  dateStart: String!
+  dateEnd: String!
+  notifications: String
+  repeat: String
+  timeZone: String!
+  description: String
+  availability: String!
+  syncStatus: Boolean
 }
 
 # payloads
@@ -104,4 +124,10 @@ type UserLogoutPayload {
 }
 type UserRegisterPayload {
   state: Boolean!
+}
+type SyncEventsPayload {
+  state: Boolean!
+}
+type CreateEventPayload {
+  id: String!
 }

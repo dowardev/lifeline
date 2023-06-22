@@ -3,6 +3,7 @@
 namespace App\GraphQL\Resolvers\events;
 
 use App\Models\Event;
+use Carbon\Carbon;
 use Nuwave\Lighthouse\Support\Contracts\GraphQLContext;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Error\Error;
@@ -21,24 +22,19 @@ class GetUserEventsResolver
       return Error::createLocatedError('Unauthorized');
     }
 
-    $date = date_time_set(date_create($args['date']), 00, 00, 00);
-    $result = Event::where('time_start', '<=', $date)
-      ->where('time_end', '>=', $date)
-      ->get();
+    $eventsData = Event::all();
+    foreach ($eventsData as $event => $value) {
+      $value->date_start = Carbon::createFromFormat(
+        'Y-m-d H:i:s',
+        $value->date_start
+      )->format('Y-m-d\TH:i:s.u\Z');
 
-    foreach ($result as $key => $value) {
-      $value->reminders = unserialize($value->reminders);
-      $value->repeats = unserialize($value->repeats);
-      $value->guests = unserialize($value->guests);
-      $value->calendar = Event::find($result[0]->id)->calendar;
-      $value->time_start = date('c', strtotime($value->time_start));
-      $value->time_end = date('c', strtotime($value->time_end));
+      $value->date_end = Carbon::createFromFormat(
+        'Y-m-d H:i:s',
+        $value->date_end
+      )->format('Y-m-d\TH:i:s.u\Z');
     }
 
-    // $events = [];
-    // foreach ($result as $key => $value) {
-    //   $value->tags = Event::find($value->id)->tags;
-    // }
-    return ['events' => $result];
+    return ['events' => $eventsData];
   }
 }
