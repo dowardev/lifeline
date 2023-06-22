@@ -12,11 +12,12 @@
     "fruitcake/laravel-cors": "^2.0",
     "guzzlehttp/guzzle": "^7.6",
     "laravel/framework": "^9.0",
-    "laravel/passport": "^10.1",
+    "laravel/passport": "^10.0",
     "laravel/sanctum": "^2.11",
     "laravel/tinker": "^2.5",
     "mll-lab/laravel-graphql-playground": "^2.6",
-    "nuwave/lighthouse": "^5.53"
+    "nuwave/lighthouse": "^5.53",
+    "lcobucci/clock": "^2.0"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9.1",
