@@ -63,15 +63,15 @@ export interface SystemMessage {
 
 // events
 export interface Event {
-  id: string;
+  id?: string;
   name?: string;
   // calendar?: string;
   guests?: Array<{ email: string }>;
-  reminders?: {
+  reminders: {
     start: Date;
     end: Date;
-    notifications: string[];
-    repeat: {
+    notifications?: string[];
+    repeat?: {
       frecuency: number;
       type: "daily" | "weekly" | "monthly" | "annually";
       daysWeek?: string[];
@@ -81,6 +81,8 @@ export interface Event {
   timezone?: string;
   description: string;
   availability: string;
+  idSync: string;
+  syncStatus: boolean;
 }
 export interface NewEvent {
   name?: string;

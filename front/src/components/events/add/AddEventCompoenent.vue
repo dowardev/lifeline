@@ -652,7 +652,7 @@ const removeGuest = (params: { index: number }) => {
   event.guests.value.splice(index, 1);
 };
 
-async function save() {
+async function save(): Promise<void> {
   let eventId = props.eventData?.id;
   let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
 

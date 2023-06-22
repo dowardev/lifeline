@@ -176,7 +176,14 @@ export const useSystem = () => {
 
   async function openToast(params: SystemMessage): Promise<void> {
     const { color = "dark", message } = params;
-    openToastService({ color, message });
+    (await openToastService({ color, message })).present();
+  }
+
+  async function openToastFixed(
+    params: SystemMessage
+  ): Promise<HTMLIonToastElement> {
+    const { color = "dark", message } = params;
+    return await openToastService({ color, message });
   }
 
   return {
@@ -197,6 +204,7 @@ export const useSystem = () => {
     loadWakaTimeToday,
     getWakaTimeDayTotal,
     clearWakaTimeApiKey,
-    openToast
+    openToast,
+openToastFixed
   };
 };

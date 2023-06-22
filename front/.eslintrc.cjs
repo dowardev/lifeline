@@ -25,6 +25,7 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "off",
     "prettier/prettier": "error",
     "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/no-non-null-assertion": 0,
   },
 
   plugins: ["prettier"],

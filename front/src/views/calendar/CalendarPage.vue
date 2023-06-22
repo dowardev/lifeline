@@ -86,8 +86,8 @@
           </div>
 
           <!-- table -->
-            <ion-card>
-              <ion-card-content>
+          <ion-card>
+            <ion-card-content>
               <div style="height: 82vh; overflow: auto; overflow-x: auto">
                 <table class="schedule-table">
                   <thead>
@@ -188,8 +188,8 @@
                   </tbody>
                 </table>
               </div>
-              </ion-card-content>
-            </ion-card>
+            </ion-card-content>
+          </ion-card>
         </ion-col>
       </ion-row>
 
@@ -232,6 +232,12 @@
 
             <ion-row>
               <ion-col>
+                <!-- button sync -->
+                <ion-item button lines="none" @click="syncData()">
+                  <ion-icon slot="start" :icon="syncOutline"></ion-icon>
+                  <ion-label class="ion-text-wrap">Sincronizar</ion-label>
+                </ion-item>
+
                 <!-- button modal reschedule tasks -->
                 <ion-item
                   button
@@ -368,6 +374,7 @@ import {
   closeOutline,
   ellipsisVerticalOutline,
   stopwatchOutline,
+  syncOutline,
   todayOutline,
 } from "ionicons/icons";
 import { Months, Schedule, ScheduleElement } from "@/utils/interfaces";
@@ -448,7 +455,7 @@ const eventPopOverMainOptions = ref(null as CustomEvent | null);
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  await useEvent().loadEvents();
+  // await useEvent().loadEvents();
   // await useSchedule().checkNotificationsPermissions();
   // await useSchedule().setReminders({
   //   id: 1,
@@ -617,6 +624,10 @@ async function deleteEvent(params: { eventId: string }): Promise<void> {
   });
   await useSchedule().saveSchedule({ schedule });
   await useSchedule().loadSchedule();
+}
+
+async function syncData() {
+  await useEvent().syncEvents();
 }
 </script>
 

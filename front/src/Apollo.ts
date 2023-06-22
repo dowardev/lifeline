@@ -13,7 +13,7 @@ cArr.forEach((val) => {
 let uri = "";
 const mode = process.env.NODE_ENV;
 if (mode == "development") {
-  uri = "http://192.168.1.68:9001/graphql";
+  uri = "http://127.0.0.0:9001/graphql";
 } else {
   uri = "https://lifeline-back.dowar.xyz/graphql";
 }

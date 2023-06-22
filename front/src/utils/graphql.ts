@@ -41,18 +41,24 @@ export const USER_EVENTS = gql`
     events {
       id
       title
-      time_start
-      time_end
-      calendar {
-        name
-      }
+      date_start
+      date_end
       guests
       tags
-      notes
+      description
       time_zone
-      reminders
-      repeats
+      repeat
     }
+  }
+`;
+export const SYNC_EVENTS = gql`
+  fragment SyncEvents on SyncEventsPayload {
+    state
+  }
+`;
+export const CREATE_EVENTS = gql`
+  fragment CreateEvent on CreateEventPayload {
+    id
   }
 `;
 

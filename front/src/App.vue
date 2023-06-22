@@ -16,13 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonApp,
-  IonRouterOutlet,
-  IonMenu,
-  IonSplitPane,
-  isPlatform,
-} from "@ionic/vue";
+import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
 import { onMounted } from "vue";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { setTheme } from "@/services/system";
@@ -33,6 +27,7 @@ import { useSchedule } from "@/composables/useSchedule";
 import { useSystem } from "@/composables/useSystem";
 import { getUserToken } from "./services/user";
 import { useUser } from "./composables/useUser";
+import { useEvent } from "./composables/useEvent";
 
 const route = useRoute();
 
@@ -45,19 +40,29 @@ onMounted(() => {
 const start = async (): Promise<void> => {
   loadUserProps();
 
-  await useDocument().loadUserDocuments();
+  // await useDocument().loadUserDocuments();
 
   await useSystem().loadThemeSelected();
   const theme = useSystem().getTheme();
   setTheme({ theme: theme, currentTheme: theme });
   await useSystem().updateThemeSelected({ theme });
 
-  await useSchedule().loadSchedule();
-  const schedule = useSchedule().getSchedule();
-  if (!schedule) await load();
+  const toast = await useSystem().openToastFixed({ message: "Sincronizando" });
+  toast.present();
+  try {
+    await load();
+    toast.dismiss();
+  } catch (error) {
+    toast.dismiss();
+    await useSystem().openToast({ message: "Problema al sincronizar" });
+  }
 };
 
-async function load() {
+async function load(): Promise<void> {
+  if (navigator.onLine) {
+    await pushEvents();
+    await storeEventsServer();
+  }
   // load schedule
   await useSchedule().generateEventsSchedule();
 
@@ -73,6 +78,7 @@ async function load() {
       });
     })
   );
+  await useSchedule().loadSchedule();
 }
 
 function loadUserProps(): void {
@@ -80,6 +86,29 @@ function loadUserProps(): void {
   if (userToken != "") {
     useUser().updateUserLoggedProp(true);
     useUser().updateUserToken(userToken);
+  }
+}
+
+async function pushEvents(): Promise<void> {
+  const events = (await useEvent().getStoredEvents()) ?? [];
+  await useEvent().pushEvents({ events });
+  await Promise.all(
+    events.map(async (event) => {
+      try {
+        await useEvent().updateEvent({ event });
+      } catch (error) {
+        console.error(error);
+      }
+    })
+  );
+}
+
+async function storeEventsServer(): Promise<void> {
+  const events = (await useEvent().getEventsServer()) ?? [];
+  await useEvent().storeEventsServer({ events });
+  const eventsRemoved = await useEvent().checkEventRemoved({ events });
+  for (const event of eventsRemoved) {
+    await useEvent().deleteEvent({ eventId: event.id! });
   }
 }
 </script>

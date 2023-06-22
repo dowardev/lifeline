@@ -43,7 +43,7 @@ export async function saveTheme(params: { theme: Theme }): Promise<void> {
 export async function openToast(params: {
   message: string;
   color: string;
-}): Promise<void> {
+}): Promise<HTMLIonToastElement> {
   const { color, message } = params;
 
   const toast = await toastController.create({
@@ -52,7 +52,7 @@ export async function openToast(params: {
     color,
     position: "bottom",
   });
-  return toast.present();
+  return toast;
 }
 
 export function getAllTimeZonesNames() {

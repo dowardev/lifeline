@@ -3,7 +3,10 @@ import { useScheduleStore } from "@/store/scheduleStore";
 import { Schedule, Event, ScheduleElement } from "@/utils/interfaces";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { format } from "date-fns";
-import { getEvent, getEvents as getEventsService } from "../services/event";
+import {
+  getEvent,
+  getEventsLocal as getEventsLocalService,
+} from "../services/event";
 import {
   getSchedule as getScheduleService,
   storeSchedule,
@@ -185,7 +188,7 @@ export const useSchedule = () => {
   }
 
   async function generateEventsSchedule(): Promise<void> {
-    const events = await getEventsService();
+    const events = await getEventsLocalService();
 
     if (!events) return;
 
@@ -215,7 +218,7 @@ export const useSchedule = () => {
           repeat,
         });
 
-        let schedule = (await getScheduleService()) ?? ({} as Schedule);
+        let schedule = {} as Schedule;
 
         let year: number, month: number, day: number;
 

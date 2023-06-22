@@ -17,66 +17,59 @@ import {
   GetCalendarsResponse,
   Event,
   GetEvents,
+  Graphql,
 } from "@/utils/interfaces";
 import { NewEvent } from "@/utils/interfaces";
+import { CREATE_EVENTS, SYNC_EVENTS, USER_EVENTS } from "@/utils/graphql";
+import {
+  executeGrapMutation,
+  executeGrapQuery,
+  graphqlMutationBuilder,
+  graphqlQueryBuilder,
+} from "./graphql";
+import { errorBuilder } from "@/utils/errors";
 
-export async function createEvent(params: Event): Promise<void> {
-  const {
-    onError,
-    onDone,
-    mutate: createEvent,
-  } = useMutation(
-    gql`
-      mutation createEvent(
-        $title: String
-        $calendar: String
-        $time_start: String
-        $time_end: String
-        $guests: String
-        $notes: String
-        $reminders: String
-        $repeats: String
-        $tags: String
-        $timeZone: String
-      ) {
-        createEvent(
-          input: {
-            title: $title
-            calendar: $calendar
-            time_start: $time_start
-            time_end: $time_end
-            guests: $guests
-            notes: $notes
-            reminders: $reminders
-            repeats: $repeats
-            tags: $tags
-            timeZone: $timeZone
-          }
-        )
-      }
-    `,
-    {
-      variables: {
-        title: params.title,
-        calendar: params.calendar,
-        time_start: params.timeStart,
-        time_end: params.timeEnd,
-        guests: params.guests,
-        notes: params.notes,
-        reminders: params.reminders,
-        repeats: params.repeats,
-        tags: params.tags,
-        timeZone: params.timeZone,
-      },
-    }
-  );
-  createEvent();
+export async function createEvent(params: {
+  event: Event;
+}): Promise<{ id: string }> {
+  const { event } = params;
+  const data = {
+    id: event.idSync ?? "",
+    name: event.name,
+    dateStart: event.reminders.start,
+    dateEnd: event.reminders.end,
+    notifications: JSON.stringify(event.reminders.notifications),
+    repeat: JSON.stringify(event.reminders.repeat),
+    guests: JSON.stringify(event.guests),
+    timeZone: event.timezone,
+    description: event.description,
+    availability: event.availability,
+    syncStatus: event.syncStatus ?? false,
+  };
 
-  return new Promise((resolve, reject) => {
-    onDone(() => resolve());
-    onError((error) => reject(error));
-  });
+  try {
+    const query = graphqlMutationBuilder({
+      name: CREATE_EVENTS,
+      fragment: "CreateEvent",
+      mutationName: "createEvent",
+      inputName: "CreateEventInput",
+    });
+
+    const { id } = (
+      await executeGrapMutation({
+        query,
+        input: data,
+      })
+    ).createEvent;
+
+    return { id };
+  } catch (error: any) {
+    if (error.message != "Unauthorized")
+      throw errorBuilder({ message: error.message, typeError: "authError" });
+    throw errorBuilder({ message: error.message });
+  }
 }
+
 export async function updateEvent(event: Record<string, any>) {
   // const token = await userService()
   //   .getUserToken()
@@ -223,7 +216,7 @@ export async function getUserCalendars(
 // }
 
 export async function saveLocalEvent(params: {
-  event: NewEvent;
+  event: Event;
 }): Promise<{ event: Event }> {
   const eventData = params.event;
   let event = {} as Event;
@@ -233,7 +226,7 @@ export async function saveLocalEvent(params: {
   event = eventData as Event;
   event.id = id;
 
-  const events = (await getEvents()) != null ? await getEvents() : [];
+  const events = (await getEventsLocal()) ?? [];
   events?.push(eventData as Event);
   await store.set("events", events);
 
@@ -244,7 +237,7 @@ export async function updateLocalEvent(params: {
   event: Event;
 }): Promise<void> {
   const eventData = params.event;
-  let events = (await getEvents()) ?? [];
+  let events = (await getEventsLocal()) ?? [];
   events = events?.map((event) => {
     if (event.id == eventData.id) event = eventData;
     return event;
@@ -252,8 +245,50 @@ export async function updateLocalEvent(params: {
   await store.set("events", events);
 }
 
-export async function getEvents(): Promise<Array<Event> | null> {
+export async function getEventsLocal(): Promise<Array<Event> | null> {
+  // await store.remove('events')
   return await store.get("events");
+}
+
+export async function getEvents(params: {
+  graphql: Graphql;
+}): Promise<Array<Event> | null> {
+  const { refetch = false, name, fragment } = params.graphql;
+
+  try {
+    const query = graphqlQueryBuilder({
+      name,
+      fragment,
+      mutationName: "events",
+    });
+
+    let response = await executeGrapQuery({
+      query,
+      options: { refetch },
+    });
+    if (!response.value.events.events) return [] as Event[];
+    response = (response.value.events.events as any[]).map((event: any) => {
+      return {
+        description: event.description,
+        guests: event.guests,
+        idSync: event.id,
+        tags: JSON.parse(event.tags),
+        timeZone: event.time_zone,
+        name: event.title,
+        reminders: {
+          start: event.date_start,
+          end: event.date_end,
+          repeat: JSON.parse(event.repeat),
+          notifications: event.notifications ?? [],
+        },
+      };
+    });
+    return response;
+  } catch (error: any) {
+    if (error.message != "Unauthorized")
+      throw errorBuilder({ message: error.message, typeError: "authError" });
+    throw errorBuilder({ message: error.message });
+  }
 }
 
 export async function getEvent(params: { id: string }): Promise<Event | null> {
@@ -266,11 +301,46 @@ export async function getEvent(params: { id: string }): Promise<Event | null> {
 
 export async function deleteEvent(params: { eventId: string }): Promise<void> {
   const id = params.eventId;
-  const events = (await getEvents()) ?? [];
+  const events = (await getEventsLocal()) ?? [];
 
   const index = events?.findIndex((element) => element.id == id);
   if (index != undefined) {
     events?.splice(index, 1);
     await store.set("events", events);
+  }
+}
+
+export async function pushEvent(params: { event: Event }): Promise<void> {
+  const { event } = params;
+  const data = {
+    id: event.idSync ?? "",
+    name: event.name,
+    dateStart: event.reminders.start,
+    dateEnd: event.reminders.end,
+    notifications: JSON.stringify(event.reminders.notifications),
+    repeat: JSON.stringify(event.reminders.repeat),
+    guests: JSON.stringify(event.guests),
+    timeZone: event.timezone,
+    description: event.description,
+    availability: event.availability,
+    syncStatus: event.syncStatus ?? false,
+  };
+
+  try {
+    const query = graphqlMutationBuilder({
+      name: SYNC_EVENTS,
+      fragment: "SyncEvents",
+      mutationName: "syncEvents",
+      inputName: "SyncEventsInput",
+    });
+
+    await executeGrapMutation({
+      query,
+      input: data,
+    });
+  } catch (error: any) {
+    if (error.message != "Unauthorized")
+      throw errorBuilder({ message: error.message, typeError: "authError" });
+    throw errorBuilder({ message: error.message });
   }
 }
