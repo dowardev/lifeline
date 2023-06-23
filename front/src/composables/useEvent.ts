@@ -149,6 +149,18 @@ export const useEvent = () => {
     }
     return deleted;
   }
+
+  async function pushNewEvent(params: { event: Event }): Promise<void> {
+    const { event } = params;
+
+    try {
+      const { id } = await createEventService({ event });
+      event.syncStatus = true;
+      event.idSync = id;
+    } catch (error) {
+      console.error(error);
+    }
+  }
   return {
     saveEvent,
     loadEvents,
@@ -162,5 +174,6 @@ export const useEvent = () => {
     getEventsServer,
     storeEventsServer,
     checkEventRemoved,
+    pushNewEvent,
   };
 };

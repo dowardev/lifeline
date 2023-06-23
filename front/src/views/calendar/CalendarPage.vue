@@ -329,7 +329,13 @@
         class="modal-event"
         :backdrop-dismiss="false"
       >
-        <AdminEventComponent />
+        <AdminEventComponent
+          @create="
+            saveEvent({
+              event: $event.data.event,
+            })
+          "
+        />
       </ion-modal>
 
       <!-- modal update event -->
@@ -377,7 +383,7 @@ import {
   syncOutline,
   todayOutline,
 } from "ionicons/icons";
-import { Months, Schedule, ScheduleElement } from "@/utils/interfaces";
+import { Event, Months, Schedule, ScheduleElement } from "@/utils/interfaces";
 
 // components
 import RescheduleComponent from "@/components/events/schedule-elements/RescheduleElements.vue";
@@ -387,6 +393,7 @@ import RightMenuEventComponent from "./RightMenuEventComponent.vue";
 // composables
 import { useSystem } from "../../composables/useSystem";
 import { useEvent } from "@/composables/useEvent";
+import { useReminder } from "@/composables/useReminder";
 
 interface Day {
   date: Date;
@@ -455,12 +462,6 @@ const eventPopOverMainOptions = ref(null as CustomEvent | null);
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  // await useEvent().loadEvents();
-  // await useSchedule().checkNotificationsPermissions();
-  // await useSchedule().setReminders({
-  //   id: 1,
-  //   reminder: "ss",
-  // });
 });
 
 // computed
@@ -628,6 +629,89 @@ async function deleteEvent(params: { eventId: string }): Promise<void> {
 
 async function syncData() {
   await useEvent().syncEvents();
+}
+
+async function pushEvent(params: { event: Event }): Promise<void> {
+  const { event } = params;
+  const eventFormated = {
+    name: event.name,
+    guests: event.guests,
+    reminders: {
+      start: event.reminders.start,
+      end: event.reminders.end,
+      notifications: event.reminders.notifications,
+      repeat: event.reminders.repeat,
+    },
+    description: event.description,
+    availability: event.availability,
+    timezone: event.timezone,
+  };
+  await useEvent().pushNewEvent({
+    event: JSON.parse(JSON.stringify(eventFormated)),
+  });
+}
+
+async function saveEvent(params: { event: Event }): Promise<void> {
+  const { event } = params;
+  const schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+  const { id } = await useEvent().saveEvent({
+    event: JSON.parse(JSON.stringify(event)),
+  });
+  event.id = id;
+  await postCreateEvent({ event, schedule });
+  pushEvent({ event });
+}
+
+async function postCreateEvent(params: {
+  event: Event;
+  schedule: Schedule;
+}): Promise<void> {
+  const { event } = params;
+  let { schedule } = params;
+  const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
+
+  const scheduleElement = useSchedule().generateScheduleElement({
+    id: scheduleId,
+    idElement: event.id!,
+    title: event.name!,
+    message: event.description,
+    startDate: new Date(event.reminders.start),
+    endDate: new Date(event.reminders.end),
+    type: "Event",
+    reminder: event.reminders.notifications!.length > 0 ? true : false,
+    repeat: event.reminders.repeat!,
+  });
+
+  if (event.id)
+    schedule = useSchedule().removeElementSchedule({
+      id: event.id,
+      schedule,
+    });
+
+  schedule = useSchedule().generateEventSchedule({
+    scheduleElement,
+    schedule,
+  });
+  await useSchedule().saveSchedule({ schedule });
+  await useSchedule().loadSchedule();
+
+  const notifications = useReminder().getEventReminders({
+    dateStart: event.reminders.start,
+    notifications: event.reminders.notifications,
+  });
+
+  if (notifications) {
+    await Promise.all(
+      notifications.map(async (notification) => {
+        await useSchedule().setReminders({
+          id: parseInt(scheduleId),
+          reminder: notification,
+          title: event.name,
+          message: event.description,
+        });
+      })
+    );
+  }
 }
 </script>
 

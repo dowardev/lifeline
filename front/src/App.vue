@@ -22,6 +22,9 @@ import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { setTheme } from "@/services/system";
 import { useRoute } from "vue-router";
 
+// interface
+import { Event } from "@/utils/interfaces";
+
 import { useDocument } from "@/composables/useDocument";
 import { useSchedule } from "@/composables/useSchedule";
 import { useSystem } from "@/composables/useSystem";
@@ -60,7 +63,17 @@ const start = async (): Promise<void> => {
 
 async function load(): Promise<void> {
   if (navigator.onLine) {
-    await pushEvents();
+    const events = (await useEvent().getStoredEvents()) ?? [];
+    await pushEvents({ events });
+    await Promise.all(
+      events.map(async (event) => {
+        try {
+          await useEvent().updateEvent({ event });
+        } catch (error) {
+          console.error(error);
+        }
+      })
+    );
     await storeEventsServer();
   }
   // load schedule
@@ -89,18 +102,9 @@ function loadUserProps(): void {
   }
 }
 
-async function pushEvents(): Promise<void> {
-  const events = (await useEvent().getStoredEvents()) ?? [];
+async function pushEvents(params: { events: Event[] }): Promise<void> {
+  const { events } = params;
   await useEvent().pushEvents({ events });
-  await Promise.all(
-    events.map(async (event) => {
-      try {
-        await useEvent().updateEvent({ event });
-      } catch (error) {
-        console.error(error);
-      }
-    })
-  );
 }
 
 async function storeEventsServer(): Promise<void> {

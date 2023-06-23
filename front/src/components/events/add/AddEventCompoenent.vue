@@ -541,6 +541,8 @@ const props = defineProps({
   eventData: { type: Object as () => Event, default: () => null },
 });
 
+const emits = defineEmits(["create"]);
+
 // components
 import CalendarComponent from "./calendar/CalendarComponent.vue";
 import RemindersComponent from "../reminders/RemindersComponent.vue";
@@ -653,41 +655,29 @@ const removeGuest = (params: { index: number }) => {
 };
 
 async function save(): Promise<void> {
-  let eventId = props.eventData?.id;
-  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
-
   try {
+    const eventFormated = {
+      name: event.name.value,
+      guests: event.guests.value,
+      reminders: {
+        start: event.reminders.value.start,
+        end: event.reminders.value.end,
+        notifications: event.reminders.value.notifications,
+        repeat: event.reminders.value.repeat,
+      },
+      description: event.description.value,
+      availability: event.availability.value,
+      timezone: event.timezone.value,
+    };
     if (!eventId) {
-      eventId = (await saveEvent()).id;
+      emits("create", { data: { event: eventFormated } });
     } else {
       await updateEvent();
     }
-
-    await postCreateEvent({ eventId, schedule });
     closePage();
   } catch (error) {
     console.error(error);
   }
-}
-
-async function saveEvent(): Promise<{ id: string }> {
-  const eventFormated = {
-    name: event.name.value,
-    guests: event.guests.value,
-    reminders: {
-      start: event.reminders.value.start,
-      end: event.reminders.value.end,
-      notifications: event.reminders.value.notifications,
-      repeat: event.reminders.value.repeat,
-    },
-    description: event.description.value,
-    availability: event.availability.value,
-    timezone: event.timezone.value,
-  };
-  const { id } = await useEvent().saveEvent({
-    event: JSON.parse(JSON.stringify(eventFormated)),
-  });
-  return { id };
 }
 
 async function updateEvent() {
