@@ -17,7 +17,6 @@ export const useEvent = () => {
 
   async function saveEvent(params: { event: Event }): Promise<{ id: string }> {
     const eventData = params.event;
-    debugger;
 
     try {
       const { id } = await saveLocalEventService({

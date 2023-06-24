@@ -78,7 +78,7 @@ export async function createEvent(params: {
 export async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   const data = {
-    id: event.id,
+    id: event.idSync,
     name: event.name,
     dateStart: event.reminders.start,
     dateEnd: event.reminders.end,

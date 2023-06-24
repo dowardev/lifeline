@@ -665,16 +665,22 @@ async function saveEvent(params: { event: Event }): Promise<void> {
 
 async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
-  const schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
 
+  event.id = idEvent.value;
+  event.idSync = useEvent().getEvent({ idEvent: idEvent.value })?.idSync;
+  try {
+    await useEvent().pusUpdateEvent({
+      event: JSON.parse(JSON.stringify(event)),
+    });
+  } catch (error) {
+    event.syncStatus = false;
+    console.error(error);
+  }
   await useEvent().updateEvent({
     event: JSON.parse(JSON.stringify(event)),
   });
-  await postUpdateEvent({ event, schedule });
-  event.id = useEvent().getEvent({ idEvent: idEvent.value })?.idSync;
-  await useEvent().pusUpdateEvent({
-    event: JSON.parse(JSON.stringify(event)),
-  });
+
+  await postUpdateEvent({ event });
 }
 
 async function postCreateEvent(params: { event: Event }): Promise<void> {
@@ -724,16 +730,12 @@ async function postCreateEvent(params: { event: Event }): Promise<void> {
   }
 }
 
-async function postUpdateEvent(params: {
-  event: Event;
-  schedule: Schedule;
-}): Promise<void> {
+async function postUpdateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
-  let { schedule } = params;
   const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
+  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
 
   const scheduleElement = useSchedule().generateScheduleElement({
-    id: scheduleId,
     idElement: event.id!,
     title: event.name!,
     message: event.description,
