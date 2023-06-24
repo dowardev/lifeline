@@ -31,6 +31,11 @@ type Mutation {
     @field(
       resolver: "App\\GraphQL\\Resolvers\\events\\SyncEventsResolver@resolve"
     )
+
+  updateEvent(input: UpdateEventInput @spread): UpdateEventPayload
+    @field(
+      resolver: "App\\GraphQL\\Resolvers\\events\\UpdateEventResolver@resolve"
+    )
 }
 
 type User {
@@ -107,6 +112,19 @@ input SyncEventsInput {
   availability: String!
   syncStatus: Boolean
 }
+input UpdateEventInput {
+  id: String
+  name: String!
+  guests: String
+  dateStart: String!
+  dateEnd: String!
+  notifications: String
+  repeat: String
+  timeZone: String!
+  description: String
+  availability: String!
+  syncStatus: Boolean
+}
 
 # payloads
 type LoginPayload {
@@ -130,4 +148,7 @@ type SyncEventsPayload {
 }
 type CreateEventPayload {
   id: String!
+}
+type UpdateEventPayload {
+  state: Boolean!
 }
