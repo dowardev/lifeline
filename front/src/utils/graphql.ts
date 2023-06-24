@@ -61,6 +61,11 @@ export const CREATE_EVENTS = gql`
     id
   }
 `;
+export const UPDATE_EVENTS = gql`
+  fragment UpdateEvent on UpdateEventPayload {
+    state
+  }
+`;
 
 // auth
 export const USER_LOGIN = gql`

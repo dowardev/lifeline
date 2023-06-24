@@ -155,7 +155,9 @@
                                 class="card-event"
                                 style="cursor: pointer"
                                 @click="
-                                  updateEvent({ idEvent: schedule.idElement })
+                                  afterUpdateEvent({
+                                    idEvent: schedule.idElement,
+                                  })
                                 "
                                 @contextmenu.prevent="
                                   openPopoverRightEventMenu({
@@ -345,7 +347,14 @@
         :is-open="isOpenModalUpdateEvent"
         @did-dismiss="isOpenModalUpdateEvent = false"
       >
-        <AdminEventComponent :event-data="useEvent().getEvent({ idEvent })" />
+        <AdminEventComponent
+          :event-data="useEvent().getEvent({ idEvent })"
+          @update="
+            updateEvent({
+              event: $event.data.event,
+            })
+          "
+        />
       </ion-modal>
       <!-- end modals -->
     </ion-content>
@@ -462,6 +471,7 @@ const eventPopOverMainOptions = ref(null as CustomEvent | null);
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
+  await useEvent().loadEvents();
 });
 
 // computed
@@ -589,7 +599,7 @@ function translateMonth(params: { monthName: string }): string {
   return result;
 }
 
-function updateEvent(params: { idEvent: string }): void {
+function afterUpdateEvent(params: { idEvent: string }): void {
   const id = params.idEvent;
   idEvent.value = id;
   isOpenModalUpdateEvent.value = true;
@@ -631,26 +641,6 @@ async function syncData() {
   await useEvent().syncEvents();
 }
 
-async function pushEvent(params: { event: Event }): Promise<void> {
-  const { event } = params;
-  const eventFormated = {
-    name: event.name,
-    guests: event.guests,
-    reminders: {
-      start: event.reminders.start,
-      end: event.reminders.end,
-      notifications: event.reminders.notifications,
-      repeat: event.reminders.repeat,
-    },
-    description: event.description,
-    availability: event.availability,
-    timezone: event.timezone,
-  };
-  await useEvent().pushNewEvent({
-    event: JSON.parse(JSON.stringify(eventFormated)),
-  });
-}
-
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   const schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
@@ -659,7 +649,23 @@ async function saveEvent(params: { event: Event }): Promise<void> {
   });
   event.id = id;
   await postCreateEvent({ event, schedule });
-  pushEvent({ event });
+  await useEvent().pushNewEvent({
+    event: JSON.parse(JSON.stringify(event)),
+  });
+}
+
+async function updateEvent(params: { event: Event }): Promise<void> {
+  const { event } = params;
+  const schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+
+  await useEvent().updateEvent({
+    event: JSON.parse(JSON.stringify(event)),
+  });
+  await postCreateEvent({ event, schedule });
+  event.id = useEvent().getEvent({ idEvent: idEvent.value })?.idSync;
+  await useEvent().pusUpdateEvent({
+    event: JSON.parse(JSON.stringify(event)),
+  });
 }
 
 async function postCreateEvent(params: {
@@ -717,7 +723,7 @@ async function postCreateEvent(params: {
 
 <style scoped>
 table.schedule-table {
-  border-collapse: collapse;
+  @sa border-collapse: collapse;
 }
 
 table.schedule-table td {

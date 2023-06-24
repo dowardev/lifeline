@@ -541,7 +541,7 @@ const props = defineProps({
   eventData: { type: Object as () => Event, default: () => null },
 });
 
-const emits = defineEmits(["create"]);
+const emits = defineEmits(["create", "update"]);
 
 // components
 import CalendarComponent from "./calendar/CalendarComponent.vue";
@@ -621,13 +621,13 @@ onMounted(async () => {
     pageTitle.value = "Actualizar evento";
     setEvent({ event: props.eventData });
   }
-  // if (props.idEvent != "") {
-  //   await useEvent().loadEvents();
-  //   pageTitle.value = "Actualizar evento";
-  //   const event = useEvent().getEvent({ idEvent: props.idEvent });
-  //   if (!event) return;
-  //   setEvent({ event });
-  // }
+  if (props.eventData) {
+    await useEvent().loadEvents();
+    pageTitle.value = "Actualizar evento";
+    const event = useEvent().getEvent({ idEvent: props.eventData.id! });
+    if (!event) return;
+    setEvent({ event });
+  }
 });
 
 // functions
@@ -669,36 +669,15 @@ async function save(): Promise<void> {
       availability: event.availability.value,
       timezone: event.timezone.value,
     };
-    if (!eventId) {
+    if (!props.eventData) {
       emits("create", { data: { event: eventFormated } });
     } else {
-      await updateEvent();
+      emits("update", { data: { event: eventFormated } });
     }
     closePage();
   } catch (error) {
     console.error(error);
   }
-}
-
-async function updateEvent() {
-  const eventFormated = {
-    id: props.eventData.id,
-    name: event.name.value,
-    guests: event.guests.value,
-    reminders: {
-      start: event.reminders.value.start,
-      end: event.reminders.value.end,
-      notifications: event.reminders.value.notifications,
-      repeat: event.reminders.value.repeat,
-    },
-    description: event.description.value,
-    availability: event.availability.value,
-    timezone: event.timezone.value,
-  };
-
-  await useEvent().updateEvent({
-    event: JSON.parse(JSON.stringify(eventFormated)),
-  });
 }
 
 function formatTextNotifications() {

@@ -20,7 +20,12 @@ import {
   Graphql,
 } from "@/utils/interfaces";
 import { NewEvent } from "@/utils/interfaces";
-import { CREATE_EVENTS, SYNC_EVENTS, USER_EVENTS } from "@/utils/graphql";
+import {
+  CREATE_EVENTS,
+  SYNC_EVENTS,
+  UPDATE_EVENTS,
+  USER_EVENTS,
+} from "@/utils/graphql";
 import {
   executeGrapMutation,
   executeGrapQuery,
@@ -70,18 +75,39 @@ export async function createEvent(params: {
   }
 }
 
-export async function updateEvent(event: Record<string, any>) {
-  // const token = await userService()
-  //   .getUserToken()
-  //   .then((response) => {
-  //     return response;
-  //   });
-  // return axios.post("http://localhost:8000/api/auth/update-event", event, {
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //     Authorization: "Bearer " + token,
-  //   },
-  // });
+export async function updateEvent(params: { event: Event }): Promise<void> {
+  const { event } = params;
+  const data = {
+    id: event.id,
+    name: event.name,
+    dateStart: event.reminders.start,
+    dateEnd: event.reminders.end,
+    notifications: JSON.stringify(event.reminders.notifications),
+    repeat: JSON.stringify(event.reminders.repeat),
+    guests: JSON.stringify(event.guests),
+    timeZone: event.timezone,
+    description: event.description,
+    availability: event.availability,
+    syncStatus: event.syncStatus ?? false,
+  };
+
+  try {
+    const query = graphqlMutationBuilder({
+      name: UPDATE_EVENTS,
+      fragment: "UpdateEvent",
+      mutationName: "updateEvent",
+      inputName: "UpdateEventInput",
+    });
+
+    await executeGrapMutation({
+      query,
+      input: data,
+    });
+  } catch (error: any) {
+    if (error.message != "Unauthorized")
+      throw errorBuilder({ message: error.message, typeError: "authError" });
+    throw errorBuilder({ message: error.message });
+  }
 }
 
 // export async function getEvents(params: GetEvents): Promise<Array<Event>> {

@@ -7,6 +7,7 @@ import {
   pushEvent as pushEventService,
   createEvent as createEventService,
   getEvents as getEventsServivice,
+  updateEvent as updateEventService,
 } from "../services/event";
 import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
@@ -59,7 +60,7 @@ export const useEvent = () => {
     const idEvent = params.idEvent;
     const event = eventStore.getEvent({ idEvent });
 
-    return event != null ? JSON.parse(JSON.stringify(event)) : undefined;
+    return event ?? undefined;
   }
 
   async function deleteEvent(params: { eventId: string }) {
@@ -161,6 +162,16 @@ export const useEvent = () => {
       console.error(error);
     }
   }
+
+  async function pusUpdateEvent(params: { event: Event }): Promise<void> {
+    const { event } = params;
+    try {
+      await updateEventService({ event });
+      event.syncStatus = true;
+    } catch (error) {
+      console.error(error);
+    }
+  }
   return {
     saveEvent,
     loadEvents,
@@ -175,5 +186,6 @@ export const useEvent = () => {
     storeEventsServer,
     checkEventRemoved,
     pushNewEvent,
+    pusUpdateEvent,
   };
 };
