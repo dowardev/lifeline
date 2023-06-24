@@ -643,15 +643,24 @@ async function syncData() {
 
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
-  const schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+  let idSync = undefined as string | undefined;
+
+  try {
+    const response = await useEvent().pushNewEvent({
+      event: JSON.parse(JSON.stringify(event)),
+    });
+    idSync = response.id;
+  } catch (error) {
+    console.error(error);
+  }
+  event.idSync = idSync;
+  event.syncStatus = true;
+
   const { id } = await useEvent().saveEvent({
     event: JSON.parse(JSON.stringify(event)),
   });
   event.id = id;
-  await postCreateEvent({ event, schedule });
-  await useEvent().pushNewEvent({
-    event: JSON.parse(JSON.stringify(event)),
-  });
+  await postCreateEvent({ event });
 }
 
 async function updateEvent(params: { event: Event }): Promise<void> {
@@ -661,14 +670,61 @@ async function updateEvent(params: { event: Event }): Promise<void> {
   await useEvent().updateEvent({
     event: JSON.parse(JSON.stringify(event)),
   });
-  await postCreateEvent({ event, schedule });
+  await postUpdateEvent({ event, schedule });
   event.id = useEvent().getEvent({ idEvent: idEvent.value })?.idSync;
   await useEvent().pusUpdateEvent({
     event: JSON.parse(JSON.stringify(event)),
   });
 }
 
-async function postCreateEvent(params: {
+async function postCreateEvent(params: { event: Event }): Promise<void> {
+  const { event } = params;
+  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+
+  const scheduleElement = useSchedule().generateScheduleElement({
+    idElement: event.id!,
+    title: event.name!,
+    message: event.description,
+    startDate: new Date(event.reminders.start),
+    endDate: new Date(event.reminders.end),
+    type: "Event",
+    reminder: event.reminders.notifications!.length > 0 ? true : false,
+    repeat: event.reminders.repeat!,
+  });
+
+  if (event.id)
+    schedule = useSchedule().removeElementSchedule({
+      id: event.id,
+      schedule,
+    });
+
+  schedule = useSchedule().generateEventSchedule({
+    scheduleElement,
+    schedule,
+  });
+  await useSchedule().saveSchedule({ schedule });
+  await useSchedule().loadSchedule();
+
+  const notifications = useReminder().getEventReminders({
+    dateStart: event.reminders.start,
+    notifications: event.reminders.notifications ?? [],
+  });
+
+  if (notifications) {
+    await Promise.all(
+      notifications.map(async (notification) => {
+        await useSchedule().setReminders({
+          id: parseInt(event.id!),
+          reminder: notification,
+          title: event.name!,
+          message: event.description,
+        });
+      })
+    );
+  }
+}
+
+async function postUpdateEvent(params: {
   event: Event;
   schedule: Schedule;
 }): Promise<void> {

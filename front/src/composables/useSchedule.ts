@@ -267,7 +267,6 @@ export const useSchedule = () => {
   }
 
   function generateScheduleElement(params: {
-    id: string;
     idElement: string;
     title: string;
     message: string;
@@ -282,7 +281,6 @@ export const useSchedule = () => {
     };
   }): Schedule {
     const {
-      id,
       idElement,
       title,
       message,
@@ -296,8 +294,8 @@ export const useSchedule = () => {
     const normalizedDaysWeek = daysWeek.map((day) => day.toLowerCase()); // Normalize day names to lowercase
 
     const eventsByDate: Schedule = {};
-    let currentDate = new Date(startDate);
-    let lastDate = new Date(currentDate);
+    const currentDate = new Date(startDate);
+    const lastDate = new Date(currentDate);
     lastDate.setFullYear(lastDate.getFullYear() + frecuency);
 
     while (currentDate <= endDate || lastDate <= endDate) {
@@ -346,7 +344,7 @@ export const useSchedule = () => {
       }
 
       eventsByDate[year][month][day].push({
-        id: id + new Date().getTime(),
+        id: idElement + new Date().getTime(),
         idElement,
         title,
         message,

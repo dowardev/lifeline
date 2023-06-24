@@ -17,17 +17,16 @@ export const useEvent = () => {
 
   async function saveEvent(params: { event: Event }): Promise<{ id: string }> {
     const eventData = params.event;
-    let event = {} as Event;
+    debugger;
 
     try {
-      event = (
-        await saveLocalEventService({
-          event: eventData,
-        })
-      ).event;
-      eventStore.addEvent({ event });
+      const { id } = await saveLocalEventService({
+        event: eventData,
+      });
+      eventData.id = id;
+      eventStore.addEvent({ event: eventData });
 
-      return { id: event.id };
+      return { id: eventData.id };
     } catch (error: any) {
       throw new Error(error);
     }
@@ -151,16 +150,19 @@ export const useEvent = () => {
     return deleted;
   }
 
-  async function pushNewEvent(params: { event: Event }): Promise<void> {
+  async function pushNewEvent(params: {
+    event: Event;
+  }): Promise<{ id: string | undefined }> {
     const { event } = params;
+    let id = undefined as string | undefined;
 
     try {
-      const { id } = await createEventService({ event });
-      event.syncStatus = true;
-      event.idSync = id;
+      const response = await createEventService({ event });
+      id = response.id;
     } catch (error) {
       console.error(error);
     }
+    return { id };
   }
 
   async function pusUpdateEvent(params: { event: Event }): Promise<void> {

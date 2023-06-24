@@ -243,7 +243,7 @@ export async function getUserCalendars(
 
 export async function saveLocalEvent(params: {
   event: Event;
-}): Promise<{ event: Event }> {
+}): Promise<{ id: string }> {
   const eventData = params.event;
   let event = {} as Event;
   const id = Date.now().toString();
@@ -256,7 +256,7 @@ export async function saveLocalEvent(params: {
   events?.push(eventData as Event);
   await store.set("events", events);
 
-  return { event: eventData as Event };
+  return { id };
 }
 
 export async function updateLocalEvent(params: {
