@@ -55,7 +55,8 @@ export const useEventsStore = defineStore("events", {
     updateEvent(params: { event: Event }) {
       const event = params.event;
       this.events = this.events.map((element) => {
-        if (element.id == event.id) element = { ...element, ...event };
+        if (element.id == event.id || event.idSync == event.idSync)
+          element = { ...element, ...event };
         return element;
       });
     },

@@ -11,6 +11,7 @@ import {
 } from "../services/event";
 import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
+import * as jsonpatch from "fast-json-patch";
 
 export const useEvent = () => {
   const eventStore = useEventsStore();
@@ -78,8 +79,8 @@ export const useEvent = () => {
     });
   }
 
-  async function pushEvents(params: { events: Event[] }): Promise<void> {
-    const { events } = params;
+  async function pushEvents(): Promise<void> {
+    const events = (await useEvent().getStoredEvents()) ?? [];
 
     await Promise.all(
       events.map(async (event) => {
@@ -116,9 +117,9 @@ export const useEvent = () => {
     return events ?? undefined;
   }
 
-  async function storeEventsServer(params: { events: Event[] }): Promise<void> {
-    const { events: eventsServer } = params;
-    const eventsStored = await getEventsLocalService();
+  async function storeEventsServer(): Promise<void> {
+    const eventsStored = (await useEvent().getStoredEvents()) ?? [];
+    const eventsServer = (await useEvent().getEventsServer()) ?? [];
 
     for (const event of eventsServer) {
       const result = eventsStored?.filter(
@@ -129,11 +130,40 @@ export const useEvent = () => {
     }
   }
 
-  async function checkEventRemoved(params: {
-    events: Event[];
-  }): Promise<Event[]> {
-    const { events: eventsServer } = params;
-    const eventsStored = (await getEventsLocalService()) ?? [];
+  async function storeUpdateEventsServer(): Promise<{
+    eventsUpdated: Event[];
+  }> {
+    const localEvents = (await useEvent().getStoredEvents()) ?? [];
+    const serverEvents = (await useEvent().getEventsServer()) ?? [];
+    const localMap = new Map<string, Event>();
+    for (const event of localEvents) {
+      if (event.idSync) {
+        localMap.set(event.idSync, event);
+      }
+    }
+
+    const mergedEvents: Event[] = [];
+    for (const serverEvent of serverEvents) {
+      const localEvent = serverEvent.idSync
+        ? localMap.get(serverEvent.idSync)
+        : undefined;
+
+      const diff = jsonpatch.compare(localEvent!, serverEvent);
+      if (diff.length > 0) {
+        jsonpatch.applyPatch(localEvent, diff);
+        mergedEvents.push(localEvent!);
+        await updateEvent({ event: serverEvent });
+      }
+      localMap.delete(serverEvent.idSync!);
+    }
+    return { eventsUpdated: mergedEvents };
+  }
+
+  async function storeRemoveEventsServer(): Promise<{
+    eventsDeleted: Event[];
+  }> {
+    const eventsStored = (await useEvent().getStoredEvents()) ?? [];
+    const eventsServer = (await useEvent().getEventsServer()) ?? [];
 
     const deleted = [] as Event[];
 
@@ -146,7 +176,11 @@ export const useEvent = () => {
         i--;
       }
     }
-    return deleted;
+
+    for (const event of deleted) {
+      await useEvent().deleteEvent({ eventId: event.id! });
+    }
+    return { eventsDeleted: deleted };
   }
 
   async function pushNewEvent(params: {
@@ -185,8 +219,9 @@ export const useEvent = () => {
     getStoredEvents,
     getEventsServer,
     storeEventsServer,
-    checkEventRemoved,
+    storeRemoveEventsServer,
     pushNewEvent,
     pusUpdateEvent,
+    storeUpdateEventsServer,
   };
 };

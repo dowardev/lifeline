@@ -23,7 +23,7 @@ import { setTheme } from "@/services/system";
 import { useRoute } from "vue-router";
 
 // interface
-import { Event } from "@/utils/interfaces";
+import { Event, Schedule } from "@/utils/interfaces";
 
 import { useDocument } from "@/composables/useDocument";
 import { useSchedule } from "@/composables/useSchedule";
@@ -31,6 +31,8 @@ import { useSystem } from "@/composables/useSystem";
 import { getUserToken } from "./services/user";
 import { useUser } from "./composables/useUser";
 import { useEvent } from "./composables/useEvent";
+import { sync } from "ionicons/icons";
+import { updateEvent } from "./services/event";
 
 const route = useRoute();
 
@@ -58,26 +60,16 @@ const start = async (): Promise<void> => {
   } catch (error) {
     toast.dismiss();
     await useSystem().openToast({ message: "Problema al sincronizar" });
+    console.error(error);
   }
 };
 
 async function load(): Promise<void> {
   if (navigator.onLine) {
-    const events = (await useEvent().getStoredEvents()) ?? [];
-    await pushEvents({ events });
-    await Promise.all(
-      events.map(async (event) => {
-        try {
-          await useEvent().updateEvent({ event });
-        } catch (error) {
-          console.error(error);
-        }
-      })
-    );
-    await storeEventsServer();
+    await syncEvents();
   }
   // load schedule
-  await useSchedule().generateEventsSchedule();
+  // await useSchedule().generateEventsSchedule();
 
   // load reminders
   const reminders = await useSchedule().generateScheduleReminders();
@@ -102,17 +94,53 @@ function loadUserProps(): void {
   }
 }
 
-async function pushEvents(params: { events: Event[] }): Promise<void> {
-  const { events } = params;
-  await useEvent().pushEvents({ events });
+async function syncEvents(): Promise<void> {
+  await useEvent().pushEvents();
+  await useEvent().storeEventsServer();
+  await removeEvents();
+  await updateEvents();
 }
 
-async function storeEventsServer(): Promise<void> {
-  const events = (await useEvent().getEventsServer()) ?? [];
-  await useEvent().storeEventsServer({ events });
-  const eventsRemoved = await useEvent().checkEventRemoved({ events });
-  for (const event of eventsRemoved) {
-    await useEvent().deleteEvent({ eventId: event.id! });
+async function removeEvents(): Promise<void> {
+  const { eventsDeleted } = await useEvent().storeRemoveEventsServer();
+  if (eventsDeleted) {
+    for (const event of eventsDeleted) {
+      let schedule = {} as Schedule;
+      schedule = useSchedule().removeElementSchedule({
+        id: event.id!,
+        schedule,
+      });
+      await useSchedule().saveSchedule({ schedule });
+    }
+  }
+}
+
+async function updateEvents(): Promise<void> {
+  const { eventsUpdated } = await useEvent().storeUpdateEventsServer();
+  let schedule = {} as Schedule;
+  if (eventsUpdated) {
+    for (const event of eventsUpdated) {
+      const scheduleElement = useSchedule().generateScheduleElement({
+        idElement: event.id!,
+        title: event.name!,
+        message: event.description,
+        startDate: new Date(event.reminders.start),
+        endDate: new Date(event.reminders.end),
+        type: "Event",
+        reminder: event.reminders.notifications!.length > 0 ? true : false,
+        repeat: event.reminders.repeat!,
+      });
+
+      schedule = useSchedule().removeElementSchedule({
+        id: event.id!,
+        schedule,
+      });
+      schedule = useSchedule().generateEventSchedule({
+        scheduleElement,
+        schedule,
+      });
+      await useSchedule().saveSchedule({ schedule });
+    }
   }
 }
 </script>

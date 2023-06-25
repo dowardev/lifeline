@@ -761,7 +761,7 @@ async function postUpdateEvent(params: { event: Event }): Promise<void> {
 
   const notifications = useReminder().getEventReminders({
     dateStart: event.reminders.start,
-    notifications: event.reminders.notifications,
+    notifications: event.reminders.notifications!,
   });
 
   if (notifications) {
@@ -770,7 +770,7 @@ async function postUpdateEvent(params: { event: Event }): Promise<void> {
         await useSchedule().setReminders({
           id: parseInt(scheduleId),
           reminder: notification,
-          title: event.name,
+          title: event.name!,
           message: event.description,
         });
       })

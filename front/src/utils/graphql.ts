@@ -40,14 +40,17 @@ export const USER_EVENTS = gql`
   fragment Events on EventsPayload {
     events {
       id
+      user_id
       title
       date_start
       date_end
       guests
-      tags
-      description
-      time_zone
       repeat
+      tags
+      time_zone
+      description
+      notifications
+      availability
     }
   }
 `;

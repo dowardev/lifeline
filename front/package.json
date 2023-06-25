@@ -32,6 +32,7 @@
     "core": "link:@apollo/client/core",
     "date-fns": "^2.29.3",
     "date-fns-tz": "^2.0.0",
+    "fast-json-patch": "^3.1.1",
     "fs-extra": "^11.1.1",
     "graphql": "^16.6.0",
     "graphql-tag": "^2.12.6",

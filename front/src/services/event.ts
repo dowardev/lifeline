@@ -265,7 +265,8 @@ export async function updateLocalEvent(params: {
   const eventData = params.event;
   let events = (await getEventsLocal()) ?? [];
   events = events?.map((event) => {
-    if (event.id == eventData.id) event = eventData;
+    if (event.id == eventData.id || event.idSync == eventData.idSync)
+      event = eventData;
     return event;
   });
   await store.set("events", events);
@@ -305,8 +306,9 @@ export async function getEvents(params: {
           start: event.date_start,
           end: event.date_end,
           repeat: JSON.parse(event.repeat),
-          notifications: event.notifications ?? [],
+          notifications: JSON.parse(event.notifications) ?? [],
         },
+        availability: event.availability,
       };
     });
     return response;
