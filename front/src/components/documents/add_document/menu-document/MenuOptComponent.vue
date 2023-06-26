@@ -26,7 +26,7 @@
     <section v-if="optionSelected == 'none'">
       <ion-list>
         <ion-list-header>
-          <ion-label>Basico</ion-label>
+          <ion-label>Básico</ion-label>
         </ion-list-header>
 
         <div style="display: flex; justify-content: space-evenly">
@@ -71,7 +71,7 @@
       <!-- edition -->
       <ion-list>
         <ion-list-header>
-          <ion-label>Edicion</ion-label>
+          <ion-label>Edición</ion-label>
         </ion-list-header>
 
         <!-- history -->

@@ -26,7 +26,7 @@
 
         <ion-col size="12" class="center">
           <p class="description">
-            LifeLine es una aplicacion de productividad todo en uno donde podras
+            LifeLine es una aplicación de productividad todo en uno donde podrás
             aumentar tu nivel de productividad gracias a todas las herramientas
             que te ofrece ademas de las diversas integraciones con las que es
             compatible.
@@ -48,7 +48,7 @@
           <ion-item button lines="none" disabled
             ><ion-icon slot="start" :icon="logoAppleAppstore"></ion-icon
             ><ion-label class="ion-text-wrap"
-              >Aplicacion movil(App Gallery)</ion-label
+              >Aplicación movil(App Gallery)</ion-label
             ></ion-item
           >
         </ion-content>

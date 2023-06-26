@@ -322,7 +322,7 @@ const formAnnualy = {
 
 const messageError = {
   required: "Campo requerido",
-  numeric: "Solamente puede contener numeros",
+  numeric: "Solamente puede contener números",
 };
 const rulesDaily = {
   formDaily: {

@@ -342,7 +342,7 @@ async function login(): Promise<void> {
     }
     if (e.message == "Disabled user") {
       presentToast(
-        "Cuenta de usuario deshabilitada, para mas informacion contacte a soporte.",
+        "Cuenta de usuario deshabilitada, para mas información contacte a soporte.",
         "danger"
       );
       return;
@@ -413,14 +413,14 @@ const presentAlertRestorePassword = async (): Promise<{
 }> => {
   const alert = await alertController.create({
     cssClass: "my-custom-class",
-    header: "Restauracion de contraseña",
+    header: "Restauración de contraseña",
     message:
-      "Te enviaremos un correo electronico con las intrucciones para restablecer tu contraseña.",
+      "Te enviaremos un correo electrónico con las instrucciones para restablecer tu contraseña.",
     inputs: [
       {
         name: "email",
         id: "email",
-        placeholder: "Correo electronico",
+        placeholder: "Correo electrónico",
         type: "email",
       },
     ],

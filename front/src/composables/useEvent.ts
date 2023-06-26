@@ -8,6 +8,7 @@ import {
   createEvent as createEventService,
   getEvents as getEventsServivice,
   updateEvent as updateEventService,
+  removeAllLocalEvents as removeAllLocalEventsService,
 } from "../services/event";
 import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
@@ -150,6 +151,7 @@ export const useEvent = () => {
 
       const diff = jsonpatch.compare(localEvent!, serverEvent);
       if (diff.length > 0) {
+        serverEvent.id = localEvent!.id;
         jsonpatch.applyPatch(localEvent, diff);
         mergedEvents.push(localEvent!);
         await updateEvent({ event: serverEvent });
@@ -207,6 +209,10 @@ export const useEvent = () => {
       console.error(error);
     }
   }
+
+  async function removeAllEvents(): Promise<void> {
+    await removeAllLocalEventsService();
+  }
   return {
     saveEvent,
     loadEvents,
@@ -223,5 +229,6 @@ export const useEvent = () => {
     pushNewEvent,
     pusUpdateEvent,
     storeUpdateEventsServer,
+    removeAllEvents,
   };
 };

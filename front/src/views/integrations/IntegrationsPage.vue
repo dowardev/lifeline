@@ -65,7 +65,7 @@
                   <ion-accordion-group>
                     <ion-accordion>
                       <ion-item slot="header">
-                        <ion-label>Descripcion</ion-label>
+                        <ion-label>Descripción</ion-label>
                       </ion-item>
 
                       <div slot="content" class="ion-padding">
@@ -76,7 +76,7 @@
                             slot="end"
                             fill="clear"
                             @click="openUrl({ url: integration.url })"
-                            >Mas informacion.</ion-button
+                            >Mas información.</ion-button
                           >
                         </ion-item>
                       </div>

@@ -1,11 +1,6 @@
 <template>
   <ion-page>
-    <ion-header
-      :translucent="true"
-      collapse="fade"
-      mode="ios"
-      class="ion-no-border"
-    >
+    <ion-header :translucent="true" mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button @click="closePage()">
@@ -32,12 +27,6 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense" mode="ios">
-        <ion-toolbar>
-          <ion-title size="large">{{ pageTitle }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
       <div>
         <section>
           <ion-row>
@@ -45,7 +34,7 @@
               <!-- basic -->
               <ion-list>
                 <ion-list-header>
-                  <ion-label>Basico</ion-label>
+                  <ion-label>Básico</ion-label>
                 </ion-list-header>
 
                 <!-- name -->
@@ -590,7 +579,7 @@ const event = {
 
 // validation
 const messageError = {
-  email: "Correo electronico no valido",
+  email: "Correo electrónico no valido",
   required: "Campo requerido",
 };
 const rules = {
@@ -655,6 +644,7 @@ const removeGuest = (params: { index: number }) => {
 };
 
 async function save(): Promise<void> {
+  console.log(event);
   try {
     const eventFormated = {
       name: event.name.value,

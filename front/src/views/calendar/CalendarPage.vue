@@ -257,40 +257,6 @@
               </ion-col>
             </ion-row>
           </ion-list>
-
-          <!-- views -->
-          <ion-list>
-            <ion-list-header>
-              <ion-label>Vista</ion-label>
-            </ion-list-header>
-
-            <ion-row>
-              <ion-col>
-                <ion-radio-group value="weekly">
-                  <!-- diary view -->
-                  <ion-item lines="none" disabled>
-                    <ion-radio value="diary" label-placement="end"
-                      >Diario</ion-radio
-                    >
-                  </ion-item>
-
-                  <!-- weekly view -->
-                  <ion-item lines="none">
-                    <ion-radio value="weekly" label-placement="end"
-                      >Semanal</ion-radio
-                    >
-                  </ion-item>
-
-                  <!-- annual view -->
-                  <ion-item lines="none" disabled>
-                    <ion-radio value="annual" label-placement="end"
-                      >Anual</ion-radio
-                    >
-                  </ion-item>
-                </ion-radio-group>
-              </ion-col>
-            </ion-row>
-          </ion-list>
         </ion-content>
       </ion-popover>
       <!-- end popovers -->
@@ -408,7 +374,7 @@ interface Day {
   date: Date;
 }
 
-const pageTitle = "Calendario";
+const pageTitle = "Agenda";
 const daysOfWeek = [
   "sunday",
   "monday",
@@ -806,12 +772,14 @@ table.schedule-table thead {
   position: sticky;
   top: 0;
   z-index: 2;
+  background-color: var(--ion-background-light-color);
 }
 
 table.schedule-table tr td:first-child,
 table.schedule-table th:first-child {
   border: none !important;
   z-index: 3;
+  background-color: var(--ion-background-light-color);
 }
 
 table.schedule-table td:nth-child(n + 2) {

@@ -273,7 +273,6 @@ export async function updateLocalEvent(params: {
 }
 
 export async function getEventsLocal(): Promise<Array<Event> | null> {
-  // await store.remove('events')
   return await store.get("events");
 }
 
@@ -297,10 +296,10 @@ export async function getEvents(params: {
     response = (response.value.events.events as any[]).map((event: any) => {
       return {
         description: event.description,
-        guests: event.guests,
+        guests: JSON.parse(event.guests),
         idSync: event.id,
         tags: JSON.parse(event.tags),
-        timeZone: event.time_zone,
+        timezone: event.time_zone,
         name: event.title,
         reminders: {
           start: event.date_start,
@@ -371,4 +370,8 @@ export async function pushEvent(params: { event: Event }): Promise<void> {
       throw errorBuilder({ message: error.message, typeError: "authError" });
     throw errorBuilder({ message: error.message });
   }
+}
+
+export async function removeAllLocalEvents(): Promise<void> {
+  await store.remove("events");
 }

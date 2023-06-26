@@ -69,7 +69,9 @@ async function load(): Promise<void> {
     await syncEvents();
   }
   // load schedule
-  // await useSchedule().generateEventsSchedule();
+  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+  if (Object.keys(schedule).length==0)
+    await useSchedule().generateEventsSchedule();
 
   // load reminders
   const reminders = await useSchedule().generateScheduleReminders();
@@ -118,7 +120,7 @@ async function removeEvents(): Promise<void> {
 async function updateEvents(): Promise<void> {
   const { eventsUpdated } = await useEvent().storeUpdateEventsServer();
   let schedule = {} as Schedule;
-  if (eventsUpdated) {
+  if (eventsUpdated.length > 0) {
     for (const event of eventsUpdated) {
       const scheduleElement = useSchedule().generateScheduleElement({
         idElement: event.id!,
@@ -130,7 +132,6 @@ async function updateEvents(): Promise<void> {
         reminder: event.reminders.notifications!.length > 0 ? true : false,
         repeat: event.reminders.repeat!,
       });
-
       schedule = useSchedule().removeElementSchedule({
         id: event.id!,
         schedule,

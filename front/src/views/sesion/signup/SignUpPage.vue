@@ -419,7 +419,7 @@ const rules = {
     password: {
       required: helpers.withMessage(messageError.required, required),
       minLength: helpers.withMessage(
-        "La contraseña debe tener almenos una mayuscula, un numero y tener un tamaño de 8",
+        "La contraseña debe tener almenos una mayúscula, un numero y tener un tamaño de 8",
         helpers.regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
       ),
     },

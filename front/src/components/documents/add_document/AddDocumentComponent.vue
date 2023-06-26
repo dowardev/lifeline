@@ -34,9 +34,7 @@
       <!-- reorder -->
       <ion-toolbar v-if="isReorderDisabled == false">
         <ion-buttons slot="end">
-          <ion-button @click="toggleReorder()">
-            Terminar reordenamiento
-          </ion-button>
+          <ion-button @click="toggleReorder()"> Terminar </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>

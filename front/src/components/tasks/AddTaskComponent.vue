@@ -449,7 +449,7 @@ let subTask = ref("");
 const showButtonsOptionSubtask = ref(-1);
 
 const messageError = {
-  email: "Correo electronico no valido",
+  email: "Correo electrónico no valido",
   required: "Campo requerido",
 };
 const rules = {

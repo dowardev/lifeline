@@ -39,7 +39,7 @@
               <!-- basic -->
               <ion-list>
                 <ion-list-header>
-                  <ion-label>Basico</ion-label>
+                  <ion-label>Básico</ion-label>
                 </ion-list-header>
 
                 <!-- name -->
@@ -291,7 +291,7 @@
                           label="Invitados"
                           label-placement="floating"
                           fill="solid"
-                          placeholder="Correo electronico"
+                          placeholder="Correo electrónico"
                           autocomplete="on"
                           autocorrect="on"
                           type="email"
@@ -597,7 +597,7 @@ const event = {
 
 // validation
 const messageError = {
-  email: "Correo electronico no valido",
+  email: "Correo electrónico no valido",
   required: "Campo requerido",
 };
 const rules = {

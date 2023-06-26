@@ -63,8 +63,8 @@
 
           <div style="margin-left: 16px">
             <div style="display: flex; align-items: center; height: 50px">
-              <ion-label v-if="formDaily.frecuency.value > 1">dias</ion-label>
-              <ion-label v-else>dia</ion-label>
+              <ion-label v-if="formDaily.frecuency.value > 1">días</ion-label>
+              <ion-label v-else>día</ion-label>
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@
       <ion-col>
         <ion-list>
           <ion-list-header>
-            <ion-label>Los dias:</ion-label>
+            <ion-label>Los días:</ion-label>
           </ion-list-header>
 
           <div
@@ -322,7 +322,7 @@ const formAnnualy = {
 
 const messageError = {
   required: "Campo requerido",
-  numeric: "Solamente puede contener numeros",
+  numeric: "Solamente puede contener números",
 };
 const rulesDaily = {
   formDaily: {

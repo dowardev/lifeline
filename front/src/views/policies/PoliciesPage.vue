@@ -33,7 +33,7 @@
           </ion-segment-button>
 
           <ion-segment-button value="tc" :disabled="true">
-            <ion-label>Terminos y condiciones</ion-label>
+            <ion-label>Términos y condiciones</ion-label>
           </ion-segment-button>
         </ion-segment>
       </ion-item-divider>
@@ -42,7 +42,7 @@
         <ion-col sieze-xs="12" size-lg="8">
           <ion-card class="ion-padding">
             <p>
-              Como desarrollador de software y usuario activo de internet,
+              Como desarrollador de software y usuario activo de Internet,
               comprendo la importancia de la privacidad. Por esta razón, todos
               los productos desarrollados bajo la marca
               <span
@@ -90,7 +90,7 @@
               <li>
                 <span class="important-text">Modo offline:</span> La aplicación
                 cuenta con una función que te permite acceder a los datos sin
-                necesidad de tener una conexión activa a internet.
+                necesidad de tener una conexión activa a Internet.
               </li>
               <li>
                 <span class="important-text">Tema:</span> Las preferencias sobre

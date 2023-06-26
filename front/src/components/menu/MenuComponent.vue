@@ -93,7 +93,7 @@
                     ></ion-icon>
                   </div>
 
-                  <ion-label class="labelOptionMenu"> Calendario</ion-label>
+                  <ion-label class="labelOptionMenu"> Agenda</ion-label>
                 </ion-item>
               </div>
 
@@ -293,6 +293,8 @@ import {
   modalController,
   IonFooter,
   IonPopover,
+  IonAccordion,
+  IonAccordionGroup,
 } from "@ionic/vue";
 import {
   addOutline,
