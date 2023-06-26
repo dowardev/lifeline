@@ -62,12 +62,11 @@ type Event {
   title: String!
   date_start: String!
   date_end: String!
-  guests: String!
-  notes: String!
-  repeat: String!
+  guests: String
+  repeat: String
   tags: String!
   time_zone: String!
-  description: String!
+  description: String
   notifications: String!
   availability: String!
 }

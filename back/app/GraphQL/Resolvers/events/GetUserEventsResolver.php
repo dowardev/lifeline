@@ -22,7 +22,8 @@ class GetUserEventsResolver
       return Error::createLocatedError('Unauthorized');
     }
 
-    $eventsData = Event::all();
+    $user_id = Auth::guard('api')->user()->id;
+    $eventsData = Event::where('user_id', $user_id)->get();
     foreach ($eventsData as $event => $value) {
       $value->date_start = Carbon::createFromFormat(
         'Y-m-d H:i:s',
