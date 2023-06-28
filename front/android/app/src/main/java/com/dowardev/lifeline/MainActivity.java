@@ -1,4 +1,4 @@
-package io.ionic.starter;
+package com.dowardev.lifeline;
 
 import com.getcapacitor.BridgeActivity;
 

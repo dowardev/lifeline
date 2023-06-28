@@ -38,85 +38,56 @@
                 </ion-list-header>
 
                 <!-- name -->
-                <ion-row>
+                <ion-row class="ion-padding">
                   <ion-col size-xs="11" size="10">
-                    <div style="display: flex">
-                      <div style="display: flex; align-items: center">
-                        <ion-button fill="clear" :disabled="true"
-                          ><ion-icon :icon="personOutline"></ion-icon
-                        ></ion-button>
-                      </div>
-
-                      <div style="width: 100%">
-                        <ion-input
-                          ref="inputName"
-                          label="Nombre"
-                          placeholder="Visita al dentista"
-                          label-placement="floating"
-                          fill="solid"
-                          autocomplete="on"
-                          autocorrect="on"
-                          type="text"
-                          :error-text="v$.event.name.$errors[0]?.$message as string"
-                          :class="[
-                            v$.event.name.$errors.length == 0
-                              ? 'ion-valid'
-                              : 'ion-invalid',
-                          ]"
-                          :value="event.name.value"
-                          @ion-input="
-                            event.name.value = $event.target.value as string
-                          "
-                          @ion-focus="
-                            ($refs.inputName as any).$el.classList.add(
-                              'ion-touched'
-                            );
-                            v$.event.name.$touch();
-                          "
-                        ></ion-input>
-                      </div>
-                    </div>
+                    <ion-input
+                      ref="inputName"
+                      label="Nombre"
+                      placeholder="Visita al dentista"
+                      label-placement="floating"
+                      fill="solid"
+                      autocomplete="on"
+                      autocorrect="on"
+                      type="text"
+                      :error-text="v$.event.name.$errors[0]?.$message as string"
+                      :class="[
+                        v$.event.name.$errors.length == 0
+                          ? 'ion-valid'
+                          : 'ion-invalid',
+                      ]"
+                      :value="event.name.value"
+                      @ion-input="
+                        event.name.value = $event.target.value as string
+                      "
+                      @ion-focus="
+                        ($refs.inputName as any).$el.classList.add(
+                          'ion-touched'
+                        );
+                        v$.event.name.$touch();
+                      "
+                    ></ion-input>
                   </ion-col>
                 </ion-row>
 
                 <br />
 
                 <!-- description -->
-                <ion-row>
+                <ion-row class="ion-padding">
                   <ion-col size-xs="11" size="10">
-                    <div style="display: flex">
-                      <div>
-                        <div
-                          style="
-                            display: flex;
-                            align-items: center;
-                            height: 50px;
-                          "
-                        >
-                          <ion-button fill="clear" :disabled="true"
-                            ><ion-icon :icon="documentTextOutline"></ion-icon
-                          ></ion-button>
-                        </div>
-                      </div>
-
-                      <div style="width: 100%">
-                        <ion-textarea
-                          placeholder="Visita rutinaria"
-                          fill="solid"
-                          label="Descripcion"
-                          label-placement="floating"
-                          :auto-grow="true"
-                          autocomplete="on"
-                          autocorrect="on"
-                          type="text"
-                          :value="event.description.value"
-                          @ion-input="
-                            event.description.value = $event.target
-                              .value as string
-                          "
-                        ></ion-textarea>
-                      </div>
-                    </div>
+                    <ion-textarea
+                      placeholder="Visita rutinaria"
+                      fill="solid"
+                      label="Descripcion"
+                      label-placement="floating"
+                      :auto-grow="true"
+                      autocomplete="on"
+                      autocorrect="on"
+                      type="text"
+                      :value="event.description.value"
+                      @ion-input="
+                        event.description.value = $event.target.value as string
+                      "
+                    ></ion-textarea>
                   </ion-col>
                 </ion-row>
               </ion-list>
@@ -128,15 +99,10 @@
                 <ion-list-header>
                   <ion-label>Tiempo</ion-label>
                 </ion-list-header>
-                <ion-row>
+
+                <ion-row class="ion-padding">
                   <ion-col size-xs="11" size="10">
                     <div style="display: flex">
-                      <div>
-                        <ion-button fill="clear" :disabled="true"
-                          ><ion-icon :icon="globeOutline"></ion-icon
-                        ></ion-button>
-                      </div>
-
                       <div style="width: 100%">
                         <!-- dates -->
                         <ion-textarea
@@ -194,28 +160,18 @@
                 <br />
 
                 <!-- time zone -->
-                <ion-row>
+                <ion-row class="ion-padding">
                   <ion-col size-xs="11" size="10">
-                    <div style="display: flex">
-                      <div style="display: flex; align-items: center">
-                        <ion-button fill="clear" :disabled="true"
-                          ><ion-icon :icon="timeOutline"></ion-icon
-                        ></ion-button>
-                      </div>
-
-                      <div style="width: 100%">
-                        <ion-item
-                          fill="solid"
-                          lines="none"
-                          @click="isOpenPopoverTimezones = true"
-                        >
-                          <ion-label>Zona horaria</ion-label>
-                          <ion-label slot="end" class="ion-text-wrap"
-                            >{{ event.timezone.value }}
-                          </ion-label>
-                        </ion-item>
-                      </div>
-                    </div>
+                    <ion-item
+                      fill="solid"
+                      lines="none"
+                      @click="isOpenPopoverTimezones = true"
+                    >
+                      <ion-label>Zona horaria</ion-label>
+                      <ion-label slot="end" class="ion-text-wrap"
+                        >{{ event.timezone.value }}
+                      </ion-label>
+                    </ion-item>
                   </ion-col>
                 </ion-row>
               </ion-list>
@@ -229,23 +185,9 @@
                 </ion-list-header>
 
                 <!-- guests -->
-                <ion-row>
+                <ion-row class="ion-padding">
                   <ion-col size-xs="11" size="10">
                     <div style="display: flex">
-                      <div>
-                        <div
-                          style="
-                            display: flex;
-                            align-items: center;
-                            height: 50px;
-                          "
-                        >
-                          <ion-button fill="clear" :disabled="true"
-                            ><ion-icon :icon="peopleOutline"></ion-icon
-                          ></ion-button>
-                        </div>
-                      </div>
-
                       <div style="width: 100%">
                         <ion-input
                           ref="inputGuest"
@@ -320,40 +262,28 @@
                 <br />
 
                 <!-- availability -->
-                <ion-row>
+                <ion-row class="ion-padding">
                   <ion-col size-xs="11" size="10">
-                    <div style="display: flex">
-                      <div style="display: flex; align-items: center">
-                        <ion-button fill="clear" :disabled="true"
-                          ><ion-icon :icon="briefcaseOutline"></ion-icon
-                        ></ion-button>
-                      </div>
-
-                      <div style="width: 100%">
-                        <ion-item fill="solid">
-                          <ion-select
-                            placeholder="Disponibilidad"
-                            ok-text="Confirmar"
-                            cancel-text="Cancelar"
-                            :value="event.availability.value"
-                            :interface="
-                              isPlatform('desktop') ? 'popover' : 'alert'
-                            "
-                            @ion-change="
-                              event.availability.value = $event.target
-                                .value as string
-                            "
-                          >
-                            <ion-select-option value="available"
-                              >Disponible</ion-select-option
-                            >
-                            <ion-select-option value="unavailable"
-                              >Ocupado</ion-select-option
-                            >
-                          </ion-select>
-                        </ion-item>
-                      </div>
-                    </div>
+                    <ion-item fill="solid">
+                      <ion-select
+                        placeholder="Disponibilidad"
+                        ok-text="Confirmar"
+                        cancel-text="Cancelar"
+                        :value="event.availability.value"
+                        :interface="isPlatform('desktop') ? 'popover' : 'alert'"
+                        @ion-change="
+                          event.availability.value = $event.target
+                            .value as string
+                        "
+                      >
+                        <ion-select-option value="available"
+                          >Disponible</ion-select-option
+                        >
+                        <ion-select-option value="unavailable"
+                          >Ocupado</ion-select-option
+                        >
+                      </ion-select>
+                    </ion-item>
                   </ion-col>
                 </ion-row>
               </ion-list>

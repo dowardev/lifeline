@@ -15,15 +15,12 @@
       :scroll-events="true"
       @ion-scroll="handleScroll"
     >
-      <div
-        style="position: sticky; top: 0; z-index: 3"
-        class="ion-padding-start ion-padding-end"
-        :class="{
-          'background1-main-section': positionScroll == 0,
-          'background2-main-section': positionScroll > 0,
-        }"
-      >
-        <ion-row :class="{ center: screenWidth >= 768 }">
+      <!-- input add task -->
+      <section>
+        <ion-row
+          class="ion-padding-start ion-padding-end"
+          :class="{ center: screenWidth >= 768 }"
+        >
           <ion-col size-xs="12" size-md="9" size-lg="6">
             <div style="display: flex; justify-content: space-between">
               <div style="width: 100%">
@@ -48,61 +45,76 @@
             </div>
           </ion-col>
         </ion-row>
+      </section>
 
+      <section>
         <ion-row :class="{ center: screenWidth >= 768 }">
-          <ion-col size-xs="12" size-md="9" size-lg="6">
-            <ion-item lines="none" style="--background: transparent">
-              <ion-select interface="popover" :value="listSelected">
-                <ion-select-option value="tray"
-                  >Bandeja de entrada</ion-select-option
-                >
-              </ion-select>
+          <ion-col size-xs="12" size-lg="6">
+            <ion-card class="card-main-content">
+              <ion-card-content>
+                <ion-row>
+                  <ion-col size-xs="12" size-md="9" size-lg="12">
+                    <ion-item lines="none" style="--background: transparent">
+                      <ion-select interface="popover" :value="listSelected">
+                        <ion-select-option value="tray"
+                          >Bandeja de entrada</ion-select-option
+                        >
+                      </ion-select>
 
-              <div slot="end">
-                <ion-button fill="clear"
-                  ><ion-icon :icon="appsOutline"></ion-icon
-                ></ion-button>
-                <ion-button
-                  :fill="viewMode == 'list' ? 'clear' : 'solid'"
-                  @click="
-                    viewMode = viewMode == 'list' ? 'kanban' : 'list';
-                    setTasksViewMode({ viewMode });
-                  "
-                  ><ion-icon :icon="albumsOutline"></ion-icon
-                ></ion-button>
-              </div>
-            </ion-item>
+                      <div slot="end">
+                        <ion-button fill="clear"
+                          ><ion-icon :icon="appsOutline"></ion-icon
+                        ></ion-button>
+
+                        <ion-button
+                          :fill="viewMode == 'list' ? 'clear' : 'solid'"
+                          @click="
+                            viewMode = viewMode == 'list' ? 'kanban' : 'list';
+                            setTasksViewMode({ viewMode });
+                          "
+                          ><ion-icon :icon="albumsOutline"></ion-icon
+                        ></ion-button>
+                      </div>
+                    </ion-item>
+                  </ion-col>
+                </ion-row>
+
+                <!-- tasks -->
+                <ion-row>
+                  <ion-col size="12">
+                    <listTasksComponent
+                      v-show="viewMode == 'list'"
+                      :task-data="useTask().getTasks()"
+                      @update="updateTask({ idTask: $event.idTask })"
+                      @remove="removeTask({ id: $event.idTask })"
+                      @toggle-check="toggleCheckTask({ id: $event.idTask })"
+                    />
+                  </ion-col>
+                </ion-row>
+
+                <ion-row>
+                  <ion-col size-xs="12" size-md="12" size-lg="12">
+                    <kanbanComponent
+                      v-show="viewMode == 'kanban'"
+                      :task-data="useTask().getTasks()"
+                      @update="updateTask({ idTask: $event.idTask })"
+                      @delete="removeTask({ id: $event.idTask })"
+                      @toggle-check="toggleCheckTask({ id: $event.idTask })"
+                      @kanban-update="
+                        kanbanUpdate({
+                          columnName: $event.columnName,
+                          id: $event.id,
+                          position: $event.position,
+                        })
+                      "
+                    />
+                  </ion-col>
+                </ion-row>
+              </ion-card-content>
+            </ion-card>
           </ion-col>
         </ion-row>
-      </div>
-
-      <!-- tasks -->
-      <listTasksComponent
-        v-show="viewMode == 'list'"
-        :task-data="useTask().getTasks()"
-        @update="updateTask({ idTask: $event.idTask })"
-        @remove="removeTask({ id: $event.idTask })"
-        @toggle-check="toggleCheckTask({ id: $event.idTask })"
-      />
-
-      <ion-row :class="{ center: screenWidth >= 768 }">
-        <ion-col size-xs="12" size-md="12" size-lg="8">
-          <kanbanComponent
-            v-show="viewMode == 'kanban'"
-            :task-data="useTask().getTasks()"
-            @update="updateTask({ idTask: $event.idTask })"
-            @delete="removeTask({ id: $event.idTask })"
-            @toggle-check="toggleCheckTask({ id: $event.idTask })"
-            @kanban-update="
-              kanbanUpdate({
-                columnName: $event.columnName,
-                id: $event.id,
-                position: $event.position,
-              })
-            "
-          />
-        </ion-col>
-      </ion-row>
+      </section>
 
       <!-- modals -->
       <ion-modal
@@ -253,6 +265,10 @@ async function kanbanUpdate(params: {
 }
 .background2-main-section {
   background: var(--ion-color-step-50);
+}
+.card-main-content {
+  max-height: 81vh;
+  overflow-y: auto;
 }
 @media only screen and (min-width: 992px) {
   .modal-event {

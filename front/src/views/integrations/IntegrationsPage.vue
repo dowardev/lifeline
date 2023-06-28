@@ -23,71 +23,63 @@
     </ion-header>
 
     <ion-content>
-      <ion-row>
-        <ion-col
-          v-for="integration in integrations"
-          :key="integration.name"
-          size-xs="12"
-          size-lg="12"
-        >
-          <ion-row class="center">
-            <ion-col size-xs="12" size-md="6" size-lg="4">
-              <ion-card>
-                <ion-card-header>
-                  <section
-                    style="display: flex; justify-content: space-between"
-                  >
-                    <div>
-                      <ion-card-title>{{ integration.name }}</ion-card-title>
-                    </div>
+      <section>
+        <div class="center" style="width: 100%">
+          <ion-segment
+            :value="mainSegment"
+            scrollable
+            @ion-change="mainSegment = $event.target.value as string"
+          >
+            <ion-segment-button value="installed">
+              <ion-label>Instalado</ion-label>
+            </ion-segment-button>
 
-                    <div v-if="integration.state == 'available'">
-                      <ion-button size="small">Instalar</ion-button>
-                    </div>
+            <ion-segment-button value="available">
+              <ion-label>Disponible</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+        </div>
+      </section>
 
-                    <div v-if="integration.state == 'installed'">
-                      <ion-button size="small" color="danger"
-                        >Remover</ion-button
-                      >
-                    </div>
-                  </section>
+      <section>
+        <ion-row class="center">
+          <ion-col sieze-xs="12" size-lg="6">
+            <ion-card class="card-main-content">
+              <ion-item
+                v-for="integration in listIntegrations(mainSegment)"
+                :key="integration.name"
+                class="transparent"
+                button
+                @click="
+                  integrationSelected.name = integration.name;
+                  integrationSelected.description = integration.description;
+                  isOpenModalIntegration = true;
+                  eventModalIntegration = $event;
+                "
+              >
+                <ion-label>
+                  {{ integration.name }}
+                </ion-label>
 
-                  <section
-                    v-for="category in integration.categories"
-                    :key="category"
-                    style="display: flex"
-                  >
-                    <ion-chip>{{ category }}</ion-chip>
-                  </section>
-                </ion-card-header>
+                <ion-button
+                  v-if="integration.state == 'available'"
+                  size="small"
+                  fill="clear"
+                  >Instalar</ion-button
+                >
 
-                <ion-card-content>
-                  <ion-accordion-group>
-                    <ion-accordion>
-                      <ion-item slot="header">
-                        <ion-label>Descripción</ion-label>
-                      </ion-item>
-
-                      <div slot="content" class="ion-padding">
-                        <p>{{ integration.description }}</p>
-                        <ion-item lines="none">
-                          <ion-button
-                            v-if="integration.url"
-                            slot="end"
-                            fill="clear"
-                            @click="openUrl({ url: integration.url })"
-                            >Mas información.</ion-button
-                          >
-                        </ion-item>
-                      </div>
-                    </ion-accordion>
-                  </ion-accordion-group>
-                </ion-card-content>
-              </ion-card>
-            </ion-col>
-          </ion-row>
-        </ion-col>
-      </ion-row>
+                <ion-button
+                  v-if="integration.state == 'installed'"
+                  size="small"
+                  color="danger"
+                  fill="clear"
+                  >Remover</ion-button
+                >
+              </ion-item>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </section>
 
       <!-- modals -->
       <ion-modal ref="modal" trigger="open-modal-help-integrations">
@@ -110,6 +102,29 @@
             vez más servicios, con el objetivo de mejorar y enriquecer tu
             experiencia dentro de la aplicación, haciendo que sea lo más
             completa posible.
+          </p>
+        </ion-content>
+      </ion-modal>
+
+      <!-- modal description -->
+      <ion-modal
+        :is-open="isOpenModalIntegration"
+        @did-dismiss="isOpenModalIntegration = false"
+      >
+        <ion-header mode="ios" class="ion-bo-border">
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="modalController.dismiss()"
+                ><ion-icon :icon="closeOutline"></ion-icon
+              ></ion-button>
+            </ion-buttons>
+            <ion-title>{{ integrationSelected.name }}</ion-title>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="ion-padding">
+          <p>
+            {{ integrationSelected.description }}
           </p>
         </ion-content>
       </ion-modal>
@@ -147,13 +162,15 @@ import {
   IonButton,
   modalController,
   isPlatform,
+  IonSegment,
+  IonSegmentButton,
 } from "@ionic/vue";
 import {
   closeOutline,
   ellipsisVerticalOutline,
   helpCircleOutline,
 } from "ionicons/icons";
-import { ref } from "vue";
+import { computed, reactive, ref } from "vue";
 
 interface Element {
   name: string;
@@ -199,6 +216,22 @@ const integrations = [
 ] as Array<Element>;
 const isOpenPopOverMainOptions = ref(false);
 const eventPopOverMainOptions = ref(null as CustomEvent | null);
+const mainSegment = ref("installed");
+const integrationSelected = reactive({
+  name: "",
+  description: "",
+});
+const isOpenModalIntegration = ref(false);
+const eventModalIntegration = ref(null as CustomEvent | null);
+
+// computed
+const listIntegrations = computed(() => {
+  return (integrationCategory: string): Element[] => {
+    return integrations.filter(
+      (integration) => integration.state == integrationCategory
+    );
+  };
+});
 
 // functions
 function openUrl(params: { url: string }): void {

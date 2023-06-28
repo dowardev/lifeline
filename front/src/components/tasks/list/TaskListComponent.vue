@@ -1,15 +1,12 @@
 <template>
-  <ion-row
-    :class="{ center: screenWidth >= 768 }"
-    class="ion-padding-start ion-padding-end"
-  >
-    <ion-col size-xs="12" size-md="6">
-      <ion-list>
+  <ion-row>
+    <ion-col size-xs=12 size-lg="6">
+      <ion-list class="transparent">
         <ion-list-header>
-          <ion-label>Pendiente</ion-label>
+          <ion-label class="center">Pendiente</ion-label>
         </ion-list-header>
 
-        <ion-card v-if="listTasks.incomplete.length > 0">
+        <div v-if="listTasks.incomplete.length > 0">
           <ion-item
             v-for="task in listTasks.incomplete"
             :key="task.name"
@@ -52,15 +49,17 @@
               ><ion-icon :icon="trashOutline"></ion-icon
             ></ion-button>
           </ion-item>
-        </ion-card>
+        </div>
       </ion-list>
+    </ion-col>
 
-      <ion-list>
+    <ion-col>
+      <ion-list class="transparent">
         <ion-list-header>
-          <ion-label>Completado</ion-label>
+          <ion-label class="center">Completado</ion-label>
         </ion-list-header>
 
-        <ion-card v-if="listTasks.complete.length > 0">
+        <div v-if="listTasks.complete.length > 0">
           <ion-item
             v-for="task in listTasks.complete"
             :key="task.name"
@@ -103,7 +102,7 @@
               ><ion-icon :icon="trashOutline"></ion-icon
             ></ion-button>
           </ion-item>
-        </ion-card>
+        </div>
       </ion-list>
     </ion-col>
   </ion-row>

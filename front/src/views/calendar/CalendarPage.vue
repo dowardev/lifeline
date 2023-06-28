@@ -7,39 +7,14 @@
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
-
-        <ion-buttons slot="end">
-          <!-- add event button -->
-          <ion-button id="modal-add-event"
-            ><ion-icon :icon="addOutline"></ion-icon
-          ></ion-button>
-
-          <!-- button popover  main options -->
-          <ion-button
-            @click="
-              eventPopOverMainOptions = isPlatform('mobile') ? null : $event;
-              isOpenPopOverMainOptions = true;
-            "
-          >
-            <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-row>
-        <!-- week calendar -->
-        <!-- button options -->
-        <ion-col size-xs="12" size-lg="12">
-          <!-- button week navigation -->
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            "
-          >
+      <section>
+        <ion-row>
+          <ion-col size="6">
+            <!-- button week navigation -->
             <div
               style="
                 display: flex;
@@ -47,153 +22,197 @@
                 align-items: center;
               "
             >
-              <div>
-                <ion-item lines="none">
-                  <!-- previous button -->
-                  <ion-button fill="clear" size="small" @click="previousWeek()"
-                    ><ion-icon :icon="chevronBackOutline"></ion-icon
-                  ></ion-button>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
+                <div>
+                  <ion-item lines="none">
+                    <!-- previous button -->
+                    <ion-button
+                      fill="clear"
+                      size="small"
+                      @click="previousWeek()"
+                      ><ion-icon :icon="chevronBackOutline"></ion-icon
+                    ></ion-button>
 
-                  <!-- next button -->
-                  <ion-button fill="clear" size="small" @click="nextWeek()"
-                    ><ion-icon :icon="chevronForwardOutline"></ion-icon
-                  ></ion-button>
-                </ion-item>
-              </div>
+                    <!-- next button -->
+                    <ion-button fill="clear" size="small" @click="nextWeek()"
+                      ><ion-icon :icon="chevronForwardOutline"></ion-icon
+                    ></ion-button>
+                  </ion-item>
+                </div>
 
-              <!-- button date selector -->
-              <div class="space-button-date-selector">
-                <ion-button
-                  fill="clear"
-                  size="small"
-                  @click="isOpenpopoverMainCalendar = true"
-                >
-                  {{
-                    translateMonth({
-                      monthName: months[getMonth(currentDate)],
-                    })
-                  }}
-                </ion-button>
-              </div>
+                <!-- button date selector -->
+                <div class="space-button-date-selector">
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    @click="isOpenpopoverMainCalendar = true"
+                  >
+                    {{
+                      translateMonth({
+                        monthName: months[getMonth(currentDate)],
+                      })
+                    }}
+                  </ion-button>
+                </div>
 
-              <!-- today button -->
-              <div>
-                <ion-button size="small" fill="clear" @click="today()">
-                  <ion-icon :icon="todayOutline"></ion-icon>
-                </ion-button>
+                <!-- today button -->
+                <div>
+                  <ion-button size="small" fill="clear" @click="today()">
+                    <ion-icon :icon="todayOutline"></ion-icon>
+                  </ion-button>
+                </div>
               </div>
             </div>
-          </div>
+          </ion-col>
 
-          <!-- table -->
-          <ion-card>
-            <ion-card-content>
-              <div style="height: 82vh; overflow: auto; overflow-x: auto">
-                <table class="schedule-table">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th v-for="(day, index) in days" :key="index">
-                        <!-- day -->
-                        <div
-                          :class="{
-                            today:
-                              day.date.getDate() == new Date().getDate() &&
-                              day.date.getMonth() == new Date().getMonth() &&
-                              day.date.getFullYear() ==
-                                new Date().getFullYear(),
-                          }"
-                        >
-                          {{
-                            translateDayHeaderTable({
-                              dayName: daysOfWeek[day.date.getDay()],
-                            })
-                          }}
-                        </div>
+          <ion-col size="6">
+            <div style="float: right">
+              <!-- add event button -->
+              <ion-button
+                fill="clear"
+                @click="
+                  eventModalAddEvent = $event;
+                  isOpenModalAddEvent = true;
+                "
+                ><ion-icon :icon="addOutline"></ion-icon
+              ></ion-button>
 
-                        <!-- day number -->
-                        <div
-                          :class="{
-                            today:
-                              day.date.getDate() == new Date().getDate() &&
-                              day.date.getMonth() == new Date().getMonth() &&
-                              day.date.getFullYear() ==
-                                new Date().getFullYear(),
-                          }"
-                        >
-                          {{ day.date.getDate() }}
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="hour in hoursOfDay" :key="hour">
-                      <td
-                        :class="{
-                          today: parseInt(hour) == new Date().getHours(),
-                        }"
-                      >
-                        {{ hour }}
-                      </td>
-                      <td v-for="day in days" :key="day.date.toString()">
-                        <div>
+              <!-- button popover  main options -->
+              <ion-button
+                fill="clear"
+                @click="
+                  eventPopOverMainOptions = $event;
+                  isOpenPopOverMainOptions = true;
+                "
+              >
+                <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
+              </ion-button>
+            </div>
+          </ion-col>
+        </ion-row>
+      </section>
+
+      <section>
+        <ion-row>
+          <!-- week calendar -->
+          <!-- button options -->
+          <ion-col size-xs="12" size-lg="12">
+            <!-- table -->
+            <ion-card class="card-main-content">
+              <ion-card-content>
+                <div>
+                  <table class="schedule-table">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th v-for="(day, index) in days" :key="index">
+                          <!-- day -->
                           <div
-                            v-for="schedule in generateSchedule[
-                              daysOfWeek[new Date(day.date).getDay()]
-                            ]"
-                            :key="schedule.date.toString()"
+                            :class="{
+                              today:
+                                day.date.getDate() == new Date().getDate() &&
+                                day.date.getMonth() == new Date().getMonth() &&
+                                day.date.getFullYear() ==
+                                  new Date().getFullYear(),
+                            }"
                           >
-                            <template
-                              v-if="
-                                new Date(schedule.date).getHours() ===
-                                  parseInt(hour) &&
-                                new Date(schedule.date).getDate() ===
-                                  day.date.getDate()
-                              "
+                            {{
+                              translateDayHeaderTable({
+                                dayName: daysOfWeek[day.date.getDay()],
+                              })
+                            }}
+                          </div>
+
+                          <!-- day number -->
+                          <div
+                            :class="{
+                              today:
+                                day.date.getDate() == new Date().getDate() &&
+                                day.date.getMonth() == new Date().getMonth() &&
+                                day.date.getFullYear() ==
+                                  new Date().getFullYear(),
+                            }"
+                          >
+                            {{ day.date.getDate() }}
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="hour in hoursOfDay" :key="hour">
+                        <td
+                          :class="{
+                            today: parseInt(hour) == new Date().getHours(),
+                          }"
+                        >
+                          {{ hour }}
+                        </td>
+                        <td v-for="day in days" :key="day.date.toString()">
+                          <div>
+                            <div
+                              v-for="schedule in generateSchedule[
+                                daysOfWeek[new Date(day.date).getDay()]
+                              ]"
+                              :key="schedule.date.toString()"
                             >
-                              <ion-card
-                                class="card-event"
-                                style="cursor: pointer"
-                                @click="
-                                  afterUpdateEvent({
-                                    idEvent: schedule.idElement,
-                                  })
-                                "
-                                @contextmenu.prevent="
-                                  openPopoverRightEventMenu({
-                                    ev: $event,
-                                    eventId: schedule.idElement,
-                                  })
-                                "
-                                @press="
-                                  openPopoverRightEventMenu({
-                                    ev: $event,
-                                    eventId: schedule.idElement,
-                                  })
+                              <template
+                                v-if="
+                                  new Date(schedule.date).getHours() ===
+                                    parseInt(hour) &&
+                                  new Date(schedule.date).getDate() ===
+                                    day.date.getDate()
                                 "
                               >
-                                <ion-card-header>
-                                  <ion-card-title>{{
-                                    schedule.title
-                                  }}</ion-card-title>
-                                </ion-card-header>
+                                <ion-card
+                                  class="card-event"
+                                  style="cursor: pointer"
+                                  @click="
+                                    afterUpdateEvent({
+                                      idEvent: schedule.idElement,
+                                    })
+                                  "
+                                  @contextmenu.prevent="
+                                    openPopoverRightEventMenu({
+                                      ev: $event,
+                                      eventId: schedule.idElement,
+                                    })
+                                  "
+                                  @press="
+                                    openPopoverRightEventMenu({
+                                      ev: $event,
+                                      eventId: schedule.idElement,
+                                    })
+                                  "
+                                >
+                                  <ion-card-header>
+                                    <ion-card-title>{{
+                                      schedule.title
+                                    }}</ion-card-title>
+                                  </ion-card-header>
 
-                                <ion-card-content>{{
-                                  format(new Date(schedule.date), "Pp")
-                                }}</ion-card-content>
-                              </ion-card>
-                            </template>
+                                  <ion-card-content>{{
+                                    format(new Date(schedule.date), "Pp")
+                                  }}</ion-card-content>
+                                </ion-card>
+                              </template>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-      </ion-row>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </section>
 
       <!-- popovers -->
       <!-- popover main calendar -->
@@ -293,9 +312,11 @@
       <!-- modal add event -->
       <ion-modal
         ref="modalAddEvent"
-        trigger="modal-add-event"
         class="modal-event"
         :backdrop-dismiss="false"
+        :is-open="isOpenModalAddEvent"
+        :event="eventModalAddEvent"
+        @did-dismiss="isOpenModalAddEvent = false"
       >
         <AdminEventComponent
           @create="
@@ -433,6 +454,8 @@ const isOpenModalUpdateEvent = ref(false);
 const isOpenModalRecheduleTasks = ref(false);
 const isOpenPopOverMainOptions = ref(false);
 const eventPopOverMainOptions = ref(null as CustomEvent | null);
+const isOpenModalAddEvent = ref(false);
+const eventModalAddEvent = ref(null as CustomEvent | null);
 
 // mounted
 onMounted(async () => {
@@ -747,7 +770,7 @@ async function postUpdateEvent(params: { event: Event }): Promise<void> {
 
 <style scoped>
 table.schedule-table {
-  @sa border-collapse: collapse;
+  border-collapse: collapse;
 }
 
 table.schedule-table td {
@@ -851,5 +874,10 @@ ion-radio.ios::part(container) {
 
 .radio-checked.ios::part(container) {
   border-color: #6815ec;
+}
+
+.card-main-content {
+  max-height: 82vh;
+  overflow: auto;
 }
 </style>

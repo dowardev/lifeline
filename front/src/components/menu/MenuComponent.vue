@@ -1,58 +1,68 @@
 <template>
   <ion-page>
-    <ion-content>
-      <section class="menu">
-        <div class="menu-container">
-          <!-- session -->
-          <section>
-            <div>
-              <!-- logged -->
-              <ion-item
-                v-if="useUser().isLogged.value == true"
-                lines="none"
-                class="transparent"
+    <ion-header mode="ios" class="ion-no-border">
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
+        </ion-buttons>
+
+        <ion-title>LifeLine</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content :fullscreen="true">
+      <!-- session -->
+      <section>
+        <ion-row>
+          <ion-col size="12">
+            <!-- logged -->
+            <ion-item
+              v-if="useUser().isLogged.value == true"
+              lines="none"
+              class="transparent"
+            >
+              <!-- <ion-avatar slot="start"> -->
+              <!--   <img :src="imageKeyPath" /> -->
+              <!-- </ion-avatar> -->
+
+              <ion-label class="labelOptionMenu">{{
+                useUser().user.value.user
+              }}</ion-label>
+
+              <ion-button
+                slot="end"
+                fill="clear"
+                @click="
+                  eventOpenPopoverUserOptions = $event;
+                  isOpenPopoverUserOptions = true;
+                "
               >
-                <ion-avatar slot="start">
-                  <img :src="imageKeyPath" />
-                </ion-avatar>
+                <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
+              </ion-button>
+            </ion-item>
 
-                <ion-label class="labelOptionMenu">{{
-                  useUser().user.value.user
-                }}</ion-label>
-
-                <ion-button
-                  slot="end"
-                  fill="clear"
-                  @click="
-                    eventOpenPopoverUserOptions = $event;
-                    isOpenPopoverUserOptions = true;
-                  "
-                >
-                  <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
-                </ion-button>
-              </ion-item>
-            </div>
-
-            <div>
-              <!-- no logged -->
-              <ion-item
-                v-if="useUser().isLogged.value == false"
-                class="transparent"
-                lines="none"
+            <!-- no logged -->
+            <ion-item
+              v-if="useUser().isLogged.value == false"
+              class="transparent"
+              lines="none"
+            >
+              <ion-button fill="clear" @click="openRoute('/login')">
+                Iniciar sesión
+              </ion-button>
+              <ion-button fill="clear" @click="openRoute('/signup')"
+                >Registrar</ion-button
               >
-                <ion-button fill="clear" @click="openRoute('/login')">
-                  Iniciar sesión
-                </ion-button>
-                <ion-button fill="clear" @click="openRoute('/signup')"
-                  >Registrar</ion-button
-                >
-              </ion-item>
-            </div>
-          </section>
+            </ion-item>
+          </ion-col>
+        </ion-row>
+      </section>
 
-          <ion-card>
+      <ion-row>
+        <ion-col>
+          <ion-card class="ion-padding-top ion-padding-bottom">
             <!-- navigation -->
-            <section class="ion-padding-top ion-padding-bottom">
+            <section>
               <div>
                 <!-- home -->
                 <ion-item
@@ -244,8 +254,8 @@
               </div>
             </section>
           </ion-card>
-        </div>
-      </section>
+        </ion-col>
+      </ion-row>
 
       <!-- popovers -->
       <!-- <ion-popover -->
@@ -291,7 +301,6 @@ import {
   menuController,
   isPlatform,
   modalController,
-  IonFooter,
   IonPopover,
   IonAccordion,
   IonAccordionGroup,
@@ -422,21 +431,5 @@ async function logout(): Promise<void> {
 
 .iconOptionNoSelected {
   padding: 8px;
-}
-
-@media only screen and (min-width: 992px) {
-  .menu {
-    height: 85%;
-    display: flex;
-    align-items: center;
-    padding-left: 16px;
-    justify-content: center;
-  }
-}
-
-.menu-container {
-  width: 100%;
-  max-height: 100%;
-  overflow: auto;
 }
 </style>

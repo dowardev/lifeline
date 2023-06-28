@@ -1,14 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
+    namespace "com.dowardev.lifeline"
     compileSdkVersion rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.dowardev.lifeline"
-        // applicationId "com.dowardev.lifeline.prueba"
+        // applicationId "com.dowardev.lifeline"
+        applicationId "com.prueba.lifeline"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "0.9.0"
+        versionCode 1
+        versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

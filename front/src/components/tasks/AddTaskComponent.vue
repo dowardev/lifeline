@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header collapse="fade" mode="ios" class="ion-no-border">
+    <ion-header  mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button @click="modalController.dismiss()">
@@ -19,12 +19,6 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense" mode="ios">
-        <ion-toolbar>
-          <ion-title size="large">{{ pageTitle }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
       <!-- basic -->
       <ion-row class="center">
         <ion-col size-xs="12" size-md="10" size-lg="6">

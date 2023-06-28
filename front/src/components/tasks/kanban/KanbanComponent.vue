@@ -3,124 +3,118 @@
     :class="{ center: screenWidth >= 768 }"
     class="ion-padding-start ion-padding-end"
   >
-    <ion-col size-xs="12" size-md="3" size-lg="3">
-      <h3>Pendiente</h3>
+    <ion-col size-xs="12" size-md="4">
+      <h3 class="center">Pendiente</h3>
       <div class="border-column"></div>
-      <ion-card class="card-elements">
-        <draggable
-          :list="pending"
-          group="people"
-          item-key="name"
-          @change="eventKanban({ evt: $event, columnName: 'pending' })"
-        >
-          <template #item="{ element }">
-            <ion-item
-              button
-              class="transparent"
-              lines="full"
-              style="cursor: move"
-              @contextmenu.prevent="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: element.id,
-                  columnName: 'pending',
-                })
-              "
-              @press="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: element.id,
-                  columnName: 'pending',
-                })
-              "
-            >
-              <ion-label>{{ element.name }} </ion-label>
-            </ion-item>
-          </template>
-        </draggable>
-      </ion-card>
+      <draggable
+        :list="pending"
+        group="people"
+        item-key="name"
+        @change="eventKanban({ evt: $event, columnName: 'pending' })"
+      >
+        <template #item="{ element }">
+          <ion-item
+            button
+            class="transparent"
+            lines="full"
+            style="cursor: move"
+            @contextmenu.prevent="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: element.id,
+                columnName: 'pending',
+              })
+            "
+            @press="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: element.id,
+                columnName: 'pending',
+              })
+            "
+          >
+            <ion-label>{{ element.name }} </ion-label>
+          </ion-item>
+        </template>
+      </draggable>
     </ion-col>
 
-    <ion-col size-xs="12" size-md="3" size-lg="3">
-      <h3>En progreso</h3>
+    <ion-col size-xs="12" size-md="4">
+      <h3 class="center">En progreso</h3>
       <div class="border-column"></div>
-      <ion-card class="card-elements">
-        <draggable
-          :list="progress"
-          group="people"
-          item-key="name"
-          @change="eventKanban({ evt: $event, columnName: 'progress' })"
-        >
-          <template #item="{ element }">
-            <ion-item
-              button
-              class="transparent"
-              lines="full"
-              style="cursor: move"
-              @contextmenu.prevent="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: element.id,
-                  columnName: 'progress',
-                })
-              "
-              @press="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: element.id,
-                  columnName: 'progress',
-                })
-              "
-            >
-              <ion-label>{{ element.name }} </ion-label>
-            </ion-item>
-          </template>
-        </draggable>
-      </ion-card>
+      <draggable
+        :list="progress"
+        group="people"
+        item-key="name"
+        @change="eventKanban({ evt: $event, columnName: 'progress' })"
+      >
+        <template #item="{ element }">
+          <ion-item
+            button
+            class="transparent"
+            lines="full"
+            style="cursor: move"
+            @contextmenu.prevent="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: element.id,
+                columnName: 'progress',
+              })
+            "
+            @press="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: element.id,
+                columnName: 'progress',
+              })
+            "
+          >
+            <ion-label>{{ element.name }} </ion-label>
+          </ion-item>
+        </template>
+      </draggable>
     </ion-col>
 
-    <ion-col size-xs="12" size-md="3" size-lg="3">
-      <h3>Finalizado</h3>
+    <ion-col size-xs="12" size-md="4">
+      <h3 class="center">Finalizado</h3>
       <div class="border-column"></div>
-      <ion-card class="card-elements">
-        <draggable
-          :list="finalized"
-          group="people"
-          item-key="name"
-          @change="eventKanban({ evt: $event, columnName: 'finalized' })"
-        >
-          <template #item="{ element }">
-            <ion-item
-              button
-              class="transparent"
-              lines="full"
-              style="cursor: move"
-              @contextmenu.prevent="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: element.id,
-                  columnName: 'finalized',
-                })
-              "
-              @press="
-                openPopoverRightTaskMenu({
-                  ev: $event,
-                  taskId: element.id,
-                  columnName: 'finalized',
-                })
-              "
-            >
-              <ion-label>{{ element.name }} </ion-label>
-            </ion-item>
-          </template>
-        </draggable>
-      </ion-card>
+      <draggable
+        :list="finalized"
+        group="people"
+        item-key="name"
+        @change="eventKanban({ evt: $event, columnName: 'finalized' })"
+      >
+        <template #item="{ element }">
+          <ion-item
+            button
+            class="transparent"
+            lines="full"
+            style="cursor: move"
+            @contextmenu.prevent="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: element.id,
+                columnName: 'finalized',
+              })
+            "
+            @press="
+              openPopoverRightTaskMenu({
+                ev: $event,
+                taskId: element.id,
+                columnName: 'finalized',
+              })
+            "
+          >
+            <ion-label>{{ element.name }} </ion-label>
+          </ion-item>
+        </template>
+      </draggable>
     </ion-col>
   </ion-row>
 </template>
 
 <script setup lang="ts">
-import { popoverController, IonCard, IonRow, IonCol } from "@ionic/vue";
+import { popoverController, IonRow, IonCol } from "@ionic/vue";
 import { onMounted, ref, watch } from "vue";
 import draggable from "vuedraggable/src/vuedraggable";
 
@@ -292,9 +286,5 @@ function eventKanban(params: { evt: any; columnName: string }) {
 
 .border-column {
   border-bottom: 1px solid var(--ion-color-primary);
-}
-
-.card-elements {
-  min-height: 40vh;
 }
 </style>
