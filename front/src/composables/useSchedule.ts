@@ -159,7 +159,6 @@ export const useSchedule = () => {
           id,
           schedule: {
             at: reminder,
-            allowWhileIdle: true,
           },
           actionTypeId: "",
           extra: extraInfo,

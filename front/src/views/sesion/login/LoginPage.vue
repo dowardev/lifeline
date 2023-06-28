@@ -247,7 +247,7 @@ import loginImageCherry from "@/assets/otros/login-cherry.png";
 const router = useRouter();
 
 // refs
-const form = reactive({ email: "", password: "" });
+const form = reactive({ email: "admin@admin.com", password: "d2f%PF" });
 // spinners
 const spinners = reactive({
   buttonLogin: false,

@@ -709,7 +709,7 @@ async function postCreateEvent(params: { event: Event }): Promise<void> {
     await Promise.all(
       notifications.map(async (notification) => {
         await useSchedule().setReminders({
-          id: parseInt(event.id!),
+          id: new Date().getMilliseconds(),
           reminder: notification,
           title: event.name!,
           message: event.description,

@@ -1,6 +1,6 @@
 <template>
   <ion-row>
-    <ion-col size-xs=12 size-lg="6">
+    <ion-col size-xs="12" size-lg="6">
       <ion-list class="transparent">
         <ion-list-header>
           <ion-label class="center">Pendiente</ion-label>
