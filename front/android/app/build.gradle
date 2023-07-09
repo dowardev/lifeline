@@ -4,8 +4,8 @@ android {
     namespace "com.dowardev.lifeline"
     compileSdkVersion rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.dowardev.lifeline"
-        // applicationId "com.prueba.lifeline"
+        // applicationId "com.dowardev.lifeline"
+        applicationId "com.prueba.lifeline"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 4

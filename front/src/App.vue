@@ -23,18 +23,16 @@ import { setTheme } from "@/services/system";
 import { useRoute } from "vue-router";
 
 // interface
-import { Event, Schedule } from "@/utils/interfaces";
+import { Schedule } from "@/utils/interfaces";
 
-import { useDocument } from "@/composables/useDocument";
 import { useSchedule } from "@/composables/useSchedule";
 import { useSystem } from "@/composables/useSystem";
 import { getUserToken } from "./services/user";
 import { useUser } from "./composables/useUser";
 import { useEvent } from "./composables/useEvent";
-import { sync } from "ionicons/icons";
-import { updateEvent } from "./services/event";
 
 const route = useRoute();
+const useUserComposable = useUser();
 
 // mounted
 onMounted(() => {
@@ -53,7 +51,9 @@ const start = async (): Promise<void> => {
   await useSystem().updateThemeSelected({ theme });
 
   const toast = await useSystem().openToastFixed({ message: "Sincronizando" });
-  toast.present();
+  if (useUserComposable.isLogged.value) {
+    toast.present();
+  }
   try {
     await load();
     toast.dismiss();
@@ -70,7 +70,7 @@ async function load(): Promise<void> {
   }
   // load schedule
   let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
-  if (Object.keys(schedule).length==0)
+  if (Object.keys(schedule).length == 0)
     await useSchedule().generateEventsSchedule();
 
   // load reminders
