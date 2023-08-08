@@ -31,6 +31,12 @@ import { DefaultApolloClient } from "@vue/apollo-composable";
 // i18n
 import i18n from "./plugins/i18n/i18n";
 
+// ionic storage
+import { Storage } from "@ionic/storage";
+const storage = new Storage();
+await storage.create();
+export { storage };
+
 // pinia
 import { createPinia } from "pinia";
 const pinia = createPinia();

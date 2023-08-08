@@ -11,6 +11,7 @@ import {
   getWakaTimeDurations as getWakaTimeDurationsService,
   deleteWakaTimeApiKey as deleteWakaTimeApiKeyService,
   openToast as openToastService,
+  deleteData as deleteDataService,
 } from "@/services/system";
 import { Theme, ViewMode } from "@/utils/types";
 import {
@@ -186,6 +187,14 @@ export const useSystem = () => {
     return await openToastService({ color, message });
   }
 
+  async function deleteData(params: {
+    events: boolean;
+    schedule: boolean;
+  }): Promise<void> {
+    const { events, schedule } = params;
+    await deleteDataService({ events, schedule });
+  }
+
   return {
     loadThemeSelected,
     getTheme,
@@ -205,6 +214,7 @@ export const useSystem = () => {
     getWakaTimeDayTotal,
     clearWakaTimeApiKey,
     openToast,
-openToastFixed
+    openToastFixed,
+    deleteData,
   };
 };

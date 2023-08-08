@@ -1,28 +1,29 @@
 import { defineStore } from "pinia";
 import { Schedule } from "../utils/interfaces";
+import { ref, watch } from "vue";
+import { storeSchedule } from "@/services/schedule";
+import { useSchedule } from "@/composables/useSchedule";
 
-interface RreminderState {
-  shedule: Schedule;
-}
+export const useScheduleStore = defineStore("schedule", () => {
+  const schedule = ref({} as Schedule);
+  const scheduleComposable = useSchedule();
 
-export const useScheduleStore = defineStore("schedule", {
-  state: (): RreminderState => ({
-    shedule: {},
-  }),
+  function getSchedule(): any {
+    return schedule.value;
+  }
 
-  getters: {
-    getSchedule(state) {
-      return () => {
-        return state.shedule;
-      };
-    },
-  },
+  function setSchedule(params: { schedule: Schedule }): void {
+    const { schedule: scheduleData } = params;
+    schedule.value = scheduleData;
+  }
 
-  actions: {
-    setSchedule(params: { schedule: Schedule }) {
-      const schedule = params.schedule;
+  // watch(
+  //   () => schedule.value,
+  //   async (newValue, oldValue) => {
+  //     await scheduleComposable.saveSchedule({ schedule: newValue });
+  //   },
+  //   { deep: true },
+  // );
 
-      this.shedule = schedule;
-    },
-  },
+  return { schedule, getSchedule, setSchedule };
 });

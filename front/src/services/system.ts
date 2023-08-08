@@ -1,6 +1,3 @@
-import { Storage } from "@ionic/storage";
-const storage = new Storage();
-storage.create();
 import { toastController } from "@ionic/vue";
 import timeZones from "../assets/files/timezones.json";
 import { SystemMessage } from "@/utils/interfaces";
@@ -9,6 +6,9 @@ import { Theme, ViewMode } from "@/utils/types";
 import axios from "axios";
 import { DocumentNode } from "graphql";
 import gql from "graphql-tag";
+import { useEvent } from "@/composables/useEvent";
+import { useSchedule } from "@/composables/useSchedule";
+import { storage } from "@/main";
 
 interface WakaTimeDuration {
   data: {
@@ -180,4 +180,14 @@ export function graphqlQueryBuilder(params: {
         ${name}
       `;
   return query;
+}
+
+export async function deleteData(params: {
+  events: boolean;
+  schedule: boolean;
+}): Promise<void> {
+  const { events, schedule } = params;
+
+  if (events) await useEvent().deleteEvents();
+  if (schedule) await useSchedule().deleteSchedule();
 }

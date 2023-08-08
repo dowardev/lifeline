@@ -1,33 +1,42 @@
-import { NewEvent, Event } from "@/utils/interfaces";
+import { NewEvent, Event, Schedule } from "@/utils/interfaces";
 import {
   saveLocalEvent as saveLocalEventService,
   getEventsLocal as getEventsLocalService,
-  updateLocalEvent,
+  updateLocalEvent as updateLocalEventService,
   deleteEvent as deleteEventService,
   pushEvent as pushEventService,
   createEvent as createEventService,
   getEvents as getEventsServivice,
   updateEvent as updateEventService,
   removeAllLocalEvents as removeAllLocalEventsService,
+  deleteEvents as deleteEventsService,
+  deleteEventServer as deleteEventServerService,
+  generateEventId as generateEventIdService,
+  formatEvent as formatEventService,
+  saveLocalEvents as saveLocalEventsService,
+  getEventLocal,
 } from "../services/event";
 import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
 import * as jsonpatch from "fast-json-patch";
+import { useSchedule } from "./useSchedule";
+import { difference } from "lodash";
 
 export const useEvent = () => {
   const eventStore = useEventsStore();
 
-  async function saveEvent(params: { event: Event }): Promise<{ id: string }> {
-    const eventData = params.event;
+  async function saveEvent(params: { event: Event }): Promise<void> {
+    let { event } = params;
 
     try {
-      const { id } = await saveLocalEventService({
-        event: eventData,
+      const { event: eventFormated } = formatEventService({ event });
+      const { id } = await pushNewEvent({ event });
+      event = eventFormated;
+      event.idSync = id;
+      await saveLocalEventService({
+        event,
       });
-      eventData.id = id;
-      eventStore.addEvent({ event: eventData });
-
-      return { id: eventData.id };
+      eventStore.addEvent({ event });
     } catch (error: any) {
       throw new Error(error);
     }
@@ -37,23 +46,35 @@ export const useEvent = () => {
     const { event } = params;
 
     try {
-      await updateLocalEvent({
-        event,
-      });
-      eventStore.updateEvent({ event });
+      const { event: eventFormated } = formatEventService({ event });
+      try {
+        await pusUpdateEvent({ event: eventFormated });
+        event.syncStatus = true;
+      } catch (error) {
+        event.syncStatus = false;
+        throw new Error(error);
+      }
+
+      await updateLocalEvent({ event: eventFormated });
+      eventStore.updateEvent({ event: eventFormated });
     } catch (error: any) {
       throw new Error(error);
     }
   }
 
   async function loadEvents(): Promise<void> {
-    const events = (await getEventsLocalService()) ?? [];
-    eventStore.updateEvents({ events });
+    let events = await getStoredEvents();
+    events = events.map((event) => {
+      // formatEventService({ event, opts: { id: true } });
+      // debugger
+      return event;
+    });
+    eventStore.addEvents({ events });
   }
 
-  async function getEvents(): Promise<Array<Event> | undefined> {
+  async function getEvents(): Promise<Event[]> {
     const events = eventStore.getEvents();
-    return events != null ? JSON.parse(JSON.stringify(events)) : undefined;
+    return events != null ? events : ([] as Event[]);
   }
 
   function getEvent(params: { idEvent: string }): Event | undefined {
@@ -63,59 +84,25 @@ export const useEvent = () => {
     return event ?? undefined;
   }
 
-  async function deleteEvent(params: { eventId: string }) {
-    const eventId = params.eventId;
-    await deleteEventService({ eventId });
-    eventStore.removeEvent({ eventId });
+  async function pushUpdateEvent(params: { event: Event }): Promise<void> {
+    const { event } = params;
+
+    try {
+      await pushEventService({ event });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  async function syncEvents(): Promise<void> {
-    const events = (await getEventsLocalService()) ?? [];
-    events.forEach((event) => {
-      if (event.syncStatus == false || event.syncStatus == undefined) {
-        createEventService({ event });
-      } else {
-        pushEventService({ event });
-      }
-    });
+  async function getStoredEvents(): Promise<Array<Event>> {
+    return await getEventsLocalService();
   }
 
-  async function pushEvents(): Promise<void> {
-    const events = (await useEvent().getStoredEvents()) ?? [];
-
-    await Promise.all(
-      events.map(async (event) => {
-        if (event.idSync == "" || event.idSync == undefined) {
-          try {
-            const { id } = await createEventService({ event });
-            event.syncStatus = true;
-            event.idSync = id;
-          } catch (error) {
-            console.error(error);
-          }
-        }
-
-        if (event.syncStatus == false) {
-          try {
-            await pushEventService({ event });
-            event.syncStatus = true;
-          } catch (error) {
-            console.error(error);
-          }
-        }
-      })
-    );
-  }
-
-  async function getStoredEvents(): Promise<Array<Event> | null> {
-    return (await getEventsLocalService()) ?? null;
-  }
-
-  async function getEventsServer(): Promise<Array<Event> | undefined> {
+  async function getEventsServer(): Promise<Array<Event>> {
     const events = await getEventsServivice({
       graphql: { name: USER_EVENTS, fragment: "Events", refetch: true },
     });
-    return events ?? undefined;
+    return events ?? ([] as Event[]);
   }
 
   async function storeEventsServer(): Promise<void> {
@@ -124,14 +111,17 @@ export const useEvent = () => {
 
     for (const event of eventsServer) {
       const result = eventsStored?.filter(
-        (eventF) => eventF.idSync == event.idSync
+        (eventF) => eventF.idSync == event.idSync,
       );
-      if (result?.length == 0 || result == undefined)
-        await saveEvent({ event });
+      if (result?.length == 0 || result == undefined) {
+        event.reminders.start = new Date(event.reminders.start);
+        event.reminders.end = new Date(event.reminders.end);
+        await storeLocalEvent({ event });
+      }
     }
   }
 
-  async function storeUpdateEventsServer(): Promise<{
+  async function getEventsServerUpdated(): Promise<{
     eventsUpdated: Event[];
   }> {
     const localEvents = (await useEvent().getStoredEvents()) ?? [];
@@ -171,7 +161,7 @@ export const useEvent = () => {
 
     for (let i = 0; i < eventsStored.length; i++) {
       const encontrado = eventsServer.find(
-        (obj) => obj.idSync === eventsStored[i].idSync
+        (obj) => obj.idSync === eventsStored[i].idSync,
       );
       if (!encontrado) {
         deleted.push(...eventsStored.splice(i, 1));
@@ -200,9 +190,20 @@ export const useEvent = () => {
     return { id };
   }
 
+  async function pushEventsUpdated(): Promise<void> {
+    const events = await getEventsLocalService();
+    const result = events.filter((event) => event.syncStatus == false);
+    await Promise.all(
+      result.map(async (event) => {
+        await pusUpdateEvent({ event });
+      }),
+    );
+  }
+
   async function pusUpdateEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
     try {
+      console.log(event);
       await updateEventService({ event });
       event.syncStatus = true;
     } catch (error) {
@@ -213,22 +214,94 @@ export const useEvent = () => {
   async function removeAllEvents(): Promise<void> {
     await removeAllLocalEventsService();
   }
+
+  async function syncEventsFromServer(): Promise<void> {
+    const eventsServer = await useEvent().getEventsServer();
+    const localEvents = await getStoredEvents();
+
+    const diffEvents: Event[] = [];
+    for (const event of eventsServer) {
+      const idSync = event.idSync;
+      const found = localEvents.find((e) => e.idSync === idSync);
+      if (!found) {
+        const { event: eventFormated } = formatEventService({
+          event,
+          opts: { id: true },
+        });
+        diffEvents.push(eventFormated);
+      }
+    }
+    if (diffEvents.length > 0)
+      await saveLocalEventsService({ events: diffEvents });
+  }
+
+  async function sync(): Promise<void> {
+    await syncEventsFromServer();
+    await pushEventsUpdated();
+  }
+
+  async function deleteEvents(): Promise<void> {
+    await deleteEventsService();
+  }
+
+  async function storeLocalEvent(params: { event: Event }): Promise<void> {
+    const { event } = params;
+    await saveLocalEventService({
+      event,
+    });
+  }
+
+  async function updateLocalEvent(params: { event: Event }): Promise<void> {
+    const { event } = params;
+    await updateLocalEventService({ event });
+  }
+
+  function removeEventStore(params: { id: string }): void {
+    const { id } = params;
+    eventStore.removeEvent({ eventId: id });
+  }
+
+  async function deleteEventStored(params: { id: string }): Promise<void> {
+    const { id } = params;
+    await deleteEventService({ eventId: id });
+  }
+
+  async function removeEventServer(params: { id: string }): Promise<void> {
+    const { id } = params;
+    await deleteEventServerService({ id });
+  }
+
+  async function deleteEvent(params: { eventId: string }): Promise<void> {
+    const eventId = params.eventId;
+    const syntEventId = await getEventLocal({ id: eventId });
+    await deleteEventService({ eventId });
+    await deleteEventServerService({ id: syntEventId.idSync as any });
+    eventStore.removeEvent({ eventId });
+  }
+
   return {
-    saveEvent,
-    loadEvents,
-    getEvents,
-    getEvent,
-    updateEvent,
     deleteEvent,
-    syncEvents,
-    pushEvents,
-    getStoredEvents,
+    deleteEventStored,
+    deleteEvents,
+    getEvent,
+    getEvents,
     getEventsServer,
-    storeEventsServer,
-    storeRemoveEventsServer,
-    pushNewEvent,
+    getStoredEvents,
+    loadEvents,
     pusUpdateEvent,
-    storeUpdateEventsServer,
+    pushNewEvent,
+    pushUpdateEvent,
     removeAllEvents,
+    removeEventServer,
+    removeEventStore,
+    saveEvent,
+    storeEventsServer,
+    storeLocalEvent,
+    storeRemoveEventsServer,
+    storeUpdateEventsServer: getEventsServerUpdated,
+    sync,
+    syncEventsFromServer,
+    updateEvent,
+    updateLocalEvent,
   };
 };

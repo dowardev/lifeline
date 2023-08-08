@@ -69,6 +69,11 @@ export const UPDATE_EVENTS = gql`
     state
   }
 `;
+export const DELETE_EVENT = gql`
+  fragment DeleteEvent on DeleteEventPayload {
+    state
+  }
+`;
 
 // auth
 export const USER_LOGIN = gql`

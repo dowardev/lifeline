@@ -61,7 +61,7 @@
                       "
                       @ion-focus="
                         ($refs.inputName as any).$el.classList.add(
-                          'ion-touched'
+                          'ion-touched',
                         );
                         v$.event.name.$touch();
                       "
@@ -112,7 +112,7 @@
                           :value="
                             format(
                               new Date(event.reminders.value.start),
-                              'Pp'
+                              'Pp',
                             ) +
                             '\n' +
                             format(new Date(event.reminders.value.end), 'Pp')
@@ -198,7 +198,9 @@
                           autocomplete="on"
                           autocorrect="on"
                           type="email"
-                          :error-text="v2$.emailGuest.$errors[0]?.$message as string"
+                          :error-text="
+                            v2$.emailGuest.$errors[0]?.$message as string
+                          "
                           :class="[
                             v2$.emailGuest.$errors.length == 0
                               ? 'ion-valid'
@@ -210,12 +212,12 @@
                           "
                           @ion-focus="
                             ($refs.inputGuest as any).$el.classList.add(
-                              'ion-touched'
+                              'ion-touched',
                             )
                           "
                           @ion-blur="
                             ($refs.inputGuest as any).$el.classList.remove(
-                              'ion-touched'
+                              'ion-touched',
                             );
                             v2$.emailGuest.$touch();
                           "
@@ -459,6 +461,7 @@ const router = useRouter();
 const props = defineProps({
   eventData: { type: Object as () => Event, default: () => null },
 });
+const scheduleComposable = useSchedule();
 
 const emits = defineEmits(["create", "update"]);
 
@@ -540,19 +543,12 @@ onMounted(async () => {
     pageTitle.value = "Actualizar evento";
     setEvent({ event: props.eventData });
   }
-  if (props.eventData) {
-    await useEvent().loadEvents();
-    pageTitle.value = "Actualizar evento";
-    const event = useEvent().getEvent({ idEvent: props.eventData.id! });
-    if (!event) return;
-    setEvent({ event });
-  }
 });
 
 // functions
 const filterZones = (query: string) => {
   filteredZones.value = timeZones.filter((zone: string) =>
-    zone.toLowerCase().includes(query.toLowerCase())
+    zone.toLowerCase().includes(query.toLowerCase()),
   );
 };
 
@@ -574,25 +570,23 @@ const removeGuest = (params: { index: number }) => {
 };
 
 async function save(): Promise<void> {
-  console.log(event);
+  const eventData = props.eventData ?? ({} as Event);
   try {
-    const eventFormated = {
-      name: event.name.value,
-      guests: event.guests.value,
-      reminders: {
-        start: event.reminders.value.start,
-        end: event.reminders.value.end,
-        notifications: event.reminders.value.notifications,
-        repeat: event.reminders.value.repeat,
-      },
-      description: event.description.value,
-      availability: event.availability.value,
-      timezone: event.timezone.value,
+    eventData.name = event.name.value;
+    eventData.guests = event.guests.value;
+    eventData.reminders = {
+      start: new Date(event.reminders.value.start),
+      end: new Date(event.reminders.value.end),
+      notifications: event.reminders.value.notifications,
+      repeat: event.reminders.value.repeat,
     };
+    eventData.description = event.description.value;
+    eventData.availability = event.availability.value;
+    eventData.timezone = event.timezone.value;
     if (!props.eventData) {
-      emits("create", { data: { event: eventFormated } });
+      emits("create", { data: { event: eventData } });
     } else {
-      emits("update", { data: { event: eventFormated } });
+      emits("update", { data: { event: eventData } });
     }
     closePage();
   } catch (error) {
@@ -679,16 +673,14 @@ function setEvent(params: { event: Event }) {
   event.availability.value = eventData.availability!;
 }
 
-async function deleteEvent() {
+async function deleteEvent(): Promise<void> {
   const { id } = props.eventData;
-  await useEvent().deleteEvent({ eventId: id });
-  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
-  schedule = useSchedule().removeElementSchedule({
-    id,
-    schedule,
+  await useEvent().deleteEvent({ eventId: id as any });
+  const { schedule } = await scheduleComposable.generateSchedules({
+    schedule: {},
   });
-  await useSchedule().saveSchedule({ schedule });
-  await useSchedule().loadSchedule();
+  await scheduleComposable.saveScheduleLocal({ schedule });
+  await scheduleComposable.loadSchedule();
   await closePage();
 }
 
@@ -739,7 +731,7 @@ async function postCreateEvent(params: {
           title: event.name.value,
           message: event.description.value,
         });
-      })
+      }),
     );
   }
 }

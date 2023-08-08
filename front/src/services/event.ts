@@ -1,10 +1,5 @@
 import axios from "axios";
 import userService from "./user.vue";
-import { Storage } from "@ionic/storage";
-import { format } from "date-fns";
-
-const store = new Storage();
-store.create();
 
 import apolloClient from "../Apollo";
 import gql from "graphql-tag";
@@ -22,6 +17,7 @@ import {
 import { NewEvent } from "@/utils/interfaces";
 import {
   CREATE_EVENTS,
+  DELETE_EVENT,
   SYNC_EVENTS,
   UPDATE_EVENTS,
   USER_EVENTS,
@@ -33,6 +29,9 @@ import {
   graphqlQueryBuilder,
 } from "./graphql";
 import { errorBuilder } from "@/utils/errors";
+import { storage } from "@/main";
+import { toRaw } from "vue";
+import { cloneDeep } from "lodash";
 
 export async function createEvent(params: {
   event: Event;
@@ -180,14 +179,13 @@ export async function updateEvent(params: { event: Event }): Promise<void> {
 //   }
 // );
 // }
-export async function getEventLocal(id: number) {
-  const events = await storage.get("events");
+export async function getEventLocal(params: { id: string }): Promise<Event> {
+  const { id } = params;
+  const events = await getEventsLocal();
 
-  const event = (JSON.parse(events) as Array<any>).filter(
-    (element) => parseInt(element["id" as any]) == id
-  );
+  const event = events.filter((event) => event.id == id);
 
-  return event;
+  return event[0] as Event;
 }
 
 export function formatDateTime(date: string | Date, typeFormat: string) {
@@ -198,7 +196,7 @@ export function formatDateTime(date: string | Date, typeFormat: string) {
 }
 
 export async function getUserCalendars(
-  params: GetCalendars
+  params: GetCalendars,
 ): Promise<Array<GetCalendarsResponse>> {
   const { onError, onResult, result } = useQuery(
     gql`
@@ -208,7 +206,7 @@ export async function getUserCalendars(
         }
       }
       ${params.graphql.name}
-    `
+    `,
   );
 
   return new Promise((resolve, reject) => {
@@ -241,39 +239,43 @@ export async function getUserCalendars(
 // );
 // }
 
-export async function saveLocalEvent(params: {
-  event: Event;
-}): Promise<{ id: string }> {
-  const eventData = params.event;
-  let event = {} as Event;
-  const id = Date.now().toString();
+export async function saveLocalEvent(params: { event: Event }): Promise<void> {
+  const { event } = params;
+  const events = await getEventsLocal();
+  events.push(event);
+  await storage.set("events", JSON.parse(JSON.stringify(events)));
+}
 
-  (eventData as Event).id = "";
-  event = eventData as Event;
-  event.id = id;
-
-  const events = (await getEventsLocal()) ?? [];
-  events?.push(eventData as Event);
-  await store.set("events", events);
-
-  return { id };
+export async function saveLocalEvents(params: {
+  events: Event[];
+}): Promise<void> {
+  let { events } = params;
+  try {
+    await storage.set("events", cloneDeep(events));
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
 }
 
 export async function updateLocalEvent(params: {
   event: Event;
 }): Promise<void> {
-  const eventData = params.event;
-  let events = (await getEventsLocal()) ?? [];
-  events = events?.map((event) => {
-    if (event.id == eventData.id || event.idSync == eventData.idSync)
-      event = eventData;
-    return event;
-  });
-  await store.set("events", events);
+  const { event: eventData } = params;
+  let events = await getEventsLocal();
+  try {
+    events = events.map((event) => {
+      if (event.id == eventData.id || event.idSync == eventData.idSync)
+        event = eventData;
+      return event;
+    });
+    await saveLocalEvents({ events });
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
 }
 
-export async function getEventsLocal(): Promise<Array<Event> | null> {
-  return await store.get("events");
+export async function getEventsLocal(): Promise<Array<Event>> {
+  return (await storage.get("events")) ?? ([] as Event[]);
 }
 
 export async function getEvents(params: {
@@ -320,8 +322,8 @@ export async function getEvents(params: {
 
 export async function getEvent(params: { id: string }): Promise<Event | null> {
   const id = params.id;
-  const event = (await store.get("events")).filter(
-    (event: Event) => event.id == id
+  const event = (await storage.get("events")).filter(
+    (event: Event) => event.id == id,
   );
   return event[0];
 }
@@ -333,7 +335,7 @@ export async function deleteEvent(params: { eventId: string }): Promise<void> {
   const index = events?.findIndex((element) => element.id == id);
   if (index != undefined) {
     events?.splice(index, 1);
-    await store.set("events", events);
+    await storage.set("events", events);
   }
 }
 
@@ -373,5 +375,51 @@ export async function pushEvent(params: { event: Event }): Promise<void> {
 }
 
 export async function removeAllLocalEvents(): Promise<void> {
-  await store.remove("events");
+  await storage.remove("events");
+}
+
+export async function deleteEvents(): Promise<void> {
+  await storage.remove("events");
+}
+
+export async function deleteEventServer(params: { id: string }): Promise<void> {
+  const { id } = params;
+
+  try {
+    const query = graphqlMutationBuilder({
+      name: DELETE_EVENT,
+      fragment: "DeleteEvent",
+      mutationName: "deleteEvent",
+      inputName: "DeleteEventInput",
+    });
+
+    await executeGrapMutation({
+      query,
+      input: { id },
+    });
+  } catch (error: any) {
+    if (error.message != "Unauthorized")
+      throw errorBuilder({ message: error.message, typeError: "authError" });
+    throw errorBuilder({ message: error.message });
+  }
+}
+
+export function generateEventId(): string {
+  return Math.random().toString(36).slice(2, 18);
+}
+
+export function formatEvent(params: {
+  event: Event;
+  opts?: { id?: boolean };
+}): {
+  event: Event;
+} {
+  let { event } = params;
+  const { opts } = params;
+
+  event = toRaw(event);
+  if (opts?.id) event.id = generateEventId();
+  event.reminders.start = new Date(event.reminders.start);
+  event.reminders.end = new Date(event.reminders.end);
+  return { event };
 }

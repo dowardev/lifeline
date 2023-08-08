@@ -134,7 +134,7 @@ export interface Document {
         };
         tags?: Array<string>;
       };
-    }
+    },
   ];
   url: string;
 }

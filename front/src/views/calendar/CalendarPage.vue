@@ -156,7 +156,7 @@
                         <td v-for="day in days" :key="day.date.toString()">
                           <div>
                             <div
-                              v-for="schedule in generateSchedule[
+                              v-for="schedule in generateCalendar[
                                 daysOfWeek[new Date(day.date).getDay()]
                               ]"
                               :key="schedule.date.toString()"
@@ -456,15 +456,17 @@ const isOpenPopOverMainOptions = ref(false);
 const eventPopOverMainOptions = ref(null as CustomEvent | null);
 const isOpenModalAddEvent = ref(false);
 const eventModalAddEvent = ref(null as CustomEvent | null);
+const eventComposable = useEvent();
+const scheduleComposable = useSchedule();
 
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  await useEvent().loadEvents();
+  // await useEvent().loadEvents();
 });
 
 // computed
-const generateSchedule = computed(() => {
+const generateCalendar = computed(() => {
   const schedule = useSchedule().getSchedule();
   if (!schedule) return {};
 
@@ -527,7 +529,7 @@ function previousWeek(): void {
     date.setMonth(currentMonth - 1);
     date.setDate(
       new Date(date.getFullYear(), currentMonth, 0).getDate() -
-        (7 - date.getDate())
+        (7 - date.getDate()),
     );
   } else {
     date.setDate(date.getDate() - 7);
@@ -541,7 +543,7 @@ function nextWeek(): void {
   const lastDayOfMonth = new Date(
     currentDate.getFullYear(),
     nextMonth,
-    0
+    0,
   ).getDate();
   const date = new Date(currentDate);
   if (date.getDate() + 7 > lastDayOfMonth) {
@@ -617,13 +619,11 @@ async function openPopoverRightEventMenu(params: {
 async function deleteEvent(params: { eventId: string }): Promise<void> {
   const { eventId } = params;
   await useEvent().deleteEvent({ eventId });
-  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
-  schedule = useSchedule().removeElementSchedule({
-    id: eventId,
-    schedule,
+  const { schedule } = await scheduleComposable.generateSchedules({
+    schedule: {},
   });
-  await useSchedule().saveSchedule({ schedule });
-  await useSchedule().loadSchedule();
+  await scheduleComposable.saveScheduleLocal({ schedule });
+  await scheduleComposable.loadSchedule();
 }
 
 async function syncData() {
@@ -632,138 +632,36 @@ async function syncData() {
 
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
-  let idSync = undefined as string | undefined;
-
   try {
-    const response = await useEvent().pushNewEvent({
-      event: JSON.parse(JSON.stringify(event)),
+    await eventComposable.saveEvent({
+      event,
     });
-    idSync = response.id;
+    const localSchedule = await scheduleComposable.getLocalSchedule();
+    const { schedule } = await scheduleComposable.generateSchedules({
+      schedule: localSchedule,
+    });
+    await scheduleComposable.saveScheduleLocal({ schedule });
+    await scheduleComposable.loadSchedule();
   } catch (error) {
     console.error(error);
   }
-  event.idSync = idSync;
-  event.syncStatus = true;
-
-  const { id } = await useEvent().saveEvent({
-    event: JSON.parse(JSON.stringify(event)),
-  });
-  event.id = id;
-  await postCreateEvent({ event });
 }
 
 async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
 
-  event.id = idEvent.value;
-  event.idSync = useEvent().getEvent({ idEvent: idEvent.value })?.idSync;
   try {
-    await useEvent().pusUpdateEvent({
-      event: JSON.parse(JSON.stringify(event)),
+    await useEvent().updateEvent({
+      event,
     });
+    const localSchedule = await scheduleComposable.getLocalSchedule();
+    const { schedule } = await scheduleComposable.generateSchedules({
+      schedule: localSchedule,
+    });
+    await scheduleComposable.saveScheduleLocal({ schedule });
+    await scheduleComposable.loadSchedule();
   } catch (error) {
-    event.syncStatus = false;
     console.error(error);
-  }
-  await useEvent().updateEvent({
-    event: JSON.parse(JSON.stringify(event)),
-  });
-
-  await postUpdateEvent({ event });
-}
-
-async function postCreateEvent(params: { event: Event }): Promise<void> {
-  const { event } = params;
-  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
-
-  const scheduleElement = useSchedule().generateScheduleElement({
-    idElement: event.id!,
-    title: event.name!,
-    message: event.description,
-    startDate: new Date(event.reminders.start),
-    endDate: new Date(event.reminders.end),
-    type: "Event",
-    reminder: event.reminders.notifications!.length > 0 ? true : false,
-    repeat: event.reminders.repeat!,
-  });
-
-  if (event.id)
-    schedule = useSchedule().removeElementSchedule({
-      id: event.id,
-      schedule,
-    });
-
-  schedule = useSchedule().generateEventSchedule({
-    scheduleElement,
-    schedule,
-  });
-  await useSchedule().saveSchedule({ schedule });
-  await useSchedule().loadSchedule();
-
-  const notifications = useReminder().getEventReminders({
-    dateStart: event.reminders.start,
-    notifications: event.reminders.notifications ?? [],
-  });
-
-  if (notifications) {
-    await Promise.all(
-      notifications.map(async (notification) => {
-        await useSchedule().setReminders({
-          id: new Date().getMilliseconds(),
-          reminder: notification,
-          title: event.name!,
-          message: event.description,
-        });
-      })
-    );
-  }
-}
-
-async function postUpdateEvent(params: { event: Event }): Promise<void> {
-  const { event } = params;
-  const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
-  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
-
-  const scheduleElement = useSchedule().generateScheduleElement({
-    idElement: event.id!,
-    title: event.name!,
-    message: event.description,
-    startDate: new Date(event.reminders.start),
-    endDate: new Date(event.reminders.end),
-    type: "Event",
-    reminder: event.reminders.notifications!.length > 0 ? true : false,
-    repeat: event.reminders.repeat!,
-  });
-
-  if (event.id)
-    schedule = useSchedule().removeElementSchedule({
-      id: event.id,
-      schedule,
-    });
-
-  schedule = useSchedule().generateEventSchedule({
-    scheduleElement,
-    schedule,
-  });
-  await useSchedule().saveSchedule({ schedule });
-  await useSchedule().loadSchedule();
-
-  const notifications = useReminder().getEventReminders({
-    dateStart: event.reminders.start,
-    notifications: event.reminders.notifications!,
-  });
-
-  if (notifications) {
-    await Promise.all(
-      notifications.map(async (notification) => {
-        await useSchedule().setReminders({
-          id: parseInt(scheduleId),
-          reminder: notification,
-          title: event.name!,
-          message: event.description,
-        });
-      })
-    );
   }
 }
 </script>

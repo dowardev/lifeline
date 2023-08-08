@@ -1,18 +1,23 @@
 import { Schedule } from "@/utils/interfaces";
-import { Storage } from "@ionic/storage";
 
-const store = new Storage();
-store.create();
+import { storage } from "@/main";
 
-export async function storeSchedule(params: { schedule: Schedule }) {
+export async function storeSchedule(params: {
+  schedule: Schedule;
+}): Promise<void> {
   const { schedule } = params;
 
-  await store.set(
+  await storage.set(
     "schedule",
-    JSON.parse(JSON.stringify(Object.assign({}, schedule)))
+    JSON.parse(JSON.stringify(Object.assign({}, schedule))),
   );
 }
 
-export async function getSchedule(): Promise<Schedule | null> {
-  return await store.get("schedule");
+export async function getSchedule(): Promise<Schedule> {
+  const schedule = await storage.get("schedule");
+  return schedule == null ? ({} as Schedule) : schedule;
+}
+
+export async function deleteSchedule(): Promise<void> {
+  await storage.remove("schedule");
 }

@@ -1,19 +1,18 @@
-import { useDocument } from "@/composables/useDocument";
 import { useScheduleStore } from "@/store/scheduleStore";
 import { Schedule, Event, ScheduleElement } from "@/utils/interfaces";
 import { LocalNotifications } from "@capacitor/local-notifications";
-import { format } from "date-fns";
-import {
-  getEvent,
-  getEventsLocal as getEventsLocalService,
-} from "../services/event";
 import {
   getSchedule as getScheduleService,
-  storeSchedule,
+  storeSchedule as storeScheduleService,
+  deleteSchedule as deleteScheduleService,
 } from "@/services/schedule";
+import { useReminder } from "./useReminder";
+import { useEvent } from "./useEvent";
 
 export const useSchedule = () => {
   const scheduleStore = useScheduleStore();
+  const reminderComposer = useReminder();
+  const eventComposable = useEvent();
 
   // function loadReminders() {
   // const documents = useDocument().getUserDocuments();
@@ -186,83 +185,46 @@ export const useSchedule = () => {
       : undefined;
   }
 
-  async function generateEventsSchedule(): Promise<void> {
-    const events = await getEventsLocalService();
+  function generateEventsSchedule(params: {
+    events: Event[];
+    schedule: Schedule;
+  }): {
+    schedule: Schedule;
+  } {
+    const { events } = params;
 
-    if (!events) return;
+    let { schedule } = params;
 
-    const newSchedule: Schedule = {};
+    events.forEach((event) => {
+      const id = event.id;
+      const idElement = event.id;
+      const title = event.name;
+      const message = event.description;
+      const startDate = event.reminders?.start;
+      const endDate = event.reminders?.end;
+      const reminder = event.reminders!.notifications.length > 0 ? true : false;
+      const repeat = event.reminders?.repeat ?? {};
 
-    await Promise.all(
-      events.map(async (event) => {
-        const id = new Date().getTime().toString();
-        const idElement = event.id;
-        const title = event.name;
-        const message = event.description;
-        const startDate = new Date(event.reminders?.start as string);
-        const endDate = new Date(event.reminders?.end as string);
-        const reminder =
-          event.reminders!.notifications.length > 0 ? true : false;
-        const repeat = event.reminders?.repeat ?? {};
+      const scheduleElement = generateScheduleElement({
+        id,
+        idElement,
+        title,
+        message,
+        startDate,
+        endDate,
+        type: "Event",
+        reminder,
+        repeat,
+      });
 
-        const scheduleElement = generateScheduleElement({
-          id,
-          idElement,
-          title,
-          message,
-          startDate,
-          endDate,
-          type: "Event",
-          reminder,
-          repeat,
-        });
+      const { schedule: newSchedule } = mergeSchedule({
+        schedule,
+        scheduleElement,
+      });
+      schedule = newSchedule;
+    });
 
-        let schedule = {} as Schedule;
-
-        let year: number, month: number, day: number;
-
-        [schedule, scheduleElement].forEach((obj) => {
-          Object.keys(obj).forEach((yearStr) => {
-            year = parseInt(yearStr);
-            if (!newSchedule.hasOwnProperty(year)) {
-              newSchedule[year] = {};
-            }
-            Object.keys(obj[year]).forEach((monthStr) => {
-              month = parseInt(monthStr);
-              if (!newSchedule[year].hasOwnProperty(month)) {
-                newSchedule[year][month] = {};
-              }
-              Object.keys(obj[year][month]).forEach((dayStr) => {
-                day = parseInt(dayStr);
-                if (!newSchedule[year][month].hasOwnProperty(day)) {
-                  newSchedule[year][month][day] = [];
-                }
-                obj[year][month][day].forEach((element) => {
-                  const existingElement = newSchedule[year][month][day].find(
-                    (e) => e.idElement === element.idElement
-                  );
-
-                  if (existingElement) {
-                    // Si el elemento ya existe, actualizamos sus propiedades
-                    Object.assign(existingElement, element);
-                  } else {
-                    // Si el elemento no existe, lo agregamos al arreglo
-                    newSchedule[year][month][day].push(element);
-                  }
-                });
-              });
-            });
-          });
-        });
-
-        if (Object.keys(schedule).length == 0) {
-          schedule = scheduleElement;
-        } else {
-          schedule = newSchedule;
-        }
-      })
-    );
-    await storeSchedule({ schedule: newSchedule });
+    return { schedule };
   }
 
   function generateScheduleElement(params: {
@@ -290,7 +252,7 @@ export const useSchedule = () => {
       repeat: { frecuency = 1, type: repeatType = "daily", daysWeek = [] },
     } = params;
 
-    const normalizedDaysWeek = daysWeek.map((day) => day.toLowerCase()); // Normalize day names to lowercase
+    const normalizedDaysWeek = daysWeek.map((day) => day.toLowerCase());
 
     const eventsByDate: Schedule = {};
     const currentDate = new Date(startDate);
@@ -343,7 +305,7 @@ export const useSchedule = () => {
       }
 
       eventsByDate[year][month][day].push({
-        id: idElement + new Date().getTime(),
+        id: idElement,
         idElement,
         title,
         message,
@@ -381,27 +343,17 @@ export const useSchedule = () => {
   }
 
   async function loadSchedule(): Promise<void> {
-    const schedule = await getScheduleService();
-
-    if (schedule == null) return;
-
-    scheduleStore.setSchedule({ schedule });
+    const schedule = (await getScheduleService()) ?? ({} as Schedule);
+    setSchedule({ schedule });
   }
 
-  function getSchedule(): Schedule | undefined {
+  function getSchedule(): Schedule {
     const schedule = scheduleStore.getSchedule();
-    return Object.keys(schedule).length > 0 ? schedule : undefined;
+    return Object.keys(schedule).length > 0 ? schedule : ({} as Schedule);
   }
 
-  function generateEventSchedule(params: {
-    scheduleElement: Schedule;
-    schedule: Schedule;
-  }): Schedule {
-    const { scheduleElement, schedule } = params;
-    return generateSchedule({
-      schedule,
-      scheduleElement,
-    });
+  async function getLocalSchedule(): Promise<Schedule> {
+    return await getScheduleService();
   }
 
   function removeElementSchedule(params: {
@@ -444,12 +396,25 @@ export const useSchedule = () => {
     return schedule;
   }
 
-  function generateSchedule(params: {
+  async function saveScheduleLocal(params: {
     schedule: Schedule;
-    scheduleElement: any;
-  }) {
+  }): Promise<void> {
+    const { schedule } = params;
+    await storeScheduleService({ schedule });
+  }
+
+  function setSchedule(params: { schedule: Schedule }): void {
+    const { schedule } = params;
+    scheduleStore.setSchedule({ schedule });
+  }
+
+  function mergeSchedule(params: {
+    schedule: Schedule;
+    scheduleElement: Schedule;
+  }): { schedule: Schedule } {
     const { schedule, scheduleElement } = params;
     const newSchedule: Schedule = {};
+
     let year: number, month: number, day: number;
 
     [schedule, scheduleElement].forEach((obj) => {
@@ -468,33 +433,160 @@ export const useSchedule = () => {
             if (!newSchedule[year][month].hasOwnProperty(day)) {
               newSchedule[year][month][day] = [];
             }
-            obj[year][month][day].forEach((element: any) => {
-              newSchedule[year][month][day].push(element);
+            obj[year][month][day].forEach((element) => {
+              const existingElement = newSchedule[year][month][day].find(
+                (e) => e.idElement === element.idElement,
+              );
+
+              if (existingElement) {
+                // Si el elemento ya existe, actualizamos sus propiedades
+                Object.assign(existingElement, element);
+              } else {
+                // Si el elemento no existe, lo agregamos al arreglo
+                newSchedule[year][month][day].push(element);
+              }
             });
           });
         });
       });
     });
-    return newSchedule;
+
+    return { schedule: newSchedule };
   }
 
-  async function saveSchedule(params: { schedule: Schedule }) {
-    const { schedule } = params;
-    await storeSchedule({ schedule });
+  async function generateEventReminders(params: {
+    event: Event;
+  }): Promise<void> {
+    const { event } = params;
+
+    const notifications = reminderComposer.getEventReminders({
+      dateStart: event.reminders.start,
+      notifications: event.reminders.notifications ?? [],
+    });
+
+    if (notifications) {
+      await Promise.all(
+        notifications.map(async (notification) => {
+          await setReminders({
+            id: new Date().getMilliseconds(),
+            reminder: notification,
+            title: event.name!,
+            message: event.description,
+          });
+        }),
+      );
+    }
+  }
+
+  async function generateEventsReminders(params: {
+    events: Event[];
+  }): Promise<void> {
+    const { events } = params;
+
+    await Promise.all(
+      events.map(async (event) => {
+        const notifications = reminderComposer.getEventReminders({
+          dateStart: event.reminders.start,
+          notifications: event.reminders.notifications ?? [],
+        });
+
+        if (notifications) {
+          await Promise.all(
+            notifications.map(async (notification) => {
+              await setReminders({
+                id: new Date().getMilliseconds(),
+                reminder: notification,
+                title: event.name!,
+                message: event.description,
+              });
+            }),
+          );
+        }
+      }),
+    );
+  }
+
+  function generateEventSchedule(params: { event: Event }): {
+    schedule: Schedule;
+  } {
+    const { event } = params;
+
+    const id = new Date().getTime().toString();
+    const idElement = event.id;
+    const title = event.name;
+    const message = event.description;
+    const startDate = event.reminders?.start;
+    const endDate = event.reminders?.end;
+    const reminder = event.reminders!.notifications.length > 0 ? true : false;
+    const repeat = event.reminders?.repeat ?? {};
+
+    const scheduleElement = generateScheduleElement({
+      id,
+      idElement,
+      title,
+      message,
+      startDate,
+      endDate,
+      type: "Event",
+      reminder,
+      repeat,
+    });
+
+    // const { schedule: newSchedule } = generateSchedule({
+    //   schedule,
+    //   scheduleElement,
+    // });
+    // schedule = newSchedule;
+
+    return { schedule: scheduleElement };
+  }
+
+  async function deleteSchedule(): Promise<void> {
+    await deleteScheduleService();
+  }
+
+  async function generateSchedules(params: {
+    schedule: Schedule;
+  }): Promise<{ schedule: Schedule }> {
+    let { schedule } = params;
+    // const localSchedule = await getLocalSchedule();
+    // const storeSchedule = getSchedule();
+    // schedule =
+    //   Object.keys(storeSchedule).length == 0 ? localSchedule : storeSchedule;
+
+    // events
+    const events = await eventComposable.getEvents();
+    const { schedule: eventsSchedule } = generateEventsSchedule({
+      events,
+      schedule,
+    });
+
+    const { schedule: newSchedule } = mergeSchedule({
+      schedule,
+      scheduleElement: eventsSchedule,
+    });
+    return { schedule: newSchedule };
   }
 
   return {
-    loadReminders,
-    setReminders,
     checkNotificationsPermissions,
-    getReminders,
     generateEventsSchedule,
-    loadSchedule,
-    getSchedule,
     generateEventSchedule,
-    saveSchedule,
     generateScheduleElement,
-    removeElementSchedule,
     generateScheduleReminders,
+    getReminders,
+    getSchedule,
+    loadReminders,
+    loadSchedule,
+    removeElementSchedule,
+    saveScheduleLocal,
+    setReminders,
+    setSchedule,
+    mergeSchedule,
+    generateEventReminders,
+    deleteSchedule,
+    generateEventsReminders,
+    getLocalSchedule,
+    generateSchedules,
   };
 };

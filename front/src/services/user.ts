@@ -1,7 +1,4 @@
-import { Storage } from "@ionic/storage";
-const store = new Storage();
-store.create();
-
+import { storage } from "@/main";
 import apolloClient from "../Apollo";
 import gql from "graphql-tag";
 import { useMutation } from "@vue/apollo-composable";
@@ -66,7 +63,7 @@ export async function getUser(params: { refetch: boolean }): Promise<User> {
 }
 
 export function getUserLang(): Promise<any> {
-  return store.get("lang");
+  return storage.get("lang");
 }
 
 export async function resendEmailConfirmation(

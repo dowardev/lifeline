@@ -1,11 +1,9 @@
-import { Storage } from "@ionic/storage";
 import { NewNote, Note } from "../utils/interfaces";
 
-const store = new Storage();
-store.create();
+import { storage } from "@/main";
 
 export async function getNotes(): Promise<Array<Note | null>> {
-  return await store.get("notes");
+  return await storage.get("notes");
 }
 
 export async function saveNote(params: {
