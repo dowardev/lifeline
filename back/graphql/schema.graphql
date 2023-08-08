@@ -36,6 +36,11 @@ type Mutation {
     @field(
       resolver: "App\\GraphQL\\Resolvers\\events\\UpdateEventResolver@resolve"
     )
+
+  deleteEvent(input: DeleteEventInput @spread): DeleteEventPayload
+    @field(
+      resolver: "App\\GraphQL\\Resolvers\\events\\DeleteEventResolver@resolve"
+    )
 }
 
 type User {
@@ -124,6 +129,9 @@ input UpdateEventInput {
   availability: String!
   syncStatus: Boolean
 }
+input DeleteEventInput {
+  id: String
+}
 
 # payloads
 type LoginPayload {
@@ -149,5 +157,8 @@ type CreateEventPayload {
   id: String!
 }
 type UpdateEventPayload {
+  state: Boolean!
+}
+type DeleteEventPayload {
   state: Boolean!
 }
