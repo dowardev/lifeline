@@ -34,24 +34,38 @@ import i18n from "./plugins/i18n/i18n";
 // ionic storage
 import { Storage } from "@ionic/storage";
 const storage = new Storage();
-await storage.create();
+storage.create();
 export { storage };
 
 // pinia
 import { createPinia } from "pinia";
 const pinia = createPinia();
 
-const app = createApp({
-  setup() {
-    provide(DefaultApolloClient, apolloClient);
-  },
-  render: () => h(App),
-})
-  .use(IonicVue)
-  .use(i18n)
-  .use(pinia)
-  .use(router);
+import { Capacitor } from "@capacitor/core";
+import { CapacitorSQLite, SQLiteConnection } from "@capacitor-community/sqlite";
 
-router.isReady().then(() => {
-  app.mount("#app");
+window.addEventListener("DOMContentLoaded", async () => {
+  const sqlite = new SQLiteConnection(CapacitorSQLite);
+  const platform = Capacitor.getPlatform();
+  if (platform === "web") {
+    const jeepSqliteEl = document.createElement("jeep-sqlite");
+    document.body.appendChild(jeepSqliteEl);
+    await customElements.whenDefined("jeep-sqlite");
+    await sqlite.initWebStore();
+  }
+
+  const app = createApp({
+    setup() {
+      provide(DefaultApolloClient, apolloClient);
+    },
+    render: () => h(App),
+  })
+    .use(IonicVue)
+    .use(i18n)
+    .use(pinia)
+    .use(router);
+
+  router.isReady().then(() => {
+    app.mount("#app");
+  });
 });
