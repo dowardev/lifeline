@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
 // import HomePage from '../views/HomePage.vue'
 import HomePage from "@/views/home/HomePage.vue";
+import MainPage from "@/views/main/MainPage.vue";
 import CalendarPage from "@/views/calendar/CalendarPage.vue";
 import SignUpPage from "@/views/sesion/signup/SignUpPage.vue";
 import LoginPage from "@/views/sesion/login/LoginPage.vue";
@@ -65,94 +66,99 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/home",
-    name: "home",
-    component: HomePage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
+    name: "main",
+    component: MainPage,
   },
-  {
-    path: "/calendar",
-    name: "CalendarPage",
-    component: CalendarPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
-  },
-  {
-    path: "/signup",
-    name: "SignUp",
-    component: SignUpPage,
-    beforeEnter: async (to, from) => {
-      return await userSignOutGuard();
-    },
-  },
-  {
-    path: "/login",
-    name: "Login",
-    component: LoginPage,
-    beforeEnter: async (to, from) => {
-      return await userSignOutGuard();
-    },
-  },
-  {
-    path: "/prueba",
-    name: "PruebaPage",
-    component: PruebaPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
-  },
-  {
-    path: "/document/:url",
-    name: "DocumentPage",
-    component: DocumentPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
-  },
-  {
-    path: "/policies",
-    name: "PoliciesPage",
-    component: PoliciesPage,
-  },
-  {
-    path: "/documents",
-    name: "DocumentsPage",
-    component: DocumentsPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
-  },
-  {
-    path: "/tasks",
-    name: "TasksPage",
-    component: TasksPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
-  },
-  {
-    path: "/integrations",
-    name: "IntegrationsPage",
-    component: IntegrationsPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
-  },
-  {
-    path: "/about",
-    name: "AboutPage",
-    component: AboutPage,
-  },
-  {
-    path: "/lading",
-    name: "LandingPage",
-    component: LandingPage,
-    beforeEnter: async (to, from) => {
-      return await userSignOutGuard();
-    },
-  },
+  // {
+  //   path: "/home",
+  //   name: "home",
+  //   component: HomePage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userLoggedGuard();
+  //   },
+  // },
+  // {
+  //   path: "/calendar",
+  //   name: "CalendarPage",
+  //   component: CalendarPage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userLoggedGuard();
+  //   },
+  // },
+  // {
+  //   path: "/signup",
+  //   name: "SignUp",
+  //   component: SignUpPage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userSignOutGuard();
+  //   },
+  // },
+  // {
+  //   path: "/login",
+  //   name: "Login",
+  //   component: LoginPage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userSignOutGuard();
+  //   },
+  // },
+  // {
+  //   path: "/prueba",
+  //   name: "PruebaPage",
+  //   component: PruebaPage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userLoggedGuard();
+  //   },
+  // },
+  // {
+  //   path: "/document/:url",
+  //   name: "DocumentPage",
+  //   component: DocumentPage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userLoggedGuard();
+  //   },
+  // },
+  // {
+  //   path: "/policies",
+  //   name: "PoliciesPage",
+  //   component: PoliciesPage,
+  // },
+  // {
+  //   path: "/documents",
+  //   name: "DocumentsPage",
+  //   component: DocumentsPage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userLoggedGuard();
+  //   },
+  // },
+  // {
+  //   path: "/tasks",
+  //   name: "TasksPage",
+  //   component: TasksPage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userLoggedGuard();
+  //   },
+  // },
+  // {
+  //   path: "/integrations",
+  //   name: "IntegrationsPage",
+  //   component: IntegrationsPage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userLoggedGuard();
+  //   },
+  // },
+  // {
+  //   path: "/about",
+  //   name: "AboutPage",
+  //   component: AboutPage,
+  // },
+  // {
+  //   path: "/lading",
+  //   name: "LandingPage",
+  //   component: LandingPage,
+  //   beforeEnter: async (to, from) => {
+  //     return await userSignOutGuard();
+  //   },
+  // },
 ];
 
 const router = createRouter({

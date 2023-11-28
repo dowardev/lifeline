@@ -96,8 +96,8 @@ ion-card {
 /*   background-color: #a8bbbf; */
 /* } */
 
-ion-toolbar{
-  --background:var(--ion-background-color)
+ion-toolbar {
+  --background: var(--ion-background-color);
 }
 
 ion-accordion ion-item {
