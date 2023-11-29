@@ -62,16 +62,11 @@ async function userSignOutGuard(): Promise<true | "/" | undefined> {
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/landing",
+    redirect: "/home",
   },
   {
     path: "/(.*)",
     redirect: "/home",
-  },
-  {
-    path: "/home",
-    name: "main",
-    component: MainPage,
   },
   {
     path: "/home",

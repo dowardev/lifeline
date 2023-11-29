@@ -2,6 +2,7 @@
   <ion-page>
     <ion-header class="ion-no-border" mode="md">
       <div>
+        <!-- session -->
         <SessionHeaderComponent
           v-if="
             $route.path == '/session' ||
@@ -13,8 +14,15 @@
           @main-segment="sessionComponent.mainSegment = $event"
         />
 
+        <!-- landing -->
         <LandingHeaderComponent
           v-if="$route.path == '/landing'"
+          :page-title="landingComponent.pageTitle"
+        />
+
+        <!-- home -->
+        <HomeHeaderComponent
+          v-if="$route.path == '/home'"
           :page-title="landingComponent.pageTitle"
         />
       </div>
@@ -22,6 +30,7 @@
 
     <ion-content :fullscreen="true">
       <ion-card class="card-main-content">
+        <!-- session -->
         <SessionContentComponent
           v-if="
             $route.path == '/session' ||
@@ -32,8 +41,15 @@
           :page-title="sessionComponent.pageTitle"
         />
 
+        <!-- landing -->
         <LandingContentComponent
           v-if="$route.path == '/landing'"
+          :page-title="landingComponent.pageTitle"
+        />
+
+        <!-- home -->
+        <HomeContentComponent
+          v-if="$route.path == '/home'"
           :page-title="landingComponent.pageTitle"
         />
       </ion-card>
@@ -51,6 +67,8 @@ import SessionHeaderComponent from "@/views/sesion/header/SessionHeaderComponent
 import SessionContentComponent from "@/views/sesion/SessionContentComponent.vue";
 import LandingContentComponent from "@/views/lading/content/LandingCotentComponent.vue";
 import LandingHeaderComponent from "@/views/lading/header/LandingHeaderComponent.vue";
+import HomeContentComponent from "@/views/home/content/HomeContentComponent.vue";
+import HomeHeaderComponent from "@/views/home/header/HomeHeaderComponent.vue";
 
 // vars
 const route = useRoute();
