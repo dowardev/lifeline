@@ -32,15 +32,15 @@ async function adminGuard(): Promise<true | "/"> {
   return "/";
 }
 
-async function userLoggedGuard(): Promise<true | "/lading"> {
-  let value = "lading" as true | "/lading";
+async function userLoggedGuard(): Promise<true | "/landing"> {
+  let value = "landing" as true | "/landing";
   try {
     await loadUser();
     const user = useUser().user.value.user;
     if (user) value = true;
   } catch (error) {
     console.error(error);
-    value = "/lading";
+    value = "/landing";
   } finally {
     return value;
   }
@@ -62,6 +62,10 @@ async function userSignOutGuard(): Promise<true | "/" | undefined> {
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
+    redirect: "/landing",
+  },
+  {
+    path: "/(.*)",
     redirect: "/home",
   },
   {
@@ -152,7 +156,7 @@ const routes: Array<RouteRecordRaw> = [
     component: MainPage,
   },
   {
-    path: "/lading",
+    path: "/landing",
     name: "LandingPage",
     component: MainPage,
     beforeEnter: async (to, from) => {

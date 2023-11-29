@@ -12,6 +12,11 @@
           :main-segment="sessionComponent.mainSegment"
           @main-segment="sessionComponent.mainSegment = $event"
         />
+
+        <LandingHeaderComponent
+          v-if="$route.path == '/landing'"
+          :page-title="landingComponent.pageTitle"
+        />
       </div>
     </ion-header>
 
@@ -23,9 +28,13 @@
             $route.path == '/signup' ||
             $route.path == '/login'
           "
-          ref="sessionContentComponent"
           :main-segment="sessionComponent.mainSegment"
           :page-title="sessionComponent.pageTitle"
+        />
+
+        <LandingContentComponent
+          v-if="$route.path == '/landing'"
+          :page-title="landingComponent.pageTitle"
         />
       </ion-card>
     </ion-content>
@@ -33,29 +42,26 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-} from "@ionic/vue";
-// session
-import SessionHeaderComponent from "../sesion/header/SessionHeaderComponent.vue";
-import SessionContentComponent from "@/views/sesion/SessionContentComponent.vue";
+import { IonContent, IonHeader, IonPage } from "@ionic/vue";
 import { reactive } from "vue";
 import { ref } from "vue";
 import { useRoute } from "vue-router";
+// components
+import SessionHeaderComponent from "@/views/sesion/header/SessionHeaderComponent.vue";
+import SessionContentComponent from "@/views/sesion/SessionContentComponent.vue";
+import LandingContentComponent from "@/views/lading/content/LandingCotentComponent.vue";
+import LandingHeaderComponent from "@/views/lading/header/LandingHeaderComponent.vue";
 
 // vars
-const pageTitle = "Home";
 const route = useRoute();
 
 // session
-const sessionContentComponent = ref();
 const sessionComponent = reactive({
   mainSegment: route.path == "/login" ? "login" : "signup",
   pageTitle: route.path == "/login" ? "Iniciar sesión" : "Registrarse",
+});
+const landingComponent = reactive({
+  pageTitle: route.path == "",
 });
 </script>
 
