@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header mode="ios" class="ion-no-border">
+    <ion-header class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
@@ -10,252 +10,244 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
-      <!-- session -->
-      <section>
-        <ion-row>
-          <ion-col size="12">
-            <!-- logged -->
+    <ion-content>
+      <ion-card>
+        <!-- session -->
+        <section>
+          <ion-row>
+            <ion-col size="12">
+              <!-- logged -->
+              <ion-item
+                v-if="useUser().isLogged.value == true"
+                lines="none"
+                class="transparent"
+              >
+                <!-- <ion-avatar slot="start"> -->
+                <!--   <img :src="imageKeyPath" /> -->
+                <!-- </ion-avatar> -->
+
+                <ion-label class="labelOptionMenu">{{
+                  useUser().user.value.user
+                }}</ion-label>
+
+                <ion-button
+                  slot="end"
+                  fill="clear"
+                  @click="
+                    eventOpenPopoverUserOptions = $event;
+                    isOpenPopoverUserOptions = true;
+                  "
+                >
+                  <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
+                </ion-button>
+              </ion-item>
+
+              <!-- no logged -->
+              <ion-item
+                v-if="useUser().isLogged.value == false"
+                class="transparent"
+                lines="none"
+              >
+                <ion-button fill="clear" @click="openRoute('/login')">
+                  Iniciar sesión
+                </ion-button>
+                <ion-button fill="clear" @click="openRoute('/signup')"
+                  >Registrar</ion-button
+                >
+              </ion-item>
+            </ion-col>
+          </ion-row>
+        </section>
+
+        <!-- navigation -->
+        <section>
+          <div>
+            <!-- home -->
             <ion-item
-              v-if="useUser().isLogged.value == true"
               lines="none"
               class="transparent"
+              button
+              @click="openRoute('/')"
             >
-              <!-- <ion-avatar slot="start"> -->
-              <!--   <img :src="imageKeyPath" /> -->
-              <!-- </ion-avatar> -->
+              <div slot="start">
+                <ion-icon
+                  :icon="homeOutline"
+                  :class="{
+                    iconOptionSelected: $route.path == '/home',
+                    iconOptionNoSelected: $route.path != '/home',
+                  }"
+                ></ion-icon>
+              </div>
 
-              <ion-label class="labelOptionMenu">{{
-                useUser().user.value.user
-              }}</ion-label>
-
-              <ion-button
-                slot="end"
-                fill="clear"
-                @click="
-                  eventOpenPopoverUserOptions = $event;
-                  isOpenPopoverUserOptions = true;
-                "
-              >
-                <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
-              </ion-button>
+              <ion-label class="labelOptionMenu"> Inicio </ion-label>
             </ion-item>
+          </div>
 
-            <!-- no logged -->
+          <div>
+            <!-- calendar -->
             <ion-item
-              v-if="useUser().isLogged.value == false"
-              class="transparent"
               lines="none"
+              class="transparent"
+              button
+              @click="openRoute('/calendar')"
             >
-              <ion-button fill="clear" @click="openRoute('/login')">
-                Iniciar sesión
-              </ion-button>
-              <ion-button fill="clear" @click="openRoute('/signup')"
-                >Registrar</ion-button
-              >
+              <div slot="start">
+                <ion-icon
+                  :icon="calendarOutline"
+                  :class="{
+                    iconOptionSelected: $route.path == '/calendar',
+                    iconOptionNoSelected: $route.path != '/calendar',
+                  }"
+                ></ion-icon>
+              </div>
+
+              <ion-label class="labelOptionMenu"> Agenda</ion-label>
             </ion-item>
-          </ion-col>
-        </ion-row>
-      </section>
+          </div>
 
-      <ion-row>
-        <ion-col>
-          <ion-card class="ion-padding-top ion-padding-bottom">
-            <!-- navigation -->
-            <section>
-              <div>
-                <!-- home -->
-                <ion-item
-                  lines="none"
-                  class="transparent"
-                  button
-                  @click="openRoute('/')"
-                >
+          <!-- integrations -->
+          <div>
+            <ion-accordion-group>
+              <ion-accordion>
+                <ion-item slot="header">
                   <div slot="start">
                     <ion-icon
-                      :icon="homeOutline"
+                      :icon="extensionPuzzleOutline"
                       :class="{
-                        iconOptionSelected: $route.path == '/home',
-                        iconOptionNoSelected: $route.path != '/home',
+                        iconOptionSelected: $route.path == '/integrations',
+                        iconOptionNoSelected: $route.path != '/integrations',
                       }"
                     ></ion-icon>
                   </div>
-
-                  <ion-label class="labelOptionMenu"> Inicio </ion-label>
+                  <ion-label>Integraciones</ion-label>
                 </ion-item>
+
+                <div slot="content" class="ion-padding-start">
+                  <ion-item lines="none" button>
+                    <ion-icon slot="start" :icon="hourglassOutline"></ion-icon>
+                    <ion-label>Wakatime</ion-label>
+                  </ion-item>
+                </div>
+
+                <div slot="content" class="ion-padding-start">
+                  <ion-item
+                    lines="full"
+                    button
+                    @click="openRoute('/integrations')"
+                  >
+                    <ion-icon slot="start" :icon="addOutline"></ion-icon>
+                    <ion-label>Agregar</ion-label>
+                  </ion-item>
+                </div>
+              </ion-accordion>
+            </ion-accordion-group>
+          </div>
+
+          <div>
+            <!-- tareas -->
+            <ion-item
+              lines="none"
+              class="transparent"
+              button
+              @click="openRoute('/tasks')"
+            >
+              <div slot="start">
+                <ion-icon
+                  :icon="checkboxOutline"
+                  :class="{
+                    iconOptionSelected: $route.path == '/tasks',
+                    iconOptionNoSelected: $route.path != '/tasks',
+                  }"
+                ></ion-icon>
               </div>
 
-              <div>
-                <!-- calendar -->
+              <ion-label class="labelOptionMenu"> Tareas </ion-label>
+            </ion-item>
+          </div>
+
+          <div>
+            <!-- tareas -->
+            <ion-item
+              lines="none"
+              class="transparent"
+              button
+              @click="openRoute('/policies')"
+            >
+              <div slot="start">
+                <ion-icon
+                  :icon="documentTextOutline"
+                  :class="{
+                    iconOptionSelected: $route.path == '/policies',
+                    iconOptionNoSelected: $route.path != '/policies',
+                  }"
+                ></ion-icon>
+              </div>
+
+              <ion-label class="labelOptionMenu"> Politicas </ion-label>
+            </ion-item>
+          </div>
+        </section>
+
+        <!-- more options -->
+        <section>
+          <div>
+            <ion-accordion-group>
+              <ion-accordion value="first">
                 <ion-item
-                  lines="none"
-                  class="transparent"
-                  button
-                  @click="openRoute('/calendar')"
+                  slot="header"
+                  class="accordion-more-options-background-color"
                 >
-                  <div slot="start">
-                    <ion-icon
-                      :icon="calendarOutline"
-                      :class="{
-                        iconOptionSelected: $route.path == '/calendar',
-                        iconOptionNoSelected: $route.path != '/calendar',
-                      }"
-                    ></ion-icon>
-                  </div>
-
-                  <ion-label class="labelOptionMenu"> Agenda</ion-label>
+                  <ion-label>Mas opciones</ion-label>
                 </ion-item>
-              </div>
 
-              <!-- integrations -->
-              <div>
-                <ion-accordion-group>
-                  <ion-accordion>
-                    <ion-item slot="header">
-                      <div slot="start">
-                        <ion-icon
-                          :icon="extensionPuzzleOutline"
-                          :class="{
-                            iconOptionSelected: $route.path == '/integrations',
-                            iconOptionNoSelected:
-                              $route.path != '/integrations',
-                          }"
-                        ></ion-icon>
-                      </div>
-                      <ion-label>Integraciones</ion-label>
-                    </ion-item>
+                <!-- contribute -->
+                <div slot="content" class="center">
+                  <!-- about -->
+                  <ion-button
+                    fill="clear"
+                    color="primary"
+                    @click="openRoute('/about')"
+                  >
+                    <ion-icon :icon="informationOutline"></ion-icon>
+                  </ion-button>
 
-                    <div slot="content" class="ion-padding-start">
-                      <ion-item lines="none" button>
-                        <ion-icon
-                          slot="start"
-                          :icon="hourglassOutline"
-                        ></ion-icon>
-                        <ion-label>Wakatime</ion-label>
-                      </ion-item>
-                    </div>
+                  <!-- support -->
+                  <ion-button
+                    disabled
+                    fill="clear"
+                    color="primary"
+                    @click="openRoute('/about')"
+                  >
+                    <ion-icon :icon="helpOutline"></ion-icon>
+                  </ion-button>
 
-                    <div slot="content" class="ion-padding-start">
-                      <ion-item
-                        lines="full"
-                        button
-                        @click="openRoute('/integrations')"
-                      >
-                        <ion-icon slot="start" :icon="addOutline"></ion-icon>
-                        <ion-label>Agregar</ion-label>
-                      </ion-item>
-                    </div>
-                  </ion-accordion>
-                </ion-accordion-group>
-              </div>
+                  <ion-button
+                    v-if="isPlatform('desktop')"
+                    fill="clear"
+                    color="primary"
+                    @click="openModalDesktop()"
+                  >
+                    <ion-icon :icon="brushOutline"></ion-icon>
+                  </ion-button>
 
-              <div>
-                <!-- tareas -->
-                <ion-item
-                  lines="none"
-                  class="transparent"
-                  button
-                  @click="openRoute('/tasks')"
-                >
-                  <div slot="start">
-                    <ion-icon
-                      :icon="checkboxOutline"
-                      :class="{
-                        iconOptionSelected: $route.path == '/tasks',
-                        iconOptionNoSelected: $route.path != '/tasks',
-                      }"
-                    ></ion-icon>
-                  </div>
+                  <ion-button
+                    v-if="!isPlatform('desktop')"
+                    fill="clear"
+                    color="primary"
+                    @click="openModalMobile()"
+                  >
+                    <ion-icon :icon="brushOutline"></ion-icon>
+                  </ion-button>
 
-                  <ion-label class="labelOptionMenu"> Tareas </ion-label>
-                </ion-item>
-              </div>
-
-              <div>
-                <!-- tareas -->
-                <ion-item
-                  lines="none"
-                  class="transparent"
-                  button
-                  @click="openRoute('/policies')"
-                >
-                  <div slot="start">
-                    <ion-icon
-                      :icon="documentTextOutline"
-                      :class="{
-                        iconOptionSelected: $route.path == '/policies',
-                        iconOptionNoSelected: $route.path != '/policies',
-                      }"
-                    ></ion-icon>
-                  </div>
-
-                  <ion-label class="labelOptionMenu"> Politicas </ion-label>
-                </ion-item>
-              </div>
-            </section>
-
-            <!-- more options -->
-            <section>
-              <div>
-                <ion-accordion-group>
-                  <ion-accordion value="first">
-                    <ion-item
-                      slot="header"
-                      class="accordion-more-options-background-color"
-                    >
-                      <ion-label>Mas opciones</ion-label>
-                    </ion-item>
-
-                    <!-- contribute -->
-                    <div slot="content" class="center">
-                      <!-- about -->
-                      <ion-button
-                        fill="clear"
-                        color="primary"
-                        @click="openRoute('/about')"
-                      >
-                        <ion-icon :icon="informationOutline"></ion-icon>
-                      </ion-button>
-
-                      <!-- support -->
-                      <ion-button
-                        disabled
-                        fill="clear"
-                        color="primary"
-                        @click="openRoute('/about')"
-                      >
-                        <ion-icon :icon="helpOutline"></ion-icon>
-                      </ion-button>
-
-                      <ion-button
-                        v-if="isPlatform('desktop')"
-                        fill="clear"
-                        color="primary"
-                        @click="openModalDesktop()"
-                      >
-                        <ion-icon :icon="brushOutline"></ion-icon>
-                      </ion-button>
-
-                      <ion-button
-                        v-if="!isPlatform('desktop')"
-                        fill="clear"
-                        color="primary"
-                        @click="openModalMobile()"
-                      >
-                        <ion-icon :icon="brushOutline"></ion-icon>
-                      </ion-button>
-
-                      <!-- <ion-button id="click-trigger" color="primary"> -->
-                      <!--   <ion-icon :icon="languageOutline"></ion-icon> -->
-                      <!-- </ion-button> -->
-                    </div>
-                  </ion-accordion>
-                </ion-accordion-group>
-              </div>
-            </section>
-          </ion-card>
-        </ion-col>
-      </ion-row>
+                  <!-- <ion-button id="click-trigger" color="primary"> -->
+                  <!--   <ion-icon :icon="languageOutline"></ion-icon> -->
+                  <!-- </ion-button> -->
+                </div>
+              </ion-accordion>
+            </ion-accordion-group>
+          </div>
+        </section>
+      </ion-card>
 
       <!-- popovers -->
       <!-- <ion-popover -->
