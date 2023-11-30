@@ -23,7 +23,17 @@
         <!-- home -->
         <HomeHeaderComponent
           v-if="$route.path == '/home'"
-          :page-title="landingComponent.pageTitle"
+          :page-title="homeComponent.pageTitle"
+        />
+
+        <!-- calendar -->
+        <CalendarHeaderComponent
+          v-if="$route.path == '/calendar'"
+          :page-title="calendarComponent.pageTitle"
+          @current-date="calendarComponent.currentDate = $event"
+          @add="calendarComponentRef.openModalAdd({ event: $event })"
+          @sync="calendarComponentRef.syncData()"
+          @reschedule="calendarComponentRef.reschedule()"
         />
       </div>
     </ion-header>
@@ -50,7 +60,15 @@
         <!-- home -->
         <HomeContentComponent
           v-if="$route.path == '/home'"
-          :page-title="landingComponent.pageTitle"
+          :page-title="homeComponent.pageTitle"
+        />
+
+        <!-- calendar-->
+        <CalendarContentComponent
+          v-if="$route.path == '/calendar'"
+          ref="calendarComponentRef"
+          :page-title="calendarComponent.pageTitle"
+          :current-date="calendarComponent.currentDate"
         />
       </ion-card>
     </ion-content>
@@ -69,17 +87,28 @@ import LandingContentComponent from "@/views/lading/content/LandingCotentCompone
 import LandingHeaderComponent from "@/views/lading/header/LandingHeaderComponent.vue";
 import HomeContentComponent from "@/views/home/content/HomeContentComponent.vue";
 import HomeHeaderComponent from "@/views/home/header/HomeHeaderComponent.vue";
+import CalendarContentComponent from "@/views/calendar/content/CalendarContentComponent.vue";
+import CalendarHeaderComponent from "@/views/calendar/header/CalendarHeaderComponent.vue";
+import { onMounted } from "vue";
 
 // vars
 const route = useRoute();
-
-// session
+// refs
+const calendarComponentRef = ref();
+// reactive
 const sessionComponent = reactive({
   mainSegment: route.path == "/login" ? "login" : "signup",
   pageTitle: route.path == "/login" ? "Iniciar sesión" : "Registrarse",
 });
 const landingComponent = reactive({
   pageTitle: route.path == "",
+});
+const homeComponent = reactive({
+  pageTitle: route.path == "Inicio",
+});
+const calendarComponent = reactive({
+  pageTitle: route.path == "Calendario",
+  currentDate: new Date(),
 });
 </script>
 
