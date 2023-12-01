@@ -147,6 +147,32 @@
         </ion-content>
       </ion-popover>
       <!-- end popovers -->
+
+      <!-- modals -->
+      <ion-modal ref="modal" trigger="open-modal-help-integrations">
+        <ion-header mode="ios" class="ion-bo-border">
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="modalController.dismiss()"
+                ><ion-icon :icon="closeOutline"></ion-icon
+              ></ion-button>
+            </ion-buttons>
+            <ion-title>Integraciones</ion-title>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="ion-padding">
+          <p>
+            Las integraciones son una forma de ampliar la funcionalidad de
+            LifeLine al permitirte tener todas tus aplicaciones de productividad
+            en un único lugar. Constantemente trabajamos para incorporar cada
+            vez más servicios, con el objetivo de mejorar y enriquecer tu
+            experiencia dentro de la aplicación, haciendo que sea lo más
+            completa posible.
+          </p>
+        </ion-content>
+      </ion-modal>
+      <!-- end modals -->
     </ion-content>
   </ion-page>
 </template>

@@ -1,0 +1,145 @@
+<template>
+  <div>
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
+      </ion-buttons>
+
+      <ion-title>{{ pageTitle }}</ion-title>
+
+      <ion-buttons slot="end">
+        <ion-segment
+          :value="mainSegment"
+          scrollable
+          @ion-change="emits('mainOption', $event.target.value as string)"
+        >
+          <ion-segment-button value="installed">
+            <ion-label>Instalado</ion-label>
+          </ion-segment-button>
+
+          <ion-segment-button value="available">
+            <ion-label>Disponible</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+
+        <!-- button popover  main options -->
+        <ion-button
+          @click="
+            eventPopOverMainOptions = isPlatform('mobile') ? null : $event;
+            isOpenPopOverMainOptions = true;
+          "
+        >
+          <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+
+    <!-- popovers -->
+    <!-- popover main options -->
+    <ion-popover
+      :is-open="isOpenPopOverMainOptions"
+      :event="eventPopOverMainOptions"
+      :dismiss-on-select="true"
+      @did-dismiss="isOpenPopOverMainOptions = false"
+    >
+      <ion-content>
+        <!-- button modal help integrations -->
+        <ion-item id="open-modal-help-integrations" button lines="none">
+          <ion-icon slot="start" :icon="helpCircleOutline"></ion-icon>
+          <ion-label class="ion-text-wrap">Ayuda</ion-label>
+        </ion-item>
+      </ion-content>
+    </ion-popover>
+    <!-- end popovers -->
+  </div>
+</template>
+
+<script setup lang="ts">
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  IonModal,
+  IonButton,
+  modalController,
+  isPlatform,
+  IonSegment,
+  IonSegmentButton,
+} from "@ionic/vue";
+import {
+  closeOutline,
+  ellipsisVerticalOutline,
+  helpCircleOutline,
+} from "ionicons/icons";
+import { computed, reactive, ref } from "vue";
+
+interface Element {
+  name: string;
+  url?: string;
+  description: string;
+  state: "installed" | "available";
+  categories: string[];
+}
+
+const emits = defineEmits(["mainOption"]);
+const pageTitle = "Integraciones";
+const integrations = [
+  {
+    name: "WakaTime",
+    url: "https://wakatime.com/",
+    description:
+      "Wakatime es una herramienta que se integra con tu editor de código y te permite hacer un seguimiento automático del tiempo que pasas escribiendo código. Wakatime te muestra cuánto tiempo pasas en cada proyecto y en cada archivo, así como cuánto tiempo pasas escribiendo en cada lenguaje de programación.",
+    state: "installed",
+    categories: ["Productividad"],
+  },
+  {
+    name: "Todoist",
+    url: "https://todoist.com",
+    description:
+      "Todoist es una herramienta de productividad que te permite organizar tus proyectos profesionales y personales. Puedes recopilar tareas, organizar proyectos y planificar tu día. Todoist te permite organizar tus tareas por proyectos y asignar tareas y subtareas a cada uno. Puedes usarlo tanto a nivel personal, con proyectos como “compras” o “recordatorios”, pero también puedes gestionar tus proyectos profesionales, compartiendo las tareas con otros usuarios.",
+    state: "available",
+    categories: ["Productividad"],
+  },
+  {
+    name: "Google Calendar",
+    url: "https://calendar.google.com",
+    description:
+      "Google Calendar es un calendario online que ofrece Google gratuitamente a sus usuarios y que combina agenda, calendario electrónico, creador de eventos y otras funciones que nos facilita mejorar la productividad y compartirlos con nuestros contactos. Permite sincronizarlo con los contactos de Gmail de manera que podamos invitarlos y compartir eventos..",
+    state: "available",
+    categories: ["Productividad"],
+  },
+  {
+    name: "Google Fit",
+    description:
+      "Google Fit es una aplicación oficial de Google destinada a mejorar nuestra salud de una forma muy simple: informándonos de la actividad física que llevamos a cabo a diario. Los usuarios tendrán que marcarse una serie de objetivos diarios o semanales. La aplicación registra la actividad física que realizamos y nos proporciona datos como calorías, distancia recorrida y pasos realizados. También podemos ver nuestras estadísticas y marcarnos objetivos diarios.",
+    state: "available",
+    categories: ["Salud"],
+  },
+] as Array<Element>;
+const isOpenPopOverMainOptions = ref(false);
+const eventPopOverMainOptions = ref(null as CustomEvent | null);
+const mainSegment = ref("installed");
+const integrationSelected = reactive({
+  name: "",
+  description: "",
+});
+const isOpenModalIntegration = ref(false);
+const eventModalIntegration = ref(null as CustomEvent | null);
+
+// computed
+const listIntegrations = computed(() => {
+  return (integrationCategory: string): Element[] => {
+    return integrations.filter(
+      (integration) => integration.state == integrationCategory
+    );
+  };
+});
+
+// functions
+function openUrl(params: { url: string }): void {
+  const { url } = params;
+  window.open(url, "_blank");
+}
+</script>

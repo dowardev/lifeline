@@ -35,6 +35,13 @@
           @sync="calendarComponentRef.syncData()"
           @reschedule="calendarComponentRef.reschedule()"
         />
+
+        <!-- integrations -->
+        <IntegrationsHeaderComponen
+          v-if="$route.path == '/integrations'"
+          :page-title="integrationsComponent.pageTitle"
+          @main-option="integrationsComponent.mainOption = $event"
+        />
       </div>
     </ion-header>
 
@@ -70,6 +77,13 @@
           :page-title="calendarComponent.pageTitle"
           :current-date="calendarComponent.currentDate"
         />
+
+        <!-- integrations -->
+        <IntegrationsContentComponent
+          v-if="$route.path == '/integrations'"
+          :page-title="integrationsComponent.pageTitle"
+          :main-option="integrationsComponent.mainOption"
+        />
       </ion-card>
     </ion-content>
   </ion-page>
@@ -89,7 +103,8 @@ import HomeContentComponent from "@/views/home/content/HomeContentComponent.vue"
 import HomeHeaderComponent from "@/views/home/header/HomeHeaderComponent.vue";
 import CalendarContentComponent from "@/views/calendar/content/CalendarContentComponent.vue";
 import CalendarHeaderComponent from "@/views/calendar/header/CalendarHeaderComponent.vue";
-import { onMounted } from "vue";
+import IntegrationsHeaderComponen from "@/views/integrations/header/IntegrationsHeaderComponent.vue";
+import IntegrationsContentComponent from "@/views/integrations/content/IntegrationsContentComponent.vue";
 
 // vars
 const route = useRoute();
@@ -109,6 +124,10 @@ const homeComponent = reactive({
 const calendarComponent = reactive({
   pageTitle: route.path == "Calendario",
   currentDate: new Date(),
+});
+const integrationsComponent = reactive({
+  pageTitle: route.path == "Integraciones",
+  mainOption: "installed",
 });
 </script>
 
