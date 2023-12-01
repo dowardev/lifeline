@@ -42,6 +42,13 @@
           :page-title="integrationsComponent.pageTitle"
           @main-option="integrationsComponent.mainOption = $event"
         />
+
+        <!-- taks -->
+        <TasksHeaderComponent
+          v-if="$route.path == '/tasks'"
+          :page-title="integrationsComponent.pageTitle"
+          @main-option="integrationsComponent.mainOption = $event"
+        />
       </div>
     </ion-header>
 
@@ -84,6 +91,13 @@
           :page-title="integrationsComponent.pageTitle"
           :main-option="integrationsComponent.mainOption"
         />
+
+        <!-- tasks -->
+        <TasksContentComponent
+          v-if="$route.path == '/tasks'"
+          :page-title="integrationsComponent.pageTitle"
+          :main-option="integrationsComponent.mainOption"
+        />
       </ion-card>
     </ion-content>
   </ion-page>
@@ -105,6 +119,8 @@ import CalendarContentComponent from "@/views/calendar/content/CalendarContentCo
 import CalendarHeaderComponent from "@/views/calendar/header/CalendarHeaderComponent.vue";
 import IntegrationsHeaderComponen from "@/views/integrations/header/IntegrationsHeaderComponent.vue";
 import IntegrationsContentComponent from "@/views/integrations/content/IntegrationsContentComponent.vue";
+import TasksHeaderComponent from "@/views/tasks/header/TasksHeaderComponent.vue";
+import TasksContentComponent from "@/views/tasks/content/TasksContentComponent.vue";
 
 // vars
 const route = useRoute();
