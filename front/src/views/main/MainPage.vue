@@ -46,8 +46,7 @@
         <!-- taks -->
         <TasksHeaderComponent
           v-if="$route.path == '/tasks'"
-          :page-title="integrationsComponent.pageTitle"
-          @main-option="integrationsComponent.mainOption = $event"
+          :page-title="tasksComponent.pageTitle"
         />
       </div>
     </ion-header>
@@ -95,8 +94,7 @@
         <!-- tasks -->
         <TasksContentComponent
           v-if="$route.path == '/tasks'"
-          :page-title="integrationsComponent.pageTitle"
-          :main-option="integrationsComponent.mainOption"
+          :page-title="tasksComponent.pageTitle"
         />
       </ion-card>
     </ion-content>
@@ -144,6 +142,9 @@ const calendarComponent = reactive({
 const integrationsComponent = reactive({
   pageTitle: route.path == "Integraciones",
   mainOption: "installed",
+});
+const tasksComponent = reactive({
+  pageTitle: route.path == "Tareas",
 });
 </script>
 
