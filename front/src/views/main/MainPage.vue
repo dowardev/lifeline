@@ -48,6 +48,12 @@
           v-if="$route.path == '/tasks'"
           :page-title="tasksComponent.pageTitle"
         />
+
+        <!-- policies -->
+        <PoliciesHeaderComponent
+          v-if="$route.path == '/policies'"
+          :page-title="policiesComponent.pageTitle"
+        />
       </div>
     </ion-header>
 
@@ -96,6 +102,13 @@
           v-if="$route.path == '/tasks'"
           :page-title="tasksComponent.pageTitle"
         />
+
+        <!-- policies -->
+        <PoliciesContentComponent
+          v-if="$route.path == '/policies'"
+          :page-title="policiesComponent.pageTitle"
+          @main-option="policiesComponent.mainOption = $event"
+        />
       </ion-card>
     </ion-content>
   </ion-page>
@@ -119,6 +132,8 @@ import IntegrationsHeaderComponen from "@/views/integrations/header/Integrations
 import IntegrationsContentComponent from "@/views/integrations/content/IntegrationsContentComponent.vue";
 import TasksHeaderComponent from "@/views/tasks/header/TasksHeaderComponent.vue";
 import TasksContentComponent from "@/views/tasks/content/TasksContentComponent.vue";
+import PoliciesHeaderComponent from "@/views/policies/header/PoliciesHeaderComponent.vue";
+import PoliciesContentComponent from "@/views/policies/content/PoliciesContentComponent.vue";
 
 // vars
 const route = useRoute();
@@ -145,6 +160,10 @@ const integrationsComponent = reactive({
 });
 const tasksComponent = reactive({
   pageTitle: route.path == "Tareas",
+});
+const policiesComponent = reactive({
+  pageTitle: route.path == "Politicas",
+  mainOption: "privacy",
 });
 </script>
 
