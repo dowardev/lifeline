@@ -4,11 +4,11 @@
     <section>
       <ion-row class="center">
         <ion-col sieze-xs="12" size-lg="8">
-          <ion-card class="card-main-content">
+          <ion-card>
             <div class="ion-padding-start ion-padding-end">
               <ion-row class="scroll-horizontal">
                 <ion-col size-xs="12" size-md="6" size-lg="6">
-                  <ion-card class="scroll-card-calendar">
+                  <ion-card class="scroll-card-calendar element-selected">
                     <div
                       class="card-calendar-content ion-padding-start ion-padding-end"
                     >
@@ -18,7 +18,7 @@
                 </ion-col>
 
                 <ion-col size-xs="12" size-md="6" size-lg="6">
-                  <ion-card>
+                  <ion-card class="element-selected">
                     <ion-card-header>
                       <div
                         style="display: flex; justify-content: space-between"
@@ -107,11 +107,15 @@ function logoutWakaTime(): void {
 }
 
 .card-calendar-content {
-  height: 76vh;
+  height: 86dvh;
 }
 
 .card-main-content {
   max-height: 82vh;
   overflow-y: auto;
+}
+
+.element-selected {
+  border: 1px solid var(--ion-color-primary);
 }
 </style>

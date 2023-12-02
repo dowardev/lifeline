@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="ion-padding-top">
     <!-- input add task -->
     <section>
       <ion-row

@@ -13,36 +13,38 @@
           ><ion-icon :icon="addOutline"></ion-icon
         ></ion-button>
 
-        <!-- previous button -->
-        <ion-button fill="clear" size="small" @click="previousWeek()"
-          ><ion-icon :icon="chevronBackOutline"></ion-icon
-        ></ion-button>
+        <div v-if="!isPlatform('mobile')">
+          <!-- previous button -->
+          <ion-button fill="clear" size="small" @click="previousWeek()"
+            ><ion-icon :icon="chevronBackOutline"></ion-icon
+          ></ion-button>
 
-        <!-- next button -->
-        <ion-button fill="clear" size="small" @click="nextWeek()"
-          ><ion-icon :icon="chevronForwardOutline"></ion-icon
-        ></ion-button>
+          <!-- next button -->
+          <ion-button fill="clear" size="small" @click="nextWeek()"
+            ><ion-icon :icon="chevronForwardOutline"></ion-icon
+          ></ion-button>
 
-        <!-- button date selector -->
-        <ion-button
-          fill="clear"
-          size="small"
-          style="width: 92px"
-          @click="
-            (popoverMainCalendar.event = $event),
-              (popoverMainCalendar.open = true)
-          "
-        >
-          {{
-            translateMonth({
-              monthName: months[getMonth(currentDate)],
-            })
-          }}
-        </ion-button>
-        <!-- today button -->
-        <ion-button size="small" fill="clear" @click="today()">
-          <ion-icon :icon="todayOutline"></ion-icon>
-        </ion-button>
+          <!-- button date selector -->
+          <ion-button
+            fill="clear"
+            size="small"
+            style="width: 92px"
+            @click="
+              (popoverMainCalendar.event = $event),
+                (popoverMainCalendar.open = true)
+            "
+          >
+            {{
+              translateMonth({
+                monthName: months[getMonth(currentDate)],
+              })
+            }}
+          </ion-button>
+          <!-- today button -->
+          <ion-button size="small" fill="clear" @click="today()">
+            <ion-icon :icon="todayOutline"></ion-icon>
+          </ion-button>
+        </div>
 
         <!-- button popover  main options -->
         <ion-button
@@ -85,9 +87,51 @@
       @did-dismiss="popOverMainOptions.open = false"
     >
       <ion-content>
-        <ion-list>
+        <ion-list v-if="isPlatform('mobile')">
           <ion-list-header>
             <ion-label>General</ion-label>
+          </ion-list-header>
+
+          <ion-row>
+            <ion-col>
+              <!-- previous button -->
+              <ion-button fill="clear" size="small" @click="previousWeek()"
+                ><ion-icon :icon="chevronBackOutline"></ion-icon
+              ></ion-button>
+
+              <!-- next button -->
+              <ion-button fill="clear" size="small" @click="nextWeek()"
+                ><ion-icon :icon="chevronForwardOutline"></ion-icon
+              ></ion-button>
+
+              <!-- button date selector -->
+              <ion-button
+                fill="clear"
+                size="small"
+                style="width: 92px"
+                @click="
+                  (popoverMainCalendar.event = $event),
+                    (popoverMainCalendar.open = true)
+                "
+              >
+                {{
+                  translateMonth({
+                    monthName: months[getMonth(currentDate)],
+                  })
+                }}
+              </ion-button>
+              <!-- today button -->
+              <ion-item button lines="none" @click="today()">
+                <ion-icon slot="start" :icon="todayOutline"></ion-icon>
+                <ion-label>Hoy</ion-label>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+        </ion-list>
+
+        <ion-list>
+          <ion-list-header>
+            <ion-label>Otros</ion-label>
           </ion-list-header>
 
           <ion-row>

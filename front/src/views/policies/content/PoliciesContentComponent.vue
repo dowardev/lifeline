@@ -15,7 +15,7 @@
                 >DowarDev
               </span>
               recopilan la mínima cantidad de datos necesarios, para permitir a
-              los usuarios mantener el mayor anonimato posible.sible.
+              los usuarios mantener el mayor anonimato posible.
             </p>
 
             <h2>Datos recopilados</h2>

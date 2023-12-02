@@ -8,19 +8,21 @@
       <ion-title>{{ pageTitle }}</ion-title>
 
       <ion-buttons slot="end">
-        <ion-segment
-          :value="mainSegment"
-          scrollable
-          @ion-change="emits('mainOption', $event.target.value as string)"
-        >
-          <ion-segment-button value="installed">
-            <ion-label>Instalado</ion-label>
-          </ion-segment-button>
+        <div class="size-main-segment">
+          <ion-segment
+            :value="mainSegment"
+            scrollable
+            @ion-change="emits('mainOption', $event.target.value as string)"
+          >
+            <ion-segment-button value="installed">
+              <ion-label>Instalado</ion-label>
+            </ion-segment-button>
 
-          <ion-segment-button value="available">
-            <ion-label>Disponible</ion-label>
-          </ion-segment-button>
-        </ion-segment>
+            <ion-segment-button value="available">
+              <ion-label>Disponible</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+        </div>
 
         <!-- button popover  main options -->
         <ion-button
@@ -143,3 +145,11 @@ function openUrl(params: { url: string }): void {
   window.open(url, "_blank");
 }
 </script>
+
+<style scoped>
+@media only screen and (max-width: 768px) {
+  .size-main-segment {
+    width: 38dvw;
+  }
+}
+</style>

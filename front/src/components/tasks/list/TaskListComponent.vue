@@ -10,7 +10,6 @@
           <ion-item
             v-for="task in listTasks.incomplete"
             :key="task.name"
-            class="transparent"
             lines="full"
             @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
             @mouseleave="showButtonsOptionsTask = -1"

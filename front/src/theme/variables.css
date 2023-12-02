@@ -106,3 +106,7 @@ ion-accordion ion-item {
 ion-accordion > div[slot="content"] {
   background: var(--ion-background-light-color) !important;
 }
+
+ion-button {
+  --box-shadow: none !important;
+}
