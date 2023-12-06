@@ -14,9 +14,31 @@ import {
 import { errorBuilder } from "@/utils/errors";
 import { executeGrapQuery, graphqlQueryBuilder } from "./graphql";
 import { USER_MENU } from "@/utils/graphql";
+import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 
-export function setUserToken(params: SetUserToken): void {
-  document.cookie = "token=" + params.token;
+export async function setUserToken(params: {
+  db: SQLiteDBConnection;
+  fields: any[];
+  values: any[];
+}): Promise<void> {
+  const { db, fields, values } = params;
+  try {
+    let query = `
+     INSERT INTO Tokens(
+       ${fields.join(", ")}
+     )
+     
+   `;
+    query += `values (`;
+    for (let index = 0; index < values.length; index++) {
+      if (index < fields.length - 1) query += "?, ";
+      else query += "? ";
+    }
+    query += `)`;
+    await db.query(query, values);
+  } catch (error: any) {
+    throw new Error(error);
+  }
 }
 
 export function getUserToken(): string {

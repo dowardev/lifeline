@@ -8,10 +8,6 @@ import {
 } from "@/services/schedule";
 import { useReminder } from "./useReminder";
 import { useEvent } from "./useEvent";
-import {
-  createTable as createTableService,
-  dbConnection as dbConnectionService,
-} from "@/services/dbService";
 
 export const useSchedule = () => {
   const scheduleStore = useScheduleStore();
@@ -572,27 +568,6 @@ export const useSchedule = () => {
     return { schedule: newSchedule };
   }
 
-  async function createTableBiological(): Promise<void> {
-    const query = `CREATE TABLE IF NOT EXISTS Biologics
-    (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT
-    );`;
-    await createTable({ query });
-  }
-
-  async function createTable(params: { query: any }): Promise<void> {
-    try {
-      const { query } = params;
-      const db = await dbConnectionService();
-      await db.open();
-      await createTableService({ query, db });
-      await db.close();
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
   return {
     checkNotificationsPermissions,
     generateEventsSchedule,
@@ -613,6 +588,5 @@ export const useSchedule = () => {
     generateEventsReminders,
     getLocalSchedule,
     generateSchedules,
-    createTableBiological,
   };
 };

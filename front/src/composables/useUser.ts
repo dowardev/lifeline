@@ -14,6 +14,10 @@ import {
 } from "@/services/session";
 import { errorBuilder } from "@/utils/errors";
 import { logout as userLogout } from "../services/session";
+import {
+  createTable as createTableService,
+  dbConnection as dbConnectionService,
+} from "@/services/dbService";
 
 export const useUser = () => {
   const userStore = useUserStore();
@@ -63,10 +67,21 @@ export const useUser = () => {
     }
   }
 
-  function storeUserToken(params: SetUserToken): void {
-    const { token } = params;
+  async function storeUserToken(params: SetUserToken): Promise<void> {
     try {
-      setUserToken({ token });
+      const db = await dbConnectionService();
+      await db.open();
+      try {
+        const { token } = params;
+        await setUserToken({
+          db,
+          fields: ["name", "token"],
+          values: ["user_auth", token],
+        });
+      } catch (error: any) {
+        throw new Error(error);
+      }
+      await db.close();
     } catch (error: any) {
       throw new Error(error);
     }

@@ -41,31 +41,17 @@ export { storage };
 import { createPinia } from "pinia";
 const pinia = createPinia();
 
-import { Capacitor } from "@capacitor/core";
-import { CapacitorSQLite, SQLiteConnection } from "@capacitor-community/sqlite";
+const app = createApp({
+  setup() {
+    provide(DefaultApolloClient, apolloClient);
+  },
+  render: () => h(App),
+})
+  .use(IonicVue)
+  .use(i18n)
+  .use(pinia)
+  .use(router);
 
-window.addEventListener("DOMContentLoaded", async () => {
-  const sqlite = new SQLiteConnection(CapacitorSQLite);
-  const platform = Capacitor.getPlatform();
-  if (platform === "web") {
-    const jeepSqliteEl = document.createElement("jeep-sqlite");
-    document.body.appendChild(jeepSqliteEl);
-    await customElements.whenDefined("jeep-sqlite");
-    await sqlite.initWebStore();
-  }
-
-  const app = createApp({
-    setup() {
-      provide(DefaultApolloClient, apolloClient);
-    },
-    render: () => h(App),
-  })
-    .use(IonicVue)
-    .use(i18n)
-    .use(pinia)
-    .use(router);
-
-  router.isReady().then(() => {
-    app.mount("#app");
-  });
+router.isReady().then(() => {
+  app.mount("#app");
 });

@@ -37,7 +37,7 @@ const scheduleComposable = useSchedule();
 // mounted
 onMounted(async () => {
   start();
-  await useSchedule().createTableBiological();
+  await useSystem().createTableTokens();
 });
 
 // functions

@@ -21,6 +21,10 @@ import {
   Months,
   SystemMessage,
 } from "@/utils/interfaces";
+import {
+  createTable as createTableService,
+  dbConnection as dbConnectionService,
+} from "@/services/dbService";
 
 export const useSystem = () => {
   const systemStore = useSystemStore();
@@ -195,26 +199,49 @@ export const useSystem = () => {
     await deleteDataService({ events, schedule });
   }
 
+  async function createTableTokens(): Promise<void> {
+    const query = `CREATE TABLE IF NOT EXISTS Tokens
+    (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      token TEXT
+    );`;
+    await createTable({ query });
+  }
+
+  async function createTable(params: { query: any }): Promise<void> {
+    try {
+      const { query } = params;
+      const db = await dbConnectionService();
+      await db.open();
+      await createTableService({ query, db });
+      await db.close();
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
   return {
-    loadThemeSelected,
-    getTheme,
+    createTableTokens,
     applyTheme,
-    updateThemeSelected,
-    translateDay,
-    translateEventReminderRepeat,
-    translateEventReminderNotification,
-    translateMonth,
-    setTasksViewMode,
+    clearWakaTimeApiKey,
+    deleteData,
     getTasksViewMode,
-    storeWakaTimeApiKey,
+    getTheme,
     getWakaTimeApiKey,
-    testWakaTimeApiKey,
+    getWakaTimeDayTotal,
+    loadThemeSelected,
     loadWakaTimeApiKey,
     loadWakaTimeToday,
-    getWakaTimeDayTotal,
-    clearWakaTimeApiKey,
     openToast,
     openToastFixed,
-    deleteData,
+    setTasksViewMode,
+    storeWakaTimeApiKey,
+    testWakaTimeApiKey,
+    translateDay,
+    translateEventReminderNotification,
+    translateEventReminderRepeat,
+    translateMonth,
+    updateThemeSelected,
   };
 };
