@@ -196,7 +196,10 @@ export const useSystem = () => {
     schedule: boolean;
   }): Promise<void> {
     const { events, schedule } = params;
-    await deleteDataService({ events, schedule });
+    const db = await dbConnectionService();
+    await db.open();
+    await deleteDataService({ events, schedule, db });
+    await db.close();
   }
 
   async function createTableTokens(): Promise<void> {
@@ -222,9 +225,9 @@ export const useSystem = () => {
   }
 
   return {
-    createTableTokens,
     applyTheme,
     clearWakaTimeApiKey,
+    createTableTokens,
     deleteData,
     getTasksViewMode,
     getTheme,

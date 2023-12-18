@@ -32,6 +32,7 @@ import { errorBuilder } from "@/utils/errors";
 import { storage } from "@/main";
 import { toRaw } from "vue";
 import { cloneDeep } from "lodash";
+import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 
 export async function createEvent(params: {
   event: Event;
@@ -196,7 +197,7 @@ export function formatDateTime(date: string | Date, typeFormat: string) {
 }
 
 export async function getUserCalendars(
-  params: GetCalendars,
+  params: GetCalendars
 ): Promise<Array<GetCalendarsResponse>> {
   const { onError, onResult, result } = useQuery(
     gql`
@@ -206,7 +207,7 @@ export async function getUserCalendars(
         }
       }
       ${params.graphql.name}
-    `,
+    `
   );
 
   return new Promise((resolve, reject) => {
@@ -239,21 +240,59 @@ export async function getUserCalendars(
 // );
 // }
 
-export async function saveLocalEvent(params: { event: Event }): Promise<void> {
-  const { event } = params;
-  const events = await getEventsLocal();
-  events.push(event);
-  await storage.set("events", JSON.parse(JSON.stringify(events)));
+export async function saveLocalEvent(params: {
+  db: SQLiteDBConnection;
+  fields: any[];
+  values: any[];
+}): Promise<void> {
+  // const { event } = params;
+  // const events = await getEventsLocal();
+  // events.push(event);
+  // await storage.set("events", JSON.parse(JSON.stringify(events)));
+  const { fields, values, db } = params;
+  try {
+    let query = `
+     INSERT INTO Events(
+       ${fields.join(", ")}
+     )
+     
+   `;
+    query += `values (`;
+    for (let index = 0; index < values.length; index++) {
+      if (index < fields.length - 1) query += "?, ";
+      else query += "? ";
+    }
+    query += `)`;
+    await db.query(query, values);
+  } catch (error: any) {
+    throw new Error(error);
+  }
 }
 
+//  TODO: remove this function
 export async function saveLocalEvents(params: {
-  events: Event[];
+  db: SQLiteDBConnection;
+  fields: any[];
+  values: any[];
 }): Promise<void> {
-  let { events } = params;
+  // await storage.set("events", cloneDeep(events));
+  const { fields, values, db } = params;
   try {
-    await storage.set("events", cloneDeep(events));
+    let query = `
+     INSERT INTO Events(
+       ${fields.join(", ")}
+     )
+     
+   `;
+    query += `values (`;
+    for (let index = 0; index < values.length; index++) {
+      if (index < fields.length - 1) query += "?, ";
+      else query += "? ";
+    }
+    query += `)`;
+    await db.query(query, values);
   } catch (error: any) {
-    throw new Error(error.message);
+    throw new Error(error);
   }
 }
 
@@ -274,8 +313,23 @@ export async function updateLocalEvent(params: {
   }
 }
 
-export async function getEventsLocal(): Promise<Array<Event>> {
-  return (await storage.get("events")) ?? ([] as Event[]);
+export async function getEventsLocal(params: {
+  db: SQLiteDBConnection;
+}): Promise<Array<Event>> {
+  const { db } = params;
+  const query = `SELECT * FROM Events`;
+  try {
+    const events = (await db.query(query)).values as Event[];
+    return events.map((event) => {
+      event.guests = JSON.parse(event.guests as any);
+      event.reminders = JSON.parse(event.reminders as any);
+      const syncStatus = JSON.parse(event.syncStatus as any);
+      event.syncStatus = syncStatus == 0 ? false : true;
+      return event;
+    });
+  } catch (error: any) {
+    throw new Error(error);
+  }
 }
 
 export async function getEvents(params: {
@@ -323,7 +377,7 @@ export async function getEvents(params: {
 export async function getEvent(params: { id: string }): Promise<Event | null> {
   const id = params.id;
   const event = (await storage.get("events")).filter(
-    (event: Event) => event.id == id,
+    (event: Event) => event.id == id
   );
   return event[0];
 }
@@ -378,8 +432,17 @@ export async function removeAllLocalEvents(): Promise<void> {
   await storage.remove("events");
 }
 
-export async function deleteEvents(): Promise<void> {
-  await storage.remove("events");
+export async function deleteEvents(params: {
+  db: SQLiteDBConnection;
+}): Promise<void> {
+  // await storage.remove("events");
+  const { db } = params;
+  const query = `Delete FROM Events`;
+  try {
+    await db.query(query);
+  } catch (error: any) {
+    throw new Error(error);
+  }
 }
 
 export async function deleteEventServer(params: { id: string }): Promise<void> {
@@ -408,17 +471,11 @@ export function generateEventId(): string {
   return Math.random().toString(36).slice(2, 18);
 }
 
-export function formatEvent(params: {
-  event: Event;
-  opts?: { id?: boolean };
-}): {
+export function formatEvent(params: { event: Event }): {
   event: Event;
 } {
-  let { event } = params;
-  const { opts } = params;
-
-  event = toRaw(event);
-  if (opts?.id) event.id = generateEventId();
+  const { event } = params;
+  // event = toRaw(event);
   event.reminders.start = new Date(event.reminders.start);
   event.reminders.end = new Date(event.reminders.end);
   return { event };

@@ -21,6 +21,12 @@ import { USER_EVENTS } from "@/utils/graphql";
 import * as jsonpatch from "fast-json-patch";
 import { useSchedule } from "./useSchedule";
 import { difference } from "lodash";
+import { useSystem } from "./useSystem";
+import {
+  dbConnection as dbConnectionService,
+  createTable as createTableService,
+} from "@/services/dbService";
+import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 
 export const useEvent = () => {
   const eventStore = useEventsStore();
@@ -33,9 +39,32 @@ export const useEvent = () => {
       const { id } = await pushNewEvent({ event });
       event = eventFormated;
       event.idSync = id;
+      const db = await dbConnectionService();
+      await db.open();
       await saveLocalEventService({
-        event,
+        values: [
+          eventFormated.availability,
+          eventFormated.description,
+          eventFormated.guests,
+          eventFormated.idSync,
+          eventFormated.name,
+          eventFormated.reminders,
+          eventFormated.syncStatus,
+          eventFormated.timezone,
+        ],
+        fields: [
+          "availability",
+          "description",
+          "guests",
+          "idSync",
+          "name",
+          "reminders",
+          "syncStatus",
+          "timezone",
+        ],
+        db,
       });
+      await db.close();
       eventStore.addEvent({ event });
     } catch (error: any) {
       throw new Error(error);
@@ -65,8 +94,7 @@ export const useEvent = () => {
   async function loadEvents(): Promise<void> {
     let events = await getStoredEvents();
     events = events.map((event) => {
-      // formatEventService({ event, opts: { id: true } });
-      // debugger
+      formatEventService({ event });
       return event;
     });
     eventStore.addEvents({ events });
@@ -95,7 +123,15 @@ export const useEvent = () => {
   }
 
   async function getStoredEvents(): Promise<Array<Event>> {
-    return await getEventsLocalService();
+    try {
+      const db = await dbConnectionService();
+      await db.open();
+      const events = await getEventsLocalService({ db });
+      await db.close();
+      return events;
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 
   async function getEventsServer(): Promise<Array<Event>> {
@@ -111,7 +147,7 @@ export const useEvent = () => {
 
     for (const event of eventsServer) {
       const result = eventsStored?.filter(
-        (eventF) => eventF.idSync == event.idSync,
+        (eventF) => eventF.idSync == event.idSync
       );
       if (result?.length == 0 || result == undefined) {
         event.reminders.start = new Date(event.reminders.start);
@@ -161,7 +197,7 @@ export const useEvent = () => {
 
     for (let i = 0; i < eventsStored.length; i++) {
       const encontrado = eventsServer.find(
-        (obj) => obj.idSync === eventsStored[i].idSync,
+        (obj) => obj.idSync === eventsStored[i].idSync
       );
       if (!encontrado) {
         deleted.push(...eventsStored.splice(i, 1));
@@ -191,19 +227,21 @@ export const useEvent = () => {
   }
 
   async function pushEventsUpdated(): Promise<void> {
-    const events = await getEventsLocalService();
+    const db = await dbConnectionService();
+    await db.open();
+    const events = await getEventsLocalService({ db });
+    await db.close();
     const result = events.filter((event) => event.syncStatus == false);
     await Promise.all(
       result.map(async (event) => {
         await pusUpdateEvent({ event });
-      }),
+      })
     );
   }
 
   async function pusUpdateEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
     try {
-      console.log(event);
       await updateEventService({ event });
       event.syncStatus = true;
     } catch (error) {
@@ -231,8 +269,46 @@ export const useEvent = () => {
         diffEvents.push(eventFormated);
       }
     }
-    if (diffEvents.length > 0)
-      await saveLocalEventsService({ events: diffEvents });
+    if (diffEvents.length == 0) return;
+    try {
+      await Promise.all(
+        diffEvents.map(async (event) => {
+          const db = await dbConnectionService();
+          await db.open();
+          await saveLocalEventService({
+            values: [
+              event.availability,
+              event.description,
+              JSON.stringify(event.guests),
+              event.idSync,
+              event.name,
+              JSON.stringify(event.reminders),
+              event.syncStatus == undefined ? false : false,
+              event.timezone,
+            ],
+            fields: [
+              "availability",
+              "description",
+              "guests",
+              "idSync",
+              "name",
+              "reminders",
+              "syncStatus",
+              "timezone",
+            ],
+            db,
+          });
+          await db.close();
+        })
+      );
+    } catch (error: any) {
+      if (
+        error.message !=
+        "Error: Query failed: SelectSQL: queryAll: UNIQUE constraint failed: EVENTS.idSync"
+      ) {
+        throw new Error(error);
+      }
+    }
   }
 
   async function sync(): Promise<void> {
@@ -240,8 +316,11 @@ export const useEvent = () => {
     await pushEventsUpdated();
   }
 
-  async function deleteEvents(): Promise<void> {
-    await deleteEventsService();
+  async function deleteEvents(params: {
+    db: SQLiteDBConnection;
+  }): Promise<void> {
+    const { db } = params;
+    await deleteEventsService({ db });
   }
 
   async function storeLocalEvent(params: { event: Event }): Promise<void> {
@@ -279,7 +358,37 @@ export const useEvent = () => {
     eventStore.removeEvent({ eventId });
   }
 
+  async function createTableEvents(): Promise<void> {
+    const query = `CREATE TABLE IF NOT EXISTS EVENTS 
+    (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      guests TEXT,
+      reminders TEXT,
+      timezone TEXT,
+      description TEXT,
+      availability TEXT,
+      idSync INT,
+      syncStatus TEXT,
+      UNIQUE(idSync)
+    );`;
+    await createTable({ query });
+  }
+
+  async function createTable(params: { query: any }): Promise<void> {
+    try {
+      const { query } = params;
+      const db = await dbConnectionService();
+      await db.open();
+      await createTableService({ query, db });
+      await db.close();
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
   return {
+    createTableEvents,
     deleteEvent,
     deleteEventStored,
     deleteEvents,

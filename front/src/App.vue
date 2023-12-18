@@ -38,6 +38,7 @@ const scheduleComposable = useSchedule();
 onMounted(async () => {
   start();
   await useSystem().createTableTokens();
+  await useEvent().createTableEvents();
 });
 
 // functions

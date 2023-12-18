@@ -9,6 +9,7 @@ import gql from "graphql-tag";
 import { useEvent } from "@/composables/useEvent";
 import { useSchedule } from "@/composables/useSchedule";
 import { storage } from "@/main";
+import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 
 interface WakaTimeDuration {
   data: {
@@ -185,9 +186,9 @@ export function graphqlQueryBuilder(params: {
 export async function deleteData(params: {
   events: boolean;
   schedule: boolean;
+  db: SQLiteDBConnection;
 }): Promise<void> {
-  const { events, schedule } = params;
-
-  if (events) await useEvent().deleteEvents();
+  const { events, schedule, db } = params;
+  if (events) await useEvent().deleteEvents({ db });
   if (schedule) await useSchedule().deleteSchedule();
 }

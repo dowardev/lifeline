@@ -548,7 +548,7 @@ export const useSchedule = () => {
   async function generateSchedules(params: {
     schedule: Schedule;
   }): Promise<{ schedule: Schedule }> {
-    let { schedule } = params;
+    const { schedule } = params;
     // const localSchedule = await getLocalSchedule();
     // const storeSchedule = getSchedule();
     // schedule =

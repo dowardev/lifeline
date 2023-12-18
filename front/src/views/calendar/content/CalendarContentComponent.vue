@@ -367,7 +367,7 @@ const scheduleComposable = useSchedule();
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  // await useEvent().loadEvents();
+  await useEvent().loadEvents();
 });
 
 // computed
