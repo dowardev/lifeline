@@ -1,6 +1,11 @@
 <template>
   <ion-row>
-    <ion-col size-xs="12" size-lg="6">
+    <ion-col
+      :class="{ 'vertical-border': !isPlatform('mobile') }"
+      size-xs="12"
+      size-lg="6"
+      style="height: 50dvh"
+    >
       <ion-list class="transparent">
         <ion-list-header>
           <ion-label class="center">Pendiente</ion-label>
@@ -10,6 +15,8 @@
           <ion-item
             v-for="task in listTasks.incomplete"
             :key="task.name"
+            class="transparent element-selected"
+            style="margin-bottom: 12px"
             lines="full"
             @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
             @mouseleave="showButtonsOptionsTask = -1"
@@ -52,7 +59,7 @@
       </ion-list>
     </ion-col>
 
-    <ion-col>
+    <ion-col style="padding-left: 12px">
       <ion-list class="transparent">
         <ion-list-header>
           <ion-label class="center">Completado</ion-label>
@@ -62,7 +69,8 @@
           <ion-item
             v-for="task in listTasks.complete"
             :key="task.name"
-            class="transparent"
+            class="transparent element-selected"
+            style="margin-bottom: 12px"
             lines="full"
             @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
             @mouseleave="showButtonsOptionsTask = -1"
@@ -109,7 +117,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonCheckbox, IonLabel, popoverController } from "@ionic/vue";
+import {
+  IonCheckbox,
+  IonLabel,
+  isPlatform,
+  popoverController,
+} from "@ionic/vue";
 import { createOutline, trashOutline } from "ionicons/icons";
 import { onMounted, ref, watch } from "vue";
 
@@ -194,3 +207,13 @@ function removeTask(params: { id: string }) {
   emits("remove", { id });
 }
 </script>
+
+<style scoped>
+.element-selected {
+  border: 1px solid var(--ion-color-primary);
+}
+.vertical-border {
+  border-right: 1px solid var(--ion-color-secondary);
+  padding-right: 12px;
+}
+</style>

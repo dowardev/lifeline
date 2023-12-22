@@ -35,35 +35,8 @@
     <section>
       <ion-row :class="{ center: screenWidth >= 768 }">
         <ion-col size-xs="12" size-lg="6">
-          <ion-card class="card-main-content element-selected">
+          <ion-card class="card-main-content">
             <ion-card-content>
-              <ion-row>
-                <ion-col size-xs="12" size-md="9" size-lg="12">
-                  <ion-item lines="none" style="--background: transparent">
-                    <ion-select interface="popover" :value="listSelected">
-                      <ion-select-option value="tray"
-                        >Bandeja de entrada</ion-select-option
-                      >
-                    </ion-select>
-
-                    <div slot="end">
-                      <ion-button fill="clear"
-                        ><ion-icon :icon="appsOutline"></ion-icon
-                      ></ion-button>
-
-                      <ion-button
-                        :fill="viewMode == 'list' ? 'clear' : 'solid'"
-                        @click="
-                          viewMode = viewMode == 'list' ? 'kanban' : 'list';
-                          setTasksViewMode({ viewMode });
-                        "
-                        ><ion-icon :icon="albumsOutline"></ion-icon
-                      ></ion-button>
-                    </div>
-                  </ion-item>
-                </ion-col>
-              </ion-row>
-
               <!-- tasks -->
               <ion-row>
                 <ion-col size="12">
@@ -171,7 +144,7 @@ const viewMode = ref("list" as "list" | "kanban");
 // mounted
 onMounted(() => {
   useTask().loadTasks();
-  getTasksViewMode();
+  // getTasksViewMode();
 });
 
 // functions
@@ -255,9 +228,6 @@ async function kanbanUpdate(params: {
   overflow-y: auto;
 }
 
-.element-selected {
-  border: 1px solid var(--ion-color-primary);
-}
 @media only screen and (min-width: 992px) {
   .modal-event {
     --width: 80vw;
