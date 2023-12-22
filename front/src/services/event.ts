@@ -245,10 +245,6 @@ export async function saveLocalEvent(params: {
   fields: any[];
   values: any[];
 }): Promise<void> {
-  // const { event } = params;
-  // const events = await getEventsLocal();
-  // events.push(event);
-  // await storage.set("events", JSON.parse(JSON.stringify(events)));
   const { fields, values, db } = params;
   try {
     let query = `

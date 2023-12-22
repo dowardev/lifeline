@@ -8,6 +8,7 @@ import { useReminder } from "@/composables/useReminder";
 import { forEach, isEqual } from "lodash";
 import { useEvent } from "@/composables/useEvent";
 import { storage } from "@/main";
+import { da } from "date-fns/locale";
 
 export const useEventsStore = defineStore("events", () => {
   const events = ref([] as Event[]);
@@ -15,6 +16,18 @@ export const useEventsStore = defineStore("events", () => {
   const scheduleComposable = useSchedule();
   const useReminderComposable = useReminder();
   const eventComposable = useEvent();
+  const calendarSchedule = ref({} as Schedule);
+
+  watch(
+    () => [date.value, events.value],
+    (newValue, oldValue) => {
+      calendarSchedule.value = useSchedule().generateEventsSchedule({
+        events: events.value,
+        date: new Date(newValue[0]),
+      });
+    },
+    { deep: true }
+  );
 
   function getEvents() {
     return events.value;
@@ -52,7 +65,7 @@ export const useEventsStore = defineStore("events", () => {
 
     eventsData.forEach((item) => {
       const index = combinedArray.findIndex(
-        (element) => element.id === item.id,
+        (element) => element.id === item.id
       );
       if (index === -1) {
         combinedArray.push(item);
@@ -147,16 +160,23 @@ export const useEventsStore = defineStore("events", () => {
   //   },
   //   { deep: true },
   // );
+  //
+
+  function updateCurrentDate(params: { date: Date }): void {
+    date.value = params.date.toISOString();
+  }
 
   return {
     addEvent,
+    addEvents,
     date,
     events,
     getEvent,
     getEvents,
     removeEvent,
+    schedule: calendarSchedule,
+    updateCurrentDate,
     updateEvent,
     updateEvents,
-    addEvents,
   };
 });

@@ -27,6 +27,7 @@ import {
   createTable as createTableService,
 } from "@/services/dbService";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
+import { toRaw } from "vue";
 
 export const useEvent = () => {
   const eventStore = useEventsStore();
@@ -48,8 +49,8 @@ export const useEvent = () => {
           eventFormated.guests,
           eventFormated.idSync,
           eventFormated.name,
-          eventFormated.reminders,
-          eventFormated.syncStatus,
+          JSON.stringify(eventFormated.reminders),
+          false,
           eventFormated.timezone,
         ],
         fields: [
@@ -264,17 +265,16 @@ export const useEvent = () => {
       if (!found) {
         const { event: eventFormated } = formatEventService({
           event,
-          opts: { id: true },
         });
         diffEvents.push(eventFormated);
       }
     }
     if (diffEvents.length == 0) return;
+    const db = await dbConnectionService();
+    await db.open();
     try {
       await Promise.all(
         diffEvents.map(async (event) => {
-          const db = await dbConnectionService();
-          await db.open();
           await saveLocalEventService({
             values: [
               event.availability,
@@ -298,7 +298,6 @@ export const useEvent = () => {
             ],
             db,
           });
-          await db.close();
         })
       );
     } catch (error: any) {
@@ -308,6 +307,8 @@ export const useEvent = () => {
       ) {
         throw new Error(error);
       }
+    } finally {
+      await db.close();
     }
   }
 
@@ -387,6 +388,11 @@ export const useEvent = () => {
     }
   }
 
+  function setCurrentDate(params: { date: Date }): void {
+    const { date } = params;
+    eventStore.updateCurrentDate({ date });
+  }
+
   return {
     createTableEvents,
     deleteEvent,
@@ -412,5 +418,6 @@ export const useEvent = () => {
     syncEventsFromServer,
     updateEvent,
     updateLocalEvent,
+    setCurrentDate,
   };
 };

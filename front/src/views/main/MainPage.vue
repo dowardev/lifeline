@@ -30,7 +30,6 @@
         <CalendarHeaderComponent
           v-if="$route.path == '/calendar'"
           :page-title="calendarComponent.pageTitle"
-          @current-date="calendarComponent.currentDate = $event"
           @add="calendarComponentRef.openModalAdd({ event: $event })"
           @sync="calendarComponentRef.syncData()"
           @reschedule="calendarComponentRef.reschedule()"
@@ -87,7 +86,6 @@
           v-if="$route.path == '/calendar'"
           ref="calendarComponentRef"
           :page-title="calendarComponent.pageTitle"
-          :current-date="calendarComponent.currentDate"
         />
 
         <!-- integrations -->

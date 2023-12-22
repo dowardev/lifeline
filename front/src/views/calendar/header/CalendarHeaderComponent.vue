@@ -177,12 +177,13 @@ import { useSystem } from "@/composables/useSystem";
 import { ref } from "vue";
 import { onMounted } from "vue";
 import { reactive } from "vue";
+import { useEvent } from "@/composables/useEvent";
 
 interface Day {
   date: Date;
 }
 
-const emits = defineEmits(["currentDate", "add", "sync", "reschedule"]);
+const emits = defineEmits(["add", "sync", "reschedule"]);
 
 const pageTitle = "Agenda";
 const currentDate = ref(new Date());
@@ -252,6 +253,7 @@ function previousWeek(): void {
     date.setDate(date.getDate() - 7);
   }
   currentDate.value = date;
+  useEvent().setCurrentDate({ date: new Date(currentDate.value) });
   emits("currentDate", currentDate);
 }
 
@@ -271,12 +273,12 @@ function nextWeek(): void {
     date.setDate(date.getDate() + 7);
   }
   currentDate.value = date;
-  emits("currentDate", currentDate);
+  useEvent().setCurrentDate({ date: new Date(currentDate.value) });
 }
 
 function today(): void {
   const date = new Date();
-  emits("currentDate", date);
+  useEvent().setCurrentDate({ date });
 }
 
 function translateMonth(params: { monthName: string }): string {

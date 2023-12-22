@@ -8,6 +8,7 @@ import {
 } from "@/services/schedule";
 import { useReminder } from "./useReminder";
 import { useEvent } from "./useEvent";
+import { useEventsStore } from "@/store/eventsStore";
 
 export const useSchedule = () => {
   const scheduleStore = useScheduleStore();
@@ -185,15 +186,11 @@ export const useSchedule = () => {
       : undefined;
   }
 
-  function generateEventsSchedule(params: {
-    events: Event[];
-    schedule: Schedule;
-  }): {
-    schedule: Schedule;
+  function generateEventsSchedule(params: { events: Event[]; date: Date }): {
+    Schedule;
   } {
-    const { events } = params;
-
-    let { schedule } = params;
+    const { events, date } = params;
+    let schedule = {};
 
     events.forEach((event) => {
       const id = event.id;
@@ -210,8 +207,8 @@ export const useSchedule = () => {
         idElement,
         title,
         message,
-        startDate,
-        endDate,
+        startDate: date,
+        endDate: date,
         type: "Event",
         reminder,
         repeat,
@@ -224,7 +221,7 @@ export const useSchedule = () => {
       schedule = newSchedule;
     });
 
-    return { schedule };
+    return schedule;
   }
 
   function generateScheduleElement(params: {
@@ -348,7 +345,7 @@ export const useSchedule = () => {
   }
 
   function getSchedule(): Schedule {
-    const schedule = scheduleStore.getSchedule();
+    const schedule = useEventsStore().schedule;
     return Object.keys(schedule).length > 0 ? schedule : ({} as Schedule);
   }
 
@@ -568,6 +565,104 @@ export const useSchedule = () => {
     return { schedule: newSchedule };
   }
 
+  function generateScheduleElementForDate(params: {
+    idElement: string;
+    title: string;
+    message: string;
+    date: Date;
+    type: string;
+    reminder: boolean;
+    repeat: {
+      frecuency?: number;
+      type?: "daily" | "weekly" | "monthly" | "annually";
+      daysWeek?: string[];
+    };
+  }): Schedule {
+    const {
+      idElement,
+      title,
+      message,
+      type,
+      reminder,
+      repeat: { frecuency = 1, type: repeatType = "daily", daysWeek = [] },
+      date,
+    } = params;
+
+    const normalizedDaysWeek = daysWeek.map((day) => day.toLowerCase());
+
+    const eventsByDate: Schedule = {};
+
+    const currentDate = new Date(date);
+    const lastDate = new Date(currentDate);
+    lastDate.setFullYear(lastDate.getFullYear() + frecuency);
+
+    while (currentDate <= lastDate) {
+      if (repeatType === "weekly") {
+        const dayOfWeek = currentDate.getDay();
+        const currentDayName = getDayName(dayOfWeek);
+        if (!normalizedDaysWeek.includes(currentDayName.toLowerCase())) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          lastDate.setDate(lastDate.getDate() + 1);
+          continue;
+        }
+      } else if (repeatType === "monthly") {
+        const dayOfMonth = currentDate.getDate();
+        if (dayOfMonth !== date.getDate()) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          lastDate.setDate(lastDate.getDate() + 1);
+          continue;
+        }
+      } else if (repeatType === "annually") {
+        const month = currentDate.getMonth();
+        const dayOfMonth = currentDate.getDate();
+        if (month !== date.getMonth() || dayOfMonth !== date.getDate()) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          lastDate.setDate(lastDate.getDate() + 1);
+          continue;
+        }
+      }
+
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const day = currentDate.getDate();
+
+      if (!eventsByDate[year]) {
+        eventsByDate[year] = {};
+      }
+
+      if (!eventsByDate[year][month]) {
+        eventsByDate[year][month] = {};
+      }
+
+      if (!eventsByDate[year][month][day]) {
+        eventsByDate[year][month][day] = [];
+      }
+
+      eventsByDate[year][month][day].push({
+        id: idElement,
+        idElement,
+        title,
+        message,
+        date: currentDate.toISOString(),
+        type,
+        reminder,
+      });
+
+      if (repeatType === "annually") {
+        currentDate.setFullYear(currentDate.getFullYear() + frecuency);
+        lastDate.setFullYear(lastDate.getFullYear() + frecuency);
+      } else if (repeatType === "monthly") {
+        currentDate.setMonth(currentDate.getMonth() + frecuency);
+        lastDate.setMonth(lastDate.getMonth() + frecuency);
+      } else {
+        currentDate.setDate(currentDate.getDate() + 1);
+        lastDate.setDate(lastDate.getDate() + 1);
+      }
+    }
+
+    return eventsByDate;
+  }
+
   return {
     checkNotificationsPermissions,
     generateEventsSchedule,
@@ -588,5 +683,6 @@ export const useSchedule = () => {
     generateEventsReminders,
     getLocalSchedule,
     generateSchedules,
+    generateScheduleElementForDate,
   };
 };

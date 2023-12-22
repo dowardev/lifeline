@@ -297,10 +297,6 @@ interface Day {
   date: Date;
 }
 
-const props = defineProps({
-  currentDate: { default: new Date(), type: Date },
-});
-
 const pageTitle = "Agenda";
 const daysOfWeek = [
   "sunday",
@@ -404,14 +400,6 @@ const generateCalendar = computed(() => {
   return eventsByDayOfWeek as any;
 });
 
-watch(
-  () => props.currentDate,
-  async (newValue, oldValue) => {
-    const date = new Date(newValue);
-    await loadDaysWeek({ date: date.getTime() });
-  }
-);
-
 // functions
 function getDaysForCurrentWeek(params: { date: Date }): Day[] {
   const date = params.date;
@@ -498,12 +486,6 @@ async function saveEvent(params: { event: Event }): Promise<void> {
     await eventComposable.saveEvent({
       event,
     });
-    const localSchedule = await scheduleComposable.getLocalSchedule();
-    const { schedule } = await scheduleComposable.generateSchedules({
-      schedule: localSchedule,
-    });
-    await scheduleComposable.saveScheduleLocal({ schedule });
-    await scheduleComposable.loadSchedule();
   } catch (error) {
     console.error(error);
   }
