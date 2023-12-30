@@ -186,9 +186,7 @@ export const useSchedule = () => {
       : undefined;
   }
 
-  function generateEventsSchedule(params: { events: Event[]; date: Date }): {
-    Schedule;
-  } {
+  function generateEventsSchedule(params: { events: Event[]; date: Date }) {
     const { events, date } = params;
     let schedule = {};
 
@@ -207,8 +205,8 @@ export const useSchedule = () => {
         idElement,
         title,
         message,
-        startDate: date,
-        endDate: date,
+        startDate,
+        endDate,
         type: "Event",
         reminder,
         repeat,
@@ -345,7 +343,7 @@ export const useSchedule = () => {
   }
 
   function getSchedule(): Schedule {
-    const schedule = useEventsStore().schedule;
+    const schedule = useEventsStore().calendarSchedule;
     return Object.keys(schedule).length > 0 ? schedule : ({} as Schedule);
   }
 

@@ -20,7 +20,7 @@ import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
 import * as jsonpatch from "fast-json-patch";
 import { useSchedule } from "./useSchedule";
-import { difference } from "lodash";
+import { difference, parseInt } from "lodash";
 import { useSystem } from "./useSystem";
 import {
   dbConnection as dbConnectionService,
@@ -46,7 +46,7 @@ export const useEvent = () => {
         values: [
           eventFormated.availability,
           eventFormated.description,
-          eventFormated.guests,
+          JSON.stringify(eventFormated.guests),
           eventFormated.idSync,
           eventFormated.name,
           JSON.stringify(eventFormated.reminders),
@@ -158,34 +158,97 @@ export const useEvent = () => {
     }
   }
 
-  async function getEventsServerUpdated(): Promise<{
-    eventsUpdated: Event[];
-  }> {
-    const localEvents = (await useEvent().getStoredEvents()) ?? [];
-    const serverEvents = (await useEvent().getEventsServer()) ?? [];
-    const localMap = new Map<string, Event>();
-    for (const event of localEvents) {
-      if (event.idSync) {
-        localMap.set(event.idSync, event);
-      }
-    }
+  async function getEventsServerUpdated(params: {
+    events: Event[];
+  }): Promise<Event[]> {
+    const { events: serverEvents } = params;
+    const localEvents = (await getStoredEvents()) ?? [];
+    const sharedIds = serverEvents.filter((event) =>
+      localEvents.some((otherEvent) => event.idSync === otherEvent.idSync)
+    );
+    // debugger
 
-    const mergedEvents: Event[] = [];
-    for (const serverEvent of serverEvents) {
-      const localEvent = serverEvent.idSync
-        ? localMap.get(serverEvent.idSync)
-        : undefined;
+    const newArray: Event[] = [];
+    sharedIds.forEach((event) => {
+      const found = localEvents.find(
+        (element) => element.idSync == event.idSync
+      );
+      if (found) {
+        let differences = 0;
+        localEvents.forEach((element) => {
+          if (element.name != event.name && element.idSync == event.idSync) {
+            differences++;
+            // debugger
+          }
+          if (
+            JSON.stringify(element.guests) != JSON.stringify(event.guests) &&
+            element.idSync == event.idSync
+          ) {
+            differences++;
+            // debugger
+          }
 
-      const diff = jsonpatch.compare(localEvent!, serverEvent);
-      if (diff.length > 0) {
-        serverEvent.id = localEvent!.id;
-        jsonpatch.applyPatch(localEvent, diff);
-        mergedEvents.push(localEvent!);
-        await updateEvent({ event: serverEvent });
+          if (
+            JSON.stringify(element.reminders) !=
+              JSON.stringify(event.reminders) &&
+            element.idSync == event.idSync
+          ) {
+            differences++;
+            // debugger
+          }
+
+          if (
+            element.timezone != event.timezone &&
+            element.idSync == event.idSync
+          ) {
+            differences++;
+            // debugger
+          }
+
+          if (
+            element.description != event.description &&
+            element.idSync == event.idSync
+          ) {
+            differences++;
+            // debugger
+          }
+
+          if (
+            element.availability != event.availability &&
+            element.idSync == event.idSync
+          ) {
+            differences++;
+            // debugger
+          }
+        });
+
+        if (differences > 0) {
+          const copy = Object.assign({}, found);
+          // copy.idSync = 0;
+          // copy.syncStatus = false;
+          copy.reminders = copy.reminders;
+          // copy.name = `${copy.name}(Problema de sincronizacion)`;
+          copy.guests = copy.guests;
+          newArray.push(copy);
+        }
       }
-      localMap.delete(serverEvent.idSync!);
-    }
-    return { eventsUpdated: mergedEvents };
+    });
+
+    // // Obtener el nuevo array con los objetos que tienen diferencias
+    // let newArray: Event[] = [];
+    // if (patch.length > 0)
+    //   newArray = jsonpatch.applyPatch(localEvents, patch).newDocument;
+    //
+    // // El nuevo array contiene los objetos que tienen diferencias entre ellos
+    // newArray = newArray.map((event) => {
+    //   event.idSync = 0;
+    //   event.syncStatus = false;
+    //   event.reminders = JSON.parse(event.reminders as any);
+    //   event.name = `Problema de sincronizacion (${event.name})`;
+    //   event.name = `Problema de sincronizacion (${event.name})`;
+    //   return event;
+    // });
+    return newArray;
   }
 
   async function storeRemoveEventsServer(): Promise<{
@@ -232,7 +295,10 @@ export const useEvent = () => {
     await db.open();
     const events = await getEventsLocalService({ db });
     await db.close();
-    const result = events.filter((event) => event.syncStatus == false);
+    const result = events.filter((event) => {
+      event.idSync = event.idSync ?? 0;
+      event.syncStatus == false && event.idSync > 0;
+    });
     await Promise.all(
       result.map(async (event) => {
         await pusUpdateEvent({ event });
@@ -244,7 +310,6 @@ export const useEvent = () => {
     const { event } = params;
     try {
       await updateEventService({ event });
-      event.syncStatus = true;
     } catch (error) {
       console.error(error);
     }
@@ -255,26 +320,34 @@ export const useEvent = () => {
   }
 
   async function syncEventsFromServer(): Promise<void> {
-    const eventsServer = await useEvent().getEventsServer();
+    const serverEvents = (await getEventsServer()) ?? [];
     const localEvents = await getStoredEvents();
+    const problems = await getEventsServerUpdated({
+      events: serverEvents,
+    });
+    const toUpdate: Event[] = [];
 
-    const diffEvents: Event[] = [];
-    for (const event of eventsServer) {
-      const idSync = event.idSync;
-      const found = localEvents.find((e) => e.idSync === idSync);
-      if (!found) {
-        const { event: eventFormated } = formatEventService({
-          event,
-        });
-        diffEvents.push(eventFormated);
+    problems.forEach((event) => {
+      const found = serverEvents.find(
+        (element) => element.idSync == event.idSync
+      );
+      if (found) {
+        found.id = event.id;
+        toUpdate.push(found);
       }
-    }
-    if (diffEvents.length == 0) return;
+    });
+
+    const events = serverEvents.filter((element) => {
+      return !localEvents.some(
+        (otherElement) => otherElement.idSync === element.idSync
+      );
+    });
+
     const db = await dbConnectionService();
     await db.open();
     try {
       await Promise.all(
-        diffEvents.map(async (event) => {
+        events.map(async (event) => {
           await saveLocalEventService({
             values: [
               event.availability,
@@ -283,7 +356,7 @@ export const useEvent = () => {
               event.idSync,
               event.name,
               JSON.stringify(event.reminders),
-              event.syncStatus == undefined ? false : false,
+              event.syncStatus,
               event.timezone,
             ],
             fields: [
@@ -310,6 +383,28 @@ export const useEvent = () => {
     } finally {
       await db.close();
     }
+    try {
+      if (problems.length > 0) {
+        await Promise.all(
+          problems.map(async (event) => {
+            await saveEvent({ event });
+          })
+        );
+      }
+    } catch (error: any) {
+      throw new Error(error);
+    }
+    try {
+      if (toUpdate.length > 0) {
+        await Promise.all(
+          toUpdate.map(async (event) => {
+            await updateLocalEvent({ event: event as any });
+          })
+        );
+      }
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 
   async function sync(): Promise<void> {
@@ -333,7 +428,43 @@ export const useEvent = () => {
 
   async function updateLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
-    await updateLocalEventService({ event });
+    const db = await dbConnectionService();
+    await db.open();
+    try {
+      await updateLocalEventService({
+        id: event.id as any,
+        values: [
+          event.availability,
+          event.description,
+          JSON.stringify(event.guests),
+          event.idSync,
+          event.name,
+          JSON.stringify(event.reminders),
+          event.syncStatus,
+          event.timezone,
+        ],
+        fields: [
+          "availability",
+          "description",
+          "guests",
+          "idSync",
+          "name",
+          "reminders",
+          "syncStatus",
+          "timezone",
+        ],
+        db,
+      });
+    } catch (error: any) {
+      if (
+        error.message !=
+        "Error: Query failed: SelectSQL: queryAll: UNIQUE constraint failed: EVENTS.idSync"
+      ) {
+        throw new Error(error);
+      }
+    } finally {
+      await db.close();
+    }
   }
 
   function removeEventStore(params: { id: string }): void {
@@ -370,7 +501,7 @@ export const useEvent = () => {
       description TEXT,
       availability TEXT,
       idSync INT,
-      syncStatus TEXT,
+      syncStatus BOOLEAN,
       UNIQUE(idSync)
     );`;
     await createTable({ query });

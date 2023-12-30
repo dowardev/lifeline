@@ -46,7 +46,6 @@ export const USER_EVENTS = gql`
       date_end
       guests
       repeat
-      tags
       time_zone
       description
       notifications

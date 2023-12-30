@@ -476,8 +476,9 @@ async function deleteEvent(params: { eventId: string }): Promise<void> {
   await scheduleComposable.loadSchedule();
 }
 
-async function syncData() {
-  await useEvent().syncEvents();
+async function syncData(): Promise<void> {
+  await eventComposable.sync();
+  await useEvent().loadEvents();
 }
 
 async function saveEvent(params: { event: Event }): Promise<void> {

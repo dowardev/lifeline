@@ -31,7 +31,7 @@ import {
 import { errorBuilder } from "@/utils/errors";
 import { storage } from "@/main";
 import { toRaw } from "vue";
-import { cloneDeep } from "lodash";
+import { cloneDeep, parseInt } from "lodash";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 
 export async function createEvent(params: {
@@ -39,7 +39,6 @@ export async function createEvent(params: {
 }): Promise<{ id: string }> {
   const { event } = params;
   const data = {
-    id: event.idSync ?? "",
     name: event.name,
     dateStart: event.reminders.start,
     dateEnd: event.reminders.end,
@@ -293,19 +292,26 @@ export async function saveLocalEvents(params: {
 }
 
 export async function updateLocalEvent(params: {
-  event: Event;
+  db: SQLiteDBConnection;
+  fields: any[];
+  values: any[];
+  id: number;
 }): Promise<void> {
-  const { event: eventData } = params;
-  let events = await getEventsLocal();
+  const { values, db, id, fields } = params;
+
   try {
-    events = events.map((event) => {
-      if (event.id == eventData.id || event.idSync == eventData.idSync)
-        event = eventData;
-      return event;
+    let query = `UPDATE Events SET `;
+
+    fields.forEach((field, index) => {
+      query += `${field} = ?`;
+      if (index < fields.length - 1) {
+        query += ", ";
+      }
     });
-    await saveLocalEvents({ events });
+    query += ` WHERE id="${id}"`;
+    await db.query(query, values);
   } catch (error: any) {
-    throw new Error(error.message);
+    throw new Error(error);
   }
 }
 
@@ -319,8 +325,9 @@ export async function getEventsLocal(params: {
     return events.map((event) => {
       event.guests = JSON.parse(event.guests as any);
       event.reminders = JSON.parse(event.reminders as any);
-      const syncStatus = JSON.parse(event.syncStatus as any);
-      event.syncStatus = syncStatus == 0 ? false : true;
+      event.reminders.start = new Date(event.reminders.start);
+      event.reminders.end = new Date(event.reminders.end);
+      event.syncStatus = event.syncStatus == 0 ? false : true;
       return event;
     });
   } catch (error: any) {
@@ -330,7 +337,7 @@ export async function getEventsLocal(params: {
 
 export async function getEvents(params: {
   graphql: Graphql;
-}): Promise<Array<Event> | null> {
+}): Promise<Event[] | null> {
   const { refetch = false, name, fragment } = params.graphql;
 
   try {
@@ -349,17 +356,17 @@ export async function getEvents(params: {
       return {
         description: event.description,
         guests: JSON.parse(event.guests),
-        idSync: event.id,
-        tags: JSON.parse(event.tags),
+        idSync: parseInt(event.id),
         timezone: event.time_zone,
         name: event.title,
         reminders: {
-          start: event.date_start,
-          end: event.date_end,
+          start: new Date(event.date_start),
+          end: new Date(event.date_end),
           repeat: JSON.parse(event.repeat),
           notifications: JSON.parse(event.notifications) ?? [],
         },
         availability: event.availability,
+        syncStatus: true,
       };
     });
     return response;

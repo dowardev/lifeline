@@ -22,8 +22,8 @@ export const useEventsStore = defineStore("events", () => {
     () => [date.value, events.value],
     (newValue, oldValue) => {
       calendarSchedule.value = useSchedule().generateEventsSchedule({
-        events: events.value,
-        date: new Date(newValue[0]),
+        events: newValue[1] as Event[],
+        date: new Date(newValue[0] as string),
       });
     },
     { deep: true }
@@ -46,7 +46,7 @@ export const useEventsStore = defineStore("events", () => {
     events.value = [...events.value, event];
   }
 
-  function addEvents(params: { events: Event[] }) {
+  function addEvents(params: { events: Event[] }): void {
     const { events: eventsData } = params;
     events.value = [...events.value, ...eventsData];
   }
@@ -174,7 +174,7 @@ export const useEventsStore = defineStore("events", () => {
     getEvent,
     getEvents,
     removeEvent,
-    schedule: calendarSchedule,
+    calendarSchedule,
     updateCurrentDate,
     updateEvent,
     updateEvents,

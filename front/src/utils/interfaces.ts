@@ -63,7 +63,7 @@ export interface SystemMessage {
 
 // events
 export interface Event {
-  id?: string;
+  id?: number;
   name?: string;
   // calendar?: string;
   guests?: Array<{ email: string }>;
@@ -81,7 +81,7 @@ export interface Event {
   timezone?: string;
   description: string;
   availability: string;
-  idSync: string | undefined;
+  idSync: number | undefined;
   syncStatus: boolean;
 }
 export interface NewEvent {
@@ -134,7 +134,7 @@ export interface Document {
         };
         tags?: Array<string>;
       };
-    },
+    }
   ];
   url: string;
 }

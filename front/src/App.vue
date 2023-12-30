@@ -67,19 +67,13 @@ const start = async (): Promise<void> => {
 };
 
 async function syncData(): Promise<void> {
-  await deleteData();
+  // await deleteData();
 
   // events
   await eventComposable.sync();
 
   // schedule
-  useEvent().setCurrentDate({ date: new Date() });
-  // const localSchedule = await scheduleComposable.getLocalSchedule();
-  // const { schedule } = await scheduleComposable.generateSchedules({
-  //   schedule: localSchedule,
-  // });
-  // await scheduleComposable.saveScheduleLocal({ schedule });
-  // await scheduleComposable.loadSchedule();
+  // useEvent().setCurrentDate({ date: new Date() });
 }
 
 function loadUserProps(): void {
