@@ -28,6 +28,7 @@ import {
 } from "@/services/dbService";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { toRaw } from "vue";
+import * as lodash from "lodash";
 
 export const useEvent = () => {
   const eventStore = useEventsStore();
@@ -40,32 +41,9 @@ export const useEvent = () => {
       const { id } = await pushNewEvent({ event });
       event = eventFormated;
       event.idSync = id;
-      const db = await dbConnectionService();
-      await db.open();
-      await saveLocalEventService({
-        values: [
-          eventFormated.availability,
-          eventFormated.description,
-          JSON.stringify(eventFormated.guests),
-          eventFormated.idSync,
-          eventFormated.name,
-          JSON.stringify(eventFormated.reminders),
-          false,
-          eventFormated.timezone,
-        ],
-        fields: [
-          "availability",
-          "description",
-          "guests",
-          "idSync",
-          "name",
-          "reminders",
-          "syncStatus",
-          "timezone",
-        ],
-        db,
+      await saveLocalEvent({
+        event: eventFormated,
       });
-      await db.close();
       eventStore.addEvent({ event });
     } catch (error: any) {
       throw new Error(error);
@@ -158,96 +136,54 @@ export const useEvent = () => {
     }
   }
 
-  async function getEventsServerUpdated(params: {
+  async function getConflictingLocalEvents(params: {
     events: Event[];
   }): Promise<Event[]> {
     const { events: serverEvents } = params;
     const localEvents = (await getStoredEvents()) ?? [];
-    const sharedIds = serverEvents.filter((event) =>
-      localEvents.some((otherEvent) => event.idSync === otherEvent.idSync)
+
+    const sharedIds = lodash.filter(serverEvents, (event) =>
+      lodash.some(
+        localEvents,
+        (otherEvent) => event.idSync === otherEvent.idSync
+      )
     );
-    // debugger
 
     const newArray: Event[] = [];
-    sharedIds.forEach((event) => {
-      const found = localEvents.find(
+
+    lodash.forEach(sharedIds, (event) => {
+      const found = lodash.find(
+        localEvents,
         (element) => element.idSync == event.idSync
       );
+
       if (found) {
         let differences = 0;
-        localEvents.forEach((element) => {
-          if (element.name != event.name && element.idSync == event.idSync) {
-            differences++;
-            // debugger
-          }
-          if (
-            JSON.stringify(element.guests) != JSON.stringify(event.guests) &&
-            element.idSync == event.idSync
-          ) {
-            differences++;
-            // debugger
-          }
 
-          if (
-            JSON.stringify(element.reminders) !=
-              JSON.stringify(event.reminders) &&
-            element.idSync == event.idSync
-          ) {
-            differences++;
-            // debugger
-          }
-
-          if (
-            element.timezone != event.timezone &&
-            element.idSync == event.idSync
-          ) {
-            differences++;
-            // debugger
-          }
-
-          if (
-            element.description != event.description &&
-            element.idSync == event.idSync
-          ) {
-            differences++;
-            // debugger
-          }
-
-          if (
-            element.availability != event.availability &&
-            element.idSync == event.idSync
-          ) {
-            differences++;
-            // debugger
+        lodash.forEach(localEvents, (element) => {
+          if (element.idSync == event.idSync) {
+            if (!lodash.isEqual(element.name, event.name)) differences++;
+            if (!lodash.isEqual(element.guests, event.guests)) differences++;
+            if (!lodash.isEqual(element.reminders, event.reminders))
+              differences++;
+            if (!lodash.isEqual(element.timezone, event.timezone))
+              differences++;
+            if (!lodash.isEqual(element.description, event.description))
+              differences++;
+            if (!lodash.isEqual(element.availability, event.availability))
+              differences++;
           }
         });
 
         if (differences > 0) {
-          const copy = Object.assign({}, found);
-          // copy.idSync = 0;
-          // copy.syncStatus = false;
+          const copy = lodash.clone(found);
           copy.reminders = copy.reminders;
-          // copy.name = `${copy.name}(Problema de sincronizacion)`;
           copy.guests = copy.guests;
           newArray.push(copy);
         }
       }
     });
 
-    // // Obtener el nuevo array con los objetos que tienen diferencias
-    // let newArray: Event[] = [];
-    // if (patch.length > 0)
-    //   newArray = jsonpatch.applyPatch(localEvents, patch).newDocument;
-    //
-    // // El nuevo array contiene los objetos que tienen diferencias entre ellos
-    // newArray = newArray.map((event) => {
-    //   event.idSync = 0;
-    //   event.syncStatus = false;
-    //   event.reminders = JSON.parse(event.reminders as any);
-    //   event.name = `Problema de sincronizacion (${event.name})`;
-    //   event.name = `Problema de sincronizacion (${event.name})`;
-    //   return event;
-    // });
     return newArray;
   }
 
@@ -322,9 +258,10 @@ export const useEvent = () => {
   async function syncEventsFromServer(): Promise<void> {
     const serverEvents = (await getEventsServer()) ?? [];
     const localEvents = await getStoredEvents();
-    const problems = await getEventsServerUpdated({
+    const problems = await getConflictingLocalEvents({
       events: serverEvents,
     });
+
     const toUpdate: Event[] = [];
 
     problems.forEach((event) => {
@@ -343,33 +280,12 @@ export const useEvent = () => {
       );
     });
 
-    const db = await dbConnectionService();
-    await db.open();
+    debugger;
     try {
       await Promise.all(
         events.map(async (event) => {
-          await saveLocalEventService({
-            values: [
-              event.availability,
-              event.description,
-              JSON.stringify(event.guests),
-              event.idSync,
-              event.name,
-              JSON.stringify(event.reminders),
-              event.syncStatus,
-              event.timezone,
-            ],
-            fields: [
-              "availability",
-              "description",
-              "guests",
-              "idSync",
-              "name",
-              "reminders",
-              "syncStatus",
-              "timezone",
-            ],
-            db,
+          await saveLocalEvent({
+            event,
           });
         })
       );
@@ -380,9 +296,8 @@ export const useEvent = () => {
       ) {
         throw new Error(error);
       }
-    } finally {
-      await db.close();
     }
+
     try {
       if (problems.length > 0) {
         await Promise.all(
@@ -394,6 +309,7 @@ export const useEvent = () => {
     } catch (error: any) {
       throw new Error(error);
     }
+
     try {
       if (toUpdate.length > 0) {
         await Promise.all(
@@ -524,6 +440,42 @@ export const useEvent = () => {
     eventStore.updateCurrentDate({ date });
   }
 
+  async function saveLocalEvent(params: { event: Event }): Promise<void> {
+    const { event } = params;
+    const db = await dbConnectionService();
+    await db.open();
+
+    try {
+      await saveLocalEventService({
+        values: [
+          event.availability,
+          event.description,
+          JSON.stringify(event.guests),
+          event.idSync,
+          event.name,
+          JSON.stringify(event.reminders),
+          event.syncStatus,
+          event.timezone,
+        ],
+        fields: [
+          "availability",
+          "description",
+          "guests",
+          "idSync",
+          "name",
+          "reminders",
+          "syncStatus",
+          "timezone",
+        ],
+        db,
+      });
+    } catch (error: any) {
+      throw new Error(error);
+    } finally {
+      await db.close();
+    }
+  }
+
   return {
     createTableEvents,
     deleteEvent,
@@ -544,7 +496,7 @@ export const useEvent = () => {
     storeEventsServer,
     storeLocalEvent,
     storeRemoveEventsServer,
-    storeUpdateEventsServer: getEventsServerUpdated,
+    storeUpdateEventsServer: getConflictingLocalEvents,
     sync,
     syncEventsFromServer,
     updateEvent,
