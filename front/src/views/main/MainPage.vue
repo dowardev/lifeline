@@ -31,7 +31,6 @@
           v-if="$route.path == '/calendar'"
           :page-title="calendarComponent.pageTitle"
           @add="calendarComponentRef.openModalAdd({ event: $event })"
-          @sync="calendarComponentRef.syncData()"
           @reschedule="calendarComponentRef.reschedule()"
         />
 

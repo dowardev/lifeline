@@ -137,7 +137,14 @@
           <ion-row>
             <ion-col>
               <!-- button sync -->
-              <ion-item button lines="none" @click="emits('sync')">
+              <ion-item
+                button
+                lines="none"
+                @click="
+                  popOverMainOptions.open = false;
+                  syncData();
+                "
+              >
                 <ion-icon slot="start" :icon="syncOutline"></ion-icon>
                 <ion-label class="ion-text-wrap">Sincronizar</ion-label>
               </ion-item>
@@ -155,11 +162,27 @@
       </ion-content>
     </ion-popover>
     <!-- end popovers -->
+
+    <!-- toasts -->
+    <!-- toast sync -->
+    <ion-toast
+      :message="toastProps.message"
+      :duration="1500"
+      :is-open="toastProps.isOpen"
+      mode="ios"
+      @did-dismiss="toastProps.isOpen = false"
+    ></ion-toast>
   </div>
 </template>
 
 <script setup lang="ts">
-import { IonTitle, IonToolbar, IonButton, isPlatform } from "@ionic/vue";
+import {
+  IonTitle,
+  IonToolbar,
+  IonButton,
+  isPlatform,
+  IonToast,
+} from "@ionic/vue";
 import { add, getMonth } from "date-fns";
 import {
   addOutline,
@@ -183,7 +206,7 @@ interface Day {
   date: Date;
 }
 
-const emits = defineEmits(["add", "sync", "reschedule"]);
+const emits = defineEmits(["add", "reschedule"]);
 
 const pageTitle = "Agenda";
 const currentDate = ref(new Date());
@@ -210,6 +233,7 @@ const popOverMainOptions = reactive({
   open: false,
   event: Event,
 });
+const toastProps = ref({ isOpen: false, message: {} });
 
 // mounted
 onMounted(async () => {
@@ -289,6 +313,15 @@ function translateMonth(params: { monthName: string }): string {
   });
   result = result.charAt(0).toUpperCase() + result.slice(1);
   return result;
+}
+
+async function syncData(): Promise<void> {
+  toastProps.value.message = "Sincronización iniciada";
+  toastProps.value.isOpen = true;
+  await useEvent().sync();
+  await useEvent().loadEvents();
+  toastProps.value.message = "Sincronización terminada";
+  toastProps.value.isOpen = true;
 }
 </script>
 

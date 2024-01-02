@@ -16,7 +16,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
+import {
+  IonApp,
+  IonRouterOutlet,
+  IonMenu,
+  IonSplitPane,
+  toastController,
+} from "@ionic/vue";
 import { onMounted } from "vue";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { setTheme } from "@/services/system";
@@ -70,7 +76,9 @@ async function syncData(): Promise<void> {
   // await deleteData();
 
   // events
+  await presentToast({ message: "Sincronización iniciada" });
   await eventComposable.sync();
+  await presentToast({ message: "Sincronización terminada" });
 
   // schedule
   // useEvent().setCurrentDate({ date: new Date() });
@@ -87,5 +95,17 @@ function loadUserProps(): void {
 async function deleteData(): Promise<void> {
   await systemComposable.deleteData({ events: true, schedule: true });
   // location.reload();
+}
+
+async function presentToast(params: { message: string }): Promise<void> {
+  const { message } = params;
+
+  const toast = await toastController.create({
+    message,
+    duration: 1500,
+    mode: "ios",
+  });
+
+  await toast.present();
 }
 </script>

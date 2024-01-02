@@ -280,7 +280,6 @@ export const useEvent = () => {
       );
     });
 
-    debugger;
     try {
       await Promise.all(
         events.map(async (event) => {
