@@ -1,20 +1,20 @@
 import { NewEvent, Event, Schedule } from "@/utils/interfaces";
 import {
-  saveLocalEvent as saveLocalEventService,
-  getEventsLocal as getEventsLocalService,
-  updateLocalEvent as updateLocalEventService,
-  deleteEvent as deleteEventService,
-  pushEvent as pushEventService,
   createEvent as createEventService,
-  getEvents as getEventsServivice,
-  updateEvent as updateEventService,
-  removeAllLocalEvents as removeAllLocalEventsService,
-  deleteEvents as deleteEventsService,
+  deleteEvent as deleteEventService,
   deleteEventServer as deleteEventServerService,
-  generateEventId as generateEventIdService,
+  deleteEvents as deleteEventsService,
   formatEvent as formatEventService,
-  saveLocalEvents as saveLocalEventsService,
+  generateEventId as generateEventIdService,
   getEventLocal,
+  getEvents as getEventsServivice,
+  getEventsLocal as getEventsLocalService,
+  pushEvent as pushEventService,
+  removeAllLocalEvents as removeAllLocalEventsService,
+  saveLocalEvent as saveLocalEventService,
+  saveLocalEvents as saveLocalEventsService,
+  updateEvent as updateEventService,
+  updateLocalEvent as updateLocalEventService,
 } from "../services/event";
 import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
@@ -56,15 +56,15 @@ export const useEvent = () => {
     try {
       const { event: eventFormated } = formatEventService({ event });
       try {
-        await pusUpdateEvent({ event: eventFormated });
+        // await pusUpdateEvent({ event: eventFormated });
         event.syncStatus = true;
-      } catch (error) {
+      } catch (error: any) {
         event.syncStatus = false;
         throw new Error(error);
       }
 
       await updateLocalEvent({ event: eventFormated });
-      eventStore.updateEvent({ event: eventFormated });
+      // eventStore.updateEvent({ event: eventFormated });
     } catch (error: any) {
       throw new Error(error);
     }
@@ -261,6 +261,14 @@ export const useEvent = () => {
     const problems = await getConflictingLocalEvents({
       events: serverEvents,
     });
+    const eventsServerDeleted = localEvents.filter((event) => {
+      const found = serverEvents.find(
+        (element) => element.idSync == event.idSync
+      );
+      if (!found) {
+        return event;
+      }
+    });
 
     const toUpdate: Event[] = [];
 
@@ -314,6 +322,17 @@ export const useEvent = () => {
         await Promise.all(
           toUpdate.map(async (event) => {
             await updateLocalEvent({ event: event as any });
+          })
+        );
+      }
+    } catch (error: any) {
+      throw new Error(error);
+    }
+    try {
+      if (eventsServerDeleted.length > 0) {
+        await Promise.all(
+          eventsServerDeleted.map(async (event) => {
+            await deleteLocalEvent({ id: event.id as number });
           })
         );
       }
@@ -399,9 +418,14 @@ export const useEvent = () => {
 
   async function deleteEvent(params: { eventId: string }): Promise<void> {
     const eventId = params.eventId;
-    const syntEventId = await getEventLocal({ id: eventId });
-    await deleteEventService({ eventId });
-    await deleteEventServerService({ id: syntEventId.idSync as any });
+
+    const db = await dbConnectionService();
+    await db.open();
+    const event = await getEventLocal({ db, id: eventId });
+    await db.close();
+
+    await deleteLocalEvent({ id: event.id as number });
+    await deleteEventServerService({ id: event.id as any });
     eventStore.removeEvent({ eventId });
   }
 
@@ -473,6 +497,14 @@ export const useEvent = () => {
     } finally {
       await db.close();
     }
+  }
+
+  async function deleteLocalEvent(params: { id: number }): Promise<void> {
+    const { id } = params;
+    const db = await dbConnectionService();
+    await db.open();
+    await deleteEventService({ id, db });
+    await db.close();
   }
 
   return {

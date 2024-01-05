@@ -58,15 +58,11 @@ const start = async (): Promise<void> => {
   setTheme({ theme: theme, currentTheme: theme });
   await useSystem().updateThemeSelected({ theme });
 
-  const toast = await useSystem().openToastFixed({ message: "Sincronizando" });
-  if (userComposable.isLogged.value) {
-    toast.present();
-  }
   try {
+    await useSystem().openToast({ message: "Sincronización iniciada" });
     await syncData();
-    toast.dismiss();
+    await useSystem().openToast({ message: "Sincronización terminada" });
   } catch (error) {
-    toast.dismiss();
     await useSystem().openToast({ message: "Problema al sincronizar" });
     console.error(error);
   }
@@ -76,9 +72,7 @@ async function syncData(): Promise<void> {
   // await deleteData();
 
   // events
-  await presentToast({ message: "Sincronización iniciada" });
   await eventComposable.sync();
-  await presentToast({ message: "Sincronización terminada" });
 
   // schedule
   // useEvent().setCurrentDate({ date: new Date() });
@@ -95,17 +89,5 @@ function loadUserProps(): void {
 async function deleteData(): Promise<void> {
   await systemComposable.deleteData({ events: true, schedule: true });
   // location.reload();
-}
-
-async function presentToast(params: { message: string }): Promise<void> {
-  const { message } = params;
-
-  const toast = await toastController.create({
-    message,
-    duration: 1500,
-    mode: "ios",
-  });
-
-  await toast.present();
 }
 </script>

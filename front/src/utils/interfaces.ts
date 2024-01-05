@@ -83,6 +83,7 @@ export interface Event {
   availability: string;
   idSync: number | undefined;
   syncStatus: boolean;
+  status: "active" | "inactive";
 }
 export interface NewEvent {
   name?: string;
