@@ -180,13 +180,13 @@ export async function updateEvent(params: { event: Event }): Promise<void> {
 // );
 // }
 export async function getEventLocal(params: {
-  id: string;
+  id: number;
   db: SQLiteDBConnection;
 }): Promise<Event> {
   const { db, id } = params;
   const query = `SELECT * FROM Events where id=${id}`;
   try {
-    const event = (await db.query(query)).values as Event;
+    const event = (await db.query(query)).values![0] as Event;
     event.guests = JSON.parse(event.guests as any);
     event.reminders = JSON.parse(event.reminders as any);
     event.reminders.start = new Date(event.reminders.start);
@@ -377,6 +377,7 @@ export async function getEvents(params: {
         },
         availability: event.availability,
         syncStatus: true,
+        status: "active",
       };
     });
     return response;
@@ -460,7 +461,7 @@ export async function deleteEvents(params: {
   }
 }
 
-export async function deleteEventServer(params: { id: string }): Promise<void> {
+export async function deleteEventServer(params: { id: number }): Promise<void> {
   const { id } = params;
 
   try {
@@ -476,8 +477,13 @@ export async function deleteEventServer(params: { id: string }): Promise<void> {
       input: { id },
     });
   } catch (error: any) {
-    if (error.message != "Unauthorized")
+    if (error.message == "Unauthorized")
       throw errorBuilder({ message: error.message, typeError: "authError" });
+    if (error.message == "NetworkError when attempting to fetch resource.")
+      throw errorBuilder({
+        message: "No internet connection",
+        typeError: "system",
+      });
     throw errorBuilder({ message: error.message });
   }
 }

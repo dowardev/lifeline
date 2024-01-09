@@ -448,14 +448,14 @@ function afterUpdateEvent(params: { idEvent: string }): void {
 
 async function openPopoverRightEventMenu(params: {
   ev: Event;
-  eventId: string;
+  eventId: number;
 }): Promise<void> {
   const eventId = params.eventId;
   const ev = params.ev;
 
   const popover = await popoverController.create({
     component: RightMenuEventComponent,
-    event: ev,
+    event: ev as any,
     showBackdrop: false,
   });
   await popover.present();
@@ -466,14 +466,18 @@ async function openPopoverRightEventMenu(params: {
   }
 }
 
-async function deleteEvent(params: { eventId: string }): Promise<void> {
+async function deleteEvent(params: { eventId: number }): Promise<void> {
   const { eventId } = params;
-  await useEvent().deleteEvent({ eventId });
-  const { schedule } = await scheduleComposable.generateSchedules({
-    schedule: {},
-  });
-  await scheduleComposable.saveScheduleLocal({ schedule });
-  await scheduleComposable.loadSchedule();
+  try {
+    await useEvent().deleteEvent({ localId: eventId });
+  } catch (error) {
+    console.error(error);
+  }
+  // const { schedule } = await scheduleComposable.generateSchedules({
+  //   schedule: {},
+  // });
+  // await scheduleComposable.saveScheduleLocal({ schedule });
+  // await scheduleComposable.loadSchedule();
 }
 
 async function syncData(): Promise<void> {

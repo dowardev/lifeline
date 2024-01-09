@@ -50,6 +50,7 @@ export const useEvent = () => {
     }
   }
 
+  // TODO: remove
   async function updateEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
 
@@ -328,6 +329,7 @@ export const useEvent = () => {
     } catch (error: any) {
       throw new Error(error);
     }
+
     try {
       if (eventsServerDeleted.length > 0) {
         await Promise.all(
@@ -344,6 +346,7 @@ export const useEvent = () => {
   async function sync(): Promise<void> {
     await syncEventsFromServer();
     await pushEventsUpdated();
+    await deleteInativeEventOnServer();
   }
 
   async function deleteEvents(params: {
@@ -376,6 +379,7 @@ export const useEvent = () => {
           JSON.stringify(event.reminders),
           event.syncStatus,
           event.timezone,
+          event.status,
         ],
         fields: [
           "availability",
@@ -386,6 +390,7 @@ export const useEvent = () => {
           "reminders",
           "syncStatus",
           "timezone",
+          "status",
         ],
         db,
       });
@@ -403,7 +408,7 @@ export const useEvent = () => {
 
   function removeEventStore(params: { id: string }): void {
     const { id } = params;
-    eventStore.removeEvent({ eventId: id });
+    eventStore.removeEvent({ id: id });
   }
 
   async function deleteEventStored(params: { id: string }): Promise<void> {
@@ -416,17 +421,43 @@ export const useEvent = () => {
     await deleteEventServerService({ id });
   }
 
-  async function deleteEvent(params: { eventId: string }): Promise<void> {
-    const eventId = params.eventId;
-
+  async function deleteEvent(params: { localId: number }): Promise<void> {
+    const { localId } = params;
     const db = await dbConnectionService();
     await db.open();
-    const event = await getEventLocal({ db, id: eventId });
-    await db.close();
 
-    await deleteLocalEvent({ id: event.id as number });
-    await deleteEventServerService({ id: event.id as any });
-    eventStore.removeEvent({ eventId });
+    let status = false;
+    try {
+      const idSync = (await getEventLocal({ db, id: localId })).idSync;
+      await deleteEventServerService({ id: idSync as number });
+      status = true;
+    } catch (error: any) {
+      if (error.message == "No internet connection")
+        console.log("No internet connection");
+      else throw new Error(error);
+    }
+
+    if (status == true) {
+      try {
+        await deleteLocalEvent({ id: localId as number });
+        status = true;
+        eventStore.removeEvent({ id: localId });
+      } catch (error: any) {
+        throw new Error(error);
+      }
+    }
+
+    if (status == false) {
+      try {
+        const event = await getEventLocal({ db, id: localId });
+        event.status = "inactive";
+        const { event: eventFormated } = formatEventService({ event });
+        await updateLocalEvent({ event: eventFormated });
+      } catch (error: any) {
+        throw new Error(error);
+      }
+    }
+    await db.close();
   }
 
   async function createTableEvents(): Promise<void> {
@@ -441,6 +472,7 @@ export const useEvent = () => {
       availability TEXT,
       idSync INT,
       syncStatus BOOLEAN,
+      status TEXT,
       UNIQUE(idSync)
     );`;
     await createTable({ query });
@@ -505,6 +537,16 @@ export const useEvent = () => {
     await db.open();
     await deleteEventService({ id, db });
     await db.close();
+  }
+
+  async function deleteInativeEventOnServer(): Promise<void> {
+    const localEvents = await getStoredEvents();
+    const events = localEvents.filter((event) => event.status == "inactive");
+    await Promise.all(
+      events.map(async (event) => {
+        await deleteEventServerService({ id: event.idSync as number });
+      })
+    );
   }
 
   return {

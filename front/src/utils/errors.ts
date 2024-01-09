@@ -1,4 +1,4 @@
-type TypeError = "graphQLError" | "defaultError" | "authError";
+type TypeError = "graphQLError" | "defaultError" | "authError" | "system";
 
 export function errorBuilder(params: {
   typeError?: TypeError;

@@ -21,8 +21,11 @@ export const useEventsStore = defineStore("events", () => {
   watch(
     () => [date.value, events.value],
     (newValue, oldValue) => {
+      const events = (newValue[1] as Event[]).filter(
+        (event) => event.status == "active"
+      );
       calendarSchedule.value = useSchedule().generateEventsSchedule({
-        events: newValue[1] as Event[],
+        events,
         date: new Date(newValue[0] as string),
       });
     },
@@ -77,8 +80,8 @@ export const useEventsStore = defineStore("events", () => {
     events.value = combinedArray;
   }
 
-  function removeEvent(params: { eventId: string }): void {
-    const { eventId } = params;
+  function removeEvent(params: { id: number }): void {
+    const { id: eventId } = params;
     const result = events.value.filter((event) => event.id != eventId);
     events.value = result;
   }
