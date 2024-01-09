@@ -243,6 +243,7 @@
             event: $event.data.event,
           })
         "
+        @delete="deleteEvent({ eventId: $event.data.id })"
       />
     </ion-modal>
     <!-- end modals -->
@@ -473,11 +474,6 @@ async function deleteEvent(params: { eventId: number }): Promise<void> {
   } catch (error) {
     console.error(error);
   }
-  // const { schedule } = await scheduleComposable.generateSchedules({
-  //   schedule: {},
-  // });
-  // await scheduleComposable.saveScheduleLocal({ schedule });
-  // await scheduleComposable.loadSchedule();
 }
 
 async function syncData(): Promise<void> {

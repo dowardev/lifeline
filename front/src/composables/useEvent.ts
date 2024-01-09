@@ -50,27 +50,6 @@ export const useEvent = () => {
     }
   }
 
-  // TODO: remove
-  async function updateEvent(params: { event: Event }): Promise<void> {
-    const { event } = params;
-
-    try {
-      const { event: eventFormated } = formatEventService({ event });
-      try {
-        // await pusUpdateEvent({ event: eventFormated });
-        event.syncStatus = true;
-      } catch (error: any) {
-        event.syncStatus = false;
-        throw new Error(error);
-      }
-
-      await updateLocalEvent({ event: eventFormated });
-      // eventStore.updateEvent({ event: eventFormated });
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
   async function loadEvents(): Promise<void> {
     let events = await getStoredEvents();
     events = events.map((event) => {
@@ -511,6 +490,7 @@ export const useEvent = () => {
           JSON.stringify(event.reminders),
           event.syncStatus,
           event.timezone,
+          event.status,
         ],
         fields: [
           "availability",
@@ -521,6 +501,7 @@ export const useEvent = () => {
           "reminders",
           "syncStatus",
           "timezone",
+          "status",
         ],
         db,
       });
@@ -572,7 +553,6 @@ export const useEvent = () => {
     storeUpdateEventsServer: getConflictingLocalEvents,
     sync,
     syncEventsFromServer,
-    updateEvent,
     updateLocalEvent,
     setCurrentDate,
   };

@@ -274,33 +274,6 @@ export async function saveLocalEvent(params: {
   }
 }
 
-//  TODO: remove this function
-export async function saveLocalEvents(params: {
-  db: SQLiteDBConnection;
-  fields: any[];
-  values: any[];
-}): Promise<void> {
-  // await storage.set("events", cloneDeep(events));
-  const { fields, values, db } = params;
-  try {
-    let query = `
-     INSERT INTO Events(
-       ${fields.join(", ")}
-     )
-     
-   `;
-    query += `values (`;
-    for (let index = 0; index < values.length; index++) {
-      if (index < fields.length - 1) query += "?, ";
-      else query += "? ";
-    }
-    query += `)`;
-    await db.query(query, values);
-  } catch (error: any) {
-    throw new Error(error);
-  }
-}
-
 export async function updateLocalEvent(params: {
   db: SQLiteDBConnection;
   fields: any[];

@@ -61,7 +61,7 @@
                       "
                       @ion-focus="
                         ($refs.inputName as any).$el.classList.add(
-                          'ion-touched',
+                          'ion-touched'
                         );
                         v$.event.name.$touch();
                       "
@@ -112,7 +112,7 @@
                           :value="
                             format(
                               new Date(event.reminders.value.start),
-                              'Pp',
+                              'Pp'
                             ) +
                             '\n' +
                             format(new Date(event.reminders.value.end), 'Pp')
@@ -212,12 +212,12 @@
                           "
                           @ion-focus="
                             ($refs.inputGuest as any).$el.classList.add(
-                              'ion-touched',
+                              'ion-touched'
                             )
                           "
                           @ion-blur="
                             ($refs.inputGuest as any).$el.classList.remove(
-                              'ion-touched',
+                              'ion-touched'
                             );
                             v2$.emailGuest.$touch();
                           "
@@ -463,7 +463,7 @@ const props = defineProps({
 });
 const scheduleComposable = useSchedule();
 
-const emits = defineEmits(["create", "update"]);
+const emits = defineEmits(["create", "update", "delete"]);
 
 // components
 import CalendarComponent from "./calendar/CalendarComponent.vue";
@@ -486,11 +486,11 @@ const isOpenPopoverReminders = ref(false);
 const timeZones = (Intl as any)
   .supportedValuesOf("timeZone")
   .map((timeZone: string) => timeZone);
-let isOpenPopoverTimezones = ref(false);
+const isOpenPopoverTimezones = ref(false);
 const filteredZones = ref(Array<string>());
 const showButtonsOptionGuest = ref(-1);
 // const repeats: string[] = [];
-let emailGuest = ref("");
+const emailGuest = ref("");
 // event
 const event = {
   name: ref(""),
@@ -548,7 +548,7 @@ onMounted(async () => {
 // functions
 const filterZones = (query: string) => {
   filteredZones.value = timeZones.filter((zone: string) =>
-    zone.toLowerCase().includes(query.toLowerCase()),
+    zone.toLowerCase().includes(query.toLowerCase())
   );
 };
 
@@ -627,7 +627,7 @@ function formatTextRepeat() {
 }
 
 function translateRepeat(params: { repeat: string }) {
-  let repeat = params.repeat as keyof EventReminderRepeat;
+  const repeat = params.repeat as keyof EventReminderRepeat;
 
   let result = useSystem().translateEventReminderRepeat({
     typeRepeat: repeat,
@@ -637,7 +637,7 @@ function translateRepeat(params: { repeat: string }) {
 }
 
 function translateDaysWeekRepear(params: { day: string }) {
-  let day = params.day as any;
+  const day = params.day as any;
 
   let result = useSystem().translateDay({
     dayName: day,
@@ -647,9 +647,9 @@ function translateDaysWeekRepear(params: { day: string }) {
 }
 
 function translateNotifications(params: { notification: string }) {
-  let notification = params.notification as keyof EventReminderNotification;
+  const notification = params.notification as keyof EventReminderNotification;
 
-  let result = useSystem().translateEventReminderNotification({
+  const result = useSystem().translateEventReminderNotification({
     notificationName: notification,
   });
   return result;
@@ -675,12 +675,7 @@ function setEvent(params: { event: Event }) {
 
 async function deleteEvent(): Promise<void> {
   const { id } = props.eventData;
-  await useEvent().deleteEvent({ eventId: id as any });
-  const { schedule } = await scheduleComposable.generateSchedules({
-    schedule: {},
-  });
-  await scheduleComposable.saveScheduleLocal({ schedule });
-  await scheduleComposable.loadSchedule();
+  emits("delete", { data: { id } });
   await closePage();
 }
 
@@ -731,7 +726,7 @@ async function postCreateEvent(params: {
           title: event.name.value,
           message: event.description.value,
         });
-      }),
+      })
     );
   }
 }
