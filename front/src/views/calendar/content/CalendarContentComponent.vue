@@ -484,9 +484,18 @@ async function syncData(): Promise<void> {
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   try {
-    await eventComposable.saveEvent({
+    // await eventComposable.saveEvent({
+    //   event,
+    // });
+    event.reminders.start = new Date(event.reminders.start);
+    event.reminders.end = new Date(event.reminders.end);
+    event.syncStatus = false;
+    event.idSync = null;
+    event.status = "active";
+    await useEvent().saveLocalEvent({
       event,
     });
+    await eventComposable.sync();
   } catch (error) {
     console.error(error);
   }

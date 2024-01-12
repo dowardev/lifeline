@@ -33,8 +33,10 @@ import * as lodash from "lodash";
 export const useEvent = () => {
   const eventStore = useEventsStore();
 
+  // TODO:remove
   async function saveEvent(params: { event: Event }): Promise<void> {
     let { event } = params;
+    debugger;
 
     try {
       const { event: eventFormated } = formatEventService({ event });
@@ -141,17 +143,61 @@ export const useEvent = () => {
         let differences = 0;
 
         lodash.forEach(localEvents, (element) => {
-          if (element.idSync == event.idSync) {
-            if (!lodash.isEqual(element.name, event.name)) differences++;
-            if (!lodash.isEqual(element.guests, event.guests)) differences++;
-            if (!lodash.isEqual(element.reminders, event.reminders))
+          if (element.idSync === event.idSync) {
+            if (!lodash.isEqual(element.name, event.name)) {
               differences++;
-            if (!lodash.isEqual(element.timezone, event.timezone))
+            }
+            if (!lodash.isEqual(element.guests, event.guests)) {
               differences++;
-            if (!lodash.isEqual(element.description, event.description))
+            }
+
+            if (
+              !lodash.isEqual(
+                element.reminders.start.getHours(),
+                event.reminders.start.getHours()
+              ) ||
+              !lodash.isEqual(
+                element.reminders.start.getMinutes(),
+                event.reminders.start.getMinutes()
+              )
+            ) {
               differences++;
-            if (!lodash.isEqual(element.availability, event.availability))
+            }
+            if (
+              !lodash.isEqual(
+                element.reminders.end.getHours(),
+                event.reminders.end.getHours()
+              ) ||
+              !lodash.isEqual(
+                element.reminders.end.getMinutes(),
+                event.reminders.end.getMinutes()
+              )
+            ) {
               differences++;
+            }
+            if (
+              !lodash.isEqual(
+                element.reminders.notifications,
+                event.reminders.notifications
+              )
+            ) {
+              differences++;
+            }
+            if (
+              !lodash.isEqual(element.reminders.repeat, event.reminders.repeat)
+            ) {
+              differences++;
+            }
+
+            if (!lodash.isEqual(element.timezone, event.timezone)) {
+              differences++;
+            }
+            if (!lodash.isEqual(element.description, event.description)) {
+              differences++;
+            }
+            if (!lodash.isEqual(element.availability, event.availability)) {
+              differences++;
+            }
           }
         });
 
@@ -193,9 +239,9 @@ export const useEvent = () => {
 
   async function pushNewEvent(params: {
     event: Event;
-  }): Promise<{ id: string | undefined }> {
+  }): Promise<{ id: number | undefined }> {
     const { event } = params;
-    let id = undefined as string | undefined;
+    let id = undefined as number | undefined;
 
     try {
       const response = await createEventService({ event });
@@ -242,6 +288,7 @@ export const useEvent = () => {
       events: serverEvents,
     });
     const eventsServerDeleted = localEvents.filter((event) => {
+      if (event.idSync == null) return;
       const found = serverEvents.find(
         (element) => element.idSync == event.idSync
       );
@@ -262,15 +309,36 @@ export const useEvent = () => {
       }
     });
 
-    const events = serverEvents.filter((element) => {
-      return !localEvents.some(
-        (otherElement) => otherElement.idSync === element.idSync
+    const newServerEvents = lodash.filter(serverEvents, (event) => {
+      return !lodash.some(
+        localEvents,
+        (otherEvent) => event.idSync === otherEvent.idSync
       );
     });
 
+    const newLocalEvents = localEvents.filter((event) => event.idSync == null);
+
     try {
       await Promise.all(
-        events.map(async (event) => {
+        newLocalEvents.map(async (event) => {
+          const { id } = await pushNewEvent({ event });
+          event.idSync = id as number;
+          event.syncStatus = true;
+          await updateLocalEvent({ event });
+        })
+      );
+    } catch (error: any) {
+      if (
+        error.message !=
+        "Error: Query failed: SelectSQL: queryAll: UNIQUE constraint failed: EVENTS.idSync"
+      ) {
+        throw new Error(error);
+      }
+    }
+
+    try {
+      await Promise.all(
+        newServerEvents.map(async (event) => {
           await saveLocalEvent({
             event,
           });
@@ -547,6 +615,8 @@ export const useEvent = () => {
     removeEventServer,
     removeEventStore,
     saveEvent,
+    saveLocalEvent,
+    setCurrentDate,
     storeEventsServer,
     storeLocalEvent,
     storeRemoveEventsServer,
@@ -554,6 +624,5 @@ export const useEvent = () => {
     sync,
     syncEventsFromServer,
     updateLocalEvent,
-    setCurrentDate,
   };
 };

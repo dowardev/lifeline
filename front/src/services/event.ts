@@ -36,7 +36,7 @@ import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 
 export async function createEvent(params: {
   event: Event;
-}): Promise<{ id: string }> {
+}): Promise<{ id: number }> {
   const { event } = params;
   const data = {
     name: event.name,

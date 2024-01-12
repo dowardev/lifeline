@@ -81,7 +81,7 @@ export interface Event {
   timezone?: string;
   description: string;
   availability: string;
-  idSync: number | undefined;
+  idSync: number | null;
   syncStatus: boolean;
   status: "active" | "inactive";
 }
