@@ -33,18 +33,32 @@ import * as lodash from "lodash";
 export const useEvent = () => {
   const eventStore = useEventsStore();
 
-  // TODO:remove
+  /**
+   * Perform all the necessary procedure to add a event both generally, locally and from the store
+   *
+   * @param {Object} params
+   * @param {Event} params.event event
+   *
+   * @returns {Promise<void>}
+   */
   async function saveEvent(params: { event: Event }): Promise<void> {
-    let { event } = params;
-    debugger;
+    const { event } = params;
+    let id = null;
 
     try {
-      const { event: eventFormated } = formatEventService({ event });
-      const { id } = await pushNewEvent({ event });
-      event = eventFormated;
+      id = (await pushNewEvent({ event })).id;
+    } catch (error: any) {
+      throw new Error(error);
+    }
+
+    try {
+      event.reminders.start = new Date(event.reminders.start);
+      event.reminders.end = new Date(event.reminders.end);
       event.idSync = id;
+      event.status = "active";
+      event.syncStatus = false;
       await saveLocalEvent({
-        event: eventFormated,
+        event,
       });
       eventStore.addEvent({ event });
     } catch (error: any) {
@@ -237,11 +251,17 @@ export const useEvent = () => {
     return { eventsDeleted: deleted };
   }
 
+  /**
+   * Create a new event in server
+   * @param {Object} params
+   * @param {Event} params.event event
+   * @returns {Promise<{ id: number | null }>}
+   */
   async function pushNewEvent(params: {
     event: Event;
-  }): Promise<{ id: number | undefined }> {
+  }): Promise<{ id: number | null }> {
     const { event } = params;
-    let id = undefined as number | undefined;
+    let id = null as number | null;
 
     try {
       const response = await createEventService({ event });
@@ -468,14 +488,22 @@ export const useEvent = () => {
     await deleteEventServerService({ id });
   }
 
-  async function deleteEvent(params: { localId: number }): Promise<void> {
-    const { localId } = params;
+  /**
+   * Perform all the necessary procedure to delete an event both generally, locally and from the store
+   *
+   * @param {Object} params
+   * @param {number} params.id event id in sqlite
+   *
+   * @returns {Promise<void>}
+   */
+  async function deleteEvent(params: { id: number }): Promise<void> {
+    const { id } = params;
     const db = await dbConnectionService();
     await db.open();
 
     let status = false;
     try {
-      const idSync = (await getEventLocal({ db, id: localId })).idSync;
+      const idSync = (await getEventLocal({ db, id })).idSync;
       await deleteEventServerService({ id: idSync as number });
       status = true;
     } catch (error: any) {
@@ -486,9 +514,9 @@ export const useEvent = () => {
 
     if (status == true) {
       try {
-        await deleteLocalEvent({ id: localId as number });
+        await deleteLocalEvent({ id });
         status = true;
-        eventStore.removeEvent({ id: localId });
+        eventStore.removeEvent({ id });
       } catch (error: any) {
         throw new Error(error);
       }
@@ -496,7 +524,7 @@ export const useEvent = () => {
 
     if (status == false) {
       try {
-        const event = await getEventLocal({ db, id: localId });
+        const event = await getEventLocal({ db, id });
         event.status = "inactive";
         const { event: eventFormated } = formatEventService({ event });
         await updateLocalEvent({ event: eventFormated });
@@ -580,6 +608,13 @@ export const useEvent = () => {
     }
   }
 
+  /**
+   * Delete event on the local
+   *
+   * @param {Object} params
+   * @param {Number} params.id id of the event on the server (idSync)
+   * @returns {Promise<void>}
+   */
   async function deleteLocalEvent(params: { id: number }): Promise<void> {
     const { id } = params;
     const db = await dbConnectionService();

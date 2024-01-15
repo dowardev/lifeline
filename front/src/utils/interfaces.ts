@@ -200,8 +200,7 @@ export interface NewTodo {
 }
 
 export interface ScheduleElement {
-  id: string;
-  idElement: string;
+  id: number;
   title: string;
   message: string;
   date: string;

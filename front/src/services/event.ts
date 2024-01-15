@@ -434,6 +434,13 @@ export async function deleteEvents(params: {
   }
 }
 
+/**
+ * Delete event on the server
+ *
+ * @param {Object} params
+ * @param {Number} params.id id of the event on the server (idSync)
+ * @returns {Promise<void>}
+ */
 export async function deleteEventServer(params: { id: number }): Promise<void> {
   const { id } = params;
 
@@ -465,6 +472,7 @@ export function generateEventId(): string {
   return Math.random().toString(36).slice(2, 18);
 }
 
+// TODO: remove
 export function formatEvent(params: { event: Event }): {
   event: Event;
 } {

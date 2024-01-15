@@ -467,10 +467,16 @@ async function openPopoverRightEventMenu(params: {
   }
 }
 
+/**
+ * Delete event
+ *
+ * params {Object} params
+ * @param {Number} params.eventId sssssss
+ */
 async function deleteEvent(params: { eventId: number }): Promise<void> {
   const { eventId } = params;
   try {
-    await useEvent().deleteEvent({ localId: eventId });
+    await useEvent().deleteEvent({ id: eventId });
   } catch (error) {
     console.error(error);
   }
@@ -484,18 +490,9 @@ async function syncData(): Promise<void> {
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   try {
-    // await eventComposable.saveEvent({
-    //   event,
-    // });
-    event.reminders.start = new Date(event.reminders.start);
-    event.reminders.end = new Date(event.reminders.end);
-    event.syncStatus = false;
-    event.idSync = null;
-    event.status = "active";
-    await useEvent().saveLocalEvent({
+    await useEvent().saveEvent({
       event,
     });
-    await eventComposable.sync();
   } catch (error) {
     console.error(error);
   }

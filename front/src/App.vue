@@ -69,7 +69,7 @@ const start = async (): Promise<void> => {
 };
 
 async function syncData(): Promise<void> {
-  // await deleteData();
+  await deleteData();
 
   // events
   await eventComposable.sync();
@@ -87,7 +87,7 @@ function loadUserProps(): void {
 }
 
 async function deleteData(): Promise<void> {
-  await systemComposable.deleteData({ events: true, schedule: true });
+  // await systemComposable.deleteData({ events: true, schedule: true });
   // location.reload();
 }
 </script>

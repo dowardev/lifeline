@@ -186,7 +186,10 @@ export const useSchedule = () => {
       : undefined;
   }
 
-  function generateEventsSchedule(params: { events: Event[]; date: Date }) {
+  function generateEventsSchedule(params: {
+    events: Event[];
+    date: Date;
+  }): Schedule {
     const { events, date } = params;
     let schedule = {};
 
@@ -197,13 +200,13 @@ export const useSchedule = () => {
       const message = event.description;
       const startDate = event.reminders?.start;
       const endDate = event.reminders?.end;
-      const reminder = event.reminders!.notifications.length > 0 ? true : false;
+      const reminder =
+        event.reminders!.notifications!.length > 0 ? true : false;
       const repeat = event.reminders?.repeat ?? {};
 
       const scheduleElement = generateScheduleElement({
-        id,
-        idElement,
-        title,
+        id: id as number,
+        title: title as string,
         message,
         startDate,
         endDate,
@@ -222,8 +225,23 @@ export const useSchedule = () => {
     return schedule;
   }
 
+  /**
+   * Generate events schedule
+   * @param {Object} params
+   * @param {Number} params.id local id from event
+   * @param {String} params.title title from event
+   * @param {String} params.message message that will be presented when the notification is displayed
+   * @param {Date} params.startDate date from which the event begins to repeat
+   * @param {Date} params.endDate date from which the event ends repeating
+   * @param {"daily" | "weekly" | "monthly" | "annually"}params.type date event repetition type
+   * @param {Boolean} params.reminder show reminder
+   * @param {Object} params.repeat data on the repetition of the event
+   * @param {Number=} params.repeat.frecuency frequency at which the event will repeat
+   * @param {"daily" | "weekly" | "monthly" | "annually"=} params.repeat.frecuency.type date event repetition type
+   * @param {String[]} params.repeat.frecuency.daysWeek arrangement that indicates the days of the week in which the event will be repeated, it is only necessary if the type is weekly
+   */
   function generateScheduleElement(params: {
-    idElement: string;
+    id: number;
     title: string;
     message: string;
     startDate: Date;
@@ -237,7 +255,7 @@ export const useSchedule = () => {
     };
   }): Schedule {
     const {
-      idElement,
+      id,
       title,
       message,
       startDate,
@@ -300,8 +318,7 @@ export const useSchedule = () => {
       }
 
       eventsByDate[year][month][day].push({
-        id: idElement,
-        idElement,
+        id,
         title,
         message,
         date: currentDate.toISOString(),
@@ -517,7 +534,7 @@ export const useSchedule = () => {
 
     const scheduleElement = generateScheduleElement({
       id,
-      idElement,
+      id: idElement,
       title,
       message,
       startDate,
