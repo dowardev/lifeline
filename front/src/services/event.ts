@@ -33,6 +33,7 @@ import { storage } from "@/main";
 import { toRaw } from "vue";
 import { cloneDeep, parseInt } from "lodash";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
+import { dbConnection as dbConnectionService } from "@/services/dbService";
 
 export async function createEvent(params: {
   event: Event;
@@ -249,26 +250,80 @@ export async function getUserCalendars(
 // );
 // }
 
-export async function saveLocalEvent(params: {
-  db: SQLiteDBConnection;
-  fields: any[];
-  values: any[];
-}): Promise<void> {
-  const { fields, values, db } = params;
+export async function saveLocalEvent(params: { event: Event }): Promise<void> {
+  const { event } = params;
+
+  const db = await dbConnectionService();
   try {
-    let query = `
-     INSERT INTO Events(
-       ${fields.join(", ")}
+    const valuesEvent = [
+      event.availability,
+      event.description,
+      JSON.stringify(event.guests),
+      event.idSync,
+      event.name,
+      event.syncStatus,
+      event.timezone,
+      event.status,
+    ];
+    const fieldsEvent = [
+      "availability",
+      "description",
+      "guests",
+      "idSync",
+      "name",
+      "syncStatus",
+      "timezone",
+      "status",
+    ];
+
+    let queryEvents = `
+        INSERT INTO Events(
+       ${fieldsEvent.join(", ")}
      )
      
    `;
-    query += `values (`;
-    for (let index = 0; index < values.length; index++) {
-      if (index < fields.length - 1) query += "?, ";
-      else query += "? ";
+    queryEvents += `values (`;
+    for (let index = 0; index < valuesEvent.length; index++) {
+      if (index < fieldsEvent.length - 1) queryEvents += "?, ";
+      else queryEvents += "? ";
     }
-    query += `)`;
-    await db.query(query, values);
+    queryEvents += `)RETURNING "Id"`;
+    const eventId = (await db.query(queryEvents, valuesEvent)).values![0].id;
+
+    const valuesReminders = [
+      eventId,
+      event.reminders.start.toISOString(),
+      event.reminders.end.toISOString(),
+      JSON.stringify(event.reminders.notifications),
+      false,
+      event.reminders.repeat?.frecuency,
+      event.reminders.repeat?.type,
+      JSON.stringify(event.reminders.repeat?.daysWeek ?? []),
+    ];
+    const fieldsReminders = [
+      "event_id",
+      "start",
+      "end",
+      "notifications",
+      "repeat",
+      "frecuency",
+      "type",
+      "daysWeek",
+    ];
+
+    let queryReminders = `
+        INSERT INTO Reminders(
+       ${fieldsReminders.join(", ")}
+     )
+   `;
+
+    queryReminders += `values (`;
+    for (let index = 0; index < valuesReminders.length; index++) {
+      if (index < fieldsReminders.length - 1) queryReminders += "?, ";
+      else queryReminders += "? ";
+    }
+    queryReminders += `)`;
+    await db.query(queryReminders, valuesReminders);
   } catch (error: any) {
     throw new Error(error);
   }
@@ -276,23 +331,76 @@ export async function saveLocalEvent(params: {
 
 export async function updateLocalEvent(params: {
   db: SQLiteDBConnection;
-  fields: any[];
-  values: any[];
-  id: number;
+  event: Event;
 }): Promise<void> {
-  const { values, db, id, fields } = params;
+  const { db, event } = params;
+  const eventId = event.id;
+  console.log(
+    await db.query(`select * from reminders where event_id=${eventId}`)
+  );
 
   try {
-    let query = `UPDATE Events SET `;
+    const valuesEvent = [
+      event.availability,
+      event.description,
+      JSON.stringify(event.guests),
+      event.idSync,
+      event.name,
+      event.syncStatus,
+      event.timezone,
+      event.status,
+    ];
+    const fieldsEvent = [
+      "availability",
+      "description",
+      "guests",
+      "idSync",
+      "name",
+      "syncStatus",
+      "timezone",
+      "status",
+    ];
 
-    fields.forEach((field, index) => {
-      query += `${field} = ?`;
-      if (index < fields.length - 1) {
-        query += ", ";
+    let queryEvent = `UPDATE Events SET `;
+
+    fieldsEvent.forEach((field, index) => {
+      queryEvent += `${field} = ?`;
+      if (index < fieldsEvent.length - 1) {
+        queryEvent += ", ";
       }
     });
-    query += ` WHERE id="${id}"`;
-    await db.query(query, values);
+    queryEvent += ` WHERE id="${eventId}"`;
+    await db.query(queryEvent, valuesEvent);
+
+    const valuesReminders = [
+      event.reminders.start.toISOString(),
+      event.reminders.end.toISOString(),
+      JSON.stringify(event.reminders.notifications),
+      false,
+      event.reminders.repeat?.frecuency,
+      event.reminders.repeat?.type,
+      JSON.stringify(event.reminders.repeat?.daysWeek ?? []),
+    ];
+    const fieldsReminders = [
+      "start",
+      "end",
+      "notifications",
+      "repeat",
+      "frecuency",
+      "type",
+      "daysWeek",
+    ];
+
+    let queryReminder = `UPDATE Reminders SET `;
+
+    fieldsReminders.forEach((field, index) => {
+      queryReminder += `${field} = ?`;
+      if (index < fieldsReminders.length - 1) {
+        queryReminder += ", ";
+      }
+    });
+    queryReminder += ` WHERE event_id="${eventId}"`;
+    await db.query(queryReminder, valuesReminders);
   } catch (error: any) {
     throw new Error(error);
   }
@@ -302,17 +410,35 @@ export async function getEventsLocal(params: {
   db: SQLiteDBConnection;
 }): Promise<Array<Event>> {
   const { db } = params;
-  const query = `SELECT * FROM Events`;
+  const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id`;
   try {
-    const events = (await db.query(query)).values as Event[];
-    return events.map((event) => {
-      event.guests = JSON.parse(event.guests as any);
-      event.reminders = JSON.parse(event.reminders as any);
-      event.reminders.start = new Date(event.reminders.start);
-      event.reminders.end = new Date(event.reminders.end);
-      event.syncStatus = event.syncStatus == 0 ? false : true;
-      return event;
+    const result = (await db.query(query)).values as any[];
+    const events: Event[] = [];
+
+    result.forEach((event: any) => {
+      events.push({
+        id: event.id,
+        name: event.name,
+        guests: JSON.parse(event.guests as any),
+        reminders: {
+          start: new Date(event.start),
+          end: new Date(event.end),
+          notifications: JSON.parse(event.notifications),
+          repeat: {
+            frecuency: event.frecuency,
+            type: event.type,
+            daysWeek: JSON.parse(event.daysWeek),
+          },
+        },
+        timezone: event.timezone,
+        description: event.description,
+        availability: event.availability,
+        idSync: event.idSync,
+        syncStatus: event.syncStatus == 0 ? false : true,
+        status: event.status,
+      });
     });
+    return events;
   } catch (error: any) {
     throw new Error(error);
   }
@@ -345,7 +471,11 @@ export async function getEvents(params: {
         reminders: {
           start: new Date(event.date_start),
           end: new Date(event.date_end),
-          repeat: JSON.parse(event.repeat),
+          repeat: {
+            frecuency: JSON.parse(event.repeat).frecuency,
+            type: JSON.parse(event.repeat).type,
+            daysWeek: JSON.parse(event.repeat).daysWeek ?? [],
+          },
           notifications: JSON.parse(event.notifications) ?? [],
         },
         availability: event.availability,
@@ -374,9 +504,11 @@ export async function deleteEvent(params: {
   db: SQLiteDBConnection;
 }): Promise<void> {
   const { db, id } = params;
-  const query = `Delete FROM Events where id=${id}`;
+  const queryReminders = `Delete FROM Reminders where event_id=${id}`;
+  const queryEvents = `Delete FROM Events where id=${id}`;
   try {
-    await db.query(query);
+    await db.query(queryReminders);
+    await db.query(queryEvents);
   } catch (error: any) {
     throw new Error(error);
   }
@@ -427,6 +559,19 @@ export async function deleteEvents(params: {
   // await storage.remove("events");
   const { db } = params;
   const query = `Delete FROM Events`;
+  try {
+    await db.query(query);
+  } catch (error: any) {
+    throw new Error(error);
+  }
+}
+
+export async function deleteReminders(params: {
+  db: SQLiteDBConnection;
+}): Promise<void> {
+  // await storage.remove("events");
+  const { db } = params;
+  const query = `Delete FROM Reminders`;
   try {
     await db.query(query);
   } catch (error: any) {

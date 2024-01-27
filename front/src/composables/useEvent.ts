@@ -4,6 +4,7 @@ import {
   deleteEvent as deleteEventService,
   deleteEventServer as deleteEventServerService,
   deleteEvents as deleteEventsService,
+  deleteReminders as deleteRemindersService,
   formatEvent as formatEventService,
   generateEventId as generateEventIdService,
   getEventLocal,
@@ -100,9 +101,7 @@ export const useEvent = () => {
   async function getStoredEvents(): Promise<Array<Event>> {
     try {
       const db = await dbConnectionService();
-      await db.open();
       const events = await getEventsLocalService({ db });
-      await db.close();
       return events;
     } catch (error: any) {
       throw new Error(error);
@@ -339,14 +338,14 @@ export const useEvent = () => {
     const newLocalEvents = localEvents.filter((event) => event.idSync == null);
 
     try {
-      await Promise.all(
-        newLocalEvents.map(async (event) => {
+      if (newLocalEvents.length > 0)
+        for (let index = 0; index < newLocalEvents.length; index++) {
+          const event = newLocalEvents[index];
           const { id } = await pushNewEvent({ event });
           event.idSync = id as number;
           event.syncStatus = true;
           await updateLocalEvent({ event });
-        })
-      );
+        }
     } catch (error: any) {
       if (
         error.message !=
@@ -357,13 +356,13 @@ export const useEvent = () => {
     }
 
     try {
-      await Promise.all(
-        newServerEvents.map(async (event) => {
+      if (newServerEvents.length > 0)
+        for (let index = 0; index < newServerEvents.length; index++) {
+          const event = newServerEvents[index];
           await saveLocalEvent({
             event,
           });
-        })
-      );
+        }
     } catch (error: any) {
       if (
         error.message !=
@@ -374,37 +373,31 @@ export const useEvent = () => {
     }
 
     try {
-      if (problems.length > 0) {
-        await Promise.all(
-          problems.map(async (event) => {
-            await saveEvent({ event });
-          })
-        );
-      }
+      if (problems.length > 0)
+        for (let index = 0; index < problems.length; index++) {
+          const event = problems[index];
+          await saveEvent({ event });
+        }
     } catch (error: any) {
       throw new Error(error);
     }
 
     try {
-      if (toUpdate.length > 0) {
-        await Promise.all(
-          toUpdate.map(async (event) => {
-            await updateLocalEvent({ event: event as any });
-          })
-        );
-      }
+      if (toUpdate.length > 0)
+        for (let index = 0; index < toUpdate.length; index++) {
+          const event = toUpdate[index];
+          await updateLocalEvent({ event: event as any });
+        }
     } catch (error: any) {
       throw new Error(error);
     }
 
     try {
-      if (eventsServerDeleted.length > 0) {
-        await Promise.all(
-          eventsServerDeleted.map(async (event) => {
-            await deleteLocalEvent({ id: event.id as number });
-          })
-        );
-      }
+      if (eventsServerDeleted.length > 0)
+        for (let index = 0; index < eventsServerDeleted.length; index++) {
+          const event = eventsServerDeleted[index];
+          await deleteLocalEvent({ id: event.id as number });
+        }
     } catch (error: any) {
       throw new Error(error);
     }
@@ -423,6 +416,13 @@ export const useEvent = () => {
     await deleteEventsService({ db });
   }
 
+  async function deleteReminders(params: {
+    db: SQLiteDBConnection;
+  }): Promise<void> {
+    const { db } = params;
+    await deleteRemindersService({ db });
+  }
+
   async function storeLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
     await saveLocalEventService({
@@ -433,33 +433,10 @@ export const useEvent = () => {
   async function updateLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
     const db = await dbConnectionService();
-    await db.open();
     try {
       await updateLocalEventService({
-        id: event.id as any,
-        values: [
-          event.availability,
-          event.description,
-          JSON.stringify(event.guests),
-          event.idSync,
-          event.name,
-          JSON.stringify(event.reminders),
-          event.syncStatus,
-          event.timezone,
-          event.status,
-        ],
-        fields: [
-          "availability",
-          "description",
-          "guests",
-          "idSync",
-          "name",
-          "reminders",
-          "syncStatus",
-          "timezone",
-          "status",
-        ],
         db,
+        event,
       });
     } catch (error: any) {
       if (
@@ -469,7 +446,6 @@ export const useEvent = () => {
         throw new Error(error);
       }
     } finally {
-      await db.close();
     }
   }
 
@@ -536,12 +512,23 @@ export const useEvent = () => {
   }
 
   async function createTableEvents(): Promise<void> {
-    const query = `CREATE TABLE IF NOT EXISTS EVENTS 
+    // const query = `CREATE TABLE IF NOT EXISTS Events
+    // (
+    //   id INTEGER PRIMARY KEY AUTOINCREMENT,
+    //   name TEXT,
+    //   guests TEXT,
+    //   timezone TEXT,
+    //   description TEXT,
+    //   availability TEXT,
+    //   idSync INT,
+    //   syncStatus BOOLEAN,
+    //   status TEXT
+    // );`;
+    const query = `CREATE TABLE IF NOT EXISTS Events
     (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
       guests TEXT,
-      reminders TEXT,
       timezone TEXT,
       description TEXT,
       availability TEXT,
@@ -549,6 +536,22 @@ export const useEvent = () => {
       syncStatus BOOLEAN,
       status TEXT,
       UNIQUE(idSync)
+    );`;
+    await createTable({ query });
+  }
+
+  async function createTableReminders(): Promise<void> {
+    const query = `CREATE TABLE IF NOT EXISTS Reminders
+    (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id INTEGER REFERENCES EVENTS(id),
+      start TEXT,
+      end TEXT,
+      notifications TEXT NULL,
+      repeat Boolean NULL,
+      frecuency INT NULL,
+      type TEXT NULL,
+      daysWeek TEXT NULL
     );`;
     await createTable({ query });
   }
@@ -572,39 +575,14 @@ export const useEvent = () => {
 
   async function saveLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
-    const db = await dbConnectionService();
-    await db.open();
 
     try {
       await saveLocalEventService({
-        values: [
-          event.availability,
-          event.description,
-          JSON.stringify(event.guests),
-          event.idSync,
-          event.name,
-          JSON.stringify(event.reminders),
-          event.syncStatus,
-          event.timezone,
-          event.status,
-        ],
-        fields: [
-          "availability",
-          "description",
-          "guests",
-          "idSync",
-          "name",
-          "reminders",
-          "syncStatus",
-          "timezone",
-          "status",
-        ],
-        db,
+        event,
       });
     } catch (error: any) {
       throw new Error(error);
     } finally {
-      await db.close();
     }
   }
 
@@ -618,9 +596,7 @@ export const useEvent = () => {
   async function deleteLocalEvent(params: { id: number }): Promise<void> {
     const { id } = params;
     const db = await dbConnectionService();
-    await db.open();
     await deleteEventService({ id, db });
-    await db.close();
   }
 
   async function deleteInativeEventOnServer(): Promise<void> {
@@ -635,9 +611,11 @@ export const useEvent = () => {
 
   return {
     createTableEvents,
+    createTableReminders,
     deleteEvent,
     deleteEventStored,
     deleteEvents,
+    deleteReminders,
     getEvent,
     getEvents,
     getEventsServer,

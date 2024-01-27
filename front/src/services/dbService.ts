@@ -5,7 +5,12 @@ import {
   SQLiteDBConnection,
 } from "@capacitor-community/sqlite";
 
+// customElements.define("jeep-sqlite", JeepSqlite);
 customElements.define("jeep-sqlite", JeepSqlite);
+const jeepSqliteEl = document.createElement("jeep-sqlite");
+document.body.appendChild(jeepSqliteEl);
+await customElements.whenDefined("jeep-sqlite");
+
 export async function dbConnection(): Promise<SQLiteDBConnection> {
   try {
     const sqlite = new SQLiteConnection(CapacitorSQLite);
@@ -22,6 +27,11 @@ export async function dbConnection(): Promise<SQLiteDBConnection> {
         1,
         false
       );
+    }
+
+    if ((await db.isDBOpen()).result == false) {
+      await db.open();
+      await sqlite.initWebStore();
     }
     return db;
   } catch (error: any) {

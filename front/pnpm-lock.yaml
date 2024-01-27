@@ -9,8 +9,8 @@ dependencies:
     specifier: ^3.8.7
     version: 3.8.7(graphql@16.8.1)
   '@capacitor-community/sqlite':
-    specifier: 5.4.2-2
-    version: 5.4.2-2(@capacitor/core@5.5.1)
+    specifier: 5.5.2
+    version: 5.5.2(@capacitor/core@5.5.1)
   '@capacitor/android':
     specifier: ^5.5.1
     version: 5.5.1(@capacitor/core@5.5.1)
@@ -1400,14 +1400,14 @@ packages:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
 
-  /@capacitor-community/sqlite@5.4.2-2(@capacitor/core@5.5.1):
-    resolution: {integrity: sha512-9cEammM0faTc3U6tkxItmkNw/KUU7rWDkzUXOkWkemh/pYxKY34BtcF3k5s1jNUnQjI3OEx/xdEUQcCtyHY+LA==}
+  /@capacitor-community/sqlite@5.5.2(@capacitor/core@5.5.1):
+    resolution: {integrity: sha512-JSrNSdoS39+Q4mHzCanoBkN+QA/5x8nDXs0zxI5vy6WCkjrmnN8STN8MeuqoEnJLU1sZwZ9w4CrhN3GVZkPwYQ==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       '@capacitor/core': ^5.0.0
     dependencies:
       '@capacitor/core': 5.5.1
-      jeep-sqlite: 2.5.4
+      jeep-sqlite: 2.5.8
     dev: false
 
   /@capacitor/android@5.5.1(@capacitor/core@5.5.1):
@@ -2159,6 +2159,12 @@ packages:
       picomatch: 2.3.1
       rollup: 2.79.1
     dev: true
+
+  /@stencil/core@4.11.0:
+    resolution: {integrity: sha512-zsKhgIkTGo+s7IthitxR/MKiMS3Ck1yIypOdXr0aE6ofboKqe9NdffTcxZ0vel0wD2bZYOb6WfPMzuhRKk6+FA==}
+    engines: {node: '>=16.0.0', npm: '>=7.10.0'}
+    hasBin: true
+    dev: false
 
   /@stencil/core@4.7.2:
     resolution: {integrity: sha512-sPPDYrXiTbfeUF5CCyfqysXK/yfTHC4xYR1+nHzGkS2vhRSBOLp0oPuB+xkJLKA+K2ZqDJUxpOnDxy1CLWwBXA==}
@@ -5391,14 +5397,14 @@ packages:
       minimatch: 3.1.2
     dev: true
 
-  /jeep-sqlite@2.5.4:
-    resolution: {integrity: sha512-1eMhAIYdHXvnSop82mRXzOjOQoUP8Jq1GOPskUWVmHdsg9jHWSqiYwMYyXI9vOYIVj/3g7Ugtg/3JwUo8t4k0g==}
+  /jeep-sqlite@2.5.8:
+    resolution: {integrity: sha512-jq9z9WVHuywM/2J9CXK4mBpN+82fKkdwGy7Lc1gbi9bv1mOo4OBoHy1b6NIV6y8wTLw9EaIZsLDGZXp6iI+gtg==}
     dependencies:
-      '@stencil/core': 4.7.2
+      '@stencil/core': 4.11.0
       browser-fs-access: 0.33.1
       jszip: 3.10.1
       localforage: 1.10.0
-      sql.js: 1.8.0
+      sql.js: 1.10.2
     dev: false
 
   /jest-diff@27.5.1:
@@ -7261,6 +7267,10 @@ packages:
     dependencies:
       through: 2.3.8
     dev: true
+
+  /sql.js@1.10.2:
+    resolution: {integrity: sha512-jnKFtdHxuVUNgu1vHwFoTjjwfTuVDVqzGpw7H05Zq3YMNMDOpLFyFGvpgTRIQGd/mqcYntuMy7iygYCytD62jQ==}
+    dev: false
 
   /sql.js@1.8.0:
     resolution: {integrity: sha512-3HD8pSkZL+5YvYUI8nlvNILs61ALqq34xgmF+BHpqxe68yZIJ1H+sIVIODvni25+CcxHUxDyrTJUL0lE/m7afw==}

@@ -40,11 +40,14 @@ const eventComposable = useEvent();
 const systemComposable = useSystem();
 const scheduleComposable = useSchedule();
 
+import { dbConnection as dbConnectionService } from "@/services/dbService";
+
 // mounted
 onMounted(async () => {
-  start();
-  await useSystem().createTableTokens();
-  await useEvent().createTableEvents();
+  // await useSystem().createTableTokens();
+  // await useEvent().createTableEvents();
+  // await useEvent().createTableReminders();
+  await start();
 });
 
 // functions
@@ -69,10 +72,16 @@ const start = async (): Promise<void> => {
 };
 
 async function syncData(): Promise<void> {
-  await deleteData();
+  // await deleteData();
 
   // events
+  // const db = await dbConnectionService();
+  // console.log(await db.isDBOpen());
   await eventComposable.sync();
+  // await db.open();
+  // console.log(2, await db.query("select *from Events"));
+  // console.log(2, await db.query("select *from Reminders"));
+  // await db.close();
 
   // schedule
   // useEvent().setCurrentDate({ date: new Date() });
@@ -87,7 +96,11 @@ function loadUserProps(): void {
 }
 
 async function deleteData(): Promise<void> {
-  // await systemComposable.deleteData({ events: true, schedule: true });
+  await systemComposable.deleteData({
+    events: true,
+    schedule: true,
+    reminders: true,
+  });
   // location.reload();
 }
 </script>

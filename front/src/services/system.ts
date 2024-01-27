@@ -186,9 +186,11 @@ export function graphqlQueryBuilder(params: {
 export async function deleteData(params: {
   events: boolean;
   schedule: boolean;
+  reminders: boolean;
   db: SQLiteDBConnection;
 }): Promise<void> {
   const { events, schedule, db } = params;
+  if (events) await useEvent().deleteReminders({ db });
   if (events) await useEvent().deleteEvents({ db });
   if (schedule) await useSchedule().deleteSchedule();
 }

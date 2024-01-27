@@ -194,12 +194,11 @@ export const useSystem = () => {
   async function deleteData(params: {
     events: boolean;
     schedule: boolean;
+    reminders: boolean;
   }): Promise<void> {
-    const { events, schedule } = params;
+    const { events, schedule, reminders } = params;
     const db = await dbConnectionService();
-    await db.open();
-    await deleteDataService({ events, schedule, db });
-    await db.close();
+    await deleteDataService({ events, schedule, reminders, db });
   }
 
   async function createTableTokens(): Promise<void> {
@@ -216,9 +215,7 @@ export const useSystem = () => {
     try {
       const { query } = params;
       const db = await dbConnectionService();
-      await db.open();
       await createTableService({ query, db });
-      await db.close();
     } catch (error: any) {
       throw new Error(error);
     }

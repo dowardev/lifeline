@@ -1,3 +1,8 @@
+import { dbConnection as dbConnectionService } from "@/services/dbService";
+const db = await dbConnectionService();
+import { useSystem } from "./composables/useSystem";
+import { useEvent } from "./composables/useEvent";
+
 import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
@@ -55,3 +60,9 @@ const app = createApp({
 router.isReady().then(() => {
   app.mount("#app");
 });
+
+if (await db.isDBOpen()) {
+  await useSystem().createTableTokens();
+  await useEvent().createTableEvents();
+  await useEvent().createTableReminders();
+}
