@@ -57,17 +57,12 @@
                       </td>
                       <td v-for="day in days" :key="day.date.toString()">
                         <div>
-                          <div
-                            v-for="schedule in generateCalendar[
-                              daysOfWeek[new Date(day.date).getDay()]
-                            ]"
-                            :key="schedule.date.toString()"
-                          >
+                          <div v-for="event in events" :key="event.id">
                             <template
                               v-if="
-                                new Date(schedule.date).getHours() ===
+                                event.reminders.start.getHours() ===
                                   parseInt(hour) &&
-                                new Date(schedule.date).getDate() ===
+                                event.reminders.start.getDate() ===
                                   day.date.getDate()
                               "
                             >
@@ -76,30 +71,30 @@
                                 style="cursor: pointer"
                                 @click="
                                   afterUpdateEvent({
-                                    idEvent: schedule.idElement,
+                                    idEvent: event.id as number,
                                   })
                                 "
                                 @contextmenu.prevent="
                                   openPopoverRightEventMenu({
                                     ev: $event,
-                                    eventId: schedule.idElement,
+                                    eventId: event.id as number,
                                   })
                                 "
                                 @press="
                                   openPopoverRightEventMenu({
                                     ev: $event,
-                                    eventId: schedule.idElement,
+                                    eventId: event.id as number,
                                   })
                                 "
                               >
                                 <ion-card-header>
                                   <ion-card-title>{{
-                                    schedule.title
+                                    event.name
                                   }}</ion-card-title>
                                 </ion-card-header>
 
                                 <ion-card-content>{{
-                                  format(new Date(schedule.date), "Pp")
+                                  format(new Date(event.reminders.start), "Pp")
                                 }}</ion-card-content>
                               </ion-card>
                             </template>
@@ -118,69 +113,28 @@
 
     <!-- popovers -->
     <!-- popover main calendar -->
-    <ion-popover
-      :class="{ 'popover-main-calendar-ios': isPlatform('ios') }"
-      :is-open="isOpenpopoverMainCalendar"
-      @did-dismiss="isOpenpopoverMainCalendar = false"
-    >
-      <ion-content>
-        <ion-datetime
-          presentation="date"
-          :value="props.currentDate.toISOString()"
-          :max="
-            add(new Date(), {
-              years: 10,
-            }).toISOString()
-          "
-          @ion-change="
-            loadDaysWeek({
-              date: new Date($event.target.value as string).getTime(),
-            })
-          "
-        ></ion-datetime>
-      </ion-content>
-    </ion-popover>
-
-    <!-- popover main options -->
-    <ion-popover
-      :is-open="isOpenPopOverMainOptions"
-      :event="eventPopOverMainOptions"
-      @did-dismiss="isOpenPopOverMainOptions = false"
-    >
-      <ion-content>
-        <ion-list>
-          <ion-list-header>
-            <ion-label>General</ion-label>
-          </ion-list-header>
-
-          <ion-row>
-            <ion-col>
-              <!-- button sync -->
-              <ion-item button lines="none" @click="syncData()">
-                <ion-icon slot="start" :icon="syncOutline"></ion-icon>
-                <ion-label class="ion-text-wrap">Sincronizar</ion-label>
-              </ion-item>
-
-              <!-- button modal reschedule tasks -->
-              <ion-item
-                button
-                lines="none"
-                @click="
-                  isOpenModalRecheduleTasks = true;
-                  isOpenPopOverMainOptions = false;
-                "
-              >
-                <ion-icon slot="start" :icon="stopwatchOutline"></ion-icon>
-                <ion-label class="ion-text-wrap"
-                  >Reagendar elementos vencidos</ion-label
-                >
-              </ion-item>
-            </ion-col>
-          </ion-row>
-        </ion-list>
-      </ion-content>
-    </ion-popover>
-    <!-- end popovers -->
+    <!-- <ion-popover -->
+    <!--   :class="{ 'popover-main-calendar-ios': isPlatform('ios') }" -->
+    <!--   :is-open="isOpenpopoverMainCalendar" -->
+    <!--   @did-dismiss="isOpenpopoverMainCalendar = false" -->
+    <!-- > -->
+    <!--   <ion-content> -->
+    <!--     <ion-datetime -->
+    <!--       presentation="date" -->
+    <!--       :value="props.currentDate.toISOString()" -->
+    <!--       :max=" -->
+    <!--         add(new Date(), { -->
+    <!--           years: 10, -->
+    <!--         }).toISOString() -->
+    <!--       " -->
+    <!--       @ion-change=" -->
+    <!--         loadDaysWeek({ -->
+    <!--           date: new Date($event.target.value as string).getTime(), -->
+    <!--         }) -->
+    <!--       " -->
+    <!--     ></ion-datetime> -->
+    <!--   </ion-content> -->
+    <!-- </ion-popover> -->
 
     <!-- modals -->
     <!-- modal reschedule elements -->
@@ -230,22 +184,22 @@
     </ion-modal>
 
     <!-- modal update event -->
-    <ion-modal
-      class="modal-event"
-      :backdrop-dismiss="false"
-      :is-open="isOpenModalUpdateEvent"
-      @did-dismiss="isOpenModalUpdateEvent = false"
-    >
-      <AdminEventComponent
-        :event-data="useEvent().getEvent({ idEvent })"
-        @update="
-          updateEvent({
-            event: $event.data.event,
-          })
-        "
-        @delete="deleteEvent({ eventId: $event.data.id })"
-      />
-    </ion-modal>
+    <!-- <ion-modal -->
+    <!--   class="modal-event" -->
+    <!--   :backdrop-dismiss="false" -->
+    <!--   :is-open="isOpenModalUpdateEvent" -->
+    <!--   @did-dismiss="isOpenModalUpdateEvent = false" -->
+    <!-- > -->
+    <!--   <AdminEventComponent -->
+    <!--     :event-data="useEvent().getEvent({ idEvent })" -->
+    <!--     @update=" -->
+    <!--       updateEvent({ -->
+    <!--         event: $event.data.event, -->
+    <!--       }) -->
+    <!--     " -->
+    <!--     @delete="deleteEvent({ eventId: $event.data.id })" -->
+    <!--   /> -->
+    <!-- </ion-modal> -->
     <!-- end modals -->
   </div>
 </template>
@@ -351,7 +305,7 @@ const months = [
   "december",
 ];
 const modalRescheduleElements = ref(null);
-const idEvent = ref("");
+const idEvent = ref(0);
 const isOpenModalUpdateEvent = ref(false);
 const isOpenModalRecheduleTasks = ref(false);
 const isOpenPopOverMainOptions = ref(false);
@@ -360,45 +314,12 @@ const isOpenModalAddEvent = ref(false);
 const eventModalAddEvent = ref(null as CustomEvent | null);
 const eventComposable = useEvent();
 const scheduleComposable = useSchedule();
+const events = ref([] as Event[]);
 
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  await useEvent().loadEvents();
-});
-
-// computed
-const generateCalendar = computed(() => {
-  const schedule = useSchedule().getSchedule();
-  if (!schedule) return {};
-
-  const eventsByDayOfWeek: { [day: string]: ScheduleElement[] } = {
-    sunday: [],
-    monday: [],
-    tuesday: [],
-    wednesday: [],
-    thursday: [],
-    friday: [],
-    saturday: [],
-  };
-
-  for (const day of daysOfWeek) {
-    eventsByDayOfWeek[day] = [];
-  }
-
-  for (const year in schedule) {
-    for (const month in schedule[parseInt(year)]) {
-      for (const day in schedule[parseInt(year)][month]) {
-        for (const event of schedule[parseInt(year)][month][day]) {
-          const date = new Date(event.date);
-          const dayOfWeek = daysOfWeek[date.getDay()];
-          eventsByDayOfWeek[dayOfWeek].push(event);
-        }
-      }
-    }
-  }
-
-  return eventsByDayOfWeek as any;
+  await syncData();
 });
 
 // functions
@@ -441,7 +362,7 @@ function translateDayHeaderTable(params: { dayName: string }): string {
   return result;
 }
 
-function afterUpdateEvent(params: { idEvent: string }): void {
+function afterUpdateEvent(params: { idEvent: number }): void {
   const id = params.idEvent;
   idEvent.value = id;
   isOpenModalUpdateEvent.value = true;
@@ -483,8 +404,25 @@ async function deleteEvent(params: { eventId: number }): Promise<void> {
 }
 
 async function syncData(): Promise<void> {
-  await eventComposable.sync();
-  await useEvent().loadEvents();
+  try {
+    await useSystem().openToast({ message: "Sincronización iniciada" });
+    await eventComposable.sync();
+    await useEvent().loadEvents({
+      dates: {
+        start: new Date("2024-01-28"),
+        end: new Date(
+          add(new Date("2024-01-28"), {
+            days: 7,
+          })
+        ),
+      },
+    });
+    events.value = await useEvent().getEvents();
+    await useSystem().openToast({ message: "Sincronización terminada" });
+  } catch (error) {
+    await useSystem().openToast({ message: "Problema al sincronizar" });
+    console.error(error);
+  }
 }
 
 async function saveEvent(params: { event: Event }): Promise<void> {

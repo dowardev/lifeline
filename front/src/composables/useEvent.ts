@@ -10,6 +10,7 @@ import {
   getEventLocal,
   getEvents as getEventsServivice,
   getEventsLocal as getEventsLocalService,
+  getEventsLocalByDate as getEventsLocalByDateService,
   pushEvent as pushEventService,
   removeAllLocalEvents as removeAllLocalEventsService,
   saveLocalEvent as saveLocalEventService,
@@ -67,15 +68,23 @@ export const useEvent = () => {
     }
   }
 
-  async function loadEvents(): Promise<void> {
-    let events = await getStoredEvents();
+  async function loadEvents(params: {
+    dates: { start: Date; end: Date };
+  }): Promise<void> {
+    const { dates } = params;
+    let events = await getStoredEvents({ filterType: "date", dates });
     events = events.map((event) => {
       formatEventService({ event });
       return event;
     });
-    eventStore.addEvents({ events });
+    eventStore.setEvents({ events });
   }
 
+  /**
+   * Get all events from Pinia store
+   *
+   * @returns {Promise<Event[]>}
+   */
   async function getEvents(): Promise<Event[]> {
     const events = eventStore.getEvents();
     return events != null ? events : ([] as Event[]);
@@ -98,10 +107,26 @@ export const useEvent = () => {
     }
   }
 
-  async function getStoredEvents(): Promise<Array<Event>> {
+  /**
+   * Get all events from sqlite
+   *
+   * @returns {Promise<Event[]>}
+   */
+  async function getStoredEvents(params: {
+    filterType: "none" | "date";
+    dates?: { start: Date; end: Date } | undefined;
+  }): Promise<Array<Event>> {
+    const { filterType, dates } = params;
     try {
       const db = await dbConnectionService();
-      const events = await getEventsLocalService({ db });
+      let events: Event[] = [];
+
+      if (filterType == "none") events = await getEventsLocalService({ db });
+
+      if (filterType == "date") {
+        if (dates == undefined) throw new Error("Required dates");
+        events = await getEventsLocalByDateService({ db, dates: dates as any });
+      }
       return events;
     } catch (error: any) {
       throw new Error(error);
@@ -116,7 +141,8 @@ export const useEvent = () => {
   }
 
   async function storeEventsServer(): Promise<void> {
-    const eventsStored = (await useEvent().getStoredEvents()) ?? [];
+    const eventsStored =
+      (await useEvent().getStoredEvents({ filterType: "none" })) ?? [];
     const eventsServer = (await useEvent().getEventsServer()) ?? [];
 
     for (const event of eventsServer) {
@@ -135,7 +161,7 @@ export const useEvent = () => {
     events: Event[];
   }): Promise<Event[]> {
     const { events: serverEvents } = params;
-    const localEvents = (await getStoredEvents()) ?? [];
+    const localEvents = (await getStoredEvents({ filterType: "none" })) ?? [];
 
     const sharedIds = lodash.filter(serverEvents, (event) =>
       lodash.some(
@@ -302,7 +328,7 @@ export const useEvent = () => {
 
   async function syncEventsFromServer(): Promise<void> {
     const serverEvents = (await getEventsServer()) ?? [];
-    const localEvents = await getStoredEvents();
+    const localEvents = await getStoredEvents({ filterType: "none" });
     const problems = await getConflictingLocalEvents({
       events: serverEvents,
     });
@@ -600,7 +626,7 @@ export const useEvent = () => {
   }
 
   async function deleteInativeEventOnServer(): Promise<void> {
-    const localEvents = await getStoredEvents();
+    const localEvents = await getStoredEvents({ filterType: "none" });
     const events = localEvents.filter((event) => event.status == "inactive");
     await Promise.all(
       events.map(async (event) => {

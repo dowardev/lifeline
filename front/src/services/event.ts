@@ -34,6 +34,7 @@ import { toRaw } from "vue";
 import { cloneDeep, parseInt } from "lodash";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { dbConnection as dbConnectionService } from "@/services/dbService";
+import { format } from "date-fns";
 
 export async function createEvent(params: {
   event: Event;
@@ -292,8 +293,8 @@ export async function saveLocalEvent(params: { event: Event }): Promise<void> {
 
     const valuesReminders = [
       eventId,
-      event.reminders.start.toISOString(),
-      event.reminders.end.toISOString(),
+      format(event.reminders.start, "yyyy-MM-dd HH:mm:ss"),
+      format(event.reminders.end, "yyyy-MM-dd HH:mm:ss"),
       JSON.stringify(event.reminders.notifications),
       false,
       event.reminders.repeat?.frecuency,
@@ -335,9 +336,6 @@ export async function updateLocalEvent(params: {
 }): Promise<void> {
   const { db, event } = params;
   const eventId = event.id;
-  console.log(
-    await db.query(`select * from reminders where event_id=${eventId}`)
-  );
 
   try {
     const valuesEvent = [
@@ -626,4 +624,47 @@ export function formatEvent(params: { event: Event }): {
   event.reminders.start = new Date(event.reminders.start);
   event.reminders.end = new Date(event.reminders.end);
   return { event };
+}
+
+export async function getEventsLocalByDate(params: {
+  db: SQLiteDBConnection;
+  dates: { start: Date; end: Date };
+}): Promise<Array<Event>> {
+  const { db, dates } = params;
+  const dateStart = format(dates.start, "yyyy-MM-dd HH:mm:ss");
+  const dateEnd = format(dates.end, "yyyy-MM-dd HH:mm:ss");
+
+  const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id
+                    WHERE reminders.start>='${dateStart}' and reminders.end<='${dateEnd}'`;
+  try {
+    const result = (await db.query(query)).values as any[];
+    const events: Event[] = [];
+
+    result.forEach((event: any) => {
+      events.push({
+        id: event.id,
+        name: event.name,
+        guests: JSON.parse(event.guests as any),
+        reminders: {
+          start: new Date(event.start),
+          end: new Date(event.end),
+          notifications: JSON.parse(event.notifications),
+          repeat: {
+            frecuency: event.frecuency,
+            type: event.type,
+            daysWeek: JSON.parse(event.daysWeek),
+          },
+        },
+        timezone: event.timezone,
+        description: event.description,
+        availability: event.availability,
+        idSync: event.idSync,
+        syncStatus: event.syncStatus == 0 ? false : true,
+        status: event.status,
+      });
+    });
+    return events;
+  } catch (error: any) {
+    throw new Error(error);
+  }
 }

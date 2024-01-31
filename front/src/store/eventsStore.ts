@@ -9,6 +9,7 @@ import { forEach, isEqual } from "lodash";
 import { useEvent } from "@/composables/useEvent";
 import { storage } from "@/main";
 import { da } from "date-fns/locale";
+import * as lodash from "lodash";
 
 export const useEventsStore = defineStore("events", () => {
   const events = ref([] as Event[]);
@@ -17,20 +18,6 @@ export const useEventsStore = defineStore("events", () => {
   const useReminderComposable = useReminder();
   const eventComposable = useEvent();
   const calendarSchedule = ref({} as Schedule);
-
-  watch(
-    () => [date.value, events.value],
-    (newValue, oldValue) => {
-      const events = (newValue[1] as Event[]).filter(
-        (event) => event.status == "active"
-      );
-      calendarSchedule.value = useSchedule().generateEventsSchedule({
-        events,
-        date: new Date(newValue[0] as string),
-      });
-    },
-    { deep: true }
-  );
 
   function getEvents() {
     return events.value;
@@ -44,14 +31,20 @@ export const useEventsStore = defineStore("events", () => {
     return document[0];
   }
 
-  function addEvent(params: { event: Event }) {
+  function addEvent(params: { event: Event }): void {
     const event = params.event;
-    events.value = [...events.value, event];
+    const exists = events.value.find((localEvent) => localEvent.id == event.id);
+    if (!exists) events.value.push(event);
   }
 
   function addEvents(params: { events: Event[] }): void {
     const { events: eventsData } = params;
-    events.value = [...events.value, ...eventsData];
+    eventsData.forEach((newEvent) => {
+      const exists = events.value.find(
+        (localEvent) => localEvent.id == newEvent.id
+      );
+      if (!exists) events.value.push(newEvent);
+    });
   }
 
   function updateEvent(params: { event: Event }): void {
@@ -169,17 +162,23 @@ export const useEventsStore = defineStore("events", () => {
     date.value = params.date.toISOString();
   }
 
+  function setEvents(params: { events: Event[] }): void {
+    const { events: newEvents } = params;
+    events.value = newEvents;
+  }
+
   return {
     addEvent,
     addEvents,
+    calendarSchedule,
     date,
     events,
     getEvent,
     getEvents,
     removeEvent,
-    calendarSchedule,
     updateCurrentDate,
     updateEvent,
     updateEvents,
+    setEvents,
   };
 });

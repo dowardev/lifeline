@@ -142,7 +142,7 @@
                 lines="none"
                 @click="
                   popOverMainOptions.open = false;
-                  syncData();
+                  emits('sync');
                 "
               >
                 <ion-icon slot="start" :icon="syncOutline"></ion-icon>
@@ -206,7 +206,7 @@ interface Day {
   date: Date;
 }
 
-const emits = defineEmits(["add", "reschedule"]);
+const emits = defineEmits(["add", "reschedule", "sync"]);
 
 const pageTitle = "Agenda";
 const currentDate = ref(new Date());

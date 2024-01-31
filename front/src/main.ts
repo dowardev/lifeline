@@ -61,7 +61,7 @@ router.isReady().then(() => {
   app.mount("#app");
 });
 
-if (await db.isDBOpen()) {
+if ((await db.isDBOpen()).result) {
   await useSystem().createTableTokens();
   await useEvent().createTableEvents();
   await useEvent().createTableReminders();
