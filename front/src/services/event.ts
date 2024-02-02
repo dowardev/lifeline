@@ -76,7 +76,9 @@ export async function createEvent(params: {
   }
 }
 
-export async function updateEvent(params: { event: Event }): Promise<void> {
+export async function updateEventServer(params: {
+  event: Event;
+}): Promise<void> {
   const { event } = params;
   const data = {
     id: event.idSync,
@@ -331,10 +333,10 @@ export async function saveLocalEvent(params: { event: Event }): Promise<void> {
 }
 
 export async function updateLocalEvent(params: {
-  db: SQLiteDBConnection;
   event: Event;
 }): Promise<void> {
-  const { db, event } = params;
+  const { event } = params;
+  const db = await dbConnectionService();
   const eventId = event.id;
 
   try {

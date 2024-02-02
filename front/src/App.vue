@@ -27,6 +27,7 @@ import { onMounted } from "vue";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { setTheme } from "@/services/system";
 import { useRoute } from "vue-router";
+import { ref } from "vue";
 
 import { useSystem } from "@/composables/useSystem";
 import { getUserToken } from "./services/user";
@@ -35,7 +36,6 @@ import { useEvent } from "./composables/useEvent";
 import { useSchedule } from "./composables/useSchedule";
 
 import { dbConnection as dbConnectionService } from "@/services/dbService";
-import { ref } from "vue";
 
 const route = useRoute();
 const userComposable = useUser();
@@ -46,12 +46,12 @@ const dbOpen = ref(false);
 
 // mounted
 onMounted(async () => {
+  const db = await dbConnectionService();
   // await useSystem().createTableTokens();
   // await useEvent().createTableEvents();
   // await useEvent().createTableReminders();
   await start();
-  dbOpen.value =
-    (await (await dbConnectionService()).isDBOpen()).result ?? false;
+  dbOpen.value = (await db.isDBOpen()).result == undefined ? false : true;
 });
 
 // functions
@@ -65,21 +65,12 @@ const start = async (): Promise<void> => {
   setTheme({ theme: theme, currentTheme: theme });
   await useSystem().updateThemeSelected({ theme });
 
-  // try {
-  //   await useSystem().openToast({ message: "Sincronización iniciada" });
-  //   await syncData();
-  //   await useSystem().openToast({ message: "Sincronización terminada" });
-  // } catch (error) {
-  //   await useSystem().openToast({ message: "Problema al sincronizar" });
-  //   console.error(error);
-  // }
+  try {
+    // await deleteData();
+  } catch (error: any) {
+    console.error(error);
+  }
 };
-
-async function syncData(): Promise<void> {
-  // await deleteData();
-  // sync events
-  // await eventComposable.sync();
-}
 
 function loadUserProps(): void {
   const userToken = getUserToken();

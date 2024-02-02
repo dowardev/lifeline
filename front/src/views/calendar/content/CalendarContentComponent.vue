@@ -184,22 +184,22 @@
     </ion-modal>
 
     <!-- modal update event -->
-    <!-- <ion-modal -->
-    <!--   class="modal-event" -->
-    <!--   :backdrop-dismiss="false" -->
-    <!--   :is-open="isOpenModalUpdateEvent" -->
-    <!--   @did-dismiss="isOpenModalUpdateEvent = false" -->
-    <!-- > -->
-    <!--   <AdminEventComponent -->
-    <!--     :event-data="useEvent().getEvent({ idEvent })" -->
-    <!--     @update=" -->
-    <!--       updateEvent({ -->
-    <!--         event: $event.data.event, -->
-    <!--       }) -->
-    <!--     " -->
-    <!--     @delete="deleteEvent({ eventId: $event.data.id })" -->
-    <!--   /> -->
-    <!-- </ion-modal> -->
+    <ion-modal
+      class="modal-event"
+      :backdrop-dismiss="false"
+      :is-open="isOpenModalUpdateEvent"
+      @did-dismiss="isOpenModalUpdateEvent = false"
+    >
+      <AdminEventComponent
+        :event-data="useEvent().getEvent({ idEvent })"
+        @update="
+          updateEvent({
+            event: $event.data.event,
+          })
+        "
+        @delete="deleteEvent({ eventId: $event.data.id })"
+      />
+    </ion-modal>
     <!-- end modals -->
   </div>
 </template>
@@ -211,31 +211,16 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  IonLabel,
   IonButton,
-  IonItem,
-  IonPopover,
-  isPlatform,
-  IonDatetime,
   IonModal,
   popoverController,
-  IonRadio,
-  IonRadioGroup,
 } from "@ionic/vue";
-import { computed, onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useSchedule } from "@/composables/useSchedule";
-import { add, format, getMonth } from "date-fns";
-import {
-  addOutline,
-  chevronBackOutline,
-  chevronForwardOutline,
-  closeOutline,
-  ellipsisVerticalOutline,
-  stopwatchOutline,
-  syncOutline,
-  todayOutline,
-} from "ionicons/icons";
-import { Event, Months, Schedule, ScheduleElement } from "@/utils/interfaces";
+import { add, format } from "date-fns";
+import { closeOutline } from "ionicons/icons";
+import { Event } from "@/utils/interfaces";
+import { dbConnection as dbConnectionService } from "@/services/dbService";
 
 // components
 import RescheduleComponent from "@/components/events/schedule-elements/RescheduleElements.vue";
@@ -245,14 +230,11 @@ import RightMenuEventComponent from "../RightMenuEventComponent.vue";
 // composables
 import { useSystem } from "@/composables/useSystem";
 import { useEvent } from "@/composables/useEvent";
-import { useReminder } from "@/composables/useReminder";
-import { watch } from "vue";
 
 interface Day {
   date: Date;
 }
 
-const pageTitle = "Agenda";
 const daysOfWeek = [
   "sunday",
   "monday",
@@ -289,27 +271,11 @@ const hoursOfDay = [
   "23:00",
 ];
 const days = ref(Array<Day>());
-const isOpenpopoverMainCalendar = ref(false);
-const months = [
-  "january",
-  "february",
-  "march",
-  "april",
-  "may",
-  "june",
-  "july",
-  "august",
-  "september",
-  "october",
-  "november",
-  "december",
-];
 const modalRescheduleElements = ref(null);
 const idEvent = ref(0);
 const isOpenModalUpdateEvent = ref(false);
 const isOpenModalRecheduleTasks = ref(false);
 const isOpenPopOverMainOptions = ref(false);
-const eventPopOverMainOptions = ref(null as CustomEvent | null);
 const isOpenModalAddEvent = ref(false);
 const eventModalAddEvent = ref(null as CustomEvent | null);
 const eventComposable = useEvent();
@@ -340,17 +306,6 @@ function getDaysForCurrentWeek(params: { date: Date }): Day[] {
   }
 
   return days;
-}
-
-function loadDaysWeek(params: { date: number }): void {
-  const date = params.date;
-  props.currentDate.setTime(date);
-  const days = getDaysForCurrentWeek({ date: props.currentDate });
-  setDaysToWeek({ days });
-}
-
-function setDaysToWeek(params: { days: Array<Day> }): void {
-  days.value = params.days;
 }
 
 function translateDayHeaderTable(params: { dayName: string }): string {
@@ -440,15 +395,15 @@ async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
 
   try {
-    await useEvent().updateEvent({
+    event.syncStatus = false;
+    await useEvent().updateLocalEvent({
       event,
     });
-    const localSchedule = await scheduleComposable.getLocalSchedule();
-    const { schedule } = await scheduleComposable.generateSchedules({
-      schedule: localSchedule,
+    await syncData();
+    event.syncStatus = true;
+    await useEvent().updateLocalEvent({
+      event,
     });
-    await scheduleComposable.saveScheduleLocal({ schedule });
-    await scheduleComposable.loadSchedule();
   } catch (error) {
     console.error(error);
   }

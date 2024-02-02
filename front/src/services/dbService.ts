@@ -29,10 +29,8 @@ export async function dbConnection(): Promise<SQLiteDBConnection> {
       );
     }
 
-    if ((await db.isDBOpen()).result == false) {
-      await db.open();
-      await sqlite.initWebStore();
-    }
+    await db.open();
+    await sqlite.initWebStore();
     return db;
   } catch (error: any) {
     throw new Error(error);

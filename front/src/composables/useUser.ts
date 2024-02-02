@@ -69,19 +69,12 @@ export const useUser = () => {
 
   async function storeUserToken(params: SetUserToken): Promise<void> {
     try {
-      try {
-        const db = await dbConnectionService();
-        await db.open();
-        const { token } = params;
-        await setUserToken({
-          db,
-          fields: ["name", "token"],
-          values: ["user_auth", token],
-        });
-        await db.close();
-      } catch (error: any) {
-        throw new Error(error);
-      }
+      const { token } = params;
+      await setUserToken({
+        token,
+      });
+      const db = await dbConnectionService();
+      console.log((await db.query("select * from Tokens")).values);
     } catch (error: any) {
       throw new Error(error);
     }

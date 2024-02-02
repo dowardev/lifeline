@@ -1,5 +1,10 @@
 import { dbConnection as dbConnectionService } from "@/services/dbService";
 const db = await dbConnectionService();
+const load = setInterval(() => {
+  db.isDBOpen().then((response) => {
+    if (response.result == true) clearInterval(load);
+  });
+}, 2000);
 import { useSystem } from "./composables/useSystem";
 import { useEvent } from "./composables/useEvent";
 
@@ -61,7 +66,7 @@ router.isReady().then(() => {
   app.mount("#app");
 });
 
-if ((await db.isDBOpen()).result) {
+if ((await db.isDBOpen()).result == true) {
   await useSystem().createTableTokens();
   await useEvent().createTableEvents();
   await useEvent().createTableReminders();

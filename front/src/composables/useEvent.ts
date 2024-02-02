@@ -15,7 +15,7 @@ import {
   removeAllLocalEvents as removeAllLocalEventsService,
   saveLocalEvent as saveLocalEventService,
   saveLocalEvents as saveLocalEventsService,
-  updateEvent as updateEventService,
+  updateEventServer as updateEventServer,
   updateLocalEvent as updateLocalEventService,
 } from "../services/event";
 import { useEventsStore } from "../store/eventsStore";
@@ -90,7 +90,7 @@ export const useEvent = () => {
     return events != null ? events : ([] as Event[]);
   }
 
-  function getEvent(params: { idEvent: string }): Event | undefined {
+  function getEvent(params: { idEvent: number }): Event | undefined {
     const idEvent = params.idEvent;
     const event = eventStore.getEvent({ idEvent });
 
@@ -161,7 +161,9 @@ export const useEvent = () => {
     events: Event[];
   }): Promise<Event[]> {
     const { events: serverEvents } = params;
-    const localEvents = (await getStoredEvents({ filterType: "none" })) ?? [];
+    const localEvents = (
+      (await getStoredEvents({ filterType: "none" })) ?? []
+    ).filter((event) => event.idSync! >= 0);
 
     const sharedIds = lodash.filter(serverEvents, (event) =>
       lodash.some(
@@ -299,24 +301,27 @@ export const useEvent = () => {
 
   async function pushEventsUpdated(): Promise<void> {
     const db = await dbConnectionService();
-    await db.open();
     const events = await getEventsLocalService({ db });
-    await db.close();
-    const result = events.filter((event) => {
-      event.idSync = event.idSync ?? 0;
-      event.syncStatus == false && event.idSync > 0;
-    });
-    await Promise.all(
-      result.map(async (event) => {
-        await pusUpdateEvent({ event });
-      })
+
+    const result = events.filter(
+      (event) => event.idSync != null && event.syncStatus == false
     );
+
+    try {
+      await Promise.all(
+        result.map(async (event) => {
+          await updateEventServer({ event });
+        })
+      );
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 
   async function pusUpdateEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
     try {
-      await updateEventService({ event });
+      await updateEventServer({ event });
     } catch (error) {
       console.error(error);
     }
@@ -430,8 +435,8 @@ export const useEvent = () => {
   }
 
   async function sync(): Promise<void> {
-    await syncEventsFromServer();
     await pushEventsUpdated();
+    await syncEventsFromServer();
     await deleteInativeEventOnServer();
   }
 
@@ -458,10 +463,9 @@ export const useEvent = () => {
 
   async function updateLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
-    const db = await dbConnectionService();
+
     try {
       await updateLocalEventService({
-        db,
         event,
       });
     } catch (error: any) {
@@ -501,7 +505,7 @@ export const useEvent = () => {
   async function deleteEvent(params: { id: number }): Promise<void> {
     const { id } = params;
     const db = await dbConnectionService();
-    await db.open();
+    // await db.open();
 
     let status = false;
     try {
@@ -534,7 +538,7 @@ export const useEvent = () => {
         throw new Error(error);
       }
     }
-    await db.close();
+    // await db.close();
   }
 
   async function createTableEvents(): Promise<void> {
@@ -586,9 +590,9 @@ export const useEvent = () => {
     try {
       const { query } = params;
       const db = await dbConnectionService();
-      await db.open();
+      // await db.open();
       await createTableService({ query, db });
-      await db.close();
+      // await db.close();
     } catch (error: any) {
       throw new Error(error);
     }
@@ -603,6 +607,7 @@ export const useEvent = () => {
     const { event } = params;
 
     try {
+      event.syncStatus = true;
       await saveLocalEventService({
         event,
       });

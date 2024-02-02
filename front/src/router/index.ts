@@ -96,8 +96,10 @@ const routes: Array<RouteRecordRaw> = [
     path: "/login",
     name: "Login",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userSignOutGuard();
+    beforeEnter: (to, from) => {
+      return userSignOutGuard().then((response) => {
+        return response;
+      });
     },
   },
   {

@@ -58,7 +58,9 @@ async function getToken(): Promise<string> {
       const tables: any = await db.query(
         "SELECT * FROM Tokens where name='user_auth'"
       );
-      await db.close();
+      // await db.close();
+      // console.log(tables.values[0].token as string);
+      // debugger;
       return tables.values[0].token as string;
     } catch (error: any) {
       return "";

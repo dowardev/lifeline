@@ -194,6 +194,7 @@ import { required, helpers, email } from "@vuelidate/validators";
 import { USER_LOGIN, USER_MENU } from "../../../utils/graphql";
 import { useSystem } from "@/composables/useSystem";
 import { useRouter } from "vue-router";
+import { dbConnection as dbConnectionService } from "@/services/dbService";
 
 // composabeles
 import { useUser } from "@/composables/useUser";
@@ -208,7 +209,7 @@ import loginImageCherry from "@/assets/otros/login-cherry.png";
 const router = useRouter();
 
 // refs
-const form = reactive({ email: "", password: "" });
+const form = reactive({ email: "admin@admin.com", password: "d2f%PF" });
 // spinners
 const spinners = reactive({
   buttonLogin: false,
@@ -286,7 +287,7 @@ async function login(): Promise<void> {
     });
 
     const token = "Bearer " + response.auth.access_token;
-    useUser().storeUserToken({ token });
+    await useUser().storeUserToken({ token });
 
     spinners.buttonLogin = false;
     clearInputs();
