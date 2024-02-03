@@ -188,14 +188,30 @@ export async function getEventLocal(params: {
   db: SQLiteDBConnection;
 }): Promise<Event> {
   const { db, id } = params;
-  const query = `SELECT * FROM Events where id=${id}`;
+  const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id where events.id=${id}`;
   try {
-    const event = (await db.query(query)).values![0] as Event;
-    event.guests = JSON.parse(event.guests as any);
-    event.reminders = JSON.parse(event.reminders as any);
-    event.reminders.start = new Date(event.reminders.start);
-    event.reminders.end = new Date(event.reminders.end);
-    event.syncStatus = event.syncStatus == 0 ? false : true;
+    const result = (await db.query(query)).values![0] as any;
+    const event = {
+      id: result.id,
+      name: result.name,
+      guests: JSON.parse(result.guests as any),
+      reminders: {
+        start: new Date(result.start),
+        end: new Date(result.end),
+        notifications: JSON.parse(result.notifications),
+        repeat: {
+          frecuency: result.frecuency,
+          type: result.type,
+          daysWeek: JSON.parse(result.daysWeek),
+        },
+      },
+      timezone: result.timezone,
+      description: result.description,
+      availability: result.availability,
+      idSync: result.idSync,
+      syncStatus: result.syncStatus == 0 ? false : true,
+      status: result.status,
+    };
     return event;
   } catch (error: any) {
     throw new Error(error);

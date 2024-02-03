@@ -215,12 +215,13 @@ import {
   IonModal,
   popoverController,
 } from "@ionic/vue";
+import { closeOutline } from "ionicons/icons";
 import { onMounted, ref } from "vue";
 import { useSchedule } from "@/composables/useSchedule";
 import { add, format } from "date-fns";
-import { closeOutline } from "ionicons/icons";
+
+// interfaces
 import { Event } from "@/utils/interfaces";
-import { dbConnection as dbConnectionService } from "@/services/dbService";
 
 // components
 import RescheduleComponent from "@/components/events/schedule-elements/RescheduleElements.vue";
@@ -285,7 +286,14 @@ const events = ref([] as Event[]);
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  await syncData();
+  try {
+    await useSystem().openToast({ message: "Sincronización iniciada" });
+    await syncData();
+    await useSystem().openToast({ message: "Sincronización terminada" });
+  } catch (error) {
+    await useSystem().openToast({ message: "Problema al sincronizar" });
+    console.error(error);
+  }
 });
 
 // functions
@@ -353,14 +361,16 @@ async function deleteEvent(params: { eventId: number }): Promise<void> {
   const { eventId } = params;
   try {
     await useEvent().deleteEvent({ id: eventId });
+    await useSystem().openToast({ message: "Evento eliminado" });
+    await syncData();
   } catch (error) {
     console.error(error);
+    await useSystem().openToast({ message: "Problema al eliminar evento" });
   }
 }
 
 async function syncData(): Promise<void> {
   try {
-    await useSystem().openToast({ message: "Sincronización iniciada" });
     await eventComposable.sync();
     await useEvent().loadEvents({
       dates: {
@@ -373,10 +383,8 @@ async function syncData(): Promise<void> {
       },
     });
     events.value = await useEvent().getEvents();
-    await useSystem().openToast({ message: "Sincronización terminada" });
-  } catch (error) {
-    await useSystem().openToast({ message: "Problema al sincronizar" });
-    console.error(error);
+  } catch (error: any) {
+    throw new Error(error);
   }
 }
 
@@ -404,8 +412,10 @@ async function updateEvent(params: { event: Event }): Promise<void> {
     await useEvent().updateLocalEvent({
       event,
     });
+    await useSystem().openToast({ message: "Evento actualizado" });
   } catch (error) {
     console.error(error);
+    await useSystem().openToast({ message: "Problema al actualizar evento" });
   }
 }
 function openModalAdd(params: { event: Event }): void {

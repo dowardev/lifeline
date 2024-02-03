@@ -505,7 +505,6 @@ export const useEvent = () => {
   async function deleteEvent(params: { id: number }): Promise<void> {
     const { id } = params;
     const db = await dbConnectionService();
-    // await db.open();
 
     let status = false;
     try {
