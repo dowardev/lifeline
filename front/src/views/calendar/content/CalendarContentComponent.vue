@@ -215,10 +215,10 @@ import {
   IonModal,
   popoverController,
 } from "@ionic/vue";
-import { closeOutline } from "ionicons/icons";
+import { closeOutline, star } from "ionicons/icons";
 import { onMounted, ref } from "vue";
 import { useSchedule } from "@/composables/useSchedule";
-import { add, format } from "date-fns";
+import { add, format, startOfWeek } from "date-fns";
 
 // interfaces
 import { Event } from "@/utils/interfaces";
@@ -231,6 +231,7 @@ import RightMenuEventComponent from "../RightMenuEventComponent.vue";
 // composables
 import { useSystem } from "@/composables/useSystem";
 import { useEvent } from "@/composables/useEvent";
+import { watch } from "vue";
 
 interface Day {
   date: Date;
@@ -288,13 +289,21 @@ onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
   try {
     await useSystem().openToast({ message: "Sincronización iniciada" });
-    await syncData();
+    await syncData({ date: useEvent().getCurrentDate() });
     await useSystem().openToast({ message: "Sincronización terminada" });
   } catch (error) {
     await useSystem().openToast({ message: "Problema al sincronizar" });
     console.error(error);
   }
 });
+
+// watch
+watch(
+  () => useEvent().getCurrentDate(),
+  async (date) => {
+    await syncData({ date });
+  }
+);
 
 // functions
 function getDaysForCurrentWeek(params: { date: Date }): Day[] {
@@ -362,24 +371,30 @@ async function deleteEvent(params: { eventId: number }): Promise<void> {
   try {
     await useEvent().deleteEvent({ id: eventId });
     await useSystem().openToast({ message: "Evento eliminado" });
-    await syncData();
+    await syncData({ date: useEvent().getCurrentDate() });
   } catch (error) {
     console.error(error);
     await useSystem().openToast({ message: "Problema al eliminar evento" });
   }
 }
 
-async function syncData(): Promise<void> {
+async function syncData(params: { date: Date }): Promise<void> {
+  const { date } = params;
   try {
+    const startWeek = startOfWeek(date, {
+      weekStartsOn: 1,
+    });
+    const endWeek = new Date(
+      add(startWeek, {
+        days: 7,
+      })
+    );
+
     await eventComposable.sync();
     await useEvent().loadEvents({
       dates: {
-        start: new Date("2024-01-28"),
-        end: new Date(
-          add(new Date("2024-01-28"), {
-            days: 7,
-          })
-        ),
+        start: startWeek,
+        end: endWeek,
       },
     });
     events.value = await useEvent().getEvents();
@@ -407,7 +422,7 @@ async function updateEvent(params: { event: Event }): Promise<void> {
     await useEvent().updateLocalEvent({
       event,
     });
-    await syncData();
+    await syncData({ date: useEvent().getCurrentDate() });
     event.syncStatus = true;
     await useEvent().updateLocalEvent({
       event,

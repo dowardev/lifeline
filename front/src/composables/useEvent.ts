@@ -639,6 +639,14 @@ export const useEvent = () => {
     );
   }
 
+  function getCurrentDate(): Date {
+    return eventStore.date;
+  }
+
+  function getCurrentDateStored(): Date {
+    return new Date();
+  }
+
   return {
     createTableEvents,
     createTableReminders,
@@ -646,6 +654,8 @@ export const useEvent = () => {
     deleteEventStored,
     deleteEvents,
     deleteReminders,
+    getCurrentDate,
+    getCurrentDateStored,
     getEvent,
     getEvents,
     getEventsServer,

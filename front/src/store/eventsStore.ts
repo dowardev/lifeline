@@ -13,11 +13,7 @@ import * as lodash from "lodash";
 
 export const useEventsStore = defineStore("events", () => {
   const events = ref([] as Event[]);
-  const date = ref(new Date().toISOString());
-  const scheduleComposable = useSchedule();
-  const useReminderComposable = useReminder();
-  const eventComposable = useEvent();
-  const calendarSchedule = ref({} as Schedule);
+  const date = ref(useEvent().getCurrentDateStored());
 
   function getEvents() {
     return events.value;
@@ -159,7 +155,7 @@ export const useEventsStore = defineStore("events", () => {
   //
 
   function updateCurrentDate(params: { date: Date }): void {
-    date.value = params.date.toISOString();
+    date.value = params.date;
   }
 
   function setEvents(params: { events: Event[] }): void {
@@ -170,7 +166,6 @@ export const useEventsStore = defineStore("events", () => {
   return {
     addEvent,
     addEvents,
-    calendarSchedule,
     date,
     events,
     getEvent,

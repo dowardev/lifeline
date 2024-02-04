@@ -76,6 +76,12 @@
               years: 10,
             }).toISOString()
           "
+          :first-day-of-week="1"
+          @ion-change="
+            useEvent().setCurrentDate({
+              date: new Date($event.target.value as any),
+            })
+          "
         ></ion-datetime>
       </ion-content>
     </ion-popover>
@@ -177,13 +183,15 @@
 
 <script setup lang="ts">
 import {
-  IonTitle,
-  IonToolbar,
   IonButton,
-  isPlatform,
+  IonDatetime,
+  IonPopover,
+  IonTitle,
   IonToast,
+  IonToolbar,
+  isPlatform,
 } from "@ionic/vue";
-import { add, getMonth } from "date-fns";
+import { add, getMonth, sub } from "date-fns";
 import {
   addOutline,
   chevronBackOutline,
@@ -262,47 +270,25 @@ function getDaysForCurrentWeek(params: { date: Date }): Day[] {
 }
 
 function previousWeek(): void {
-  const currentMonth = currentDate.value.getMonth();
-  if (currentMonth === 0 && currentDate.value.getDate() <= 7) {
-    return;
-  }
-  const date = new Date(currentDate.value);
-  if (date.getDate() <= 7) {
-    date.setMonth(currentMonth - 1);
-    date.setDate(
-      new Date(date.getFullYear(), currentMonth, 0).getDate() -
-        (7 - date.getDate())
-    );
-  } else {
-    date.setDate(date.getDate() - 7);
-  }
-  currentDate.value = date;
-  useEvent().setCurrentDate({ date: new Date(currentDate.value) });
-  emits("currentDate", currentDate);
+  const nextDate = new Date(
+    sub(useEvent().getCurrentDate(), {
+      days: 7,
+    })
+  );
+  useEvent().setCurrentDate({ date: nextDate });
 }
 
 function nextWeek(): void {
-  const currentMonth = currentDate.value.getMonth();
-  const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
-  const lastDayOfMonth = new Date(
-    currentDate.value.getFullYear(),
-    nextMonth,
-    0
-  ).getDate();
-  const date = new Date(currentDate.value);
-  if (date.getDate() + 7 > lastDayOfMonth) {
-    date.setMonth(nextMonth);
-    date.setDate(7 - (lastDayOfMonth - date.getDate()));
-  } else {
-    date.setDate(date.getDate() + 7);
-  }
-  currentDate.value = date;
-  useEvent().setCurrentDate({ date: new Date(currentDate.value) });
+  const nextDate = new Date(
+    add(useEvent().getCurrentDate(), {
+      days: 7,
+    })
+  );
+  useEvent().setCurrentDate({ date: nextDate });
 }
 
 function today(): void {
-  const date = new Date();
-  useEvent().setCurrentDate({ date });
+  useEvent().setCurrentDate({ date: new Date() });
 }
 
 function translateMonth(params: { monthName: string }): string {
