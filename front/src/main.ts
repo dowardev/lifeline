@@ -1,12 +1,15 @@
-import { dbConnection as dbConnectionService } from "@/services/dbService";
-const db = await dbConnectionService();
-const load = setInterval(() => {
-  db.isDBOpen().then((response) => {
-    if (response.result == true) clearInterval(load);
-  });
-}, 2000);
+import { main } from "@/services/dbService";
+import {
+  CapacitorSQLite,
+  SQLiteConnection,
+  SQLiteDBConnection,
+} from "@capacitor-community/sqlite";
+import { Capacitor } from "@capacitor/core";
 import { useSystem } from "./composables/useSystem";
 import { useEvent } from "./composables/useEvent";
+
+import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
+customElements.define("jeep-sqlite", JeepSqlite);
 
 import { createApp } from "vue";
 import App from "./App.vue";
@@ -35,8 +38,6 @@ import "./theme/variables.css";
 
 // apollo
 import apolloClient from "./Apollo";
-import { provide, h } from "vue";
-import { DefaultApolloClient } from "@vue/apollo-composable";
 
 // i18n
 import i18n from "./plugins/i18n/i18n";
@@ -50,24 +51,30 @@ export { storage };
 // pinia
 import { createPinia } from "pinia";
 const pinia = createPinia();
+import { createApolloProvider } from "@vue/apollo-option";
 
-const app = createApp({
-  setup() {
-    provide(DefaultApolloClient, apolloClient);
-  },
-  render: () => h(App),
-})
-  .use(IonicVue)
-  .use(i18n)
-  .use(pinia)
-  .use(router);
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const dbService = new main();
+    await dbService.init();
+    await dbService.dbConnection();
+    (await dbService.dbConnection()).open();
 
-router.isReady().then(() => {
-  app.mount("#app");
+    const apolloProvider = createApolloProvider({
+      defaultClient: apolloClient,
+    });
+
+    const app = createApp(App)
+      .use(apolloProvider)
+      .use(IonicVue)
+      .use(i18n)
+      .use(pinia)
+      .use(router);
+    router.isReady().then(() => {
+      app.mount("#app");
+    });
+  } catch (err) {
+    console.log(`Error: ${err}`);
+    throw new Error(`Error: ${err}`);
+  }
 });
-
-if ((await db.isDBOpen()).result == true) {
-  await useSystem().createTableTokens();
-  await useEvent().createTableEvents();
-  await useEvent().createTableReminders();
-}

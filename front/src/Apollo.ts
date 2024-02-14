@@ -1,6 +1,8 @@
 import { ApolloClient, InMemoryCache } from "@apollo/client/core";
 import { CapacitorSQLite, SQLiteConnection } from "@capacitor-community/sqlite";
 import { Capacitor } from "@capacitor/core";
+import { main } from "@/services/dbService";
+import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 
 const cache = new InMemoryCache();
 
@@ -18,54 +20,17 @@ const apolloClient = new ApolloClient({
   cache,
   uri,
   headers: {
-    Authorization: await getToken(),
+    Authorization: getToken(),
   },
 });
 export default apolloClient;
 
-async function getToken(): Promise<string> {
-  const sqlite = new SQLiteConnection(CapacitorSQLite);
-  const platform = Capacitor.getPlatform();
-  if (platform === "web") {
-    const jeepSqliteEl = document.createElement("jeep-sqlite");
-    document.body.appendChild(jeepSqliteEl);
-    await customElements.whenDefined("jeep-sqlite");
-    await sqlite.initWebStore();
+function getToken(): string {
+  const cookie = document.cookie;
+  const authTokenCookie = cookie.match(/authToken=(.*?)(?=(;|$))/);
+  if (authTokenCookie) {
+    const token = JSON.parse(authTokenCookie[1]);
+    return token;
   }
-  let db = null;
-  try {
-    const sqlite = new SQLiteConnection(CapacitorSQLite);
-    const ret = await sqlite.checkConnectionsConsistency();
-    const isConn = (await sqlite.isConnection("db_vite", false)).result;
-
-    if (ret.result && isConn) {
-      db = await sqlite.retrieveConnection("db_vite", false);
-    } else {
-      db = await sqlite.createConnection(
-        "db_vite",
-        false,
-        "no-encryption",
-        1,
-        false
-      );
-    }
-  } catch (error: any) {
-    throw new Error(error);
-  }
-  try {
-    await db.open();
-    try {
-      const tables: any = await db.query(
-        "SELECT * FROM Tokens where name='user_auth'"
-      );
-      // await db.close();
-      // console.log(tables.values[0].token as string);
-      // debugger;
-      return tables.values[0].token as string;
-    } catch (error: any) {
-      return "";
-    }
-  } catch (error: any) {
-    throw new Error(error);
-  }
+  return "";
 }

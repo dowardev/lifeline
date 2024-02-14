@@ -4,15 +4,21 @@ import {
   SQLiteConnection,
   SQLiteDBConnection,
 } from "@capacitor-community/sqlite";
+import { Capacitor } from "@capacitor/core";
 
-// customElements.define("jeep-sqlite", JeepSqlite);
-customElements.define("jeep-sqlite", JeepSqlite);
-const jeepSqliteEl = document.createElement("jeep-sqlite");
-document.body.appendChild(jeepSqliteEl);
-await customElements.whenDefined("jeep-sqlite");
+export class main {
+  async init(): Promise<void> {
+    const platform = Capacitor.getPlatform();
+    const sqlite = new SQLiteConnection(CapacitorSQLite);
+    if (platform === "web") {
+      const jeepSqliteEl = document.createElement("jeep-sqlite");
+      document.body.appendChild(jeepSqliteEl);
+      await customElements.whenDefined("jeep-sqlite");
+      await sqlite.initWebStore();
+    }
+  }
 
-export async function dbConnection(): Promise<SQLiteDBConnection> {
-  try {
+  async dbConnection(): Promise<SQLiteDBConnection> {
     const sqlite = new SQLiteConnection(CapacitorSQLite);
     const ret = await sqlite.checkConnectionsConsistency();
     const isConn = (await sqlite.isConnection("db_vite", false)).result;
@@ -28,31 +34,25 @@ export async function dbConnection(): Promise<SQLiteDBConnection> {
         false
       );
     }
-
-    await db.open();
-    await sqlite.initWebStore();
     return db;
-  } catch (error: any) {
-    throw new Error(error);
   }
-}
 
-export async function createTable(params: {
-  query: any;
-  db: SQLiteDBConnection;
-}): Promise<void> {
-  try {
-    const { query, db } = params;
-    const queryCreateTable = query;
-    const respCT = await db.execute(queryCreateTable);
-    if (
-      respCT.changes &&
-      respCT.changes.changes &&
-      respCT.changes.changes < 0
-    ) {
-      throw new Error(`Error: execute failed`);
+  async createTable(params: { query: any }): Promise<void> {
+    try {
+      const { query } = params;
+      const db = await new main().dbConnection();
+      if ((await db.isDBOpen()).result == false) await db.open();
+      const queryCreateTable = query;
+      const respCT = await db.execute(queryCreateTable);
+      if (
+        respCT.changes &&
+        respCT.changes.changes &&
+        respCT.changes.changes < 0
+      ) {
+        throw new Error(`Error: execute failed`);
+      }
+    } catch (error: any) {
+      throw new Error(error);
     }
-  } catch (error: any) {
-    throw new Error(error);
   }
 }

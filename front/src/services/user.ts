@@ -15,13 +15,16 @@ import { errorBuilder } from "@/utils/errors";
 import { executeGrapQuery, graphqlQueryBuilder } from "./graphql";
 import { USER_MENU } from "@/utils/graphql";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
-import { dbConnection as dbConnectionService } from "@/services/dbService";
+import { main } from "@/services/dbService";
+
+const dbService = new main();
 
 export async function setUserToken(params: { token: string }): Promise<void> {
   const { token } = params;
-  const db = await dbConnectionService();
   const fields = ["name", "token"];
   const values = ["user_auth", token];
+  const db = await new main().dbConnection();
+  if ((await db.isDBOpen()).result == false) await db.open();
 
   try {
     let query = `

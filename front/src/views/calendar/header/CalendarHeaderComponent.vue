@@ -247,6 +247,8 @@ const toastProps = ref({ isOpen: false, message: {} });
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
   // await useEvent().loadEvents();
+  currentDate.value = await useEvent().getCurrentDateStored();
+  useEvent().setCurrentDate({ date: currentDate.value });
 });
 
 // functions
@@ -276,6 +278,7 @@ function previousWeek(): void {
     })
   );
   useEvent().setCurrentDate({ date: nextDate });
+  useEvent().setCurrentDateStored({ date: nextDate });
 }
 
 function nextWeek(): void {
@@ -285,10 +288,12 @@ function nextWeek(): void {
     })
   );
   useEvent().setCurrentDate({ date: nextDate });
+  useEvent().setCurrentDateStored({ date: nextDate });
 }
 
 function today(): void {
   useEvent().setCurrentDate({ date: new Date() });
+  useEvent().setCurrentDateStored({ date: new Date() });
 }
 
 function translateMonth(params: { monthName: string }): string {

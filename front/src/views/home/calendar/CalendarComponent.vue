@@ -29,35 +29,35 @@
     </section>
 
     <section class="calendar-body">
-      <table class="schedule-table">
-        <thead>
-          <tr>
-            <th class="hour-column">Hora</th>
-            <th class="event-column">Eventos</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr v-for="hour in hours" :key="hour">
-            <td class="hour-cell">{{ hour }}</td>
-            <td class="event-cell">
-              <div
-                v-for="event in filteredEvents({ hour: parseInt(hour) })"
-                :key="event.id"
-              >
-                <ion-card class="card-event">
-                  <ion-card-header>
-                    <ion-card-title>{{ event.title }}</ion-card-title>
-                  </ion-card-header>
-                  <ion-card-content>
-                    {{ format(new Date(event.date), "Pp") }}
-                  </ion-card-content>
-                </ion-card>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- <table class="schedule-table"> -->
+      <!--   <thead> -->
+      <!--     <tr> -->
+      <!--       <th class="hour-column">Hora</th> -->
+      <!--       <th class="event-column">Eventos</th> -->
+      <!--     </tr> -->
+      <!--   </thead> -->
+      <!---->
+      <!--   <tbody> -->
+      <!--     <tr v-for="hour in hours" :key="hour"> -->
+      <!--       <td class="hour-cell">{{ hour }}</td> -->
+      <!--       <td class="event-cell"> -->
+      <!--         <div -->
+      <!--           v-for="event in filteredEvents({ hour: parseInt(hour) })" -->
+      <!--           :key="event.id" -->
+      <!--         > -->
+      <!--           <ion-card class="card-event"> -->
+      <!--             <ion-card-header> -->
+      <!--               <ion-card-title>{{ event.title }}</ion-card-title> -->
+      <!--             </ion-card-header> -->
+      <!--             <ion-card-content> -->
+      <!--               {{ format(new Date(event.date), "Pp") }} -->
+      <!--             </ion-card-content> -->
+      <!--           </ion-card> -->
+      <!--         </div> -->
+      <!--       </td> -->
+      <!--     </tr> -->
+      <!--   </tbody> -->
+      <!-- </table> -->
     </section>
   </section>
 
@@ -114,29 +114,29 @@ const hours = Array.from(
 const miniCalendar = ref(null);
 
 // computed
-const generateSchedule = computed(() => {
-  const schedule = useSchedule().getSchedule();
-  if (!schedule) return [];
-
-  const year = currentDate.value.getFullYear();
-  const month = currentDate.value.getMonth();
-  const day = currentDate.value.getDate();
-
-  const events = schedule[year]?.[month]?.[day];
-  if (!events) return [];
-  return events;
-});
+// const generateSchedule = computed(() => {
+//   const schedule = useSchedule().getSchedule();
+//   if (!schedule) return [];
+//
+//   const year = currentDate.value.getFullYear();
+//   const month = currentDate.value.getMonth();
+//   const day = currentDate.value.getDate();
+//
+//   const events = schedule[year]?.[month]?.[day];
+//   if (!events) return [];
+//   return events;
+// });
 
 // functions
-function filteredEvents(params: { hour: number }): ScheduleElement[] {
-  return generateSchedule.value.filter((event) => {
-    const eventHour = new Date(event.date).getHours();
-    if (eventHour === params.hour) {
-      return true;
-    }
-    return false;
-  });
-}
+// function filteredEvents(params: { hour: number }): ScheduleElement[] {
+//   return generateSchedule.value.filter((event) => {
+//     const eventHour = new Date(event.date).getHours();
+//     if (eventHour === params.hour) {
+//       return true;
+//     }
+//     return false;
+//   });
+// }
 </script>
 
 <style scoped>
@@ -185,7 +185,6 @@ function filteredEvents(params: { hour: number }): ScheduleElement[] {
 .schedule-table .event-column {
   width: 90%;
 }
-
 
 .schedule-table .event-cell {
   position: relative;

@@ -13,7 +13,7 @@ import * as lodash from "lodash";
 
 export const useEventsStore = defineStore("events", () => {
   const events = ref([] as Event[]);
-  const date = ref(useEvent().getCurrentDateStored());
+  const date = ref(new Date());
 
   function getEvents() {
     return events.value;

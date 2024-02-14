@@ -21,10 +21,9 @@ import {
   Months,
   SystemMessage,
 } from "@/utils/interfaces";
-import {
-  createTable as createTableService,
-  dbConnection as dbConnectionService,
-} from "@/services/dbService";
+import { main } from "@/services/dbService";
+
+const dbService = new main();
 
 export const useSystem = () => {
   const systemStore = useSystemStore();
@@ -197,7 +196,7 @@ export const useSystem = () => {
     reminders: boolean;
   }): Promise<void> {
     const { events, schedule, reminders } = params;
-    const db = await dbConnectionService();
+    const db = await dbService.dbConnection();
     await deleteDataService({ events, schedule, reminders, db });
   }
 
@@ -214,8 +213,7 @@ export const useSystem = () => {
   async function createTable(params: { query: any }): Promise<void> {
     try {
       const { query } = params;
-      const db = await dbConnectionService();
-      await createTableService({ query, db });
+      await dbService.createTable({ query });
     } catch (error: any) {
       throw new Error(error);
     }

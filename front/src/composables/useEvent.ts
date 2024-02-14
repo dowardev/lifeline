@@ -24,13 +24,14 @@ import * as jsonpatch from "fast-json-patch";
 import { useSchedule } from "./useSchedule";
 import { difference, parseInt } from "lodash";
 import { useSystem } from "./useSystem";
-import {
-  dbConnection as dbConnectionService,
-  createTable as createTableService,
-} from "@/services/dbService";
+import { main } from "@/services/dbService";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { toRaw } from "vue";
 import * as lodash from "lodash";
+import { storage } from "@/main";
+import { ViewCalendar } from "@/utils/types";
+
+const dbService = new main();
 
 export const useEvent = () => {
   const eventStore = useEventsStore();
@@ -118,14 +119,13 @@ export const useEvent = () => {
   }): Promise<Array<Event>> {
     const { filterType, dates } = params;
     try {
-      const db = await dbConnectionService();
       let events: Event[] = [];
 
-      if (filterType == "none") events = await getEventsLocalService({ db });
+      if (filterType == "none") events = await getEventsLocalService();
 
       if (filterType == "date") {
         if (dates == undefined) throw new Error("Required dates");
-        events = await getEventsLocalByDateService({ db, dates: dates as any });
+        events = await getEventsLocalByDateService({ dates: dates as any });
       }
       return events;
     } catch (error: any) {
@@ -300,8 +300,12 @@ export const useEvent = () => {
   }
 
   async function pushEventsUpdated(): Promise<void> {
-    const db = await dbConnectionService();
-    const events = await getEventsLocalService({ db });
+    try {
+    } catch (error) {
+      console.error(error);
+      debugger;
+    }
+    const events = await getEventsLocalService();
 
     const result = events.filter(
       (event) => event.idSync != null && event.syncStatus == false
@@ -435,9 +439,13 @@ export const useEvent = () => {
   }
 
   async function sync(): Promise<void> {
-    await pushEventsUpdated();
-    await syncEventsFromServer();
-    await deleteInativeEventOnServer();
+    try {
+      await pushEventsUpdated();
+      await syncEventsFromServer();
+      await deleteInativeEventOnServer();
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 
   async function deleteEvents(params: {
@@ -504,7 +512,7 @@ export const useEvent = () => {
    */
   async function deleteEvent(params: { id: number }): Promise<void> {
     const { id } = params;
-    const db = await dbConnectionService();
+    const db = await dbService.dbConnection();
 
     let status = false;
     try {
@@ -588,9 +596,9 @@ export const useEvent = () => {
   async function createTable(params: { query: any }): Promise<void> {
     try {
       const { query } = params;
-      const db = await dbConnectionService();
+      const db = await dbService.dbConnection();
       // await db.open();
-      await createTableService({ query, db });
+      await dbService.createTable({ query, db });
       // await db.close();
     } catch (error: any) {
       throw new Error(error);
@@ -625,8 +633,7 @@ export const useEvent = () => {
    */
   async function deleteLocalEvent(params: { id: number }): Promise<void> {
     const { id } = params;
-    const db = await dbConnectionService();
-    await deleteEventService({ id, db });
+    await deleteEventService({ id });
   }
 
   async function deleteInativeEventOnServer(): Promise<void> {
@@ -643,8 +650,24 @@ export const useEvent = () => {
     return eventStore.date;
   }
 
-  function getCurrentDateStored(): Date {
-    return new Date();
+  async function getCurrentDateStored(): Promise<Date> {
+    return (await storage.get("currentDate")) ?? new Date();
+  }
+
+  async function setCurrentDateStored(params: { date: Date }): Promise<Date> {
+    const { date } = params;
+    return (await storage.set("currentDate", date)) ?? new Date();
+  }
+
+  async function getViewCalendarStored(): Promise<ViewCalendar> {
+    return (await storage.get("viewCalendar")) ?? "weekly";
+  }
+
+  async function setViewCalendarStored(params: {
+    mode: ViewCalendar;
+  }): Promise<ViewCalendar> {
+    const { mode } = params;
+    return (await storage.set("viewCalendar", mode)) ?? "weekly";
   }
 
   return {
@@ -660,6 +683,7 @@ export const useEvent = () => {
     getEvents,
     getEventsServer,
     getStoredEvents,
+    getViewCalendarStored,
     loadEvents,
     pusUpdateEvent,
     pushNewEvent,
@@ -670,6 +694,8 @@ export const useEvent = () => {
     saveEvent,
     saveLocalEvent,
     setCurrentDate,
+    setCurrentDateStored,
+    setViewCalendarStored,
     storeEventsServer,
     storeLocalEvent,
     storeRemoveEventsServer,

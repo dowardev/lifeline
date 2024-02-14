@@ -281,27 +281,28 @@ const isOpenPopOverMainOptions = ref(false);
 const isOpenModalAddEvent = ref(false);
 const eventModalAddEvent = ref(null as CustomEvent | null);
 const eventComposable = useEvent();
-const scheduleComposable = useSchedule();
 const events = ref([] as Event[]);
+const componentLoaded = ref(false);
 
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  try {
-    await useSystem().openToast({ message: "Sincronización iniciada" });
-    await syncData({ date: useEvent().getCurrentDate() });
-    await useSystem().openToast({ message: "Sincronización terminada" });
-  } catch (error) {
-    await useSystem().openToast({ message: "Problema al sincronizar" });
-    console.error(error);
-  }
+  await syncAction();
 });
 
 // watch
 watch(
-  () => useEvent().getCurrentDate(),
-  async (date) => {
-    await syncData({ date });
+  () => [useEvent().getCurrentDate(), componentLoaded.value],
+  async (value) => {
+    const date = value[0] as Date;
+    const componentLoaded = value[1];
+    if (componentLoaded == true)
+      try {
+        await syncData({ date });
+        days.value = getDaysForCurrentWeek({ date });
+      } catch (error) {
+        console.error(error);
+      }
   }
 );
 
@@ -380,22 +381,25 @@ async function deleteEvent(params: { eventId: number }): Promise<void> {
 
 async function syncData(params: { date: Date }): Promise<void> {
   const { date } = params;
+
   try {
-    const startWeek = startOfWeek(date, {
-      weekStartsOn: 1,
-    });
-    const endWeek = new Date(
-      add(startWeek, {
-        days: 7,
-      })
-    );
+    const viewCalendar = await useEvent().getViewCalendarStored();
+    const dates = { start: new Date(), end: new Date() };
+
+    if (viewCalendar == "weekly") {
+      dates.start = startOfWeek(date, {
+        weekStartsOn: 1,
+      });
+      dates.end = new Date(
+        add(dates.start, {
+          days: 7,
+        })
+      );
+    }
 
     await eventComposable.sync();
     await useEvent().loadEvents({
-      dates: {
-        start: startWeek,
-        end: endWeek,
-      },
+      dates,
     });
     events.value = await useEvent().getEvents();
   } catch (error: any) {
@@ -444,7 +448,19 @@ function reschedule(): void {
   isOpenPopOverMainOptions.value = false;
 }
 
-defineExpose({ openModalAdd, syncData, reschedule });
+async function syncAction(): Promise<void> {
+  try {
+    await useSystem().openToast({ message: "Sincronización iniciada" });
+    await syncData({ date: useEvent().getCurrentDate() });
+    await useSystem().openToast({ message: "Sincronización terminada" });
+    componentLoaded.value = true;
+  } catch (error) {
+    await useSystem().openToast({ message: "Problema al sincronizar" });
+    console.error(error);
+  }
+}
+
+defineExpose({ openModalAdd, reschedule, syncAction });
 </script>
 
 <style scoped>

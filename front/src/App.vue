@@ -1,5 +1,5 @@
 <template>
-  <ion-app v-if="dbOpen">
+  <ion-app>
     <ion-split-pane when="lg" content-id="menu-content">
       <ion-menu
         content-id="menu-content"
@@ -16,42 +16,24 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonApp,
-  IonRouterOutlet,
-  IonMenu,
-  IonSplitPane,
-  toastController,
-} from "@ionic/vue";
+import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
 import { onMounted } from "vue";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { setTheme } from "@/services/system";
-import { useRoute } from "vue-router";
-import { ref } from "vue";
 
 import { useSystem } from "@/composables/useSystem";
 import { getUserToken } from "./services/user";
 import { useUser } from "./composables/useUser";
 import { useEvent } from "./composables/useEvent";
-import { useSchedule } from "./composables/useSchedule";
 
-import { dbConnection as dbConnectionService } from "@/services/dbService";
-
-const route = useRoute();
-const userComposable = useUser();
-const eventComposable = useEvent();
 const systemComposable = useSystem();
-const scheduleComposable = useSchedule();
-const dbOpen = ref(false);
 
 // mounted
 onMounted(async () => {
-  const db = await dbConnectionService();
-  // await useSystem().createTableTokens();
-  // await useEvent().createTableEvents();
-  // await useEvent().createTableReminders();
   await start();
-  dbOpen.value = (await db.isDBOpen()).result == undefined ? false : true;
+  await useSystem().createTableTokens();
+  await useEvent().createTableEvents();
+  await useEvent().createTableReminders();
 });
 
 // functions

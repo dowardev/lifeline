@@ -47,6 +47,9 @@ dependencies:
   '@vue/apollo-composable':
     specifier: 4.0.0-beta.4
     version: 4.0.0-beta.4(@apollo/client@3.8.7)(graphql@16.8.1)(typescript@5.3.2)(vue@3.3.9)
+  '@vue/apollo-option':
+    specifier: ^4.0.0
+    version: 4.0.0(@apollo/client@3.8.7)(vue@3.3.9)
   '@vuelidate/core':
     specifier: ^2.0.3
     version: 2.0.3(vue@3.3.9)
@@ -2616,6 +2619,17 @@ packages:
       vue-demi: 0.13.11(vue@3.3.9)
     transitivePeerDependencies:
       - typescript
+    dev: false
+
+  /@vue/apollo-option@4.0.0(@apollo/client@3.8.7)(vue@3.3.9):
+    resolution: {integrity: sha512-rZf4bLNldV9egADp3UhC2O4qmmn6L3vF/RwRJse8lgtpGFrov9qtZxl/rRg0+9UtZeOTFwTovnQo7J7C7FP3Ow==}
+    peerDependencies:
+      '@apollo/client': ^3.2.1
+      vue: ^3.1.0
+    dependencies:
+      '@apollo/client': 3.8.7(graphql@16.8.1)
+      throttle-debounce: 5.0.0
+      vue: 3.3.9(typescript@5.3.2)
     dev: false
 
   /@vue/compiler-core@3.3.9:
@@ -7550,6 +7564,11 @@ packages:
   /throttle-debounce@3.0.1:
     resolution: {integrity: sha512-dTEWWNu6JmeVXY0ZYoPuH5cRIwc0MeGbJwah9KUNYSJwommQpCzTySTpEe8Gs1J23aeWEuAobe4Ag7EHVt/LOg==}
     engines: {node: '>=10'}
+    dev: false
+
+  /throttle-debounce@5.0.0:
+    resolution: {integrity: sha512-2iQTSgkkc1Zyk0MeVrt/3BvuOXYPl/R8Z0U2xxo9rjwNciaHDG3R+Lm6dh4EeUci49DanvBnuqI6jshoQQRGEg==}
+    engines: {node: '>=12.22'}
     dev: false
 
   /throttleit@1.0.1:

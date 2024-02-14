@@ -14,10 +14,9 @@ import {
 } from "@/services/session";
 import { errorBuilder } from "@/utils/errors";
 import { logout as userLogout } from "../services/session";
-import {
-  createTable as createTableService,
-  dbConnection as dbConnectionService,
-} from "@/services/dbService";
+import { main } from "@/services/dbService";
+
+const dbService = new main();
 
 export const useUser = () => {
   const userStore = useUserStore();
@@ -73,8 +72,8 @@ export const useUser = () => {
       await setUserToken({
         token,
       });
-      const db = await dbConnectionService();
-      console.log((await db.query("select * from Tokens")).values);
+      const serializedToken = JSON.stringify(token);
+      document.cookie = `authToken=${serializedToken}; path=/;`;
     } catch (error: any) {
       throw new Error(error);
     }

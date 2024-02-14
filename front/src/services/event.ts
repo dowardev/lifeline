@@ -33,8 +33,10 @@ import { storage } from "@/main";
 import { toRaw } from "vue";
 import { cloneDeep, parseInt } from "lodash";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
-import { dbConnection as dbConnectionService } from "@/services/dbService";
+import { main } from "@/services/dbService";
 import { format } from "date-fns";
+
+const dbService = new main();
 
 export async function createEvent(params: {
   event: Event;
@@ -271,8 +273,9 @@ export async function getUserCalendars(
 
 export async function saveLocalEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
+  const db = await new main().dbConnection();
+  if ((await db.isDBOpen()).result == false) await db.open();
 
-  const db = await dbConnectionService();
   try {
     const valuesEvent = [
       event.availability,
@@ -352,8 +355,9 @@ export async function updateLocalEvent(params: {
   event: Event;
 }): Promise<void> {
   const { event } = params;
-  const db = await dbConnectionService();
   const eventId = event.id;
+  const db = await new main().dbConnection();
+  if ((await db.isDBOpen()).result == false) await db.open();
 
   try {
     const valuesEvent = [
@@ -422,10 +426,10 @@ export async function updateLocalEvent(params: {
   }
 }
 
-export async function getEventsLocal(params: {
-  db: SQLiteDBConnection;
-}): Promise<Array<Event>> {
-  const { db } = params;
+export async function getEventsLocal(): Promise<Array<Event>> {
+  const db = await new main().dbConnection();
+  if ((await db.isDBOpen()).result == false) await db.open();
+
   const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id`;
   try {
     const result = (await db.query(query)).values as any[];
@@ -515,13 +519,14 @@ export async function getEvent(params: { id: string }): Promise<Event | null> {
   return event[0];
 }
 
-export async function deleteEvent(params: {
-  id: number;
-  db: SQLiteDBConnection;
-}): Promise<void> {
-  const { db, id } = params;
+export async function deleteEvent(params: { id: number }): Promise<void> {
+  const { id } = params;
   const queryReminders = `Delete FROM Reminders where event_id=${id}`;
   const queryEvents = `Delete FROM Events where id=${id}`;
+  const db = await new main().dbConnection();
+
+  if ((await db.isDBOpen()).result == false) await db.open();
+
   try {
     await db.query(queryReminders);
     await db.query(queryEvents);
@@ -645,10 +650,12 @@ export function formatEvent(params: { event: Event }): {
 }
 
 export async function getEventsLocalByDate(params: {
-  db: SQLiteDBConnection;
   dates: { start: Date; end: Date };
 }): Promise<Array<Event>> {
-  const { db, dates } = params;
+  const db = await new main().dbConnection();
+  if ((await db.isDBOpen()).result == false) await db.open();
+
+  const { dates } = params;
   const dateStart = format(dates.start, "yyyy-MM-dd HH:mm:ss");
   const dateEnd = format(dates.end, "yyyy-MM-dd HH:mm:ss");
 

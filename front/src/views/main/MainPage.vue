@@ -32,7 +32,7 @@
           :page-title="calendarComponent.pageTitle"
           @add="calendarComponentRef.openModalAdd({ event: $event })"
           @reschedule="calendarComponentRef.reschedule()"
-          @sync="calendarComponentRef.syncData()"
+          @sync="calendarComponentRef.syncAction()"
         />
 
         <!-- integrations -->
