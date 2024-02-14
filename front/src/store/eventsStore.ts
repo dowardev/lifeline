@@ -1,15 +1,6 @@
 import { defineStore } from "pinia";
-import { Event, Schedule } from "@/utils/interfaces";
-import { getEvents as getEventsService } from "../services/event";
-import { USER_EVENTS } from "../services/graphql";
-import { ref, toRaw, watch } from "vue";
-import { useSchedule } from "@/composables/useSchedule";
-import { useReminder } from "@/composables/useReminder";
-import { forEach, isEqual } from "lodash";
-import { useEvent } from "@/composables/useEvent";
-import { storage } from "@/main";
-import { da } from "date-fns/locale";
-import * as lodash from "lodash";
+import { Event } from "@/utils/interfaces";
+import { ref } from "vue";
 
 export const useEventsStore = defineStore("events", () => {
   const events = ref([] as Event[]);

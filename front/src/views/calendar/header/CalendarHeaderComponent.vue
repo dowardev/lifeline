@@ -209,6 +209,7 @@ import { ref } from "vue";
 import { onMounted } from "vue";
 import { reactive } from "vue";
 import { useEvent } from "@/composables/useEvent";
+import { watch } from "vue";
 
 interface Day {
   date: Date;
@@ -250,6 +251,14 @@ onMounted(async () => {
   currentDate.value = await useEvent().getCurrentDateStored();
   useEvent().setCurrentDate({ date: currentDate.value });
 });
+
+// watch
+watch(
+  () => useEvent().getCurrentDate(),
+  async (date) => {
+    currentDate.value = date;
+  }
+);
 
 // functions
 function getDaysForCurrentWeek(params: { date: Date }): Day[] {
