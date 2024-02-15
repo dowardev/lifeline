@@ -60,10 +60,14 @@
                           <div v-for="event in events" :key="event.id">
                             <template
                               v-if="
-                                event.reminders.start.getHours() ===
+                                (event.reminders.start.getHours() ===
                                   parseInt(hour) &&
-                                event.reminders.start.getDate() ===
-                                  day.date.getDate()
+                                  event.reminders.start.getDate() <=
+                                    day.date.getDate()) ||
+                                (event.reminders.end.getHours() ===
+                                  parseInt(hour) &&
+                                  event.reminders.end.getDate() <=
+                                    day.date.getDate())
                               "
                             >
                               <ion-card
