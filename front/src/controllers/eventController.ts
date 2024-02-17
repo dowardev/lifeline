@@ -1,40 +1,17 @@
-import { NewEvent, Event, Schedule } from "@/utils/interfaces";
-import {
-  createEvent as createEventService,
-  deleteEvent as deleteEventService,
-  deleteEventServer as deleteEventServerService,
-  deleteEvents as deleteEventsService,
-  deleteReminders as deleteRemindersService,
-  formatEvent as formatEventService,
-  generateEventId as generateEventIdService,
-  getEventLocal,
-  getEvents as getEventsServivice,
-  getEventsLocal as getEventsLocalService,
-  getEventsLocalByDate as getEventsLocalByDateService,
-  pushEvent as pushEventService,
-  removeAllLocalEvents as removeAllLocalEventsService,
-  saveLocalEvent as saveLocalEventService,
-  saveLocalEvents as saveLocalEventsService,
-  updateEventServer as updateEventServer,
-  updateLocalEvent as updateLocalEventService,
-} from "../services/event";
+import { Event } from "@/utils/interfaces";
 import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
-import * as jsonpatch from "fast-json-patch";
-import { useSchedule } from "./useSchedule";
-import { difference, parseInt } from "lodash";
-import { useSystem } from "./useSystem";
-import { main } from "@/services/dbService";
+import { DBService } from "@/services/dbService";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
-import { toRaw } from "vue";
-import * as lodash from "lodash";
+import lodash from "lodash";
 import { storage } from "@/main";
 import { ViewCalendar } from "@/utils/types";
+import { EventService } from "@/services/event";
 
-const dbService = new main();
-
-export const useEvent = () => {
-  const eventStore = useEventsStore();
+export class EventController {
+  dbService = new DBService();
+  eventService = new EventService();
+  eventStore = useEventsStore();
 
   /**
    * Perform all the necessary procedure to add a event both generally, locally and from the store
@@ -44,12 +21,12 @@ export const useEvent = () => {
    *
    * @returns {Promise<void>}
    */
-  async function saveEvent(params: { event: Event }): Promise<void> {
+  async saveEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
     let id = null;
 
     try {
-      id = (await pushNewEvent({ event })).id;
+      id = (await this.pushNewEvent({ event })).id;
     } catch (error: any) {
       throw new Error(error);
     }
@@ -60,25 +37,25 @@ export const useEvent = () => {
       event.idSync = id;
       event.status = "active";
       event.syncStatus = false;
-      await saveLocalEvent({
+      await this.saveLocalEvent({
         event,
       });
-      eventStore.addEvent({ event });
+      this.eventStore.addEvent({ event });
     } catch (error: any) {
       throw new Error(error);
     }
   }
 
-  async function loadEvents(params: {
+  async loadEvents(params: {
     dates: { start: Date; end: Date };
   }): Promise<void> {
     const { dates } = params;
-    let events = await getStoredEvents({ filterType: "date", dates });
-    events = events.map((event) => {
-      formatEventService({ event });
-      return event;
-    });
-    eventStore.setEvents({ events });
+    const events = await this.getStoredEvents({ filterType: "date", dates });
+    // events = events.map((event) => {
+    //   eventService.formatEvent({ event });
+    //   return event;
+    // });
+    this.eventStore.setEvents({ events });
   }
 
   /**
@@ -86,23 +63,23 @@ export const useEvent = () => {
    *
    * @returns {Promise<Event[]>}
    */
-  async function getEvents(): Promise<Event[]> {
-    const events = eventStore.getEvents();
+  async getEvents(): Promise<Event[]> {
+    const events = this.eventStore.getEvents();
     return events != null ? events : ([] as Event[]);
   }
 
-  function getEvent(params: { idEvent: number }): Event | undefined {
+  getEvent(params: { idEvent: number }): Event | undefined {
     const idEvent = params.idEvent;
-    const event = eventStore.getEvent({ idEvent });
+    const event = this.eventStore.getEvent({ idEvent });
 
     return event ?? undefined;
   }
 
-  async function pushUpdateEvent(params: { event: Event }): Promise<void> {
+  async pushUpdateEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
 
     try {
-      await pushEventService({ event });
+      await this.eventService.pushEvent({ event });
     } catch (error) {
       console.error(error);
     }
@@ -113,7 +90,7 @@ export const useEvent = () => {
    *
    * @returns {Promise<Event[]>}
    */
-  async function getStoredEvents(params: {
+  async getStoredEvents(params: {
     filterType: "none" | "date";
     dates?: { start: Date; end: Date } | undefined;
   }): Promise<Array<Event>> {
@@ -121,11 +98,14 @@ export const useEvent = () => {
     try {
       let events: Event[] = [];
 
-      if (filterType == "none") events = await getEventsLocalService();
+      if (filterType == "none")
+        events = await this.eventService.getEventsLocal();
 
       if (filterType == "date") {
         if (dates == undefined) throw new Error("Required dates");
-        events = await getEventsLocalByDateService({ dates: dates as any });
+        events = await this.eventService.getEventsLocalByDate({
+          dates: dates as any,
+        });
       }
       return events;
     } catch (error: any) {
@@ -133,17 +113,17 @@ export const useEvent = () => {
     }
   }
 
-  async function getEventsServer(): Promise<Array<Event>> {
-    const events = await getEventsServivice({
+  async getEventsServer(): Promise<Array<Event>> {
+    const events = await this.eventService.getEvents({
       graphql: { name: USER_EVENTS, fragment: "Events", refetch: true },
     });
     return events ?? ([] as Event[]);
   }
 
-  async function storeEventsServer(): Promise<void> {
+  async storeEventsServer(): Promise<void> {
     const eventsStored =
-      (await useEvent().getStoredEvents({ filterType: "none" })) ?? [];
-    const eventsServer = (await useEvent().getEventsServer()) ?? [];
+      (await this.getStoredEvents({ filterType: "none" })) ?? [];
+    const eventsServer = (await this.getEventsServer()) ?? [];
 
     for (const event of eventsServer) {
       const result = eventsStored?.filter(
@@ -152,17 +132,17 @@ export const useEvent = () => {
       if (result?.length == 0 || result == undefined) {
         event.reminders.start = new Date(event.reminders.start);
         event.reminders.end = new Date(event.reminders.end);
-        await storeLocalEvent({ event });
+        await this.storeLocalEvent({ event });
       }
     }
   }
 
-  async function getConflictingLocalEvents(params: {
+  async getConflictingLocalEvents(params: {
     events: Event[];
   }): Promise<Event[]> {
     const { events: serverEvents } = params;
     const localEvents = (
-      (await getStoredEvents({ filterType: "none" })) ?? []
+      (await this.getStoredEvents({ filterType: "none" })) ?? []
     ).filter((event) => event.idSync! >= 0);
 
     const sharedIds = lodash.filter(serverEvents, (event) =>
@@ -254,11 +234,11 @@ export const useEvent = () => {
     return newArray;
   }
 
-  async function storeRemoveEventsServer(): Promise<{
+  async storeRemoveEventsServer(): Promise<{
     eventsDeleted: Event[];
   }> {
-    const eventsStored = (await useEvent().getStoredEvents()) ?? [];
-    const eventsServer = (await useEvent().getEventsServer()) ?? [];
+    const eventsStored = (await this.getStoredEvents()) ?? [];
+    const eventsServer = (await this.getEventsServer()) ?? [];
 
     const deleted = [] as Event[];
 
@@ -273,7 +253,7 @@ export const useEvent = () => {
     }
 
     for (const event of deleted) {
-      await useEvent().deleteEvent({ eventId: event.id! });
+      await this.deleteEvent({ eventId: event.id! });
     }
     return { eventsDeleted: deleted };
   }
@@ -284,14 +264,12 @@ export const useEvent = () => {
    * @param {Event} params.event event
    * @returns {Promise<{ id: number | null }>}
    */
-  async function pushNewEvent(params: {
-    event: Event;
-  }): Promise<{ id: number | null }> {
+  async pushNewEvent(params: { event: Event }): Promise<{ id: number | null }> {
     const { event } = params;
     let id = null as number | null;
 
     try {
-      const response = await createEventService({ event });
+      const response = await this.eventService.createEvent({ event });
       id = response.id;
     } catch (error) {
       console.error(error);
@@ -299,13 +277,13 @@ export const useEvent = () => {
     return { id };
   }
 
-  async function pushEventsUpdated(): Promise<void> {
+  async pushEventsUpdated(): Promise<void> {
     try {
     } catch (error) {
       console.error(error);
       debugger;
     }
-    const events = await getEventsLocalService();
+    const events = await this.eventService.getEventsLocal();
 
     const result = events.filter(
       (event) => event.idSync != null && event.syncStatus == false
@@ -314,7 +292,7 @@ export const useEvent = () => {
     try {
       await Promise.all(
         result.map(async (event) => {
-          await updateEventServer({ event });
+          await this.eventService.updateEventServer({ event });
         })
       );
     } catch (error: any) {
@@ -322,23 +300,23 @@ export const useEvent = () => {
     }
   }
 
-  async function pusUpdateEvent(params: { event: Event }): Promise<void> {
+  async pusUpdateEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
     try {
-      await updateEventServer({ event });
+      await this.eventService.updateEventServer({ event });
     } catch (error) {
       console.error(error);
     }
   }
 
-  async function removeAllEvents(): Promise<void> {
-    await removeAllLocalEventsService();
+  async removeAllEvents(): Promise<void> {
+    await this.eventService.removeAllLocalEvents();
   }
 
-  async function syncEventsFromServer(): Promise<void> {
-    const serverEvents = (await getEventsServer()) ?? [];
-    const localEvents = await getStoredEvents({ filterType: "none" });
-    const problems = await getConflictingLocalEvents({
+  async syncEventsFromServer(): Promise<void> {
+    const serverEvents = (await this.getEventsServer()) ?? [];
+    const localEvents = await this.getStoredEvents({ filterType: "none" });
+    const problems = await this.getConflictingLocalEvents({
       events: serverEvents,
     });
     const eventsServerDeleted = localEvents.filter((event) => {
@@ -376,10 +354,10 @@ export const useEvent = () => {
       if (newLocalEvents.length > 0)
         for (let index = 0; index < newLocalEvents.length; index++) {
           const event = newLocalEvents[index];
-          const { id } = await pushNewEvent({ event });
+          const { id } = await this.pushNewEvent({ event });
           event.idSync = id as number;
           event.syncStatus = true;
-          await updateLocalEvent({ event });
+          await this.updateLocalEvent({ event });
         }
     } catch (error: any) {
       if (
@@ -394,7 +372,7 @@ export const useEvent = () => {
       if (newServerEvents.length > 0)
         for (let index = 0; index < newServerEvents.length; index++) {
           const event = newServerEvents[index];
-          await saveLocalEvent({
+          await this.saveLocalEvent({
             event,
           });
         }
@@ -411,7 +389,7 @@ export const useEvent = () => {
       if (problems.length > 0)
         for (let index = 0; index < problems.length; index++) {
           const event = problems[index];
-          await saveEvent({ event });
+          await this.saveEvent({ event });
         }
     } catch (error: any) {
       throw new Error(error);
@@ -421,7 +399,7 @@ export const useEvent = () => {
       if (toUpdate.length > 0)
         for (let index = 0; index < toUpdate.length; index++) {
           const event = toUpdate[index];
-          await updateLocalEvent({ event: event as any });
+          await this.updateLocalEvent({ event: event as any });
         }
     } catch (error: any) {
       throw new Error(error);
@@ -431,49 +409,45 @@ export const useEvent = () => {
       if (eventsServerDeleted.length > 0)
         for (let index = 0; index < eventsServerDeleted.length; index++) {
           const event = eventsServerDeleted[index];
-          await deleteLocalEvent({ id: event.id as number });
+          await this.deleteLocalEvent({ id: event.id as number });
         }
     } catch (error: any) {
       throw new Error(error);
     }
   }
 
-  async function sync(): Promise<void> {
+  async sync(): Promise<void> {
     try {
-      await pushEventsUpdated();
-      await syncEventsFromServer();
-      await deleteInativeEventOnServer();
+      await this.pushEventsUpdated();
+      await this.syncEventsFromServer();
+      await this.deleteInativeEventOnServer();
     } catch (error: any) {
       throw new Error(error);
     }
   }
 
-  async function deleteEvents(params: {
-    db: SQLiteDBConnection;
-  }): Promise<void> {
+  async deleteEvents(params: { db: SQLiteDBConnection }): Promise<void> {
     const { db } = params;
-    await deleteEventsService({ db });
+    await this.eventService.deleteEvents({ db });
   }
 
-  async function deleteReminders(params: {
-    db: SQLiteDBConnection;
-  }): Promise<void> {
+  async deleteReminders(params: { db: SQLiteDBConnection }): Promise<void> {
     const { db } = params;
-    await deleteRemindersService({ db });
+    await this.eventService.deleteReminders({ db });
   }
 
-  async function storeLocalEvent(params: { event: Event }): Promise<void> {
+  async storeLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
-    await saveLocalEventService({
+    await this.eventService.saveLocalEvent({
       event,
     });
   }
 
-  async function updateLocalEvent(params: { event: Event }): Promise<void> {
+  async updateLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
 
     try {
-      await updateLocalEventService({
+      await this.eventService.updateLocalEvent({
         event,
       });
     } catch (error: any) {
@@ -487,19 +461,19 @@ export const useEvent = () => {
     }
   }
 
-  function removeEventStore(params: { id: string }): void {
+  removeEventStore(params: { id: string }): void {
     const { id } = params;
-    eventStore.removeEvent({ id: id });
+    this.eventStore.removeEvent({ id: id });
   }
 
-  async function deleteEventStored(params: { id: string }): Promise<void> {
+  async deleteEventStored(params: { id: string }): Promise<void> {
     const { id } = params;
-    await deleteEventService({ eventId: id });
+    await this.eventService.deleteEvent({ eventId: id });
   }
 
-  async function removeEventServer(params: { id: string }): Promise<void> {
+  async removeEventServer(params: { id: string }): Promise<void> {
     const { id } = params;
-    await deleteEventServerService({ id });
+    await this.eventService.deleteEventServer({ id });
   }
 
   /**
@@ -510,14 +484,15 @@ export const useEvent = () => {
    *
    * @returns {Promise<void>}
    */
-  async function deleteEvent(params: { id: number }): Promise<void> {
+  async deleteEvent(params: { id: number }): Promise<void> {
     const { id } = params;
     const db = await dbService.dbConnection();
 
     let status = false;
     try {
-      const idSync = (await getEventLocal({ db, id })).idSync;
-      await deleteEventServerService({ id: idSync as number });
+      const idSync = (await this.eventService.getEventsLocal({ db, id }))
+        .idSync;
+      await this.eventService.deleteEventServer({ id: idSync as number });
       status = true;
     } catch (error: any) {
       if (error.message == "No internet connection")
@@ -527,9 +502,9 @@ export const useEvent = () => {
 
     if (status == true) {
       try {
-        await deleteLocalEvent({ id });
+        await this.deleteLocalEvent({ id });
         status = true;
-        eventStore.removeEvent({ id });
+        this.eventStore.removeEvent({ id });
       } catch (error: any) {
         throw new Error(error);
       }
@@ -537,10 +512,12 @@ export const useEvent = () => {
 
     if (status == false) {
       try {
-        const event = await getEventLocal({ db, id });
+        const event = await this.getEventLocal({ db, id });
         event.status = "inactive";
-        const { event: eventFormated } = formatEventService({ event });
-        await updateLocalEvent({ event: eventFormated });
+        const { event: eventFormated } = this.eventService.formatEvent({
+          event,
+        });
+        await this.updateLocalEvent({ event: eventFormated });
       } catch (error: any) {
         throw new Error(error);
       }
@@ -548,7 +525,7 @@ export const useEvent = () => {
     // await db.close();
   }
 
-  async function createTableEvents(): Promise<void> {
+  async createTableEvents(): Promise<void> {
     // const query = `CREATE TABLE IF NOT EXISTS Events
     // (
     //   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -574,10 +551,10 @@ export const useEvent = () => {
       status TEXT,
       UNIQUE(idSync)
     );`;
-    await createTable({ query });
+    await this.createTable({ query });
   }
 
-  async function createTableReminders(): Promise<void> {
+  async createTableReminders(): Promise<void> {
     const query = `CREATE TABLE IF NOT EXISTS Reminders
     (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -590,32 +567,32 @@ export const useEvent = () => {
       type TEXT NULL,
       daysWeek TEXT NULL
     );`;
-    await createTable({ query });
+    await this.createTable({ query });
   }
 
-  async function createTable(params: { query: any }): Promise<void> {
+  async createTable(params: { query: any }): Promise<void> {
     try {
       const { query } = params;
-      const db = await dbService.dbConnection();
+      const db = await this.dbService.dbConnection();
       // await db.open();
-      await dbService.createTable({ query, db });
+      await this.dbService.createTable({ query, db });
       // await db.close();
     } catch (error: any) {
       throw new Error(error);
     }
   }
 
-  function setCurrentDate(params: { date: Date }): void {
+  setCurrentDate(params: { date: Date }): void {
     const { date } = params;
-    eventStore.updateCurrentDate({ date });
+    this.eventStore.updateCurrentDate({ date });
   }
 
-  async function saveLocalEvent(params: { event: Event }): Promise<void> {
+  async saveLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
 
     try {
       event.syncStatus = true;
-      await saveLocalEventService({
+      await this.eventService.saveLocalEvent({
         event,
       });
     } catch (error: any) {
@@ -631,77 +608,44 @@ export const useEvent = () => {
    * @param {Number} params.id id of the event on the server (idSync)
    * @returns {Promise<void>}
    */
-  async function deleteLocalEvent(params: { id: number }): Promise<void> {
+  async deleteLocalEvent(params: { id: number }): Promise<void> {
     const { id } = params;
-    await deleteEventService({ id });
+    await this.eventService.deleteEvent({ id });
   }
 
-  async function deleteInativeEventOnServer(): Promise<void> {
-    const localEvents = await getStoredEvents({ filterType: "none" });
+  async deleteInativeEventOnServer(): Promise<void> {
+    const localEvents = await this.getStoredEvents({ filterType: "none" });
     const events = localEvents.filter((event) => event.status == "inactive");
     await Promise.all(
       events.map(async (event) => {
-        await deleteEventServerService({ id: event.idSync as number });
+        await this.eventService.deleteEventServer({
+          id: event.idSync as number,
+        });
       })
     );
   }
 
-  function getCurrentDate(): Date {
-    return eventStore.date;
+  getCurrentDate(): Date {
+    return this.eventStore.date;
   }
 
-  async function getCurrentDateStored(): Promise<Date> {
+  async getCurrentDateStored(): Promise<Date> {
     return (await storage.get("currentDate")) ?? new Date();
   }
 
-  async function setCurrentDateStored(params: { date: Date }): Promise<Date> {
+  async setCurrentDateStored(params: { date: Date }): Promise<Date> {
     const { date } = params;
     return (await storage.set("currentDate", date)) ?? new Date();
   }
 
-  async function getViewCalendarStored(): Promise<ViewCalendar> {
+  async getViewCalendarStored(): Promise<ViewCalendar> {
     return (await storage.get("viewCalendar")) ?? "weekly";
   }
 
-  async function setViewCalendarStored(params: {
+  async setViewCalendarStored(params: {
     mode: ViewCalendar;
   }): Promise<ViewCalendar> {
     const { mode } = params;
     return (await storage.set("viewCalendar", mode)) ?? "weekly";
   }
-
-  return {
-    createTableEvents,
-    createTableReminders,
-    deleteEvent,
-    deleteEventStored,
-    deleteEvents,
-    deleteReminders,
-    getCurrentDate,
-    getCurrentDateStored,
-    getEvent,
-    getEvents,
-    getEventsServer,
-    getStoredEvents,
-    getViewCalendarStored,
-    loadEvents,
-    pusUpdateEvent,
-    pushNewEvent,
-    pushUpdateEvent,
-    removeAllEvents,
-    removeEventServer,
-    removeEventStore,
-    saveEvent,
-    saveLocalEvent,
-    setCurrentDate,
-    setCurrentDateStored,
-    setViewCalendarStored,
-    storeEventsServer,
-    storeLocalEvent,
-    storeRemoveEventsServer,
-    storeUpdateEventsServer: getConflictingLocalEvents,
-    sync,
-    syncEventsFromServer,
-    updateLocalEvent,
-  };
-};
+}

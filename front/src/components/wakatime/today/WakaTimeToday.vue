@@ -9,8 +9,11 @@
 </template>
 
 <script setup lang="ts">
-import { useSystem } from "@/composables/useSystem";
 import { onMounted, ref } from "vue";
+
+// controllers
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
 
 const props = defineProps({
   apiKey: { default: "", type: String, required: true },
@@ -26,7 +29,7 @@ onMounted(() => {
 async function getWakaTimeToday(params: { apiKey: string }): Promise<void> {
   const { apiKey } = params;
   const date = getTodayDate();
-  const response = await useSystem().getWakaTimeDayTotal({ apiKey, date });
+  const response = await systemController.getWakaTimeDayTotal({ apiKey, date });
   todayTime.value = response;
 }
 
@@ -53,7 +56,7 @@ function refresh(): void {
 }
 
 async function logout(): Promise<void> {
-  await useSystem().clearWakaTimeApiKey();
+  await systemController.clearWakaTimeApiKey();
 }
 
 defineExpose({

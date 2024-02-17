@@ -37,12 +37,12 @@
     </ion-header>
 
     <ion-content
-      v-if="useDocument().getUserDocuments() != undefined"
+      v-if="documentController.getUserDocuments() != undefined"
       :fullscreen="true"
     >
       <ion-row>
         <ion-col
-          v-for="(document, index) in useDocument().getUserDocuments()"
+          v-for="(document, index) in documentController.getUserDocuments()"
           :key="index"
           size-xs="12"
           class="center"
@@ -91,7 +91,6 @@ import { ref } from "vue";
 import { useEventsStore } from "../../store/eventsStore";
 import { Storage } from "@ionic/storage";
 import { storeToRefs } from "pinia";
-import { useDocument } from "../../composables/useDocument";
 import RightMenuComponent from "./RightMenuComponent.vue";
 import { useRouter } from "vue-router";
 import { addOutline, calendarOutline } from "ionicons/icons";
@@ -101,6 +100,10 @@ const { date } = storeToRefs(eventsStore);
 const storage = new Storage();
 storage.create();
 const router = useRouter();
+
+// controllers
+import { DocumentController } from "@/controllers/documentController";
+const documentController = new DocumentController();
 
 // refs
 const pageTitle = ref("Inicio");
@@ -127,7 +130,7 @@ const addDocument = async () => {
 };
 
 const loadDocuments = async () => {
-  await useDocument().loadUserDocuments();
+  await documentController.loadUserDocuments();
 };
 
 const openDocument = async (params: { documentUrl: string }) => {
@@ -137,7 +140,7 @@ const openDocument = async (params: { documentUrl: string }) => {
 
 const deleteDocument = async (params: { documentId: string }) => {
   const documentId = params.documentId;
-  await useDocument().deleteDocument({ documentId });
+  await documentController.deleteDocument({ documentId });
 };
 
 const openPopoverRightMenu = async (params: {
@@ -163,13 +166,13 @@ const openPopoverRightMenu = async (params: {
 const createDocument = async (): Promise<
   { documentUrl: string | undefined } | undefined
 > => {
-  let document = {
+  const document = {
     title: "Nuevo documento",
   };
 
   let url = undefined;
   try {
-    const response = await useDocument().saveDocument({ document });
+    const response = await documentController.saveDocument({ document });
     if (response == null) return undefined;
     url = response.url;
     return { documentUrl: url };

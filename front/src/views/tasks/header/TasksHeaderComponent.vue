@@ -78,7 +78,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSystem } from "@/composables/useSystem";
 import { ViewMode } from "@/utils/types";
 import { IonTitle, IonToolbar, IonButtons, isPlatform } from "@ionic/vue";
 import {
@@ -87,6 +86,10 @@ import {
   stopwatchOutline,
 } from "ionicons/icons";
 import { ref, watch, reactive } from "vue";
+
+// controllers
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
 
 const props = defineProps({
   viewModeProp: { type: String, default: "list" },
@@ -111,7 +114,7 @@ watch(
 // functions
 function setTasksViewMode(params: { viewMode: ViewMode }): void {
   const { viewMode } = params;
-  useSystem().setTasksViewMode({ viewMode });
+  systemController.setTasksViewMode({ viewMode });
 }
 </script>
 

@@ -51,7 +51,6 @@
 
 <script setup lang="ts">
 import { IonContent, IonTitle, IonToolbar, IonButton } from "@ionic/vue";
-import { useSystem } from "@/composables/useSystem";
 import { onMounted, ref } from "vue";
 
 import { brushOutline, ellipsisVerticalOutline } from "ionicons/icons";
@@ -61,8 +60,12 @@ const pageTitle = "Inicio";
 const isOpenPopOverMainOptions = ref(false);
 const eventPopOverMainOptions = ref(null as CustomEvent | null);
 
+// controllers
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
+
 onMounted(() => {
-  useSystem().loadWakaTimeApiKey();
+  systemController.loadWakaTimeApiKey();
 });
 </script>
 

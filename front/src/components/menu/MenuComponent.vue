@@ -18,7 +18,7 @@
             <ion-col size="12">
               <!-- logged -->
               <ion-item
-                v-if="useUser().isLogged.value == true"
+                v-if="userController.refs.isLogged.value == true"
                 lines="none"
                 class="transparent"
               >
@@ -27,7 +27,7 @@
                 <!-- </ion-avatar> -->
 
                 <ion-label class="labelOptionMenu">{{
-                  useUser().user.value.user
+                  userController.refs.user.value
                 }}</ion-label>
 
                 <ion-button
@@ -44,7 +44,7 @@
 
               <!-- no logged -->
               <ion-item
-                v-if="useUser().isLogged.value == false"
+                v-if="userController.refs.isLogged.value == false"
                 class="transparent"
                 lines="none"
               >
@@ -315,20 +315,24 @@ import { Storage } from "@ionic/storage";
 const store = new Storage();
 store.create();
 import ThemeSelectorComponent from "./theme/ThemeMenuComponent.vue";
-import { useSystem } from "@/composables/useSystem";
 import userImage from "@/assets/otros/user.png";
 import userImageGruvbox from "@/assets/otros/user-gruvbox.png";
 import { useRouter } from "vue-router";
-import { useUser } from "@/composables/useUser";
 
 const router = useRouter();
 const spinners = reactive({ buttonLogout: false });
 const isOpenPopoverUserOptions = ref(false);
 const eventOpenPopoverUserOptions = ref(CustomEvent);
 
+// controllers
+import { SystemController } from "@/controllers/systemController";
+import { UserController } from "@/controllers/userController";
+const systemController = new SystemController();
+const userController = new UserController();
+
 // computed
 const imageKeyPath = computed(() => {
-  const theme = useSystem().getTheme();
+  const theme = systemController.getTheme();
   let image = "";
   if (theme == "nord" || "light") image = userImage;
   if (theme == "gruvbox") image = userImageGruvbox;
@@ -348,7 +352,7 @@ const openRoute = (route: string) => {
 
 const loadUser = async (): Promise<void> => {
   try {
-    await useUser().loadUser();
+    await userController.loadUser();
   } catch (error) {
     console.error(error);
   }
@@ -382,7 +386,7 @@ const changeLanguage = (language: string) => {
 async function logout(): Promise<void> {
   spinners.buttonLogout = true;
   try {
-    await useUser().logout();
+    await userController.logout();
     spinners.buttonLogout = false;
     location.reload();
   } catch (error) {

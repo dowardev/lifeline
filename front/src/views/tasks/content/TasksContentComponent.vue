@@ -42,7 +42,7 @@
                 <ion-col size="12">
                   <listTasksComponent
                     v-show="viewMode == 'list'"
-                    :task-data="useTask().getTasks()"
+                    :task-data="taskController.getTasks()"
                     @update="updateTask({ idTask: $event.idTask })"
                     @remove="removeTask({ id: $event.idTask })"
                     @toggle-check="toggleCheckTask({ id: $event.idTask })"
@@ -54,7 +54,7 @@
                 <ion-col size-xs="12" size-md="12" size-lg="12">
                   <kanbanComponent
                     v-show="viewMode == 'kanban'"
-                    :task-data="useTask().getTasks()"
+                    :task-data="taskController.getTasks()"
                     @update="updateTask({ idTask: $event.idTask })"
                     @delete="removeTask({ id: $event.idTask })"
                     @toggle-check="toggleCheckTask({ id: $event.idTask })"
@@ -91,7 +91,7 @@
       :is-open="isOpenModalUpdateTask"
       @did-dismiss="isOpenModalUpdateTask = false"
     >
-      <AddTaskComponent :task-data="useTask().getTask({ idTask })" />
+      <AddTaskComponent :task-data="taskController.getTask({ idTask })" />
     </ion-modal>
   </div>
 </template>
@@ -114,9 +114,11 @@ import {
 import { addOutline, albumsOutline, appsOutline } from "ionicons/icons";
 import { onMounted, ref } from "vue";
 
-// composable
-import { useTask } from "@/composables/useTask";
-import { useSystem } from "@/composables/useSystem";
+// controllers
+import { SystemController } from "@/controllers/systemController";
+import { TaskController } from "@/controllers/taskController";
+const systemController = new SystemController();
+const taskController = new TaskController();
 
 // interface
 import { NewTask } from "@/utils/interfaces";
@@ -143,7 +145,7 @@ const viewMode = ref("list" as "list" | "kanban");
 
 // mounted
 onMounted(() => {
-  useTask().loadTasks();
+  taskController.loadTasks();
   // getTasksViewMode();
 });
 
@@ -164,16 +166,16 @@ async function addTask(params: { name: string }) {
     subtasks: [],
     kanban: {
       columnName: "pending",
-      position: useTask().getTasks()!.length,
+      position: taskController.getTasks()!.length,
     },
   } as NewTask;
-  await useTask().saveTask({ task });
+  await taskController.saveTask({ task });
   inputTaskValue.value = "";
 }
 
 async function removeTask(params: { id: string }) {
   const { id } = params;
-  await useTask().deleteTask({ taskId: id });
+  await taskController.deleteTask({ taskId: id });
 }
 
 function updateTask(params: { idTask: string }) {
@@ -184,23 +186,23 @@ function updateTask(params: { idTask: string }) {
 
 function toggleCheckTask(params: { id: string }) {
   const { id } = params;
-  const task = useTask().getTask({ idTask: id });
+  const task = taskController.getTask({ idTask: id });
   if (!task) return;
 
   task.checked = !task.checked;
 
-  useTask().updateTask({
+  taskController.updateTask({
     task: { id: task.id, name: task.name, checked: task.checked },
   });
 }
 
 function setTasksViewMode(params: { viewMode: ViewMode }) {
   const { viewMode } = params;
-  useSystem().setTasksViewMode({ viewMode });
+  systemController.setTasksViewMode({ viewMode });
 }
 
 async function getTasksViewMode() {
-  viewMode.value = await useSystem().getTasksViewMode();
+  viewMode.value = await systemController.getTasksViewMode();
 }
 
 async function kanbanUpdate(params: {
@@ -209,10 +211,10 @@ async function kanbanUpdate(params: {
   columnName: "pending" | "progress" | "finalized";
 }) {
   const { id, columnName, position } = params;
-  const task = useTask().getTask({ idTask: id })!;
+  const task = taskController.getTask({ idTask: id })!;
   task.kanban.columnName = columnName;
   task.kanban.position = position;
-  useTask().updateTask({ task });
+  taskController.updateTask({ task });
 }
 </script>
 

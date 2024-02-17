@@ -1,7 +1,7 @@
 import { ApolloClient, InMemoryCache } from "@apollo/client/core";
 import { CapacitorSQLite, SQLiteConnection } from "@capacitor-community/sqlite";
 import { Capacitor } from "@capacitor/core";
-import { main } from "@/services/dbService";
+import { dbService } from "@/services/dbService";
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 
 const cache = new InMemoryCache();

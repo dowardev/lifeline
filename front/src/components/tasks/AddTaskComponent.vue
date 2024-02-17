@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header  mode="ios" class="ion-no-border">
+    <ion-header mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button @click="modalController.dismiss()">
@@ -370,7 +370,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSystem } from "@/composables/useSystem";
 import {
   Schedule,
   Task,
@@ -403,9 +402,16 @@ import useVuelidate from "@vuelidate/core";
 
 // components
 import RemindersComponent from "./reminders/RemindersComponent.vue";
-import { useSchedule } from "@/composables/useSchedule";
-import { useTask } from "@/composables/useTask";
-import { useReminder } from "@/composables/useReminder";
+
+// controllers
+import { SystemController } from "@/controllers/systemController";
+import { ScheduleController } from "@/controllers/scheduleController";
+import { TaskController } from "@/controllers/taskController";
+import { ReminderController } from "@/controllers/reminderController";
+const systemController = new SystemController();
+const scheduleController = new ScheduleController();
+const taskController = new TaskController();
+const reminderController = new ReminderController();
 
 const props = defineProps({
   taskData: { type: Object as () => Task, default: () => null },
@@ -415,7 +421,7 @@ const props = defineProps({
 const pageTitle = ref("Agregar tarea");
 const popoverRemindersSegment = ref("date-start");
 const isOpenPopoverReminders = ref(false);
-let isOpenPopoverTimezones = ref(false);
+const isOpenPopoverTimezones = ref(false);
 const task = {
   name: ref(""),
   description: ref(""),
@@ -437,9 +443,9 @@ const filteredZones = ref(Array<string>());
 const timeZones = (Intl as any)
   .supportedValuesOf("timeZone")
   .map((timeZone: string) => timeZone);
-let emailGuest = ref("");
+const emailGuest = ref("");
 const showButtonsOptionGuest = ref(-1);
-let subTask = ref("");
+const subTask = ref("");
 const showButtonsOptionSubtask = ref(-1);
 
 const messageError = {
@@ -503,18 +509,18 @@ function formatTextRepeat() {
 }
 
 function translateNotifications(params: { notification: string }) {
-  let notification = params.notification as keyof TaskReminderNotification;
+  const notification = params.notification as keyof TaskReminderNotification;
 
-  let result = useSystem().translateEventReminderNotification({
+  const result = systemController.translateEventReminderNotification({
     notificationName: notification,
   });
   return result;
 }
 
 function translateDaysWeekRepear(params: { day: string }) {
-  let day = params.day as any;
+  const day = params.day as any;
 
-  let result = useSystem().translateDay({
+  let result = systemController.translateDay({
     dayName: day,
   });
   result = result.charAt(0).toUpperCase() + result.slice(1);
@@ -522,9 +528,9 @@ function translateDaysWeekRepear(params: { day: string }) {
 }
 
 function translateRepeat(params: { repeat: string }) {
-  let repeat = params.repeat as keyof TaskReminderRepeat;
+  const repeat = params.repeat as keyof TaskReminderRepeat;
 
-  let result = useSystem().translateEventReminderRepeat({
+  let result = systemController.translateEventReminderRepeat({
     typeRepeat: repeat,
   });
   result = result.charAt(0).toUpperCase() + result.slice(1);
@@ -579,8 +585,9 @@ function setTask(params: { task: Task }) {
 }
 
 async function save() {
-  let taskId = props.taskData?.id;
-  let schedule: Schedule = useSchedule().getSchedule() ?? ({} as Schedule);
+  const taskId = props.taskData?.id;
+  const schedule: Schedule =
+    scheduleController.getSchedule() ?? ({} as Schedule);
 
   try {
     await updateTask();
@@ -610,7 +617,7 @@ async function updateTask() {
   };
 
   console.log(taskFormated);
-  await useTask().updateTask({
+  await taskController.updateTask({
     task: JSON.parse(JSON.stringify(taskFormated)),
   });
 }
@@ -620,7 +627,7 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
   let { schedule } = params;
   const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
 
-  const scheduleElement = useSchedule().generateScheduleElement({
+  const scheduleElement = scheduleController.generateScheduleElement({
     id: scheduleId,
     idElement: taskId,
     title: task.name.value,
@@ -633,17 +640,17 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
   });
 
   if (taskId)
-    schedule = useSchedule().removeElementSchedule({
+    schedule = scheduleController.removeElementSchedule({
       id: taskId,
       schedule,
     });
 
-  schedule = useSchedule().generateEventSchedule({
+  schedule = scheduleController.generateEventSchedule({
     scheduleElement,
     schedule,
   });
-  await useSchedule().saveSchedule({ schedule });
-  await useSchedule().loadSchedule();
+  await scheduleController.saveSchedule({ schedule });
+  await scheduleController.loadSchedule();
 
   const notifications = useReminder().getEventReminders({
     dateStart: task.reminders.value.start!,
@@ -653,7 +660,7 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
   if (notifications) {
     await Promise.all(
       notifications.map(async (notification) => {
-        await useSchedule().setReminders({
+        await scheduleController.setReminders({
           id: parseInt(scheduleId),
           reminder: notification,
           title: task.name.value,

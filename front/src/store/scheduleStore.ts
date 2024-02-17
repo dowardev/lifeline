@@ -1,12 +1,9 @@
 import { defineStore } from "pinia";
 import { Schedule } from "../utils/interfaces";
 import { ref, watch } from "vue";
-import { storeSchedule } from "@/services/schedule";
-import { useSchedule } from "@/composables/useSchedule";
 
 export const useScheduleStore = defineStore("schedule", () => {
   const schedule = ref({} as Schedule);
-  const scheduleComposable = useSchedule();
 
   function getSchedule(): any {
     return schedule.value;

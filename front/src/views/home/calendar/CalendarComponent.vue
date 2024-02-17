@@ -99,8 +99,6 @@
 import { IonDatetime, IonPopover } from "@ionic/vue";
 import { computed, ref } from "vue";
 import { format } from "date-fns";
-import { ScheduleElement } from "@/utils/interfaces";
-import { useSchedule } from "@/composables/useSchedule";
 import { addOutline } from "ionicons/icons";
 
 // components

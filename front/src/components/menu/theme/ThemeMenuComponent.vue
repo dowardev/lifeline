@@ -46,15 +46,18 @@ import {
 } from "@ionic/vue";
 import { checkmarkOutline, chevronBackOutline } from "ionicons/icons";
 import { Theme } from "@/utils/types";
-import { useSystem } from "@/composables/useSystem";
 import { onMounted, ref } from "vue";
 
 const availableThemes: Theme[] = ["light", "nord", "gruvbox", "cherry"];
 const pageTitle = "Selector de tema";
 const currentTheme = ref("" as Theme);
 
+// controllers
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
+
 onMounted(() => {
-  currentTheme.value = useSystem().getTheme();
+  currentTheme.value = systemController.getTheme();
 });
 
 // funtions
@@ -64,8 +67,8 @@ const closeModal = () => {
 
 async function applyTheme(params: { name: Theme }) {
   const theme = params.name;
-  useSystem().applyTheme({ theme });
-  await useSystem().updateThemeSelected({ theme });
+  systemController.applyTheme({ theme });
+  await systemController.updateThemeSelected({ theme });
   currentTheme.value = theme;
 }
 </script>

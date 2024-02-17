@@ -335,7 +335,7 @@
         @did-dismiss="isOpenModalUpdateEvent = false"
       >
         <AdminEventComponent
-          :event-data="useEvent().getEvent({ idEvent })"
+          :event-data="eventController.getEvent({ idEvent })"
           @update="
             updateEvent({
               event: $event.data.event,
@@ -386,10 +386,11 @@ import RescheduleComponent from "@/components/events/schedule-elements/Reschedul
 import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
 import RightMenuEventComponent from "./RightMenuEventComponent.vue";
 
-// composables
-import { useSystem } from "../../composables/useSystem";
-import { useEvent } from "@/composables/useEvent";
-import { useReminder } from "@/composables/useReminder";
+// controllers
+import { SystemController } from "@/controllers/systemController";
+import { EventController } from "@/controllers/eventController";
+const systemController = new SystemController();
+const eventController = new EventController();
 
 interface Day {
   date: Date;
@@ -456,13 +457,12 @@ const isOpenPopOverMainOptions = ref(false);
 const eventPopOverMainOptions = ref(null as CustomEvent | null);
 const isOpenModalAddEvent = ref(false);
 const eventModalAddEvent = ref(null as CustomEvent | null);
-const eventComposable = useEvent();
 const scheduleComposable = useSchedule();
 
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  // await useEvent().loadEvents();
+  // await eventController.loadEvents();
 });
 
 // computed
@@ -573,7 +573,7 @@ function setDaysToWeek(params: { days: Array<Day> }): void {
 
 function translateDayHeaderTable(params: { dayName: string }): string {
   const dayName = params.dayName as any;
-  let result = useSystem().translateDay({
+  let result = systemController.translateDay({
     dayName,
   });
   result = result.charAt(0).toUpperCase() + result.slice(1);
@@ -583,7 +583,7 @@ function translateDayHeaderTable(params: { dayName: string }): string {
 function translateMonth(params: { monthName: string }): string {
   const monthName = params.monthName as keyof Months;
 
-  let result = useSystem().translateMonth({
+  let result = systemController.translateMonth({
     monthName,
   });
   result = result.charAt(0).toUpperCase() + result.slice(1);
@@ -618,7 +618,7 @@ async function openPopoverRightEventMenu(params: {
 
 async function deleteEvent(params: { eventId: string }): Promise<void> {
   const { eventId } = params;
-  await useEvent().deleteEvent({ eventId });
+  await eventController.deleteEvent({ eventId });
   const { schedule } = await scheduleComposable.generateSchedules({
     schedule: {},
   });
@@ -627,7 +627,7 @@ async function deleteEvent(params: { eventId: string }): Promise<void> {
 }
 
 async function syncData() {
-  await useEvent().syncEvents();
+  await eventController.syncEvents();
 }
 
 async function saveEvent(params: { event: Event }): Promise<void> {
@@ -651,7 +651,7 @@ async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
 
   try {
-    await useEvent().updateEvent({
+    await eventController.updateEvent({
       event,
     });
     const localSchedule = await scheduleComposable.getLocalSchedule();

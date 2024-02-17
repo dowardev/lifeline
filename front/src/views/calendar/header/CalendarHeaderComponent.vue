@@ -78,7 +78,7 @@
           "
           :first-day-of-week="1"
           @ion-change="
-            useEvent().setCurrentDate({
+            eventController.setCurrentDate({
               date: new Date($event.target.value as any),
             })
           "
@@ -202,13 +202,15 @@ import {
   todayOutline,
 } from "ionicons/icons";
 import { Months } from "@/utils/interfaces";
-
-// composables
-import { useSystem } from "@/composables/useSystem";
 import { ref } from "vue";
 import { onMounted } from "vue";
 import { reactive } from "vue";
-import { useEvent } from "@/composables/useEvent";
+
+// controllers
+import { SystemController } from "@/controllers/systemController";
+import { EventController } from "@/controllers/eventController";
+const systemController = new SystemController();
+const eventController = new EventController();
 
 interface Day {
   date: Date;
@@ -246,9 +248,9 @@ const toastProps = ref({ isOpen: false, message: {} });
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  // await useEvent().loadEvents();
-  currentDate.value = await useEvent().getCurrentDateStored();
-  useEvent().setCurrentDate({ date: currentDate.value });
+  // await eventController.loadEvents();
+  currentDate.value = await eventController.getCurrentDateStored();
+  eventController.setCurrentDate({ date: currentDate.value });
 });
 
 // functions
@@ -273,33 +275,33 @@ function getDaysForCurrentWeek(params: { date: Date }): Day[] {
 
 function previousWeek(): void {
   const nextDate = new Date(
-    sub(useEvent().getCurrentDate(), {
+    sub(eventController.getCurrentDate(), {
       days: 7,
     })
   );
-  useEvent().setCurrentDate({ date: nextDate });
-  useEvent().setCurrentDateStored({ date: nextDate });
+  eventController.setCurrentDate({ date: nextDate });
+  eventController.setCurrentDateStored({ date: nextDate });
 }
 
 function nextWeek(): void {
   const nextDate = new Date(
-    add(useEvent().getCurrentDate(), {
+    add(eventController.getCurrentDate(), {
       days: 7,
     })
   );
-  useEvent().setCurrentDate({ date: nextDate });
-  useEvent().setCurrentDateStored({ date: nextDate });
+  eventController.setCurrentDate({ date: nextDate });
+  eventController.setCurrentDateStored({ date: nextDate });
 }
 
 function today(): void {
-  useEvent().setCurrentDate({ date: new Date() });
-  useEvent().setCurrentDateStored({ date: new Date() });
+  eventController.setCurrentDate({ date: new Date() });
+  eventController.setCurrentDateStored({ date: new Date() });
 }
 
 function translateMonth(params: { monthName: string }): string {
   const monthName = params.monthName as keyof Months;
 
-  let result = useSystem().translateMonth({
+  let result = systemController.translateMonth({
     monthName,
   });
   result = result.charAt(0).toUpperCase() + result.slice(1);
@@ -309,8 +311,8 @@ function translateMonth(params: { monthName: string }): string {
 async function syncData(): Promise<void> {
   toastProps.value.message = "Sincronización iniciada";
   toastProps.value.isOpen = true;
-  await useEvent().sync();
-  await useEvent().loadEvents();
+  await eventController.sync();
+  await eventController.loadEvents();
   toastProps.value.message = "Sincronización terminada";
   toastProps.value.isOpen = true;
 }
