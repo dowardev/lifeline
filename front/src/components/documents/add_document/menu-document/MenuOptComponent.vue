@@ -47,8 +47,9 @@
             size="large"
             :disabled="
               (
-                useDocument().getUserDocument({ documentId: props.documentId })
-                  ?.elements ?? []
+                documentController.getUserDocument({
+                  documentId: props.documentId,
+                })?.elements ?? []
               ).length <= 1
             "
             @click="selectOption({ option: 'order' })"
@@ -105,7 +106,7 @@
     }"
   >
     <ShareComponent
-      :url="useDocument().getUserDocument({ documentId: documentId })?.url"
+      :url="documentController.getUserDocument({ documentId: documentId })?.url"
       @close-share="toggleShareOption()"
     />
   </section>
@@ -142,10 +143,13 @@ import {
   timeOutline,
 } from "ionicons/icons";
 import { OptionsMainMenuDocument } from "../../../../utils/types";
-import { useDocument } from "../../../../composables/useDocument";
 import { isPlatform } from "@ionic/vue";
 import ShareComponent from "./share/ShareComponent.vue";
 import RemindersComponent from "./reminder/RemindersComponent.vue";
+
+// controllers
+import { DocumentController } from "@/controllers/documentController";
+const documentController = new DocumentController();
 
 const props = defineProps({ documentId: { default: "", type: String } });
 

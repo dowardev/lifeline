@@ -4,22 +4,17 @@ import {
   DeleteDocument,
   Note,
 } from "../utils/interfaces";
-import {
-  getUserDocuments as getUserDocumentsService,
-  getDocument as getDocumentService,
-  saveDocument as saveDocumentService,
-  updateDocument as updateDocumentService,
-  deleteUserDocument as deleteUserDocumentService,
-} from "../services/document";
-import { useDocumentStore } from "../store/documentStore";
+import { useDocumentStore } from "../store/this.documentStore";
 import { DocumentElements } from "../utils/types";
 import { format } from "date-fns";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import { DocumentService } from "@/services/document";
 
-export const useDocument = () => {
-  const documentStore = useDocumentStore();
+export class DocumentController {
+  documentStore = useDocumentStore();
+  documentService = new DocumentService();
 
-  async function saveDocument(params: {
+  async saveDocument(params: {
     document: { title: string };
   }): Promise<{ id: string; url: string } | null> {
     const documentData = params.document;
@@ -27,50 +22,52 @@ export const useDocument = () => {
 
     try {
       document = (
-        await saveDocumentService({
+        await this.documentService.saveDocument({
           document: documentData,
         })
       ).document;
-      documentStore.addDocument({ document });
+      this.documentStore.addDocument({ document });
       return { id: document.id, url: document.url };
     } catch (error: any) {
       throw new Error(error);
     }
   }
 
-  async function loadUserDocuments(): Promise<void> {
-    const documents = await getUserDocumentsService();
+  async loadUserDocuments(): Promise<void> {
+    const documents = await this.documentService.getUserDocuments();
 
     if (documents == null) return;
 
     documents.forEach((document) => {
-      documentStore.addDocument({ document });
+      this.documentStore.addDocument({ document });
     });
   }
 
-  async function loadDocument(params: { elementId: string }): Promise<void> {
+  async loadDocument(params: { elementId: string }): Promise<void> {
     const elementId = params.elementId;
-    const document = await getDocumentService({ elementId: elementId });
+    const document = await this.documentService.getDocument({
+      elementId: elementId,
+    });
 
     if (document == null) return;
 
-    documentStore.addDocument({ document });
+    this.documentStore.addDocument({ document });
   }
 
-  function getUserDocuments(): Array<Document> | undefined {
-    const documents = documentStore.getDocuments();
+  getUserDocuments(): Array<Document> | undefined {
+    const documents = this.documentStore.getDocuments();
     return documents != null
       ? JSON.parse(JSON.stringify(documents))
       : undefined;
   }
 
-  async function deleteDocument(params: DeleteDocument): Promise<void> {
+  async deleteDocument(params: DeleteDocument): Promise<void> {
     const documentId = params.documentId;
-    await deleteUserDocumentService({ documentId });
-    documentStore.removeDocument({ documentId });
+    await this.documentService.deleteUserDocument({ documentId });
+    this.documentStore.removeDocument({ documentId });
   }
 
-  function getUserDocument(params: {
+  getUserDocument(params: {
     documentId?: string;
     documentUrl?: string;
   }): Document | undefined {
@@ -79,41 +76,38 @@ export const useDocument = () => {
 
     let document = "" as any;
     if (documentId)
-      document = documentStore.getDocument({ elementSearch: documentId });
+      document = this.documentStore.getDocument({ elementSearch: documentId });
     if (documentUrl)
-      document = documentStore.getDocument({ elementSearch: documentUrl });
+      document = this.documentStore.getDocument({ elementSearch: documentUrl });
 
     return document ? document : undefined;
   }
 
-  async function updateDocument(params: { document: Document }): Promise<void> {
+  async updateDocument(params: { document: Document }): Promise<void> {
     try {
       const document = JSON.parse(JSON.stringify(params.document));
-      await updateDocumentService({ document });
-      documentStore.updateDocument({ document });
+      await this.documentService.updateDocument({ document });
+      this.documentStore.updateDocument({ document });
     } catch (error: any) {
       console.error(error);
     }
   }
 
-  function deleteElement(params: { index: number; documentId: string }) {
+  deleteElement(params: { index: number; documentId: string }) {
     const index = params.index;
     const documentId = params.documentId;
 
-    documentStore.removeElement({ index, documentId });
+    this.documentStore.removeElement({ index, documentId });
   }
 
-  function insertElement(params: {
-    documentId: string;
-    element: DocumentElements;
-  }) {
+  insertElement(params: { documentId: string; element: DocumentElements }) {
     const documentId = params.documentId;
     const element = params.element;
 
     useDocumentStore().insertElement({ documentId, element });
   }
 
-  async function updateNoteValue(params: {
+  async updateNoteValue(params: {
     data: { value: string };
     index: number;
     documentId: string;
@@ -121,19 +115,21 @@ export const useDocument = () => {
     const value = params.data.value;
     const index = params.index;
     const documentId = params.documentId;
-    const document = await getDocumentService({ elementId: documentId });
+    const document = await this.documentService.getDocument({
+      elementId: documentId,
+    });
     if (!document) return;
 
     const note = document?.elements![index].data as Note;
     note.content = value;
-    await updateDocument({ document });
+    await this.documentService.updateDocument({ document });
 
     if (!document?.elements) return;
     (document.elements[index].data as Note).content = value;
-    await updateDocument({ document });
+    await this.documentService.updateDocument({ document });
   }
 
-  async function updateNoteReminder(params: {
+  async updateNoteReminder(params: {
     data: { dateStart: string; dateEnd: string };
     index: number;
     documentId: string;
@@ -142,7 +138,9 @@ export const useDocument = () => {
     const dateEnd = params.data.dateEnd;
     const index = params.index;
     const documentId = params.documentId;
-    const document = await getDocumentService({ elementId: documentId });
+    const document = await this.documentService.getDocument({
+      elementId: documentId,
+    });
     if (!document) return;
 
     if (!document?.elements) return;
@@ -152,20 +150,6 @@ export const useDocument = () => {
         reminderEnd: dateEnd,
       },
     };
-    await updateDocument({ document });
+    await this.updateDocument({ document });
   }
-
-  return {
-    deleteDocument,
-    saveDocument,
-    loadUserDocuments,
-    getUserDocument,
-    updateDocument,
-    getUserDocuments,
-    deleteElement,
-    insertElement,
-    loadDocument,
-    updateNoteValue,
-    updateNoteReminder,
-  };
-};
+}

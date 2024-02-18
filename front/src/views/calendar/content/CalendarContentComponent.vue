@@ -60,10 +60,14 @@
                           <div v-for="event in events" :key="event.id">
                             <template
                               v-if="
-                                event.reminders.start.getHours() ===
+                                (event.reminders.start.getHours() ===
                                   parseInt(hour) &&
-                                event.reminders.start.getDate() ===
-                                  day.date.getDate()
+                                  event.reminders.start.getDate() <=
+                                    day.date.getDate()) ||
+                                (event.reminders.end.getHours() ===
+                                  parseInt(hour) &&
+                                  event.reminders.end.getDate() <=
+                                    day.date.getDate())
                               "
                             >
                               <ion-card
@@ -191,7 +195,7 @@
       @did-dismiss="isOpenModalUpdateEvent = false"
     >
       <AdminEventComponent
-        :event-data="useEvent().getEvent({ idEvent })"
+        :event-data="eventController.getEvent({ idEvent })"
         @update="
           updateEvent({
             event: $event.data.event,
@@ -217,8 +221,8 @@ import {
 } from "@ionic/vue";
 import { closeOutline, star } from "ionicons/icons";
 import { onMounted, ref } from "vue";
-import { useSchedule } from "@/composables/useSchedule";
 import { add, format, startOfWeek } from "date-fns";
+import { watch } from "vue";
 
 // interfaces
 import { Event } from "@/utils/interfaces";
@@ -228,10 +232,11 @@ import RescheduleComponent from "@/components/events/schedule-elements/Reschedul
 import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
 import RightMenuEventComponent from "../RightMenuEventComponent.vue";
 
-// composables
-import { useSystem } from "@/composables/useSystem";
-import { useEvent } from "@/composables/useEvent";
-import { watch } from "vue";
+// controllers
+import { SystemController } from "@/controllers/systemController";
+import { EventController } from "@/controllers/eventController";
+const systemController = new SystemController();
+const eventController = new EventController();
 
 interface Day {
   date: Date;
@@ -280,7 +285,7 @@ const isOpenModalRecheduleTasks = ref(false);
 const isOpenPopOverMainOptions = ref(false);
 const isOpenModalAddEvent = ref(false);
 const eventModalAddEvent = ref(null as CustomEvent | null);
-const eventComposable = useEvent();
+const eventComposable = eventController;
 const events = ref([] as Event[]);
 const componentLoaded = ref(false);
 
@@ -292,7 +297,7 @@ onMounted(async () => {
 
 // watch
 watch(
-  () => [useEvent().getCurrentDate(), componentLoaded.value],
+  () => [eventController.getCurrentDate(), componentLoaded.value],
   async (value) => {
     const date = value[0] as Date;
     const componentLoaded = value[1];
@@ -328,7 +333,7 @@ function getDaysForCurrentWeek(params: { date: Date }): Day[] {
 
 function translateDayHeaderTable(params: { dayName: string }): string {
   const dayName = params.dayName as any;
-  let result = useSystem().translateDay({
+  let result = systemController.translateDay({
     dayName,
   });
   result = result.charAt(0).toUpperCase() + result.slice(1);
@@ -370,12 +375,14 @@ async function openPopoverRightEventMenu(params: {
 async function deleteEvent(params: { eventId: number }): Promise<void> {
   const { eventId } = params;
   try {
-    await useEvent().deleteEvent({ id: eventId });
-    await useSystem().openToast({ message: "Evento eliminado" });
-    await syncData({ date: useEvent().getCurrentDate() });
+    await eventController.deleteEvent({ id: eventId });
+    await systemController.openToast({ message: "Evento eliminado" });
+    await syncData({ date: eventController.getCurrentDate() });
   } catch (error) {
     console.error(error);
-    await useSystem().openToast({ message: "Problema al eliminar evento" });
+    await systemController.openToast({
+      message: "Problema al eliminar evento",
+    });
   }
 }
 
@@ -383,7 +390,7 @@ async function syncData(params: { date: Date }): Promise<void> {
   const { date } = params;
 
   try {
-    const viewCalendar = await useEvent().getViewCalendarStored();
+    const viewCalendar = await eventController.getViewCalendarStored();
     const dates = { start: new Date(), end: new Date() };
 
     if (viewCalendar == "weekly") {
@@ -398,10 +405,10 @@ async function syncData(params: { date: Date }): Promise<void> {
     }
 
     await eventComposable.sync();
-    await useEvent().loadEvents({
+    await eventController.loadEvents({
       dates,
     });
-    events.value = await useEvent().getEvents();
+    events.value = await eventController.getEvents();
   } catch (error: any) {
     throw new Error(error);
   }
@@ -410,7 +417,7 @@ async function syncData(params: { date: Date }): Promise<void> {
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   try {
-    await useEvent().saveEvent({
+    await eventController.saveEvent({
       event,
     });
   } catch (error) {
@@ -423,18 +430,20 @@ async function updateEvent(params: { event: Event }): Promise<void> {
 
   try {
     event.syncStatus = false;
-    await useEvent().updateLocalEvent({
+    await eventController.updateLocalEvent({
       event,
     });
-    await syncData({ date: useEvent().getCurrentDate() });
+    await syncData({ date: eventController.getCurrentDate() });
     event.syncStatus = true;
-    await useEvent().updateLocalEvent({
+    await eventController.updateLocalEvent({
       event,
     });
-    await useSystem().openToast({ message: "Evento actualizado" });
+    await systemController.openToast({ message: "Evento actualizado" });
   } catch (error) {
     console.error(error);
-    await useSystem().openToast({ message: "Problema al actualizar evento" });
+    await systemController.openToast({
+      message: "Problema al actualizar evento",
+    });
   }
 }
 function openModalAdd(params: { event: Event }): void {
@@ -450,12 +459,12 @@ function reschedule(): void {
 
 async function syncAction(): Promise<void> {
   try {
-    await useSystem().openToast({ message: "Sincronización iniciada" });
-    await syncData({ date: useEvent().getCurrentDate() });
-    await useSystem().openToast({ message: "Sincronización terminada" });
+    await systemController.openToast({ message: "Sincronización iniciada" });
+    await syncData({ date: eventController.getCurrentDate() });
+    await systemController.openToast({ message: "Sincronización terminada" });
     componentLoaded.value = true;
   } catch (error) {
-    await useSystem().openToast({ message: "Problema al sincronizar" });
+    await systemController.openToast({ message: "Problema al sincronizar" });
     console.error(error);
   }
 }

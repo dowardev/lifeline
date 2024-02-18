@@ -15,28 +15,31 @@ import IntegrationsPage from "../views/integrations/IntegrationsPage.vue";
 import AboutPage from "../views/about/AboutPage.vue";
 import LandingPage from "../views/lading/LandingPage.vue";
 
-import { useUser } from "@/composables/useUser";
+import { UserController } from "@/controllers/userController";
 
 async function loadUser(): Promise<void> {
+  const userController = new UserController();
   try {
-    await useUser().loadUser();
+    await userController.loadUser();
   } catch (error: any) {
     throw new Error(error.message);
   }
 }
 
 async function adminGuard(): Promise<true | "/"> {
+  const userController = new UserController();
   await loadUser();
-  const isAdmin = useUser().user.value.isAdmin;
+  const isAdmin = userController.refs.user.value.isAdmin;
   if (isAdmin == true) return true;
   return "/";
 }
 
 async function userLoggedGuard(): Promise<true | "/landing"> {
+  const userController = new UserController();
   let value = "landing" as true | "/landing";
   try {
     await loadUser();
-    const user = useUser().user.value.user;
+    const user = userController.refs.user.value.user;
     if (user) value = true;
   } catch (error) {
     console.error(error);
@@ -47,10 +50,11 @@ async function userLoggedGuard(): Promise<true | "/landing"> {
 }
 
 async function userSignOutGuard(): Promise<true | "/" | undefined> {
+  const userController = new UserController();
   let value = true as true | "/";
   try {
     await loadUser();
-    const user = useUser().user.value.user;
+    const user = userController.refs.user.value.user;
     if (user) value = "/";
   } catch (error) {
     value = true;

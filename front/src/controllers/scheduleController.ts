@@ -1,21 +1,20 @@
 import { useScheduleStore } from "@/store/scheduleStore";
 import { Schedule, Event, ScheduleElement } from "@/utils/interfaces";
 import { LocalNotifications } from "@capacitor/local-notifications";
-import {
-  getSchedule as getScheduleService,
-  storeSchedule as storeScheduleService,
-  deleteSchedule as deleteScheduleService,
-} from "@/services/schedule";
-import { useReminder } from "./useReminder";
-import { useEvent } from "./useEvent";
 import { useEventsStore } from "@/store/eventsStore";
+import { ScheduleService } from "@/services/schedule";
 
-export const useSchedule = () => {
-  const scheduleStore = useScheduleStore();
-  const reminderComposer = useReminder();
-  const eventComposable = useEvent();
+const scheduleService = new ScheduleService();
 
-  // function loadReminders() {
+import { ReminderController } from "./reminderController";
+import { EventController } from "./eventController";
+
+export class ScheduleController {
+  scheduleStore = useScheduleStore();
+  reminderController = new ReminderController();
+  eventController = new EventController();
+
+  //  loadReminders() {
   // const documents = useDocument().getUserDocuments();
   // if (!documents) return;
   //
@@ -41,7 +40,7 @@ export const useSchedule = () => {
   //   });
   // });
   // }
-  // function loadReminders() {
+  //  loadReminders() {
   //   const documents = useDocument().getUserDocuments() ?? [];
   //
   //   documents.forEach(async (document) => {
@@ -64,8 +63,8 @@ export const useSchedule = () => {
   //   });
   // }
 
-  async function loadReminders(): Promise<ScheduleElement[]> {
-    const schedule = getSchedule() ?? [];
+  async loadReminders(): Promise<ScheduleElement[]> {
+    const schedule = this.getSchedule() ?? [];
     const millisecondsInDay = 24 * 60 * 60 * 1000;
     const next7Days = new Date().getTime() + 7 * millisecondsInDay;
 
@@ -86,10 +85,10 @@ export const useSchedule = () => {
     return next7DaysElements;
   }
 
-  async function generateScheduleReminders(): Promise<
+  async generateScheduleReminders(): Promise<
     { id: number; title: string; message: string; date: string }[]
   > {
-    const schedule = getSchedule() ?? [];
+    const schedule = this.getSchedule() ?? [];
     const currentDate = new Date();
     const next7Days = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -140,7 +139,7 @@ export const useSchedule = () => {
     return next7DaysElements;
   }
 
-  async function setReminders(params: {
+  async setReminders(params: {
     reminder: Date;
     id: number;
     title: string;
@@ -148,7 +147,7 @@ export const useSchedule = () => {
     extraInfo?: string;
   }) {
     const { id, reminder, title, message, extraInfo } = params;
-    const permission = await checkNotificationsPermissions();
+    const permission = await this.checkNotificationsPermissions();
     if (permission == false) return;
 
     await LocalNotifications.schedule({
@@ -169,7 +168,7 @@ export const useSchedule = () => {
     });
   }
 
-  async function checkNotificationsPermissions(): Promise<boolean> {
+  async checkNotificationsPermissions(): Promise<boolean> {
     const permission = await LocalNotifications.requestPermissions();
 
     if (permission.display == "granted") {
@@ -179,17 +178,14 @@ export const useSchedule = () => {
     }
   }
 
-  function getReminders(): Array<Schedule> | undefined {
-    const reminders = scheduleStore.getReminders();
+  getReminders(): Array<Schedule> | undefined {
+    const reminders = this.scheduleStore.getReminders();
     return reminders != null
       ? JSON.parse(JSON.stringify(reminders))
       : undefined;
   }
 
-  function generateEventsSchedule(params: {
-    events: Event[];
-    date: Date;
-  }): Schedule {
+  generateEventsSchedule(params: { events: Event[]; date: Date }): Schedule {
     const { events, date } = params;
     let schedule = {};
 
@@ -204,7 +200,7 @@ export const useSchedule = () => {
         event.reminders!.notifications!.length > 0 ? true : false;
       const repeat = event.reminders?.repeat ?? {};
 
-      const scheduleElement = generateScheduleElement({
+      const scheduleElement = this.generateScheduleElement({
         id: id as number,
         title: title as string,
         message,
@@ -215,7 +211,7 @@ export const useSchedule = () => {
         repeat,
       });
 
-      const { schedule: newSchedule } = mergeSchedule({
+      const { schedule: newSchedule } = this.mergeSchedule({
         schedule,
         scheduleElement,
       });
@@ -240,7 +236,7 @@ export const useSchedule = () => {
    * @param {"daily" | "weekly" | "monthly" | "annually"=} params.repeat.frecuency.type date event repetition type
    * @param {String[]} params.repeat.frecuency.daysWeek arrangement that indicates the days of the week in which the event will be repeated, it is only necessary if the type is weekly
    */
-  function generateScheduleElement(params: {
+  generateScheduleElement(params: {
     id: number;
     title: string;
     message: string;
@@ -275,7 +271,7 @@ export const useSchedule = () => {
     while (currentDate <= endDate || lastDate <= endDate) {
       if (repeatType === "weekly") {
         const dayOfWeek = currentDate.getDay();
-        const currentDayName = getDayName(dayOfWeek);
+        const currentDayName = this.getDayName(dayOfWeek);
         if (!normalizedDaysWeek.includes(currentDayName.toLowerCase())) {
           currentDate.setDate(currentDate.getDate() + 1);
           lastDate.setDate(lastDate.getDate() + 1);
@@ -341,7 +337,7 @@ export const useSchedule = () => {
     return eventsByDate;
   }
 
-  function getDayName(dayOfWeek: number): string {
+  getDayName(dayOfWeek: number): string {
     const days = [
       "Sunday",
       "Monday",
@@ -354,24 +350,21 @@ export const useSchedule = () => {
     return days[dayOfWeek];
   }
 
-  async function loadSchedule(): Promise<void> {
-    const schedule = (await getScheduleService()) ?? ({} as Schedule);
-    setSchedule({ schedule });
+  async loadSchedule(): Promise<void> {
+    const schedule = (await scheduleService.getSchedule()) ?? ({} as Schedule);
+    this.setSchedule({ schedule });
   }
 
-  function getSchedule(): Schedule {
-    const schedule = useEventsStore().calendarSchedule;
+  getSchedule(): Schedule {
+    const schedule = this.useEventsStore().calendarSchedule;
     return Object.keys(schedule).length > 0 ? schedule : ({} as Schedule);
   }
 
-  async function getLocalSchedule(): Promise<Schedule> {
-    return await getScheduleService();
+  async getLocalSchedule(): Promise<Schedule> {
+    return await scheduleService.getSchedule();
   }
 
-  function removeElementSchedule(params: {
-    id: string;
-    schedule: Schedule;
-  }): Schedule {
+  removeElementSchedule(params: { id: string; schedule: Schedule }): Schedule {
     const { id, schedule } = params;
 
     for (const year in schedule) {
@@ -408,22 +401,19 @@ export const useSchedule = () => {
     return schedule;
   }
 
-  async function saveScheduleLocal(params: {
-    schedule: Schedule;
-  }): Promise<void> {
+  async saveScheduleLocal(params: { schedule: Schedule }): Promise<void> {
     const { schedule } = params;
-    await storeScheduleService({ schedule });
+    await scheduleService.storeSchedule({ schedule });
   }
 
-  function setSchedule(params: { schedule: Schedule }): void {
+  setSchedule(params: { schedule: Schedule }): void {
     const { schedule } = params;
-    scheduleStore.setSchedule({ schedule });
+    this.scheduleStore.setSchedule({ schedule });
   }
 
-  function mergeSchedule(params: {
+  mergeSchedule(params: { schedule: Schedule; scheduleElement: Schedule }): {
     schedule: Schedule;
-    scheduleElement: Schedule;
-  }): { schedule: Schedule } {
+  } {
     const { schedule, scheduleElement } = params;
     const newSchedule: Schedule = {};
 
@@ -466,12 +456,10 @@ export const useSchedule = () => {
     return { schedule: newSchedule };
   }
 
-  async function generateEventReminders(params: {
-    event: Event;
-  }): Promise<void> {
+  async generateEventReminders(params: { event: Event }): Promise<void> {
     const { event } = params;
 
-    const notifications = reminderComposer.getEventReminders({
+    const notifications = this.reminderController.getEventReminders({
       dateStart: event.reminders.start,
       notifications: event.reminders.notifications ?? [],
     });
@@ -479,7 +467,7 @@ export const useSchedule = () => {
     if (notifications) {
       await Promise.all(
         notifications.map(async (notification) => {
-          await setReminders({
+          await this.setReminders({
             id: new Date().getMilliseconds(),
             reminder: notification,
             title: event.name!,
@@ -490,14 +478,12 @@ export const useSchedule = () => {
     }
   }
 
-  async function generateEventsReminders(params: {
-    events: Event[];
-  }): Promise<void> {
+  async generateEventsReminders(params: { events: Event[] }): Promise<void> {
     const { events } = params;
 
     await Promise.all(
       events.map(async (event) => {
-        const notifications = reminderComposer.getEventReminders({
+        const notifications = this.reminderController.getEventReminders({
           dateStart: event.reminders.start,
           notifications: event.reminders.notifications ?? [],
         });
@@ -505,7 +491,7 @@ export const useSchedule = () => {
         if (notifications) {
           await Promise.all(
             notifications.map(async (notification) => {
-              await setReminders({
+              await this.setReminders({
                 id: new Date().getMilliseconds(),
                 reminder: notification,
                 title: event.name!,
@@ -518,7 +504,7 @@ export const useSchedule = () => {
     );
   }
 
-  function generateEventSchedule(params: { event: Event }): {
+  generateEventSchedule(params: { event: Event }): {
     schedule: Schedule;
   } {
     const { event } = params;
@@ -532,7 +518,7 @@ export const useSchedule = () => {
     const reminder = event.reminders!.notifications.length > 0 ? true : false;
     const repeat = event.reminders?.repeat ?? {};
 
-    const scheduleElement = generateScheduleElement({
+    const scheduleElement = this.generateScheduleElement({
       id,
       id: idElement,
       title,
@@ -553,11 +539,11 @@ export const useSchedule = () => {
     return { schedule: scheduleElement };
   }
 
-  async function deleteSchedule(): Promise<void> {
-    await deleteScheduleService();
+  async deleteSchedule(): Promise<void> {
+    await scheduleService.deleteSchedule();
   }
 
-  async function generateSchedules(params: {
+  async generateSchedules(params: {
     schedule: Schedule;
   }): Promise<{ schedule: Schedule }> {
     const { schedule } = params;
@@ -567,20 +553,20 @@ export const useSchedule = () => {
     //   Object.keys(storeSchedule).length == 0 ? localSchedule : storeSchedule;
 
     // events
-    const events = await eventComposable.getEvents();
-    const { schedule: eventsSchedule } = generateEventsSchedule({
+    const events = await this.eventController.getEvents();
+    const { schedule: eventsSchedule } = this.generateEventsSchedule({
       events,
       schedule,
     });
 
-    const { schedule: newSchedule } = mergeSchedule({
+    const { schedule: newSchedule } = this.mergeSchedule({
       schedule,
       scheduleElement: eventsSchedule,
     });
     return { schedule: newSchedule };
   }
 
-  function generateScheduleElementForDate(params: {
+  generateScheduleElementForDate(params: {
     idElement: string;
     title: string;
     message: string;
@@ -614,7 +600,7 @@ export const useSchedule = () => {
     while (currentDate <= lastDate) {
       if (repeatType === "weekly") {
         const dayOfWeek = currentDate.getDay();
-        const currentDayName = getDayName(dayOfWeek);
+        const currentDayName = this.getDayName(dayOfWeek);
         if (!normalizedDaysWeek.includes(currentDayName.toLowerCase())) {
           currentDate.setDate(currentDate.getDate() + 1);
           lastDate.setDate(lastDate.getDate() + 1);
@@ -677,27 +663,4 @@ export const useSchedule = () => {
 
     return eventsByDate;
   }
-
-  return {
-    checkNotificationsPermissions,
-    generateEventsSchedule,
-    generateEventSchedule,
-    generateScheduleElement,
-    generateScheduleReminders,
-    getReminders,
-    getSchedule,
-    loadReminders,
-    loadSchedule,
-    removeElementSchedule,
-    saveScheduleLocal,
-    setReminders,
-    setSchedule,
-    mergeSchedule,
-    generateEventReminders,
-    deleteSchedule,
-    generateEventsReminders,
-    getLocalSchedule,
-    generateSchedules,
-    generateScheduleElementForDate,
-  };
-};
+}

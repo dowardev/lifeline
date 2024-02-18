@@ -306,9 +306,11 @@ import useVuelidate from "@vuelidate/core";
 import { required, email, helpers, sameAs } from "@vuelidate/validators";
 import { useRouter } from "vue-router";
 
-// composables
-import { useSystem } from "@/composables/useSystem";
-import { useUser } from "@/composables/useUser";
+// controllers
+import { SystemController } from "@/controllers/systemController";
+import { UserController } from "@/controllers/userController";
+const systemController = new SystemController();
+const userController = new UserController();
 
 // assets
 import userImage from "@/assets/otros/user.png";
@@ -320,7 +322,7 @@ import loginImageCherry from "@/assets/otros/login-cherry.png";
 const router = useRouter();
 
 const imageUserPath = computed(() => {
-  const theme = useSystem().getTheme();
+  const theme = systemController.getTheme();
   let image = "";
   if (theme == "nord" || "light") image = userImage;
   if (theme == "gruvbox") image = userImageGruvbox;
@@ -329,7 +331,7 @@ const imageUserPath = computed(() => {
 });
 
 const loginImagePath = computed(() => {
-  const theme = useSystem().getTheme();
+  const theme = systemController.getTheme();
   let image = "";
   if (theme == "nord" || "light")
     image =
@@ -402,7 +404,7 @@ const addUser = async (): Promise<void> => {
   const email = form.email.replace(/\s+/g, "");
   const password = form.password;
   try {
-    await useUser().register({
+    await userController.register({
       name,
       user,
       email,
@@ -415,21 +417,21 @@ const addUser = async (): Promise<void> => {
   } catch (e: any) {
     spinners.buttonSignup = false;
     if (e.message == "The email has already been selected") {
-      useSystem().openToast({
+      systemController.openToast({
         message: "Correo ya en uso",
         color: "warning",
       });
       return;
     }
     if (e.message == "The user has already been selected") {
-      useSystem().openToast({
+      systemController.openToast({
         message: "Usuario ya en uso",
         color: "warning",
       });
       return;
     }
     console.error(e);
-    // useSystem().openToastError(e);
+    // systemController.openToastError(e);
   }
 };
 

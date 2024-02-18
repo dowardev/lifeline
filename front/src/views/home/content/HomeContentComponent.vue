@@ -48,15 +48,15 @@
                     <div>
                       <!-- input api key -->
                       <div
-                        v-if="!useSystem().getWakaTimeApiKey()"
+                        v-if="!systemController.getWakaTimeApiKey()"
                         class="ion-padding"
                       >
                         <WakaTimeApiKeyComponent />
                       </div>
-                      <div v-if="useSystem().getWakaTimeApiKey()">
+                      <div v-if="systemController.getWakaTimeApiKey()">
                         <WakaTimeToday
                           ref="todayComponentRef"
-                          :api-key="useSystem().getWakaTimeApiKey()"
+                          :api-key="systemController.getWakaTimeApiKey()"
                         />
                       </div>
                     </div>
@@ -73,7 +73,6 @@
 
 <script setup lang="ts">
 import { IonButton, IonCard, IonCardTitle } from "@ionic/vue";
-import { useSystem } from "@/composables/useSystem";
 import { onMounted, ref } from "vue";
 
 import { logOutOutline, refreshOutline } from "ionicons/icons";
@@ -82,10 +81,14 @@ import CalendarComponent from "../calendar/CalendarComponent.vue";
 import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
 import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 
+// controllers
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
+
 const todayComponentRef = ref();
 
 onMounted(() => {
-  useSystem().loadWakaTimeApiKey();
+  systemController.loadWakaTimeApiKey();
 });
 
 function refreshTodayComponent(): void {

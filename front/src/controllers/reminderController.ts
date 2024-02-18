@@ -1,8 +1,5 @@
-export const useReminder = () => {
-  function getEventReminders(params: {
-    notifications: string[];
-    dateStart: Date;
-  }) {
+export class ReminderController {
+  getEventReminders(params: { notifications: string[]; dateStart: Date }) {
     const { notifications, dateStart } = params;
 
     const notificationTimes: { [key: string]: number } = {
@@ -37,5 +34,4 @@ export const useReminder = () => {
     }
     return notificationDates;
   }
-  return { getEventReminders };
-};
+}

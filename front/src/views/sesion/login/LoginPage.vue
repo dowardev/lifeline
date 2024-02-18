@@ -231,11 +231,13 @@ import {
 import useVuelidate from "@vuelidate/core";
 import { required, helpers, email } from "@vuelidate/validators";
 import { USER_LOGIN, USER_MENU } from "../../../utils/graphql";
-import { useSystem } from "@/composables/useSystem";
 import { useRouter } from "vue-router";
 
-// composabeles
-import { useUser } from "@/composables/useUser";
+// controllers
+import { SystemController } from "@/controllers/systemController";
+import { UserController } from "@/controllers/userController";
+const systemController = new SystemController();
+const userController = new UserController();
 
 // assets
 import keyImage from "@/assets/otros/key.svg";
@@ -283,7 +285,7 @@ const v$ = useVuelidate(rules, { form });
 
 // computed
 const imageKeyPath = computed(() => {
-  const theme = useSystem().getTheme();
+  const theme = systemController.getTheme();
   let image = "";
   if (theme == "nord" || "light") image = keyImage;
   if (theme == "gruvbox") image = keyImageGruvbox;
@@ -291,7 +293,7 @@ const imageKeyPath = computed(() => {
   return image;
 });
 const loginImagePath = computed(() => {
-  const theme = useSystem().getTheme();
+  const theme = systemController.getTheme();
   let image = "";
   if (theme == "nord" || "light")
     image =
@@ -319,13 +321,13 @@ async function login(): Promise<void> {
   const password = form.password;
 
   try {
-    const response = await useUser().userLogin({
+    const response = await userController.userLogin({
       user,
       password,
     });
 
     const token = "Bearer " + response.auth.access_token;
-    useUser().storeUserToken({ token });
+    userController.storeUserToken({ token });
 
     spinners.buttonLogin = false;
     clearInputs();
@@ -347,7 +349,7 @@ async function login(): Promise<void> {
       );
       return;
     }
-    // useSystem().openToastError(e);
+    // systemController.openToastError(e);
     console.error(e.message);
   }
 }
@@ -450,7 +452,7 @@ const presentAlertRestorePassword = async (): Promise<{
 
 const loadUser = async (): Promise<void> => {
   try {
-    useUser().loadUser({
+    userController.loadUser({
       graphql: { name: USER_MENU, fragment: "UserMenu" },
     });
   } catch (error) {

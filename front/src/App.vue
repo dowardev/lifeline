@@ -19,21 +19,27 @@
 import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
 import { onMounted } from "vue";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
-import { setTheme } from "@/services/system";
 
-import { useSystem } from "@/composables/useSystem";
-import { getUserToken } from "./services/user";
-import { useUser } from "./composables/useUser";
-import { useEvent } from "./composables/useEvent";
+// controllers
+import { SystemController } from "@/controllers/systemController";
+import { EventController } from "@/controllers/eventController";
+import { UserController } from "@/controllers/userController";
+const systemController = new SystemController();
+const eventController = new EventController();
+const userController = new UserController();
 
-const systemComposable = useSystem();
+// services
+import { SystemService } from "./services/system";
+import { UserService } from "./services/user";
+const systemService = new SystemService();
+const userService = new UserService();
 
 // mounted
 onMounted(async () => {
   await start();
-  await useSystem().createTableTokens();
-  await useEvent().createTableEvents();
-  await useEvent().createTableReminders();
+  await systemController.createTableTokens();
+  await eventController.createTableEvents();
+  await eventController.createTableReminders();
 });
 
 // functions
@@ -42,10 +48,11 @@ const start = async (): Promise<void> => {
 
   // await useDocument().loadUserDocuments();
 
-  await useSystem().loadThemeSelected();
-  const theme = useSystem().getTheme();
-  setTheme({ theme: theme, currentTheme: theme });
-  await useSystem().updateThemeSelected({ theme });
+  await systemController.loadThemeSelected();
+  const theme = systemController.getTheme();
+  // TODO: use composable instead of service
+  systemService.setTheme({ theme: theme, currentTheme: theme });
+  await systemController.updateThemeSelected({ theme });
 
   try {
     // await deleteData();
@@ -55,15 +62,15 @@ const start = async (): Promise<void> => {
 };
 
 function loadUserProps(): void {
-  const userToken = getUserToken();
+  const userToken = userService.getUserToken();
   if (userToken != "") {
-    useUser().updateUserLoggedProp(true);
-    useUser().updateUserToken(userToken);
+    userController.updateUserLoggedProp(true);
+    userController.updateUserTokenProp(userToken);
   }
 }
 
 async function deleteData(): Promise<void> {
-  await systemComposable.deleteData({
+  await systemController.deleteData({
     events: true,
     schedule: true,
     reminders: true,

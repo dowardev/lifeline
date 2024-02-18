@@ -1,4 +1,4 @@
-import { main } from "@/services/dbService";
+import { DBService } from "@/services/dbService";
 import {
   CapacitorSQLite,
   SQLiteConnection,
@@ -55,10 +55,10 @@ import { createApolloProvider } from "@vue/apollo-option";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
-    const dbService = new main();
-    await dbService.init();
-    await dbService.dbConnection();
-    (await dbService.dbConnection()).open();
+    const dbs = new DBService();
+    await dbs.init();
+    await dbs.dbConnection();
+    (await dbs.dbConnection()).open();
 
     const apolloProvider = createApolloProvider({
       defaultClient: apolloClient,

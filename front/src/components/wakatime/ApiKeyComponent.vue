@@ -27,8 +27,11 @@
 <script setup lang="ts">
 import { IonInput, IonButton } from "@ionic/vue";
 import { reactive, ref } from "vue";
-import { useSystem } from "@/composables/useSystem";
 import { saveOutline } from "ionicons/icons";
+
+// controllers
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
 
 const inputApiKeyValue = ref("");
 const spinners = reactive({ testApiKey: false });
@@ -40,10 +43,13 @@ async function testWakaTimeApiKey(params: { apiKey: string }): Promise<void> {
 
   try {
     const date = getTodayDate();
-    const response = await useSystem().testWakaTimeApiKey({ apiKey, date });
+    const response = await systemController.testWakaTimeApiKey({
+      apiKey,
+      date,
+    });
     if (response) {
       await storeWakaTimeApiKey({ apiKey });
-      useSystem().loadWakaTimeApiKey();
+      systemController.loadWakaTimeApiKey();
     }
   } catch (error) {
     console.error(error);
@@ -54,7 +60,7 @@ async function testWakaTimeApiKey(params: { apiKey: string }): Promise<void> {
 
 async function storeWakaTimeApiKey(params: { apiKey: string }): Promise<void> {
   const { apiKey } = params;
-  await useSystem().storeWakaTimeApiKey({ apiKey });
+  await systemController.storeWakaTimeApiKey({ apiKey });
 }
 
 function getTodayDate(): string {

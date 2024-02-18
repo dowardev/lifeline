@@ -3,18 +3,14 @@ import { NewNote } from "../utils/interfaces";
 import { saveNote as saveNoteService } from "../services/note";
 import { useNoteStore } from "../store/noteStore";
 
-export const useNote = () => {
-  const noteStore = useNoteStore();
+export class NoteController {
+  noteStore = useNoteStore();
 
-  async function addNote(params: { note: NewNote }) {
+  async addNote(params: { note: NewNote }) {
     const note = JSON.parse(JSON.stringify(params.note));
     const { id } = await saveNoteService({ note });
 
     note.id = id;
-    noteStore.addNote({ note });
+    this.noteStore.addNote({ note });
   }
-
-  return {
-    addNote,
-  };
-};
+}

@@ -307,7 +307,7 @@
           "
           class="ion-padding hidde-scroll"
         >
-          <CalendarComponent :events="useEvent().getEvents()" />
+          <CalendarComponent :events="eventController.getEvents()" />
         </section>
       </div>
 
@@ -461,7 +461,6 @@ const router = useRouter();
 const props = defineProps({
   eventData: { type: Object as () => Event, default: () => null },
 });
-const scheduleComposable = useSchedule();
 
 const emits = defineEmits(["create", "update", "delete"]);
 
@@ -469,11 +468,15 @@ const emits = defineEmits(["create", "update", "delete"]);
 import CalendarComponent from "./calendar/CalendarComponent.vue";
 import RemindersComponent from "../reminders/RemindersComponent.vue";
 
-// composables
-import { useEvent } from "@/composables/useEvent";
-import { useSchedule } from "@/composables/useSchedule";
-import { useSystem } from "@/composables/useSystem";
-import { useReminder } from "@/composables/useReminder";
+// controllers
+import { EventController } from "@/controllers/eventController";
+import { ScheduleController } from "@/controllers/scheduleController";
+import { SystemController } from "@/controllers/systemController";
+import { ReminderController } from "@/controllers/reminderController";
+const eventController = new EventController();
+const scheduleController = new ScheduleController();
+const systemController = new SystemController();
+const reminderController = new ReminderController();
 
 import {
   EventReminderNotification,
@@ -629,7 +632,7 @@ function formatTextRepeat() {
 function translateRepeat(params: { repeat: string }) {
   const repeat = params.repeat as keyof EventReminderRepeat;
 
-  let result = useSystem().translateEventReminderRepeat({
+  let result = systemController.translateEventReminderRepeat({
     typeRepeat: repeat,
   });
   result = result.charAt(0).toUpperCase() + result.slice(1);
@@ -639,7 +642,7 @@ function translateRepeat(params: { repeat: string }) {
 function translateDaysWeekRepear(params: { day: string }) {
   const day = params.day as any;
 
-  let result = useSystem().translateDay({
+  let result = systemController.translateDay({
     dayName: day,
   });
   result = result.charAt(0).toUpperCase() + result.slice(1);
@@ -649,7 +652,7 @@ function translateDaysWeekRepear(params: { day: string }) {
 function translateNotifications(params: { notification: string }) {
   const notification = params.notification as keyof EventReminderNotification;
 
-  const result = useSystem().translateEventReminderNotification({
+  const result = systemController.translateEventReminderNotification({
     notificationName: notification,
   });
   return result;
@@ -687,7 +690,7 @@ async function postCreateEvent(params: {
   let { schedule } = params;
   const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
 
-  const scheduleElement = useSchedule().generateScheduleElement({
+  const scheduleElement = scheduleController.generateScheduleElement({
     id: scheduleId,
     idElement: eventId,
     title: event.name.value,
@@ -700,19 +703,19 @@ async function postCreateEvent(params: {
   });
 
   if (eventId)
-    schedule = useSchedule().removeElementSchedule({
+    schedule = scheduleController.removeElementSchedule({
       id: eventId,
       schedule,
     });
 
-  schedule = useSchedule().generateEventSchedule({
+  schedule = scheduleController.generateEventSchedule({
     scheduleElement,
     schedule,
   });
-  await useSchedule().saveSchedule({ schedule });
-  await useSchedule().loadSchedule();
+  await scheduleController.saveSchedule({ schedule });
+  await scheduleController.loadSchedule();
 
-  const notifications = useReminder().getEventReminders({
+  const notifications = reminderController.getEventReminders({
     dateStart: event.reminders.value.start,
     notifications: event.reminders.value.notifications,
   });
@@ -720,7 +723,7 @@ async function postCreateEvent(params: {
   if (notifications) {
     await Promise.all(
       notifications.map(async (notification) => {
-        await useSchedule().setReminders({
+        await scheduleController.setReminders({
           id: parseInt(scheduleId),
           reminder: notification,
           title: event.name.value,

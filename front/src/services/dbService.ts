@@ -6,7 +6,7 @@ import {
 } from "@capacitor-community/sqlite";
 import { Capacitor } from "@capacitor/core";
 
-export class main {
+export class DBService {
   async init(): Promise<void> {
     const platform = Capacitor.getPlatform();
     const sqlite = new SQLiteConnection(CapacitorSQLite);
@@ -40,7 +40,7 @@ export class main {
   async createTable(params: { query: any }): Promise<void> {
     try {
       const { query } = params;
-      const db = await new main().dbConnection();
+      const db = await this.dbConnection();
       if ((await db.isDBOpen()).result == false) await db.open();
       const queryCreateTable = query;
       const respCT = await db.execute(queryCreateTable);

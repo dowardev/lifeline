@@ -2,14 +2,15 @@ import { useMutation, useQuery } from "@vue/apollo-composable";
 import { DocumentNode } from "graphql";
 import gql from "graphql-tag";
 
-export function graphqlQueryBuilder(params: {
-  name: DocumentNode;
-  fragment: string;
-  mutationName: string;
-}): DocumentNode {
-  const { name, fragment, mutationName } = params;
+export class GrapQLService {
+  graphqlQueryBuilder(params: {
+    name: DocumentNode;
+    fragment: string;
+    mutationName: string;
+  }): DocumentNode {
+    const { name, fragment, mutationName } = params;
 
-  const query = gql`
+    const query = gql`
         query ${mutationName}{
           ${mutationName}{
            ...${fragment}
@@ -18,20 +19,20 @@ export function graphqlQueryBuilder(params: {
         ${name}
       `;
 
-  return query;
-}
+    return query;
+  }
 
-export function graphqlMutationBuilder(params: {
-  name: DocumentNode;
-  fragment: string;
-  mutationName: string;
-  inputName?: string;
-}): DocumentNode {
-  const { name, fragment, mutationName, inputName } = params;
-  let query = "" as any;
+  graphqlMutationBuilder(params: {
+    name: DocumentNode;
+    fragment: string;
+    mutationName: string;
+    inputName?: string;
+  }): DocumentNode {
+    const { name, fragment, mutationName, inputName } = params;
+    let query = "" as any;
 
-  if (inputName)
-    query = gql`
+    if (inputName)
+      query = gql`
         mutation ${mutationName}($input:${inputName}){
           ${mutationName}(input: $input){
            ...${fragment}
@@ -40,8 +41,8 @@ export function graphqlMutationBuilder(params: {
         ${name}
       `;
 
-  if (!inputName)
-    query = gql`
+    if (!inputName)
+      query = gql`
         mutation ${mutationName}{
           ${mutationName}{
            ...${fragment}
@@ -50,36 +51,34 @@ export function graphqlMutationBuilder(params: {
         ${name}
       `;
 
-  return query;
-}
-export async function executeGrapQuery(params: {
-  query: any;
-  options: { refetch: boolean };
-}): Promise<any> {
-  const { query, options } = params;
-  const { refetch, result } = useQuery(query, null, {
-    fetchPolicy: "cache-first",
-  });
-  if (options.refetch) await refetch();
-
-  return result;
-}
-
-export function executeGrapMutation(params: {
-  query: any;
-  input?: any;
-}): Promise<any> {
-  const { query, input } = params;
-  const { mutate: mutate, onDone, onError } = useMutation(query);
-
-  if (!input) mutate();
-  if (input) mutate({ input });
-
-  return new Promise((resolve, reject) => {
-    onDone((response) => {
-      resolve(response.data);
+    return query;
+  }
+  async executeGrapQuery(params: {
+    query: any;
+    options: { refetch: boolean };
+  }): Promise<any> {
+    const { query, options } = params;
+    const { refetch, result } = useQuery(query, null, {
+      fetchPolicy: "cache-first",
     });
+    if (options.refetch) await refetch();
 
-    onError((error) => reject(error));
-  });
+    return result;
+  }
+
+  executeGrapMutation(params: { query: any; input?: any }): Promise<any> {
+    const { query, input } = params;
+    const { mutate: mutate, onDone, onError } = useMutation(query);
+
+    if (!input) mutate();
+    if (input) mutate({ input });
+
+    return new Promise((resolve, reject) => {
+      onDone((response) => {
+        resolve(response.data);
+      });
+
+      onError((error) => reject(error));
+    });
+  }
 }

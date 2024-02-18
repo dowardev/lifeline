@@ -81,15 +81,15 @@
                       <div>
                         <!-- input api key -->
                         <div
-                          v-if="!useSystem().getWakaTimeApiKey()"
+                          v-if="!systemController.getWakaTimeApiKey()"
                           class="ion-padding"
                         >
                           <WakaTimeApiKeyComponent />
                         </div>
-                        <div v-if="useSystem().getWakaTimeApiKey()">
+                        <div v-if="systemController.getWakaTimeApiKey()">
                           <WakaTimeToday
                             ref="todayComponentRef"
-                            :api-key="useSystem().getWakaTimeApiKey()"
+                            :api-key="systemController.getWakaTimeApiKey()"
                           />
                         </div>
                       </div>
@@ -143,7 +143,6 @@ import {
   IonCard,
   IonCardTitle,
 } from "@ionic/vue";
-import { useSystem } from "@/composables/useSystem";
 import { onMounted, ref } from "vue";
 
 import {
@@ -152,10 +151,15 @@ import {
   logOutOutline,
   refreshOutline,
 } from "ionicons/icons";
+
 // components
 import CalendarComponent from "./calendar/CalendarComponent.vue";
 import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
 import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
+
+// controllers
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
 
 const pageTitle = "Inicio";
 const todayComponentRef = ref();
@@ -163,7 +167,7 @@ const isOpenPopOverMainOptions = ref(false);
 const eventPopOverMainOptions = ref(null as CustomEvent | null);
 
 onMounted(() => {
-  useSystem().loadWakaTimeApiKey();
+  systemController.loadWakaTimeApiKey();
 });
 
 function refreshTodayComponent(): void {
