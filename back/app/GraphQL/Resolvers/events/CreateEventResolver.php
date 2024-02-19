@@ -26,7 +26,6 @@ class CreateEventResolver
       return Error::createLocatedError('Unauthorized');
     }
 
-    $id = $args['id'];
     $user_id = Auth::guard('api')->user()->id;
     $title = $args['name'];
     $date_start = $args['dateStart'];

@@ -88,7 +88,6 @@ input LoginInput {
   password: String!
 }
 input CreateEventInput {
-  id: String
   name: String!
   guests: String
   dateStart: String!
@@ -117,7 +116,7 @@ input SyncEventsInput {
   syncStatus: Boolean
 }
 input UpdateEventInput {
-  id: String
+  id: Int!
   name: String!
   guests: String
   dateStart: String!
@@ -130,7 +129,7 @@ input UpdateEventInput {
   syncStatus: Boolean
 }
 input DeleteEventInput {
-  id: String
+  id: Int!
 }
 
 # payloads
@@ -154,7 +153,7 @@ type SyncEventsPayload {
   state: Boolean!
 }
 type CreateEventPayload {
-  id: String!
+  id: Int!
 }
 type UpdateEventPayload {
   state: Boolean!
