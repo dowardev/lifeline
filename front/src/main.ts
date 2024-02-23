@@ -1,13 +1,4 @@
 import { DBService } from "@/services/dbService";
-import {
-  CapacitorSQLite,
-  SQLiteConnection,
-  SQLiteDBConnection,
-} from "@capacitor-community/sqlite";
-import { Capacitor } from "@capacitor/core";
-import { useSystem } from "./composables/useSystem";
-import { useEvent } from "./composables/useEvent";
-
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 customElements.define("jeep-sqlite", JeepSqlite);
 
@@ -37,7 +28,7 @@ import "@ionic/vue/css/display.css";
 import "./theme/variables.css";
 
 // apollo
-import apolloClient from "./Apollo";
+// import apolloClient from "./Apollo";
 
 // i18n
 import i18n from "./plugins/i18n/i18n";
@@ -51,7 +42,7 @@ export { storage };
 // pinia
 import { createPinia } from "pinia";
 const pinia = createPinia();
-import { createApolloProvider } from "@vue/apollo-option";
+// import { createApolloProvider } from "@vue/apollo-option";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -60,16 +51,27 @@ window.addEventListener("DOMContentLoaded", async () => {
     await dbs.dbConnection();
     (await dbs.dbConnection()).open();
 
-    const apolloProvider = createApolloProvider({
-      defaultClient: apolloClient,
-    });
+    // const apolloProvider = createApolloProvider({
+    //   defaultClient: apolloClient,
+    // });
 
-    const app = createApp(App)
-      .use(apolloProvider)
-      .use(IonicVue)
-      .use(i18n)
-      .use(pinia)
-      .use(router);
+    // const app = createApp({
+    //   setup() {
+    //     provide(DefaultApolloClient, apolloClient);
+    //   },
+    //
+    //   render: () => h(App),
+    // })
+    //   .use(apolloProvider)
+    //   .use(IonicVue)
+    //   .use(i18n)
+    //   .use(pinia)
+    //   .use(router);
+    // router.isReady().then(() => {
+    //   app.mount("#app");
+    // });
+
+    const app = createApp(App).use(IonicVue).use(i18n).use(pinia).use(router);
     router.isReady().then(() => {
       app.mount("#app");
     });

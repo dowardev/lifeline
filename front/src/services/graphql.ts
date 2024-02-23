@@ -1,8 +1,25 @@
-import { useMutation, useQuery } from "@vue/apollo-composable";
+import { storage } from "@/main";
+import { ApolloClient, InMemoryCache } from "@apollo/client/core";
+import { CapacitorCookies } from "@capacitor/core";
+import {
+  provideApolloClient,
+  useMutation,
+  useQuery,
+} from "@vue/apollo-composable";
 import { DocumentNode } from "graphql";
 import gql from "graphql-tag";
 
 export class GrapQLService {
+  uri = "";
+  constructor() {
+    const mode = process.env.NODE_ENV;
+    if (mode == "development") {
+      this.uri = "http://127.0.0.1:8000/graphql";
+    } else {
+      this.uri = "https://lifeline-back.dowar.xyz/graphql";
+    }
+  }
+
   graphqlQueryBuilder(params: {
     name: DocumentNode;
     fragment: string;
@@ -53,22 +70,47 @@ export class GrapQLService {
 
     return query;
   }
+
   async executeGrapQuery(params: {
     query: any;
     options: { refetch: boolean };
   }): Promise<any> {
     const { query, options } = params;
-    const { refetch, result } = useQuery(query, null, {
-      fetchPolicy: "cache-first",
-    });
-    if (options.refetch) await refetch();
 
+    const cache = new InMemoryCache();
+    const apolloClient = new ApolloClient({
+      cache,
+      uri: this.uri,
+      headers: {
+        Authorization: await storage.get("authToken"),
+      },
+    });
+    const { refetch, result } = provideApolloClient(apolloClient)(() =>
+      useQuery(query, null, {
+        fetchPolicy: "cache-first",
+      })
+    );
+    if (options.refetch) await refetch();
     return result;
   }
 
-  executeGrapMutation(params: { query: any; input?: any }): Promise<any> {
+  async executeGrapMutation(params: { query: any; input?: any }): Promise<any> {
     const { query, input } = params;
-    const { mutate: mutate, onDone, onError } = useMutation(query);
+
+    const cache = new InMemoryCache();
+    const apolloClient = new ApolloClient({
+      cache,
+      uri: this.uri,
+      headers: {
+        Authorization: (await CapacitorCookies.getCookies()).authToken,
+      },
+    });
+
+    const {
+      mutate: mutate,
+      onDone,
+      onError,
+    } = provideApolloClient(apolloClient)(() => useMutation(query));
 
     if (!input) mutate();
     if (input) mutate({ input });

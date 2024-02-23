@@ -2,8 +2,8 @@ import { storage } from "@/main";
 import apolloClient from "../Apollo";
 import gql from "graphql-tag";
 import { useMutation } from "@vue/apollo-composable";
-import { provideApolloClient } from "@vue/apollo-composable";
-provideApolloClient(apolloClient);
+// import { provideApolloClient } from "@vue/apollo-composable";
+// provideApolloClient(apolloClient);
 
 import {
   SetUserToken,
@@ -73,20 +73,20 @@ export class UserService {
         query,
         options: { refetch },
       });
-      if (!response.value.userAuth) return {} as User;
-      response = {
-        id: response.value.userAuth.user.id,
-        name: response.value.userAuth.user.name,
-        email: response.value.userAuth.user.email,
-        user: response.value.userAuth.user.user,
-        imageProfile: response.value.userAuth.user.image_profile,
-        isAdmin: response.value.userAuth.user.is_admin,
-      };
-      return response;
+      if (response) {
+        response = {
+          id: response.value.userAuth.user.id,
+          name: response.value.userAuth.user.name,
+          email: response.value.userAuth.user.email,
+          user: response.value.userAuth.user.user,
+          imageProfile: response.value.userAuth.user.image_profile,
+          isAdmin: response.value.userAuth.user.is_admin,
+        };
+        return response;
+      }
+      return {} as User;
     } catch (error: any) {
-      if (error.message != "Unauthorized")
-        throw errorBuilder({ message: error.message, typeError: "authError" });
-      throw errorBuilder({ message: error.message });
+      throw new Error(error);
     }
   }
 

@@ -10,6 +10,8 @@ import {
 import { errorBuilder } from "@/utils/errors";
 import { UserService } from "@/services/user";
 import { SessionService } from "@/services/session";
+import { CapacitorCookies } from "@capacitor/core";
+import { storage } from "@/main";
 
 export class UserController {
   userStore = useUserStore();
@@ -25,7 +27,7 @@ export class UserController {
 
       this.updateUserProps({ user });
     } catch (error: any) {
-      if (error.message != "Unauthorized") throw error;
+      if (error.message != "Unauthorized") throw new Error(error);
     }
   }
 
@@ -64,11 +66,7 @@ export class UserController {
   async storeUserToken(params: SetUserToken): Promise<void> {
     try {
       const { token } = params;
-      const serializedToken = JSON.stringify(token);
-      document.cookie = `authToken=${serializedToken}; path=/;`;
-      await this.userService.setUserToken({
-        token,
-      });
+      await storage.set("authToken", token);
     } catch (error: any) {
       throw new Error(error);
     }

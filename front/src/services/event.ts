@@ -4,8 +4,8 @@ import userService from "./user.vue";
 import apolloClient from "../Apollo";
 import gql from "graphql-tag";
 import { useQuery, useMutation } from "@vue/apollo-composable";
-import { provideApolloClient } from "@vue/apollo-composable";
-provideApolloClient(apolloClient);
+// import { provideApolloClient } from "@vue/apollo-composable";
+// provideApolloClient(apolloClient);
 
 import {
   GetCalendars,

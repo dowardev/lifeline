@@ -2,8 +2,8 @@ import { format } from "date-fns";
 import { storage } from "@/main";
 
 import apolloClient from "../Apollo";
-import { provideApolloClient } from "@vue/apollo-composable";
-provideApolloClient(apolloClient);
+// import { provideApolloClient } from "@vue/apollo-composable";
+// provideApolloClient(apolloClient);
 
 import { Task, NewTask } from "@/utils/interfaces";
 

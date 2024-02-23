@@ -1,9 +1,12 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { VitePWA } from "vite-plugin-pwa";
-import path from 'path'
+import path from "path";
 
 export default defineConfig({
+  build: {
+    target: "esnext", //browsers can handle the latest ES features
+  },
   plugins: [
     vue(),
     VitePWA({
@@ -33,7 +36,7 @@ export default defineConfig({
         ],
       },
       strategies: "generateSW",
-      includeAssets: ["*", "**/*"], 
+      includeAssets: ["*", "**/*"],
       workbox: {
         runtimeCaching: [
           {
