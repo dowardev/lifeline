@@ -51,10 +51,6 @@ export class EventController {
   }): Promise<void> {
     const { dates } = params;
     const events = await this.getStoredEvents({ filterType: "date", dates });
-    // events = events.map((event) => {
-    //   eventService.formatEvent({ event });
-    //   return event;
-    // });
     this.eventStore.setEvents({ events });
   }
 

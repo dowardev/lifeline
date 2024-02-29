@@ -102,7 +102,7 @@ export class GrapQLService {
       cache,
       uri: this.uri,
       headers: {
-        Authorization: (await CapacitorCookies.getCookies()).authToken,
+        Authorization: await storage.get("authToken"),
       },
     });
 

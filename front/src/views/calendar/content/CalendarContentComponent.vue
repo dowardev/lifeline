@@ -57,17 +57,13 @@
                       </td>
                       <td v-for="day in days" :key="day.date.toString()">
                         <div>
-                          <div v-for="event in events" :key="event.id">
+                          <div v-for="event in events2" :key="event.id">
                             <template
                               v-if="
-                                (event.reminders.start.getHours() ===
-                                  parseInt(hour) &&
-                                  event.reminders.start.getDate() <=
-                                    day.date.getDate()) ||
-                                (event.reminders.end.getHours() ===
-                                  parseInt(hour) &&
-                                  event.reminders.end.getDate() <=
-                                    day.date.getDate())
+                                event.reminders.start <= day.date &&
+                                event.reminders.end >= day.date &&
+                                event.reminders.start.getHours() ===
+                                  parseInt(hour)
                               "
                             >
                               <ion-card
@@ -221,7 +217,7 @@ import {
 } from "@ionic/vue";
 import { closeOutline, star } from "ionicons/icons";
 import { onMounted, ref } from "vue";
-import { add, format, startOfWeek } from "date-fns";
+import { add, endOfMonth, format, startOfMonth, startOfWeek } from "date-fns";
 import { watch } from "vue";
 
 // interfaces
@@ -235,6 +231,7 @@ import RightMenuEventComponent from "../RightMenuEventComponent.vue";
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
+import { computed } from "vue";
 const systemController = new SystemController();
 const eventController = new EventController();
 
@@ -287,7 +284,6 @@ const isOpenModalAddEvent = ref(false);
 const eventModalAddEvent = ref(null as CustomEvent | null);
 const eventComposable = eventController;
 const events = ref([] as Event[]);
-const componentLoaded = ref(false);
 
 // mounted
 onMounted(async () => {
@@ -297,22 +293,30 @@ onMounted(async () => {
 
 // watch
 watch(
-  () => [eventController.getCurrentDate(), componentLoaded.value],
-  async (value) => {
-    const date = value[0] as Date;
-    const componentLoaded = value[1];
-    if (componentLoaded == true)
-      try {
-        await syncData({ date });
-        days.value = getDaysForCurrentWeek({ date });
-      } catch (error) {
-        console.error(error);
-      }
+  () => eventController.getCurrentDate(),
+  async (date) => {
+    try {
+      await syncData({ date });
+      days.value = getDaysForCurrentWeek({ date });
+    } catch (error) {
+      console.error(error);
+    }
   }
 );
 
+// computed
+const events2 = computed(() => {
+  return events.value.map((event) => {
+    event.reminders.start.setHours(0);
+    event.reminders.start.setMinutes(0);
+    event.reminders.start.setSeconds(0);
+    event.reminders.start.setMilliseconds(0);
+    return event;
+  });
+});
+
 // functions
-function getDaysForCurrentWeek(params: { date: Date }): Day[] {
+function getDaysForCurrentWeek(params: { date: Date }): { date: Date }[] {
   const date = params.date;
   const days = [];
   const dayOfWeek = date.getDay();
@@ -321,11 +325,13 @@ function getDaysForCurrentWeek(params: { date: Date }): Day[] {
   firstDayOfWeek.setDate(date.getDate() + diff);
 
   for (let i = 0; i < 7; i++) {
-    const day = new Date(firstDayOfWeek);
-    day.setDate(firstDayOfWeek.getDate() + i);
-    days.push({
-      date: day,
-    });
+    const day = new Date(firstDayOfWeek); // Create a new Date object from firstDayOfWeek
+    day.setDate(firstDayOfWeek.getDate() + i); // Modify the date of the new Date object
+    day.setHours(0);
+    day.setMinutes(0);
+    day.setSeconds(0);
+    day.setMilliseconds(0);
+    days.push({ date: day });
   }
 
   return days;
@@ -391,18 +397,21 @@ async function syncData(params: { date: Date }): Promise<void> {
 
   try {
     const viewCalendar = await eventController.getViewCalendarStored();
-    const dates = { start: new Date(), end: new Date() };
+    const dates = {
+      start: new Date(startOfMonth(eventController.getCurrentDate())),
+      end: new Date(endOfMonth(eventController.getCurrentDate())),
+    };
 
-    if (viewCalendar == "weekly") {
-      dates.start = startOfWeek(date, {
-        weekStartsOn: 1,
-      });
-      dates.end = new Date(
-        add(dates.start, {
-          days: 7,
-        })
-      );
-    }
+    // if (viewCalendar == "weekly") {
+    //   dates.start = startOfWeek(date, {
+    //     weekStartsOn: 1,
+    //   });
+    //   dates.end = new Date(
+    //     add(dates.start, {
+    //       days: 7,
+    //     })
+    //   );
+    // }
 
     await eventComposable.sync();
     await eventController.loadEvents({
@@ -462,7 +471,6 @@ async function syncAction(): Promise<void> {
     await systemController.openToast({ message: "Sincronización iniciada" });
     await syncData({ date: eventController.getCurrentDate() });
     await systemController.openToast({ message: "Sincronización terminada" });
-    componentLoaded.value = true;
   } catch (error) {
     await systemController.openToast({ message: "Problema al sincronizar" });
     console.error(error);

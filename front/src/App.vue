@@ -1,5 +1,5 @@
 <template>
-  <ion-app>
+  <ion-app v-if="componentLoaded">
     <ion-split-pane when="lg" content-id="menu-content">
       <ion-menu
         content-id="menu-content"
@@ -18,6 +18,9 @@
 <script setup lang="ts">
 import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
 import { onMounted } from "vue";
+import { ref } from "vue";
+
+// components
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 
 // controllers
@@ -34,12 +37,15 @@ import { UserService } from "./services/user";
 const systemService = new SystemService();
 const userService = new UserService();
 
+const componentLoaded = ref(false);
+
 // mounted
 onMounted(async () => {
-  await start();
   await systemController.createTableTokens();
   await eventController.createTableEvents();
   await eventController.createTableReminders();
+  await start();
+  componentLoaded.value = true;
 });
 
 // functions

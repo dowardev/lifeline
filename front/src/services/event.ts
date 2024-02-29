@@ -645,7 +645,7 @@ export class EventService {
     const dateEnd = format(dates.end, "yyyy-MM-dd HH:mm:ss");
 
     const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id
-                    WHERE reminders.start>='${dateStart}' and reminders.end<='${dateEnd}'`;
+                    WHERE reminders.start>='${dateStart}' or reminders.end<='${dateEnd}'`;
     try {
       const result = (await db.query(query)).values as any[];
       const events: Event[] = [];
