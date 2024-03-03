@@ -51,7 +51,6 @@ onMounted(async () => {
 // functions
 const start = async (): Promise<void> => {
   loadUserProps();
-
   // await useDocument().loadUserDocuments();
 
   await systemController.loadThemeSelected();

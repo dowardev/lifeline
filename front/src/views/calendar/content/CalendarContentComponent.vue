@@ -429,6 +429,7 @@ async function saveEvent(params: { event: Event }): Promise<void> {
     await eventController.saveEvent({
       event,
     });
+    await syncAction();
   } catch (error) {
     console.error(error);
   }
@@ -471,6 +472,7 @@ async function syncAction(): Promise<void> {
     await systemController.openToast({ message: "Sincronización iniciada" });
     await syncData({ date: eventController.getCurrentDate() });
     await systemController.openToast({ message: "Sincronización terminada" });
+    await eventController.setReminders({ events: events.value });
   } catch (error) {
     await systemController.openToast({ message: "Problema al sincronizar" });
     console.error(error);

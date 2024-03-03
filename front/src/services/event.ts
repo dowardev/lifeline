@@ -28,8 +28,9 @@ import { toRaw } from "vue";
 import { cloneDeep, parseInt } from "lodash";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { DBService } from "@/services/dbService";
-import { format } from "date-fns";
+import { format, formatISO } from "date-fns";
 import { GrapQLService } from "./graphql";
+import { LocalNotifications } from "@capacitor/local-notifications";
 
 const dbService = new DBService();
 const grapService = new GrapQLService();
@@ -676,6 +677,46 @@ export class EventService {
       return events;
     } catch (error: any) {
       throw new Error(error);
+    }
+  }
+
+  async setEventReminder(params: {
+    title: string;
+    message: string;
+    extraInfo: string;
+    reminder: Date;
+  }) {
+    const { title, message, extraInfo, reminder } = params;
+    console.log(reminder);
+
+    const permission = await this.checkNotificationsPermissions();
+    if (permission == false) return;
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          title,
+          body: message,
+          id: Math.floor(Math.random() * 1000),
+          schedule: {
+            at: reminder,
+          },
+          actionTypeId: "",
+          extra: extraInfo,
+        },
+      ],
+    }).catch((e) => {
+      console.error(e);
+    });
+  }
+
+  async checkNotificationsPermissions(): Promise<boolean> {
+    const permission = await LocalNotifications.requestPermissions();
+
+    if (permission.display == "granted") {
+      return true;
+    } else {
+      return false;
     }
   }
 }

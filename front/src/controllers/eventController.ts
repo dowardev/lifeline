@@ -7,6 +7,7 @@ import lodash from "lodash";
 import { storage } from "@/main";
 import { ViewCalendar } from "@/utils/types";
 import { EventService } from "@/services/event";
+import { add } from "date-fns";
 
 export class EventController {
   dbService = new DBService();
@@ -643,5 +644,23 @@ export class EventController {
   }): Promise<ViewCalendar> {
     const { mode } = params;
     return (await storage.set("viewCalendar", mode)) ?? "weekly";
+  }
+
+  async setReminders(params: { events: Event[] }) {
+    const { events } = params;
+
+    for (let index = 0; index < events.length; index++) {
+      const event = events[index];
+      const newDate = add(event.reminders.start, {
+        minutes: 1,
+      });
+      console.log(newDate);
+      await this.eventService.setEventReminder({
+        reminder: newDate,
+        extraInfo: "",
+        message: event.description,
+        title: event.name!,
+      });
+    }
   }
 }
