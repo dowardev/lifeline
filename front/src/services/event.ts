@@ -308,8 +308,11 @@ export class EventService {
 
       const valuesReminders = [
         eventId,
-        format(event.reminders.start, "yyyy-MM-dd HH:mm:ss"),
-        format(event.reminders.end, "yyyy-MM-dd HH:mm:ss"),
+        event.reminders.start
+          .toISOString()
+          .replace(/T/, " ")
+          .replace(/\..+/, ""),
+        event.reminders.end.toISOString().replace(/T/, " ").replace(/\..+/, ""),
         JSON.stringify(event.reminders.notifications),
         false,
         event.reminders.repeat?.frecuency,
@@ -564,22 +567,24 @@ export class EventService {
     await storage.remove("events");
   }
 
-  async deleteEvents(params: { db: SQLiteDBConnection }): Promise<void> {
+  async deleteEvents(): Promise<void> {
     // await storage.remove("events");
-    const { db } = params;
     const query = `Delete FROM Events`;
     try {
+      const db = await dbService.dbConnection();
+      if ((await db.isDBOpen()).result == false) await db.open();
       await db.query(query);
     } catch (error: any) {
       throw new Error(error);
     }
   }
 
-  async deleteReminders(params: { db: SQLiteDBConnection }): Promise<void> {
+  async deleteReminders(): Promise<void> {
     // await storage.remove("events");
-    const { db } = params;
     const query = `Delete FROM Reminders`;
     try {
+      const db = await dbService.dbConnection();
+      if ((await db.isDBOpen()).result == false) await db.open();
       await db.query(query);
     } catch (error: any) {
       throw new Error(error);

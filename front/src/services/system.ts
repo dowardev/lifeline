@@ -192,9 +192,9 @@ export class SystemService {
     reminders: boolean;
     db: SQLiteDBConnection;
   }): Promise<void> {
-    const { events, schedule, db } = params;
-    if (events) await this.eventController.deleteReminders({ db });
-    if (events) await this.eventController.deleteEvents({ db });
+    const { events, schedule } = params;
+    if (events) await this.eventController.deleteReminders();
+    if (events) await this.eventController.deleteEvents();
     if (schedule) await this.scheduleController.deleteSchedule();
   }
 }

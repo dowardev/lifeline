@@ -10,9 +10,9 @@ import { EventService } from "@/services/event";
 import { add } from "date-fns";
 
 export class EventController {
-  dbService = new DBService();
-  eventService = new EventService();
-  eventStore = useEventsStore();
+  private dbService = new DBService();
+  private eventService = new EventService();
+  private eventStore = useEventsStore();
 
   /**
    * Perform all the necessary procedure to add a event both generally, locally and from the store
@@ -60,7 +60,7 @@ export class EventController {
    *
    * @returns {Promise<Event[]>}
    */
-  async getEvents(): Promise<Event[]> {
+  getEvents(): Event[] {
     const events = this.eventStore.getEvents();
     return events != null ? events : ([] as Event[]);
   }
@@ -278,7 +278,6 @@ export class EventController {
     try {
     } catch (error) {
       console.error(error);
-      debugger;
     }
     const events = await this.eventService.getEventsLocal();
 
@@ -423,14 +422,12 @@ export class EventController {
     }
   }
 
-  async deleteEvents(params: { db: SQLiteDBConnection }): Promise<void> {
-    const { db } = params;
-    await this.eventService.deleteEvents({ db });
+  async deleteEvents(): Promise<void> {
+    await this.eventService.deleteEvents();
   }
 
-  async deleteReminders(params: { db: SQLiteDBConnection }): Promise<void> {
-    const { db } = params;
-    await this.eventService.deleteReminders({ db });
+  async deleteReminders(): Promise<void> {
+    await this.eventService.deleteReminders();
   }
 
   async storeLocalEvent(params: { event: Event }): Promise<void> {
@@ -651,12 +648,8 @@ export class EventController {
 
     for (let index = 0; index < events.length; index++) {
       const event = events[index];
-      const newDate = add(event.reminders.start, {
-        minutes: 1,
-      });
-      console.log(newDate);
       await this.eventService.setEventReminder({
-        reminder: newDate,
+        reminder: event.reminders.start,
         extraInfo: "",
         message: event.description,
         title: event.name!,

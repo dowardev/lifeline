@@ -57,13 +57,14 @@
                       </td>
                       <td v-for="day in days" :key="day.date.toString()">
                         <div>
-                          <div v-for="event in events2" :key="event.id">
-                            <template
+                          <div v-for="event in events" :key="event.id">
+                            <div
                               v-if="
-                                event.reminders.start <= day.date &&
-                                event.reminders.end >= day.date &&
-                                event.reminders.start.getHours() ===
-                                  parseInt(hour)
+                                eventComparation({
+                                  event,
+                                  date: day.date,
+                                  hour,
+                                })
                               "
                             >
                               <ion-card
@@ -97,7 +98,7 @@
                                   format(new Date(event.reminders.start), "Pp")
                                 }}</ion-card-content>
                               </ion-card>
-                            </template>
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -288,15 +289,18 @@ const events = ref([] as Event[]);
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
-  await syncAction();
+  // await syncAction();
+  await eventController.setReminders({ events: events.value });
 });
 
 // watch
+// watch date
 watch(
   () => eventController.getCurrentDate(),
   async (date) => {
     try {
       await syncData({ date });
+      await eventController.setReminders({ events: events.value });
       days.value = getDaysForCurrentWeek({ date });
     } catch (error) {
       console.error(error);
@@ -304,16 +308,13 @@ watch(
   }
 );
 
-// computed
-const events2 = computed(() => {
-  return events.value.map((event) => {
-    event.reminders.start.setHours(0);
-    event.reminders.start.setMinutes(0);
-    event.reminders.start.setSeconds(0);
-    event.reminders.start.setMilliseconds(0);
-    return event;
-  });
-});
+// watch events
+watch(
+  () => eventController.getEvents(),
+  async (response) => {
+    events.value = response;
+  }
+);
 
 // functions
 function getDaysForCurrentWeek(params: { date: Date }): { date: Date }[] {
@@ -327,10 +328,6 @@ function getDaysForCurrentWeek(params: { date: Date }): { date: Date }[] {
   for (let i = 0; i < 7; i++) {
     const day = new Date(firstDayOfWeek); // Create a new Date object from firstDayOfWeek
     day.setDate(firstDayOfWeek.getDate() + i); // Modify the date of the new Date object
-    day.setHours(0);
-    day.setMinutes(0);
-    day.setSeconds(0);
-    day.setMilliseconds(0);
     days.push({ date: day });
   }
 
@@ -417,7 +414,6 @@ async function syncData(params: { date: Date }): Promise<void> {
     await eventController.loadEvents({
       dates,
     });
-    events.value = await eventController.getEvents();
   } catch (error: any) {
     throw new Error(error);
   }
@@ -472,11 +468,39 @@ async function syncAction(): Promise<void> {
     await systemController.openToast({ message: "Sincronización iniciada" });
     await syncData({ date: eventController.getCurrentDate() });
     await systemController.openToast({ message: "Sincronización terminada" });
-    await eventController.setReminders({ events: events.value });
   } catch (error) {
     await systemController.openToast({ message: "Problema al sincronizar" });
     console.error(error);
   }
+}
+
+function eventComparation(params: {
+  event: Event;
+  date: Date;
+  hour: string;
+}): boolean {
+  const { event, date, hour } = params;
+  const newEvent = JSON.parse(JSON.stringify(event));
+  newEvent.reminders.start = new Date(newEvent.reminders.start);
+  newEvent.reminders.end = new Date(newEvent.reminders.end);
+
+  newEvent.reminders.start.setHours(0);
+  newEvent.reminders.start.setMinutes(0);
+  newEvent.reminders.start.setSeconds(0);
+  newEvent.reminders.start.setMilliseconds(0);
+
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+
+  if (
+    newEvent.reminders.start <= date &&
+    newEvent.reminders.end >= date &&
+    event.reminders.start.getHours() === parseInt(hour)
+  )
+    return true;
+  return false;
 }
 
 defineExpose({ openModalAdd, reschedule, syncAction });
