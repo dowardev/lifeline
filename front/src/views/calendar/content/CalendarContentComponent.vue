@@ -426,6 +426,7 @@ async function saveEvent(params: { event: Event }): Promise<void> {
       event,
     });
     await syncAction();
+    await eventController.setReminders({ events: events.value });
   } catch (error) {
     console.error(error);
   }

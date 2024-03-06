@@ -311,8 +311,11 @@ export class EventService {
         event.reminders.start
           .toISOString()
           .replace(/T/, " ")
-          .replace(/\..+/, ""),
-        event.reminders.end.toISOString().replace(/T/, " ").replace(/\..+/, ""),
+          .replace(/\..+/, "") + "Z",
+        event.reminders.end
+          .toISOString()
+          .replace(/T/, " ")
+          .replace(/\..+/, "") + "Z",
         JSON.stringify(event.reminders.notifications),
         false,
         event.reminders.repeat?.frecuency,
@@ -692,7 +695,6 @@ export class EventService {
     reminder: Date;
   }) {
     const { title, message, extraInfo, reminder } = params;
-    console.log(reminder);
 
     const permission = await this.checkNotificationsPermissions();
     if (permission == false) return;
