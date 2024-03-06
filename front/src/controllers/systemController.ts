@@ -29,7 +29,7 @@ export class SystemController {
 
   applyTheme(params: { theme: Theme }) {
     const theme = params.theme;
-    const currentTheme = getTheme();
+    const currentTheme = this.getTheme();
     this.systemService.setTheme({ theme, currentTheme });
     this.systemStore.setThemeSelected({ theme });
   }
