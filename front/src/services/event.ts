@@ -179,11 +179,11 @@ export class EventService {
   //   }
   // );
   // }
-  async getEventLocal(params: {
-    id: number;
-    db: SQLiteDBConnection;
-  }): Promise<Event> {
-    const { db, id } = params;
+  async getEventLocal(params: { id: number }): Promise<Event> {
+    const { id } = params;
+    const db = await dbService.dbConnection();
+    if ((await db.isDBOpen()).result == false) await db.open();
+
     const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id where events.id=${id}`;
     try {
       const result = (await db.query(query)).values![0] as any;

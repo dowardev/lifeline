@@ -479,12 +479,11 @@ export class EventController {
    */
   async deleteEvent(params: { id: number }): Promise<void> {
     const { id } = params;
-    const db = await dbService.dbConnection();
+    const db = await this.dbService.dbConnection();
 
     let status = false;
     try {
-      const idSync = (await this.eventService.getEventsLocal({ db, id }))
-        .idSync;
+      const idSync = (await this.eventService.getEventLocal({ id })).idSync;
       await this.eventService.deleteEventServer({ id: idSync as number });
       status = true;
     } catch (error: any) {
