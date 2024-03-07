@@ -641,7 +641,14 @@ export class EventController {
     return (await storage.set("viewCalendar", mode)) ?? "weekly";
   }
 
-  async setReminders(params: { events: Event[] }) {
+  /**
+   * Set a reminder for event group
+   *
+   * @param {Object} params
+   * @param {Number} params.event event is an array object of type Event
+   * @returns {Promise<void>}
+   */
+  async setEventsReminders(params: { events: Event[] }): Promise<void> {
     const { events } = params;
 
     for (let index = 0; index < events.length; index++) {
@@ -653,5 +660,23 @@ export class EventController {
         title: event.name!,
       });
     }
+  }
+
+  /**
+   * Set a reminder for an event
+   *
+   * @param {Object} params
+   * @param {Number} params.event event is an object of type Event
+   * @returns {Promise<void>}
+   */
+  async setEventReminder(params: { event: Event }): Promise<void> {
+    const { event } = params;
+
+    await this.eventService.setEventReminder({
+      reminder: event.reminders.start,
+      extraInfo: "",
+      message: event.description,
+      title: event.name!,
+    });
   }
 }

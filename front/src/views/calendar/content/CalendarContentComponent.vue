@@ -290,7 +290,6 @@ const events = ref([] as Event[]);
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
   // await syncAction();
-  await eventController.setReminders({ events: events.value });
 });
 
 // watch
@@ -300,8 +299,8 @@ watch(
   async (date) => {
     try {
       await syncData({ date });
-      await eventController.setReminders({ events: events.value });
       days.value = getDaysForCurrentWeek({ date });
+      await setEventsReminders();
     } catch (error) {
       console.error(error);
     }
@@ -426,7 +425,7 @@ async function saveEvent(params: { event: Event }): Promise<void> {
       event,
     });
     await syncAction();
-    await eventController.setReminders({ events: events.value });
+    await eventController.setEventReminder({ event });
   } catch (error) {
     console.error(error);
   }
@@ -502,6 +501,14 @@ function eventComparation(params: {
   )
     return true;
   return false;
+}
+
+async function setEventsReminders(): Promise<void> {
+  for (let i = 0; i < events.value.length; i++) {
+    const event = events.value[i];
+    if (event.reminders.start > new Date())
+      await eventController.setEventsReminders({ events: events.value });
+  }
 }
 
 defineExpose({ openModalAdd, reschedule, syncAction });
