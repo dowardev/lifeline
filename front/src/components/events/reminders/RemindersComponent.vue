@@ -171,6 +171,7 @@ const props = defineProps({
       };
     },
   },
+  idReminders: { type: Array, default: () => [] },
 });
 
 const emitEvent = defineEmits(["updateDataReminders"]);
@@ -188,6 +189,8 @@ const dates = ref({
   start: props.dates.start,
   end: props.dates.end,
 });
+
+const idReminders = props.idReminders;
 
 const notificationsData = ref([
   {
@@ -296,7 +299,13 @@ const saveReminder = async () => {
   const dateRepeat = dataRepeat;
 
   emitEvent("updateDataReminders", {
-    data: { start: dateStart, end: dateEnd, remindersChecked, dateRepeat },
+    data: {
+      start: dateStart,
+      end: dateEnd,
+      remindersChecked,
+      dateRepeat,
+      idReminders,
+    },
   });
   closPage();
 };

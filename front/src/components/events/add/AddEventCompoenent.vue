@@ -327,12 +327,14 @@
           :segment-option="popoverRemindersSegment"
           :notifications="event.reminders.value.notifications"
           :repeat="event.reminders.value.repeat"
+          :id-reminders="event.reminders.value.idReminders"
           @update-data-reminders="
             event.reminders.value = {
               start: $event.data.start,
               end: $event.data.end,
               notifications: $event.data.remindersChecked,
               repeat: $event.data.dateRepeat,
+              idReminders: $event.data.idReminders,
             }
           "
         />
@@ -507,6 +509,7 @@ const event = {
       type: "daily" | "weekly" | "monthly" | "annually";
       daysWeek?: string[];
     },
+    idReminders: props.eventData.reminders.idReminders ?? [],
   }),
   timezone: ref(Intl.DateTimeFormat().resolvedOptions().timeZone),
   guests: ref(Array<{ email: string }>()),
@@ -574,6 +577,7 @@ const removeGuest = (params: { index: number }) => {
 
 async function save(): Promise<void> {
   const eventData = props.eventData ?? ({} as Event);
+
   try {
     eventData.name = event.name.value;
     eventData.guests = event.guests.value;
@@ -582,6 +586,7 @@ async function save(): Promise<void> {
       end: new Date(event.reminders.value.end),
       notifications: event.reminders.value.notifications,
       repeat: event.reminders.value.repeat,
+      idReminders: event.reminders.value.idReminders,
     };
     eventData.description = event.description.value;
     eventData.availability = event.availability.value;

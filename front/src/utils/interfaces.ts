@@ -76,6 +76,7 @@ export interface Event {
       type: "daily" | "weekly" | "monthly" | "annually";
       daysWeek?: string[];
     };
+    idReminders: number[];
   };
   // tags?: Array<string>;
   timezone?: string;

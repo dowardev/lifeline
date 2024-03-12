@@ -409,7 +409,7 @@ async function syncData(params: { date: Date }): Promise<void> {
     //   );
     // }
 
-    await eventComposable.sync();
+    // await eventComposable.sync();
     await eventController.loadEvents({
       dates,
     });
@@ -433,13 +433,30 @@ async function saveEvent(params: { event: Event }): Promise<void> {
 
 async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
+  console.log(event.reminders.idReminders);
 
   try {
-    event.syncStatus = false;
-    await eventController.updateLocalEvent({
-      event,
-    });
-    await syncData({ date: eventController.getCurrentDate() });
+    if (event.reminders.idReminders && event.reminders.idReminders.length > 0) {
+      await eventController.discardEventReminders({
+        event,
+      });
+    }
+
+    if (event.reminders.idReminders.length == 0) {
+      const reminderId = (
+        await eventController.setEventReminder({
+          event,
+        })
+      ).reminderId;
+      event.reminders.idReminders.push(reminderId);
+      // console.log({ seted: event.reminders.idReminders });
+    }
+
+    // event.syncStatus = false;
+    // await eventController.updateLocalEvent({
+    //   event,
+    // });
+    // await syncData({ date: eventController.getCurrentDate() });
     event.syncStatus = true;
     await eventController.updateLocalEvent({
       event,

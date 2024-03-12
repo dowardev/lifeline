@@ -200,6 +200,7 @@ export class EventService {
             type: result.type,
             daysWeek: JSON.parse(result.daysWeek),
           },
+          idReminders: JSON.parse(result.id_reminders ?? []),
         },
         timezone: result.timezone,
         description: result.description,
@@ -321,6 +322,7 @@ export class EventService {
         event.reminders.repeat?.frecuency,
         event.reminders.repeat?.type,
         JSON.stringify(event.reminders.repeat?.daysWeek ?? []),
+        JSON.stringify(event.reminders.idReminders ?? []),
       ];
       const fieldsReminders = [
         "event_id",
@@ -331,6 +333,7 @@ export class EventService {
         "frecuency",
         "type",
         "daysWeek",
+        "id_reminders",
       ];
 
       let queryReminders = `
@@ -346,6 +349,7 @@ export class EventService {
       }
       queryReminders += `)`;
       await db.query(queryReminders, valuesReminders);
+      // console.log(await this.getEventsLocal());
     } catch (error: any) {
       throw new Error(error);
     }
@@ -353,6 +357,7 @@ export class EventService {
 
   async updateLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
+
     const eventId = event.id;
     const db = await dbService.dbConnection();
     if ((await db.isDBOpen()).result == false) await db.open();
@@ -398,6 +403,7 @@ export class EventService {
         event.reminders.repeat?.frecuency,
         event.reminders.repeat?.type,
         JSON.stringify(event.reminders.repeat?.daysWeek ?? []),
+        JSON.stringify(event.reminders.idReminders ?? []),
       ];
       const fieldsReminders = [
         "start",
@@ -407,6 +413,7 @@ export class EventService {
         "frecuency",
         "type",
         "daysWeek",
+        "id_reminders",
       ];
 
       let queryReminder = `UPDATE Reminders SET `;
@@ -419,6 +426,7 @@ export class EventService {
       });
       queryReminder += ` WHERE event_id="${eventId}"`;
       await db.query(queryReminder, valuesReminders);
+      // console.log((await this.getEventsLocal())[0].reminders.idReminders);
     } catch (error: any) {
       throw new Error(error);
     }
@@ -447,6 +455,7 @@ export class EventService {
               type: event.type,
               daysWeek: JSON.parse(event.daysWeek),
             },
+            idReminders: JSON.parse(event.id_reminders ?? []),
           },
           timezone: event.timezone,
           description: event.description,
@@ -673,6 +682,7 @@ export class EventService {
               type: event.type,
               daysWeek: JSON.parse(event.daysWeek),
             },
+            idReminders: JSON.parse(event.id_reminders ?? []),
           },
           timezone: event.timezone,
           description: event.description,
@@ -693,18 +703,19 @@ export class EventService {
     message: string;
     extraInfo: string;
     reminder: Date;
-  }) {
+  }): Promise<{ reminderId: number }> {
     const { title, message, extraInfo, reminder } = params;
 
     const permission = await this.checkNotificationsPermissions();
-    if (permission == false) return;
+    if (permission == false) throw new Error("no permissions");
 
+    const reminderId = Math.floor(Math.random() * 1000);
     await LocalNotifications.schedule({
       notifications: [
         {
           title,
           body: message,
-          id: Math.floor(Math.random() * 1000),
+          id: reminderId,
           schedule: {
             at: reminder,
           },
@@ -715,6 +726,7 @@ export class EventService {
     }).catch((e) => {
       console.error(e);
     });
+    return { reminderId };
   }
 
   async checkNotificationsPermissions(): Promise<boolean> {
@@ -724,6 +736,16 @@ export class EventService {
       return true;
     } else {
       return false;
+    }
+  }
+
+  async cancelEventReminder(params: { id: number }): Promise<void> {
+    const { id } = params;
+
+    try {
+      await LocalNotifications.cancel({ notifications: [{ id }] });
+    } catch (error: any) {
+      throw new Error(error);
     }
   }
 }

@@ -345,6 +345,8 @@ export class EventController {
     });
 
     const newLocalEvents = localEvents.filter((event) => event.idSync == null);
+
+    // debugger;
     try {
       if (newLocalEvents.length > 0)
         for (let index = 0; index < newLocalEvents.length; index++) {
@@ -557,7 +559,8 @@ export class EventController {
       repeat Boolean NULL,
       frecuency INT NULL,
       type TEXT NULL,
-      daysWeek TEXT NULL
+      daysWeek TEXT NULL,
+      id_reminders TEXT NULL
     );`;
     await this.createTable({ query });
   }
@@ -669,14 +672,36 @@ export class EventController {
    * @param {Number} params.event event is an object of type Event
    * @returns {Promise<void>}
    */
-  async setEventReminder(params: { event: Event }): Promise<void> {
+  async setEventReminder(params: {
+    event: Event;
+  }): Promise<{ reminderId: number }> {
     const { event } = params;
 
-    await this.eventService.setEventReminder({
+    const { reminderId } = await this.eventService.setEventReminder({
       reminder: event.reminders.start,
       extraInfo: "",
       message: event.description,
       title: event.name!,
     });
+
+    return { reminderId };
+  }
+
+  async discardEventReminders(params: { event: Event }): Promise<void> {
+    const { event } = params;
+    const idReminders = event.reminders.idReminders;
+
+    for (let index = 0; index < idReminders.length; index++) {
+      const id = idReminders[index];
+      // console.log({ deleted: id });
+      try {
+        await this.eventService.cancelEventReminder({ id });
+      } catch (error: any) {
+        throw new Error(error);
+      }
+    }
+
+    event.reminders.idReminders = [];
+    await this.updateLocalEvent({ event });
   }
 }
