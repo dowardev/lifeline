@@ -18,6 +18,7 @@ export class GrapQLService {
     } else {
       this.uri = "https://lifeline-back.dowar.xyz/graphql";
     }
+    // this.uri = "https://lifeline-back.dowar.xyz/graphql";
   }
 
   graphqlQueryBuilder(params: {

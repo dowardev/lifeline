@@ -509,7 +509,7 @@ const event = {
       type: "daily" | "weekly" | "monthly" | "annually";
       daysWeek?: string[];
     },
-    idReminders: props.eventData.reminders.idReminders ?? [],
+    idReminders: [],
   }),
   timezone: ref(Intl.DateTimeFormat().resolvedOptions().timeZone),
   guests: ref(Array<{ email: string }>()),

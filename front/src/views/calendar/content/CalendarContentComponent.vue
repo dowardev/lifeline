@@ -300,7 +300,6 @@ watch(
     try {
       await syncData({ date });
       days.value = getDaysForCurrentWeek({ date });
-      await setEventsReminders();
     } catch (error) {
       console.error(error);
     }
@@ -421,11 +420,17 @@ async function syncData(params: { date: Date }): Promise<void> {
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   try {
+    const remindersId = (
+      await eventController.setEventReminder({
+        event,
+      })
+    ).remindersId;
+    event.reminders.idReminders = remindersId;
+
     await eventController.saveEvent({
       event,
     });
     await syncAction();
-    await eventController.setEventReminder({ event });
   } catch (error) {
     console.error(error);
   }
@@ -433,7 +438,6 @@ async function saveEvent(params: { event: Event }): Promise<void> {
 
 async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
-  console.log(event.reminders.idReminders);
 
   try {
     if (event.reminders.idReminders && event.reminders.idReminders.length > 0) {
@@ -443,12 +447,15 @@ async function updateEvent(params: { event: Event }): Promise<void> {
     }
 
     if (event.reminders.idReminders.length == 0) {
-      const reminderId = (
+      const remindersId = (
         await eventController.setEventReminder({
           event,
         })
-      ).reminderId;
-      event.reminders.idReminders.push(reminderId);
+      ).remindersId;
+      event.reminders.idReminders = [
+        ...event.reminders.idReminders,
+        ...remindersId,
+      ];
       // console.log({ seted: event.reminders.idReminders });
     }
 
@@ -518,14 +525,6 @@ function eventComparation(params: {
   )
     return true;
   return false;
-}
-
-async function setEventsReminders(): Promise<void> {
-  for (let i = 0; i < events.value.length; i++) {
-    const event = events.value[i];
-    if (event.reminders.start > new Date())
-      await eventController.setEventsReminders({ events: events.value });
-  }
 }
 
 defineExpose({ openModalAdd, reschedule, syncAction });
