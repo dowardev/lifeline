@@ -697,15 +697,4 @@ export class EventService {
       throw new Error(error);
     }
   }
-
-
-  async cancelEventReminder(params: { id: number }): Promise<void> {
-    const { id } = params;
-
-    try {
-      await LocalNotifications.cancel({ notifications: [{ id }] });
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
 }

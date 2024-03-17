@@ -185,4 +185,13 @@ export class ReminderController {
       return false;
     }
   }
+  async cancelReminder(params: { id: number }): Promise<void> {
+    const { id } = params;
+
+    try {
+      await LocalNotifications.cancel({ notifications: [{ id }] });
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
 }

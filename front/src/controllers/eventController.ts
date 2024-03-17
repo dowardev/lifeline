@@ -689,7 +689,7 @@ export class EventController {
       const id = idReminders[index];
       // console.log({ deleted: id });
       try {
-        await this.eventService.cancelEventReminder({ id });
+        await this.reminderController.cancelReminder({ id });
       } catch (error: any) {
         throw new Error(error);
       }
