@@ -675,3 +675,4 @@ async function closePage() {
   await modalController.dismiss();
 }
 </script>
+@/controllers/remindersController

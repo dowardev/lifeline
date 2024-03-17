@@ -698,46 +698,6 @@ export class EventService {
     }
   }
 
-  async setEventReminder(params: {
-    title: string;
-    message: string;
-    extraInfo: string;
-    reminder: Date;
-  }): Promise<{ reminderId: number }> {
-    const { title, message, extraInfo, reminder } = params;
-
-    const permission = await this.checkNotificationsPermissions();
-    if (permission == false) throw new Error("no permissions");
-
-    const reminderId = Math.floor(Math.random() * 1000);
-    await LocalNotifications.schedule({
-      notifications: [
-        {
-          title,
-          body: message,
-          id: reminderId,
-          schedule: {
-            at: reminder,
-          },
-          actionTypeId: "",
-          extra: extraInfo,
-        },
-      ],
-    }).catch((e) => {
-      console.error(e);
-    });
-    return { reminderId };
-  }
-
-  async checkNotificationsPermissions(): Promise<boolean> {
-    const permission = await LocalNotifications.requestPermissions();
-
-    if (permission.display == "granted") {
-      return true;
-    } else {
-      return false;
-    }
-  }
 
   async cancelEventReminder(params: { id: number }): Promise<void> {
     const { id } = params;
