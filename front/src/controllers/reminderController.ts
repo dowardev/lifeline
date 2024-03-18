@@ -4,48 +4,58 @@ import { eachDayOfInterval, sub } from "date-fns";
 import { add } from "date-fns";
 
 export class ReminderController {
-  generatorReminder(params: { event: Event }): Date[] {
-    const { event } = params;
+  generatorReminder(params: {
+    frecuency: number;
+    reminderStart: Date;
+    reminderEnd: Date;
+    repeat: "daily" | "weekly" | "monthly" | "annually";
+    daysWeek?: string[];
+    notifications?: string[];
+  }): Date[] {
+    const {
+      reminderStart,
+      reminderEnd,
+      repeat: repeatType,
+      daysWeek,
+      notifications,
+    } = params;
     const reminders: Date[] = [];
-    event.reminders.start.setMilliseconds(0);
-    event.reminders.start.setSeconds(0);
+    let { frecuency } = params;
+
+    reminderStart.setMilliseconds(0);
+    reminderStart.setSeconds(0);
 
     let dates = eachDayOfInterval({
-      start: event.reminders.start,
-      end: event.reminders.end,
+      start: reminderStart,
+      end: reminderEnd,
     });
 
-    dates = dates.map((date) => {
-      date.setHours(event.reminders.start.getHours());
-      date.setMinutes(event.reminders.start.getMinutes());
-      return date;
-    });
+    const repeatDict = {
+      daily: "days",
+      weekly: "weeks",
+      monthly: "months",
+      annually: "years",
+    };
 
-    const repeatType = event.reminders.repeat?.type;
-
-    if (repeatType == "daily") {
-      let frecuency = event.reminders.repeat?.frecuency;
-      if (frecuency! > 1) {
-        const repeatDates = dates.filter((dt) => {
-          const newDate = add(event.reminders.start, {
-            days: frecuency,
-          });
-
-          if (newDate.toISOString() == dt.toISOString()) {
-            frecuency! += event.reminders.repeat?.frecuency!;
-            return dt;
-          }
+    const rep = repeatDict[repeatType as keyof typeof repeatDict];
+    dates = dates
+      .map((date) => {
+        date.setHours(reminderStart.getHours());
+        date.setMinutes(reminderStart.getMinutes());
+        const newDate = add(reminderStart, {
+          [rep]: frecuency ?? 0,
         });
-
-        dates = repeatDates;
-        dates.push(event.reminders.start);
-      }
-    }
+        if (newDate.toISOString() == date.toISOString()) {
+          frecuency! += frecuency ?? 0;
+          return date;
+        }
+        return null;
+      })
+      .filter((date) => date !== null) as Date[];
 
     if (repeatType == "weekly") {
-      let frecuency = event.reminders.repeat?.frecuency;
-      let eventWeekDays = event.reminders.repeat?.daysWeek;
-      const weekDays = {
+      const eventWeekDays = daysWeek;
+      const weekDays: { [key: string]: number } = {
         sunday: 0,
         monday: 1,
         tuesday: 2,
@@ -54,24 +64,13 @@ export class ReminderController {
         friday: 5,
         saturday: 6,
       };
-      eventWeekDays = eventWeekDays!.map((dayName) => {
-        return weekDays[dayName];
-      });
 
-      const repeatDates = dates.filter((dt) => {
-        const newDate = add(event.reminders.start, {
-          weeks: frecuency,
-        });
-
-        if (newDate.toISOString() == dt.toISOString()) {
-          frecuency! += event.reminders.repeat?.frecuency!;
-
-          return dt;
-        }
+      const weekNumberDays = eventWeekDays!.map((dayName) => {
+        return weekDays[dayName.toString()];
       });
       const newNewDays: Date[] = [];
-      repeatDates.forEach((element) => {
-        eventWeekDays?.forEach((dayNumber) => {
+      dates.forEach((element) => {
+        weekNumberDays?.forEach((dayNumber) => {
           const result = (dayNumber - element.getDay() + 7) % 7;
           newNewDays.push(
             new Date(
@@ -82,43 +81,11 @@ export class ReminderController {
           );
         });
       });
-      dates = newNewDays;
-      dates.push(event.reminders.start);
     }
 
-    if (repeatType == "monthly") {
-      let frecuency = event.reminders.repeat?.frecuency;
-      const repeatDates = dates.filter((dt) => {
-        const newDate = add(event.reminders.start, {
-          months: frecuency,
-        });
+    dates.push(reminderStart);
 
-        if (newDate.getTime() == dt.getTime()) {
-          frecuency! += event.reminders.repeat?.frecuency!;
-          return dt;
-        }
-      });
-      dates = repeatDates;
-      dates.push(event.reminders.start);
-    }
-
-    if (repeatType == "annually") {
-      let frecuency = event.reminders.repeat?.frecuency;
-      const repeatDates = dates.filter((dt) => {
-        const newDate = add(event.reminders.start, {
-          years: frecuency,
-        });
-
-        if (newDate.getTime() == dt.getTime()) {
-          frecuency! += event.reminders.repeat?.frecuency!;
-          return dt;
-        }
-      });
-      dates = repeatDates;
-      dates.push(event.reminders.start);
-    }
-
-    event.reminders.notifications!.forEach((notification) => {
+    notifications!.forEach((notification) => {
       dates.forEach((date) => {
         const tr = {
           months: 0,
@@ -142,6 +109,7 @@ export class ReminderController {
         reminders.push(result);
       });
     });
+    // console.log(reminders);
     return reminders;
   }
 

@@ -664,7 +664,14 @@ export class EventController {
   }): Promise<{ remindersId: number[] }> {
     const { event } = params;
 
-    const dates = this.reminderController.generatorReminder({ event });
+    const dates = this.reminderController.generatorReminder({
+      frecuency: event.reminders.repeat!.frecuency!,
+      reminderEnd: event.reminders.end,
+      reminderStart: event.reminders.start,
+      repeat: event.reminders.repeat!.type,
+      daysWeek: event.reminders.repeat?.daysWeek,
+      notifications: event.reminders.notifications,
+    });
     const remindersId: number[] = [];
 
     for (let index = 0; index < dates.length; index++) {
