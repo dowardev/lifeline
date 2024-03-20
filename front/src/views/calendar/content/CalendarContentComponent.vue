@@ -422,7 +422,14 @@ async function saveEvent(params: { event: Event }): Promise<void> {
   try {
     const remindersId = (
       await eventController.setEventReminder({
-        event,
+        daysWeek: event.reminders.repeat!.daysWeek!,
+        description: event.description,
+        frecuency: event.reminders.repeat!.frecuency!,
+        name: event.name!,
+        notifications: event.reminders.notifications!,
+        reminderEnd: event.reminders.end,
+        reminderStart: event.reminders.start,
+        repeatType: event.reminders.repeat!.type!,
       })
     ).remindersId;
     event.reminders.idReminders = remindersId;
