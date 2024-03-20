@@ -438,18 +438,24 @@ async function saveEvent(params: { event: Event }): Promise<void> {
 
 async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
-
   try {
     if (event.reminders.idReminders && event.reminders.idReminders.length > 0) {
       await eventController.discardEventReminders({
-        event,
+        idReminders: event.reminders.idReminders,
       });
     }
 
     if (event.reminders.idReminders.length == 0) {
       const remindersId = (
         await eventController.setEventReminder({
-          event,
+          daysWeek: event.reminders.repeat!.daysWeek!,
+          description: event.description,
+          frecuency: event.reminders.repeat!.frecuency!,
+          name: event.name!,
+          notifications: event.reminders.notifications!,
+          reminderEnd: event.reminders.end,
+          reminderStart: event.reminders.start,
+          repeatType: event.reminders.repeat!.type!,
         })
       ).remindersId;
       event.reminders.idReminders = [

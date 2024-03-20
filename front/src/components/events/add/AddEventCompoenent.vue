@@ -591,6 +591,7 @@ async function save(): Promise<void> {
     eventData.description = event.description.value;
     eventData.availability = event.availability.value;
     eventData.timezone = event.timezone.value;
+
     if (!props.eventData) {
       emits("create", { data: { event: eventData } });
     } else {

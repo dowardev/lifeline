@@ -660,17 +660,33 @@ export class EventController {
    * @returns {Promise<void>}
    */
   async setEventReminder(params: {
-    event: Event;
+    frecuency: number;
+    reminderEnd: Date;
+    reminderStart: Date;
+    repeatType: "daily" | "weekly" | "monthly" | "annually";
+    daysWeek: string[];
+    notifications: string[];
+    description: string;
+    name: string;
   }): Promise<{ remindersId: number[] }> {
-    const { event } = params;
+    const {
+      daysWeek,
+      description,
+      frecuency,
+      name,
+      notifications,
+      reminderEnd,
+      reminderStart,
+      repeatType,
+    } = params;
 
     const dates = this.reminderController.generatorReminder({
-      frecuency: event.reminders.repeat!.frecuency!,
-      reminderEnd: event.reminders.end,
-      reminderStart: event.reminders.start,
-      repeat: event.reminders.repeat!.type,
-      daysWeek: event.reminders.repeat?.daysWeek,
-      notifications: event.reminders.notifications,
+      frecuency,
+      reminderEnd,
+      reminderStart,
+      repeat: repeatType,
+      daysWeek,
+      notifications,
     });
     const remindersId: number[] = [];
 
@@ -679,18 +695,18 @@ export class EventController {
       const { reminderId } = await this.reminderController.setReminder({
         reminder: date,
         extraInfo: "",
-        message: event.description,
-        title: event.name!,
+        message: description,
+        title: name,
       });
       remindersId.push(reminderId);
     }
-
     return { remindersId };
   }
 
-  async discardEventReminders(params: { event: Event }): Promise<void> {
-    const { event } = params;
-    const idReminders = event.reminders.idReminders;
+  async discardEventReminders(params: {
+    idReminders: number[];
+  }): Promise<void> {
+    const { idReminders } = params;
 
     for (let index = 0; index < idReminders.length; index++) {
       const id = idReminders[index];
