@@ -52,6 +52,7 @@ export class ReminderController {
         return null;
       })
       .filter((date) => date !== null) as Date[];
+    dates.push(reminderStart);
 
     if (repeatType == "weekly") {
       const eventWeekDays = daysWeek;
