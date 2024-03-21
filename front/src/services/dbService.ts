@@ -55,4 +55,12 @@ export class DBService {
       throw new Error(error);
     }
   }
+
+  async updateTable(params: { query: string; values: any[] }): Promise<void> {
+    const { query, values } = params;
+
+    const db = await this.dbConnection();
+    if ((await db.isDBOpen()).result == false) await db.open();
+    await db.query(query, values);
+  }
 }

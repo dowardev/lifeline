@@ -443,7 +443,18 @@ export class EventController {
 
     try {
       await this.eventService.updateLocalEvent({
-        event,
+        availability: event.availability,
+        daysWeek: event.reminders.repeat?.daysWeek,
+        description: event.description,
+        end: event.reminders.end,
+        guests: event.guests,
+        id: event.id!,
+        idSync: event.idSync!,
+        name: event.name,
+        start: event.reminders.start,
+        status: event.status,
+        syncStatus: event.syncStatus,
+        timezone: event.timezone,
       });
     } catch (error: any) {
       if (

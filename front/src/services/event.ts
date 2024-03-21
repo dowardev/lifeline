@@ -355,34 +355,81 @@ export class EventService {
     }
   }
 
-  async updateLocalEvent(params: { event: Event }): Promise<void> {
-    const { event } = params;
+  async updateLocalEvent(params: {
+    availability?: string;
+    daysWeek?: string[];
+    description?: string;
+    end?: Date;
+    frecuency?: number;
+    guests?: Array<{ email: string }>;
+    id: number;
+    idReminders?: number[];
+    idSync: number;
+    name?: string;
+    notifications?: string[];
+    start?: Date;
+    status?: string;
+    syncStatus: boolean;
+    timezone?: string;
+    type?: "daily" | "weekly" | "monthly" | "annually";
+  }): Promise<void> {
+    const {
+      availability,
+      description,
+      guests,
+      idSync,
+      name,
+      syncStatus,
+      timezone,
+      status,
+      start,
+      end,
+      notifications,
+      frecuency,
+      type,
+      daysWeek,
+      idReminders,
+      id,
+    } = params;
 
-    const eventId = event.id;
-    const db = await dbService.dbConnection();
-    if ((await db.isDBOpen()).result == false) await db.open();
+    const eventId = id;
 
     try {
-      const valuesEvent = [
-        event.availability,
-        event.description,
-        JSON.stringify(event.guests),
-        event.idSync,
-        event.name,
-        event.syncStatus,
-        event.timezone,
-        event.status,
-      ];
-      const fieldsEvent = [
-        "availability",
-        "description",
-        "guests",
-        "idSync",
-        "name",
-        "syncStatus",
-        "timezone",
-        "status",
-      ];
+      const valuesEvent = [];
+      const fieldsEvent = [];
+
+      if (availability) {
+        valuesEvent.push(availability);
+        fieldsEvent.push("availability");
+      }
+      if (description) {
+        valuesEvent.push(description);
+        fieldsEvent.push("description");
+      }
+      if (guests) {
+        valuesEvent.push(JSON.stringify(guests));
+        fieldsEvent.push("guests");
+      }
+      if (idSync) {
+        valuesEvent.push(idSync);
+        fieldsEvent.push("idSync");
+      }
+      if (name) {
+        valuesEvent.push(name);
+        fieldsEvent.push("name");
+      }
+      if (syncStatus) {
+        valuesEvent.push(syncStatus);
+        fieldsEvent.push("syncStatus");
+      }
+      if (timezone) {
+        valuesEvent.push(timezone);
+        fieldsEvent.push("timezone");
+      }
+      if (status) {
+        valuesEvent.push(status);
+        fieldsEvent.push("status");
+      }
 
       let queryEvent = `UPDATE Events SET `;
 
@@ -393,28 +440,39 @@ export class EventService {
         }
       });
       queryEvent += ` WHERE id="${eventId}"`;
-      await db.query(queryEvent, valuesEvent);
+      await dbService.updateTable({ query: queryEvent, values: valuesEvent });
 
-      const valuesReminders = [
-        event.reminders.start.toISOString(),
-        event.reminders.end.toISOString(),
-        JSON.stringify(event.reminders.notifications),
-        false,
-        event.reminders.repeat?.frecuency,
-        event.reminders.repeat?.type,
-        JSON.stringify(event.reminders.repeat?.daysWeek ?? []),
-        JSON.stringify(event.reminders.idReminders ?? []),
-      ];
-      const fieldsReminders = [
-        "start",
-        "end",
-        "notifications",
-        "repeat",
-        "frecuency",
-        "type",
-        "daysWeek",
-        "id_reminders",
-      ];
+      const valuesReminders = [];
+      const fieldsReminders = [];
+
+      if (start) {
+        valuesReminders.push(start.toISOString());
+        fieldsReminders.push("start");
+      }
+      if (end) {
+        valuesReminders.push(end.toISOString());
+        fieldsReminders.push("end");
+      }
+      if (notifications) {
+        valuesReminders.push(JSON.stringify(notifications));
+        fieldsReminders.push("notifications");
+      }
+      if (frecuency) {
+        valuesReminders.push(frecuency);
+        fieldsReminders.push("frecuency");
+      }
+      if (type) {
+        valuesReminders.push(type);
+        fieldsReminders.push("type");
+      }
+      if (daysWeek) {
+        valuesReminders.push(JSON.stringify(daysWeek ?? []));
+        fieldsReminders.push("daysWeek");
+      }
+      if (idReminders) {
+        valuesReminders.push(JSON.stringify(idReminders ?? []));
+        fieldsReminders.push("idReminders");
+      }
 
       let queryReminder = `UPDATE Reminders SET `;
 
@@ -425,7 +483,10 @@ export class EventService {
         }
       });
       queryReminder += ` WHERE event_id="${eventId}"`;
-      await db.query(queryReminder, valuesReminders);
+      await dbService.updateTable({
+        query: queryReminder,
+        values: valuesReminders,
+      });
       // console.log((await this.getEventsLocal())[0].reminders.idReminders);
     } catch (error: any) {
       throw new Error(error);
