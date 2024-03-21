@@ -18,7 +18,7 @@ export class DBService {
     }
   }
 
-  async dbConnection(): Promise<SQLiteDBConnection> {
+  private async dbConnection(): Promise<SQLiteDBConnection> {
     const sqlite = new SQLiteConnection(CapacitorSQLite);
     const ret = await sqlite.checkConnectionsConsistency();
     const isConn = (await sqlite.isConnection("db_vite", false)).result;
@@ -56,11 +56,21 @@ export class DBService {
     }
   }
 
-  async updateTable(params: { query: string; values: any[] }): Promise<void> {
+  async executeQuery(params: {
+    query: string;
+    values?: any[];
+  }): Promise<any | undefined> {
     const { query, values } = params;
 
     const db = await this.dbConnection();
     if ((await db.isDBOpen()).result == false) await db.open();
-    await db.query(query, values);
+
+    if (values) {
+      await db.query(query, values);
+      return null;
+    }
+    if (!values) {
+      return await db.query(query);
+    }
   }
 }

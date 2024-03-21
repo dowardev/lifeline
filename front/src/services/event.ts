@@ -181,12 +181,12 @@ export class EventService {
   // }
   async getEventLocal(params: { id: number }): Promise<Event> {
     const { id } = params;
-    const db = await dbService.dbConnection();
-    if ((await db.isDBOpen()).result == false) await db.open();
 
     const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id where events.id=${id}`;
     try {
-      const result = (await db.query(query)).values![0] as any;
+      const result = (await dbService.executeQuery({ query }))
+        .values![0] as any;
+      console.log(result);
       const event = {
         id: result.id,
         name: result.name,
@@ -268,8 +268,6 @@ export class EventService {
 
   async saveLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
-    const db = await dbService.dbConnection();
-    if ((await db.isDBOpen()).result == false) await db.open();
 
     try {
       const valuesEvent = [
@@ -305,7 +303,12 @@ export class EventService {
         else queryEvents += "? ";
       }
       queryEvents += `)RETURNING "Id"`;
-      const eventId = (await db.query(queryEvents, valuesEvent)).values![0].id;
+      const eventId = (
+        await dbService.executeQuery({
+          query: queryEvents,
+          values: valuesEvent,
+        })
+      ).values![0].id;
 
       const valuesReminders = [
         eventId,
@@ -348,7 +351,10 @@ export class EventService {
         else queryReminders += "? ";
       }
       queryReminders += `)`;
-      await db.query(queryReminders, valuesReminders);
+      await dbService.executeQuery({
+        query: queryReminders,
+        values: valuesReminders,
+      });
       // console.log(await this.getEventsLocal());
     } catch (error: any) {
       throw new Error(error);
@@ -440,7 +446,10 @@ export class EventService {
         }
       });
       queryEvent += ` WHERE id="${eventId}"`;
-      await dbService.updateTable({ query: queryEvent, values: valuesEvent });
+      await dbService.executeQuery({
+        query: queryEvent,
+        values: valuesEvent,
+      });
 
       const valuesReminders = [];
       const fieldsReminders = [];
@@ -483,7 +492,7 @@ export class EventService {
         }
       });
       queryReminder += ` WHERE event_id="${eventId}"`;
-      await dbService.updateTable({
+      await dbService.executeQuery({
         query: queryReminder,
         values: valuesReminders,
       });
@@ -656,9 +665,7 @@ export class EventService {
     // await storage.remove("events");
     const query = `Delete FROM Reminders`;
     try {
-      const db = await dbService.dbConnection();
-      if ((await db.isDBOpen()).result == false) await db.open();
-      await db.query(query);
+      await dbService.executeQuery({ query });
     } catch (error: any) {
       throw new Error(error);
     }
@@ -716,9 +723,6 @@ export class EventService {
   async getEventsLocalByDate(params: {
     dates: { start: Date; end: Date };
   }): Promise<Array<Event>> {
-    const db = await dbService.dbConnection();
-    if ((await db.isDBOpen()).result == false) await db.open();
-
     const { dates } = params;
     const dateStart = format(dates.start, "yyyy-MM-dd HH:mm:ss");
     const dateEnd = format(dates.end, "yyyy-MM-dd HH:mm:ss");
@@ -726,7 +730,7 @@ export class EventService {
     const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id
                     WHERE reminders.start>='${dateStart}' or reminders.end<='${dateEnd}'`;
     try {
-      const result = (await db.query(query)).values as any[];
+      const result = (await dbService.executeQuery({ query })).values as any[];
       const events: Event[] = [];
 
       result.forEach((event: any) => {
