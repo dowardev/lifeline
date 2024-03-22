@@ -408,7 +408,7 @@ async function syncData(params: { date: Date }): Promise<void> {
     //   );
     // }
 
-    // await eventComposable.sync();
+    await eventComposable.sync();
     await eventController.loadEvents({
       dates,
     });

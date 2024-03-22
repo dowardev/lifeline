@@ -1,6 +1,7 @@
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 import {
   CapacitorSQLite,
+  DBSQLiteValues,
   SQLiteConnection,
   SQLiteDBConnection,
 } from "@capacitor-community/sqlite";
@@ -59,18 +60,21 @@ export class DBService {
   async executeQuery(params: {
     query: string;
     values?: any[];
-  }): Promise<any | undefined> {
-    const { query, values } = params;
+  }): Promise<{ values: any[] }> {
+    const { query, values: valuesData } = params;
 
     const db = await this.dbConnection();
     if ((await db.isDBOpen()).result == false) await db.open();
 
-    if (values) {
-      await db.query(query, values);
-      return null;
+    let values: any[] = [];
+
+    if (valuesData) {
+      values = (await db.query(query, valuesData)).values ?? [];
     }
-    if (!values) {
-      return await db.query(query);
+    if (!valuesData) {
+      values = (await db.query(query)).values ?? [];
     }
+
+    return { values };
   }
 }
