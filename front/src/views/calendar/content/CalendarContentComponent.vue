@@ -602,9 +602,18 @@ function groupEvents(params: { events: Event[] }): {
         }
 
         groupedEvents[yearKey][monthKey][dayKey][timeKey].push({
-          id: event.id ?? "",
+          id: event.id!,
           name: event.name ?? "",
           reminders: event.reminders,
+        });
+
+        // Ordenar los eventos por hora
+        groupedEvents[yearKey][monthKey][dayKey][timeKey].sort((a, b) => {
+          const aTime =
+            a.reminders.start.getHours() * 60 + a.reminders.start.getMinutes();
+          const bTime =
+            b.reminders.start.getHours() * 60 + b.reminders.start.getMinutes();
+          return aTime - bTime;
         });
       });
 
