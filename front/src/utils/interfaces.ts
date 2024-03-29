@@ -1,5 +1,5 @@
 import { DocumentNode } from "graphql";
-import { DocumentElements, Theme } from "./types";
+import { DocumentElements, Theme, RepeatType } from "./types";
 
 export interface Graphql {
   name: DocumentNode;
@@ -73,7 +73,7 @@ export interface Event {
     notifications?: string[];
     repeat?: {
       frecuency: number;
-      type: "daily" | "weekly" | "monthly" | "annually";
+      type: RepeatType;
       daysWeek?: string[];
     };
     idReminders: number[];

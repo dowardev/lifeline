@@ -9,6 +9,7 @@ import {
 } from "@/utils/interfaces";
 import { DBService } from "@/services/dbService";
 import { SystemService } from "@/services/system";
+import { cloneDeep } from "lodash";
 
 export class SystemController {
   systemStore = useSystemStore();
@@ -195,15 +196,11 @@ export class SystemController {
       name TEXT,
       token TEXT
     );`;
-    await this.createTable({ query });
+    await this.dbService.createTable({ query });
   }
 
-  async createTable(params: { query: any }): Promise<void> {
-    try {
-      const { query } = params;
-      await this.dbService.createTable({ query });
-    } catch (error: any) {
-      throw new Error(error);
-    }
+  cloneObjet(params: { obj: any }): any {
+    const { obj } = params;
+    return cloneDeep(obj);
   }
 }

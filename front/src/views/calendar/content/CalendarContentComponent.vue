@@ -56,49 +56,50 @@
                         {{ hour }}
                       </td>
                       <td v-for="day in days" :key="day.date.toString()">
-                        <div>
-                          <div v-for="event in events" :key="event.id">
-                            <div
-                              v-if="
-                                eventComparation({
-                                  event,
-                                  date: day.date,
-                                  hour,
+                        <div
+                          v-for="(event, index) in generateCalendar"
+                          :key="index"
+                        >
+                          <div
+                            v-if="
+                              `${event.day}/${event.month}/${event.year}` ==
+                                `${day.date.getDate()}/${
+                                  day.date.getMonth() + 1
+                                }/${day.date.getFullYear()}` &&
+                              hour == event.time
+                            "
+                          >
+                            <ion-card
+                              class="card-event"
+                              style="cursor: pointer"
+                              @click="
+                                afterUpdateEvent({
+                                  idEvent: event.id,
+                                })
+                              "
+                              @contextmenu.prevent="
+                                openPopoverRightEventMenu({
+                                  ev: $event,
+                                  eventId: event.id,
+                                })
+                              "
+                              @press="
+                                openPopoverRightEventMenu({
+                                  ev: $event,
+                                  eventId: event.id,
                                 })
                               "
                             >
-                              <ion-card
-                                class="card-event"
-                                style="cursor: pointer"
-                                @click="
-                                  afterUpdateEvent({
-                                    idEvent: event.id as number,
-                                  })
-                                "
-                                @contextmenu.prevent="
-                                  openPopoverRightEventMenu({
-                                    ev: $event,
-                                    eventId: event.id as number,
-                                  })
-                                "
-                                @press="
-                                  openPopoverRightEventMenu({
-                                    ev: $event,
-                                    eventId: event.id as number,
-                                  })
-                                "
-                              >
-                                <ion-card-header>
-                                  <ion-card-title>{{
-                                    event.name
-                                  }}</ion-card-title>
-                                </ion-card-header>
+                              <ion-card-header>
+                                <ion-card-title>{{
+                                  event.name
+                                }}</ion-card-title>
+                              </ion-card-header>
 
-                                <ion-card-content>{{
-                                  format(new Date(event.reminders.start), "Pp")
-                                }}</ion-card-content>
-                              </ion-card>
-                            </div>
+                              <ion-card-content>{{
+                                format(new Date(event.reminders.start), "Pp")
+                              }}</ion-card-content>
+                            </ion-card>
                           </div>
                         </div>
                       </td>
@@ -218,7 +219,16 @@ import {
 } from "@ionic/vue";
 import { closeOutline, star } from "ionicons/icons";
 import { onMounted, ref } from "vue";
-import { add, endOfMonth, format, startOfMonth, startOfWeek } from "date-fns";
+import {
+  add,
+  compareAsc,
+  eachDayOfInterval,
+  endOfMonth,
+  format,
+  getDay,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
 import { watch } from "vue";
 
 // interfaces
@@ -249,17 +259,17 @@ const daysOfWeek = [
   "friday",
   "saturday",
 ];
-const hoursOfDay = [
-  "00:00",
-  "01:00",
-  "02:00",
-  "03:00",
-  "04:00",
-  "05:00",
-  "06:00",
-  "07:00",
-  "08:00",
-  "09:00",
+let hoursOfDay = [
+  "0:00",
+  "1:00",
+  "2:00",
+  "3:00",
+  "4:00",
+  "5:00",
+  "6:00",
+  "7:00",
+  "8:00",
+  "9:00",
   "10:00",
   "11:00",
   "12:00",
@@ -313,6 +323,13 @@ watch(
     events.value = response;
   }
 );
+
+// computed
+const generateCalendar = computed(() => {
+  if (events.value.length == 0) return;
+  const response = groupEvents({ events: events.value });
+  return flattenEvents({ events: response });
+});
 
 // functions
 function getDaysForCurrentWeek(params: { date: Date }): { date: Date }[] {
@@ -511,33 +528,202 @@ async function syncAction(): Promise<void> {
   }
 }
 
-function eventComparation(params: {
-  event: Event;
-  date: Date;
-  hour: string;
-}): boolean {
-  const { event, date, hour } = params;
-  const newEvent = JSON.parse(JSON.stringify(event));
-  newEvent.reminders.start = new Date(newEvent.reminders.start);
-  newEvent.reminders.end = new Date(newEvent.reminders.end);
+function groupEvents(params: { events: Event[] }): {
+  [year: string]: {
+    [month: string]: {
+      [day: string]: {
+        [time: string]: {
+          id: number;
+          name: string;
+          reminders: any;
+        }[];
+      };
+    };
+  };
+} {
+  const events = systemController.cloneObjet({
+    obj: params.events,
+  }) as Event[];
 
-  newEvent.reminders.start.setHours(0);
-  newEvent.reminders.start.setMinutes(0);
-  newEvent.reminders.start.setSeconds(0);
-  newEvent.reminders.start.setMilliseconds(0);
+  return events.reduce(
+    (
+      groupedEvents: {
+        [year: string]: {
+          [month: string]: {
+            [day: string]: {
+              [time: string]: {
+                id: number;
+                name: string;
+                reminders: any;
+              }[];
+            };
+          };
+        };
+      },
+      event: Event
+    ) => {
+      const reminderStart = event.reminders.start;
+      const reminderEnd = event.reminders.end;
+      const repeatType = event.reminders.repeat?.type ?? "daily";
+      const daysWeek = event.reminders.repeat!.daysWeek;
+      const frecuency = event.reminders.repeat?.frecuency ?? 1;
 
-  date.setHours(0);
-  date.setMinutes(0);
-  date.setSeconds(0);
-  date.setMilliseconds(0);
+      reminderStart.setMilliseconds(0);
+      reminderStart.setSeconds(0);
 
-  if (
-    newEvent.reminders.start <= date &&
-    newEvent.reminders.end >= date &&
-    event.reminders.start.getHours() === parseInt(hour)
-  )
-    return true;
-  return false;
+      const dates = eachPeriodOfInterval({
+        start: reminderStart,
+        end: reminderEnd,
+        repeatType,
+        frecuency,
+        daysWeek,
+      }).dates;
+
+      dates.forEach((date) => {
+        const yearKey = date.getFullYear().toString();
+        const monthKey = (date.getMonth() + 1).toString();
+        const dayKey = date.getDate().toString();
+        const timeKey = `${date.getHours().toString()}:00`;
+
+        if (!groupedEvents[yearKey]) {
+          groupedEvents[yearKey] = {};
+        }
+
+        if (!groupedEvents[yearKey][monthKey]) {
+          groupedEvents[yearKey][monthKey] = {};
+        }
+
+        if (!groupedEvents[yearKey][monthKey][dayKey]) {
+          groupedEvents[yearKey][monthKey][dayKey] = {};
+        }
+
+        if (!groupedEvents[yearKey][monthKey][dayKey][timeKey]) {
+          groupedEvents[yearKey][monthKey][dayKey][timeKey] = [];
+        }
+
+        groupedEvents[yearKey][monthKey][dayKey][timeKey].push({
+          id: event.id ?? "",
+          name: event.name ?? "",
+          reminders: event.reminders,
+        });
+      });
+
+      return groupedEvents;
+    },
+    {} as {
+      [year: string]: {
+        [month: string]: {
+          [day: string]: {
+            [time: string]: {
+              id: number;
+              name: string;
+              reminders: any;
+            }[];
+          };
+        };
+      };
+    }
+  );
+}
+
+function flattenEvents(params: {
+  events: {
+    [year: string]: {
+      [month: string]: {
+        [day: string]: {
+          [time: string]: {
+            id: number;
+            name: string;
+            reminders: any;
+          }[];
+        };
+      };
+    };
+  };
+}): {
+  year: string;
+  month: string;
+  day: string;
+  time: string;
+  id: number;
+  name: string;
+  reminders: any;
+}[] {
+  const { events } = params;
+  const flattened = [];
+
+  for (const year in events) {
+    for (const month in events[year]) {
+      for (const day in events[year][month]) {
+        for (const time in events[year][month][day]) {
+          if (Array.isArray(events[year][month][day][time])) {
+            for (const event of events[year][month][day][time]) {
+              flattened.push({
+                year: year,
+                month: month,
+                day: day,
+                time: time,
+                id: event.id,
+                name: event.name,
+                reminders: event.reminders,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+  return flattened;
+}
+
+function eachPeriodOfInterval(params: {
+  start: Date;
+  end: Date;
+  repeatType: string;
+  frecuency: number;
+  daysWeek?: string[];
+}): { dates: Date[] } {
+  const { end, repeatType, frecuency, daysWeek } = params;
+  let { start: currentDate } = params;
+  const dates = [];
+
+  const repeatDict = {
+    daily: "days",
+    weekly: "weeks",
+    monthly: "months",
+    annually: "years",
+  };
+
+  const rep = repeatDict[repeatType as keyof typeof repeatDict];
+
+  while (compareAsc(currentDate, end) <= 0) {
+    if (repeatType === "weekly" && daysWeek) {
+      const daysOfWeekNames = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
+      for (let i = 0; i < 7; i++) {
+        if (
+          daysWeek
+            .map((day) => day.toLowerCase())
+            .includes(daysOfWeekNames[getDay(currentDate)])
+        ) {
+          dates.push(new Date(currentDate));
+        }
+        currentDate = add(currentDate, { days: 1 });
+      }
+    } else {
+      dates.push(new Date(currentDate));
+      currentDate = add(currentDate, { [rep]: frecuency });
+    }
+  }
+
+  return { dates };
 }
 
 defineExpose({ openModalAdd, reschedule, syncAction });

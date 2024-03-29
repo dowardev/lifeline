@@ -1,4 +1,5 @@
 import { Event } from "@/utils/interfaces";
+import { RepeatType } from "@/utils/types";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { eachDayOfInterval, sub } from "date-fns";
 import { add } from "date-fns";
@@ -8,7 +9,7 @@ export class ReminderController {
     frecuency: number;
     reminderStart: Date;
     reminderEnd: Date;
-    repeat: "daily" | "weekly" | "monthly" | "annually";
+    repeat: RepeatType;
     daysWeek?: string[];
     notifications?: string[];
   }): Date[] {
