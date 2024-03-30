@@ -1,142 +1,15 @@
 <template>
   <div ref="mainDiv" style="overflow: auto; height: 95dvh">
     <section>
-      <ion-row>
-        <!-- week calendar -->
-        <!-- button options -->
-        <ion-col size-xs="12" size-lg="12">
-          <!-- table -->
-          <ion-card class="card-main-content">
-            <ion-card-content>
-              <div>
-                <table class="schedule-table">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th v-for="(day, index) in days" :key="index">
-                        <!-- day -->
-                        <div
-                          :class="{
-                            today:
-                              day.date.getDate() == new Date().getDate() &&
-                              day.date.getMonth() == new Date().getMonth() &&
-                              day.date.getFullYear() ==
-                                new Date().getFullYear(),
-                          }"
-                        >
-                          {{
-                            translateDayHeaderTable({
-                              dayName: daysOfWeek[day.date.getDay()],
-                            })
-                          }}
-                        </div>
-
-                        <!-- day number -->
-                        <div
-                          :class="{
-                            today:
-                              day.date.getDate() == new Date().getDate() &&
-                              day.date.getMonth() == new Date().getMonth() &&
-                              day.date.getFullYear() ==
-                                new Date().getFullYear(),
-                          }"
-                        >
-                          {{ day.date.getDate() }}
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="hour in hoursOfDay" :key="hour">
-                      <td
-                        :class="{
-                          today: parseInt(hour) == new Date().getHours(),
-                        }"
-                      >
-                        {{ hour }}
-                      </td>
-                      <td v-for="day in days" :key="day.date.toString()">
-                        <div
-                          v-for="(event, index) in generateCalendar"
-                          :key="index"
-                        >
-                          <div
-                            v-if="
-                              `${event.day}/${event.month}/${event.year}` ==
-                                `${day.date.getDate()}/${
-                                  day.date.getMonth() + 1
-                                }/${day.date.getFullYear()}` &&
-                              hour == event.time
-                            "
-                          >
-                            <ion-card
-                              class="card-event"
-                              style="cursor: pointer"
-                              @click="
-                                afterUpdateEvent({
-                                  idEvent: event.id,
-                                })
-                              "
-                              @contextmenu.prevent="
-                                openPopoverRightEventMenu({
-                                  ev: $event,
-                                  eventId: event.id,
-                                })
-                              "
-                              @press="
-                                openPopoverRightEventMenu({
-                                  ev: $event,
-                                  eventId: event.id,
-                                })
-                              "
-                            >
-                              <ion-card-header>
-                                <ion-card-title>{{
-                                  event.name
-                                }}</ion-card-title>
-                              </ion-card-header>
-
-                              <ion-card-content>{{
-                                format(new Date(event.reminders.start), "Pp")
-                              }}</ion-card-content>
-                            </ion-card>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-      </ion-row>
+      <CalendarWeekComponent
+        :calendar-data="generateCalendar || []"
+        @update-event="
+          idEvent = $event.idEvent;
+          isOpenModalAddEvent = true;
+        "
+        @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
+      />
     </section>
-
-    <!-- popovers -->
-    <!-- popover main calendar -->
-    <!-- <ion-popover -->
-    <!--   :class="{ 'popover-main-calendar-ios': isPlatform('ios') }" -->
-    <!--   :is-open="isOpenpopoverMainCalendar" -->
-    <!--   @did-dismiss="isOpenpopoverMainCalendar = false" -->
-    <!-- > -->
-    <!--   <ion-content> -->
-    <!--     <ion-datetime -->
-    <!--       presentation="date" -->
-    <!--       :value="props.currentDate.toISOString()" -->
-    <!--       :max=" -->
-    <!--         add(new Date(), { -->
-    <!--           years: 10, -->
-    <!--         }).toISOString() -->
-    <!--       " -->
-    <!--       @ion-change=" -->
-    <!--         loadDaysWeek({ -->
-    <!--           date: new Date($event.target.value as string).getTime(), -->
-    <!--         }) -->
-    <!--       " -->
-    <!--     ></ion-datetime> -->
-    <!--   </ion-content> -->
-    <!-- </ion-popover> -->
 
     <!-- modals -->
     <!-- modal reschedule elements -->
@@ -217,17 +90,15 @@ import {
   IonModal,
   popoverController,
 } from "@ionic/vue";
-import { closeOutline, star } from "ionicons/icons";
-import { onMounted, ref } from "vue";
+import { closeOutline } from "ionicons/icons";
+import { ref } from "vue";
 import {
   add,
   compareAsc,
-  eachDayOfInterval,
   endOfMonth,
   format,
   getDay,
   startOfMonth,
-  startOfWeek,
 } from "date-fns";
 import { watch } from "vue";
 
@@ -238,6 +109,7 @@ import { Event } from "@/utils/interfaces";
 import RescheduleComponent from "@/components/events/schedule-elements/RescheduleElements.vue";
 import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
 import RightMenuEventComponent from "../RightMenuEventComponent.vue";
+import CalendarWeekComponent from "@/components/calendar/week/CalendarWeekComponent.vue";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
@@ -250,42 +122,6 @@ interface Day {
   date: Date;
 }
 
-const daysOfWeek = [
-  "sunday",
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-];
-let hoursOfDay = [
-  "0:00",
-  "1:00",
-  "2:00",
-  "3:00",
-  "4:00",
-  "5:00",
-  "6:00",
-  "7:00",
-  "8:00",
-  "9:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-  "19:00",
-  "20:00",
-  "21:00",
-  "22:00",
-  "23:00",
-];
-const days = ref(Array<Day>());
 const modalRescheduleElements = ref(null);
 const idEvent = ref(0);
 const isOpenModalUpdateEvent = ref(false);
@@ -296,12 +132,6 @@ const eventModalAddEvent = ref(null as CustomEvent | null);
 const eventComposable = eventController;
 const events = ref([] as Event[]);
 
-// mounted
-onMounted(async () => {
-  days.value = getDaysForCurrentWeek({ date: new Date() });
-  // await syncAction();
-});
-
 // watch
 // watch date
 watch(
@@ -309,7 +139,6 @@ watch(
   async (date) => {
     try {
       await syncData({ date });
-      days.value = getDaysForCurrentWeek({ date });
     } catch (error) {
       console.error(error);
     }
@@ -332,38 +161,6 @@ const generateCalendar = computed(() => {
 });
 
 // functions
-function getDaysForCurrentWeek(params: { date: Date }): { date: Date }[] {
-  const date = params.date;
-  const days = [];
-  const dayOfWeek = date.getDay();
-  const firstDayOfWeek = new Date(date);
-  const diff = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
-  firstDayOfWeek.setDate(date.getDate() + diff);
-
-  for (let i = 0; i < 7; i++) {
-    const day = new Date(firstDayOfWeek); // Create a new Date object from firstDayOfWeek
-    day.setDate(firstDayOfWeek.getDate() + i); // Modify the date of the new Date object
-    days.push({ date: day });
-  }
-
-  return days;
-}
-
-function translateDayHeaderTable(params: { dayName: string }): string {
-  const dayName = params.dayName as any;
-  let result = systemController.translateDay({
-    dayName,
-  });
-  result = result.charAt(0).toUpperCase() + result.slice(1);
-  return result;
-}
-
-function afterUpdateEvent(params: { idEvent: number }): void {
-  const id = params.idEvent;
-  idEvent.value = id;
-  isOpenModalUpdateEvent.value = true;
-}
-
 async function openPopoverRightEventMenu(params: {
   ev: Event;
   eventId: number;
@@ -737,117 +534,3 @@ function eachPeriodOfInterval(params: {
 
 defineExpose({ openModalAdd, reschedule, syncAction });
 </script>
-
-<style scoped>
-table.schedule-table {
-  border-collapse: collapse;
-}
-
-table.schedule-table td {
-  padding: 10px;
-  text-align: center;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-table.schedule-table td:first-child {
-  position: sticky;
-  left: 0;
-}
-
-table.schedule-table td:not(:first-child) {
-  position: relative;
-  /* width: 150px; */
-}
-
-table.schedule-table thead {
-  font-weight: bold;
-  border: none !important;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background-color: var(--ion-background-light-color);
-}
-
-table.schedule-table tr td:first-child,
-table.schedule-table th:first-child {
-  border: none !important;
-  z-index: 3;
-  background-color: var(--ion-background-light-color);
-}
-
-table.schedule-table td:nth-child(n + 2) {
-  min-width: 210px;
-}
-
-@media only screen and (min-width: 768px) {
-  table.schedule-table td:nth-child(n + 2) {
-    min-width: 180px;
-  }
-}
-
-.card-event {
-  border-style: solid;
-  border-width: 1px;
-  border-color: #ffb4b4;
-}
-
-ion-content {
-  --offset-bottom: auto !important;
-  --overflow: hidden;
-  overflow: auto;
-}
-
-ion-content::-webkit-scrollbar {
-  display: none;
-}
-
-.today {
-  color: var(--ion-color-primary);
-}
-
-.popover-main-calendar-ios {
-  --width: 66vw;
-}
-
-.space-button-date-selector {
-  width: 7rem;
-  display: flex;
-  justify-content: center;
-}
-
-@media only screen and (min-width: 992px) {
-  .modal-event {
-    --width: 80vw;
-    --height: 90vh;
-  }
-  .space-button-date-selector {
-    width: 7rem;
-    display: flex;
-    justify-content: center;
-  }
-}
-ion-radio {
-  --border-radius: 4px;
-  --inner-border-radius: 4px;
-
-  --color: #ddd;
-  --color-checked: #6815ec;
-}
-
-ion-radio.ios::part(container) {
-  width: 20px;
-  height: 20px;
-
-  border: 2px solid #ddd;
-  border-radius: 4px;
-}
-
-.radio-checked.ios::part(container) {
-  border-color: #6815ec;
-}
-
-.card-main-content {
-  max-height: 82vh;
-  overflow: auto;
-}
-</style>
