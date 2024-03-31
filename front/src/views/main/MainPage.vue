@@ -30,9 +30,11 @@
         <CalendarHeaderComponent
           v-if="$route.path == '/calendar'"
           :page-title="calendarComponent.pageTitle"
+          :mode-view="calendarComponent.modeView"
           @add="calendarComponentRef.openModalAdd({ event: $event })"
           @reschedule="calendarComponentRef.reschedule()"
           @sync="calendarComponentRef.syncAction()"
+          @view-mode="calendarComponent.modeView = $event"
         />
 
         <!-- integrations -->
@@ -86,6 +88,7 @@
           v-if="$route.path == '/calendar'"
           ref="calendarComponentRef"
           :page-title="calendarComponent.pageTitle"
+          :mode-view="calendarComponent.modeView"
         />
 
         <!-- integrations -->
@@ -151,6 +154,7 @@ const homeComponent = reactive({
 const calendarComponent = reactive({
   pageTitle: route.path == "Calendario",
   currentDate: new Date(),
+  modeView: "week",
 });
 const integrationsComponent = reactive({
   pageTitle: route.path == "Integraciones",

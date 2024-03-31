@@ -137,6 +137,30 @@
 
         <ion-list>
           <ion-list-header>
+            <ion-label>Principal</ion-label>
+          </ion-list-header>
+
+          <!-- mode view -->
+          <ion-item>
+            <ion-select
+              label="Vista"
+              :value="props.modeView"
+              @ion-change="emits('viewMode', $event.detail.value)"
+            >
+              <ion-select-option value="diary" disabled
+                >Agenda</ion-select-option
+              >
+              <ion-select-option value="day">Dia</ion-select-option>
+              <ion-select-option value="week">Semanal</ion-select-option>
+              <ion-select-option value="month" disabled
+                >Mensual</ion-select-option
+              >
+            </ion-select>
+          </ion-item>
+        </ion-list>
+
+        <ion-list>
+          <ion-list-header>
             <ion-label>Otros</ion-label>
           </ion-list-header>
 
@@ -190,10 +214,14 @@ import {
   IonToast,
   IonToolbar,
   isPlatform,
+  IonItem,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/vue";
 import { add, getMonth, sub } from "date-fns";
 import {
   addOutline,
+  albumsOutline,
   chevronBackOutline,
   chevronForwardOutline,
   ellipsisVerticalOutline,
@@ -217,7 +245,14 @@ interface Day {
   date: Date;
 }
 
-const emits = defineEmits(["add", "reschedule", "sync"]);
+const props = defineProps({
+  modeView: {
+    type: String,
+    required: true,
+    default: "week",
+  },
+});
+const emits = defineEmits(["add", "reschedule", "sync", "viewMode"]);
 
 const pageTitle = "Agenda";
 const currentDate = ref(new Date());

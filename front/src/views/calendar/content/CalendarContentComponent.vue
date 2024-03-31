@@ -2,7 +2,9 @@
   <div ref="mainDiv" style="overflow: auto; height: 95dvh">
     <section>
       <CalendarWeekComponent
+        v-if="props.modeView == 'week'"
         :calendar-data="generateCalendar || []"
+        :mode-view="props.modeView"
         @update-event="
           idEvent = $event.idEvent;
           isOpenModalAddEvent = true;
@@ -92,14 +94,7 @@ import {
 } from "@ionic/vue";
 import { closeOutline } from "ionicons/icons";
 import { ref } from "vue";
-import {
-  add,
-  compareAsc,
-  endOfMonth,
-  format,
-  getDay,
-  startOfMonth,
-} from "date-fns";
+import { add, compareAsc, endOfMonth, getDay, startOfMonth } from "date-fns";
 import { watch } from "vue";
 
 // interfaces
@@ -121,6 +116,15 @@ const eventController = new EventController();
 interface Day {
   date: Date;
 }
+
+// props
+const props = defineProps({
+  modeView: {
+    type: String,
+    required: true,
+    default: "week",
+  },
+});
 
 const modalRescheduleElements = ref(null);
 const idEvent = ref(0);
