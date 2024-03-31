@@ -23,6 +23,6 @@ export type Theme = "light" | "nord" | "gruvbox" | "cherry";
 
 export type ViewMode = "list" | "kanban";
 
-export type ViewCalendar = "diary" | "weekly" | "monthly" | "annual";
+export type ViewCalendar = "diary" | "day" | "weekly" | "monthly" | "annual";
 
 export type RepeatType = "daily" | "weekly" | "monthly" | "annually";

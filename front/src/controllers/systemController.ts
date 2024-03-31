@@ -1,5 +1,5 @@
 import { useSystemStore } from "@/store/system";
-import { Theme, ViewMode } from "@/utils/types";
+import { Theme, ViewCalendar, ViewMode } from "@/utils/types";
 import {
   Days,
   EventReminderNotification,
@@ -202,5 +202,14 @@ export class SystemController {
   cloneObjet(params: { obj: any }): any {
     const { obj } = params;
     return cloneDeep(obj);
+  }
+
+  async setCalendarModeView(params: { mode: ViewCalendar }): Promise<void> {
+    const { mode } = params;
+    await this.systemService.setCalendarModeView({ mode });
+  }
+
+  async getCalendarModeView(): Promise<ViewCalendar> {
+    return await this.systemService.getCalendarModeView();
   }
 }

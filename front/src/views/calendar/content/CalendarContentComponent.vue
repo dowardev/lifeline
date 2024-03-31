@@ -1,10 +1,21 @@
 <template>
   <div ref="mainDiv" style="overflow: auto; height: 95dvh">
     <section>
+      <!-- calendar day -->
+      <CalendarDayComponent
+        class="center"
+        v-if="props.modeView == 'day'"
+        :calendar-data="generateCalendar || []"
+        @update-event="
+          idEvent = $event.idEvent;
+          isOpenModalAddEvent = true;
+        "
+        @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
+      />
+      <!-- calendar week -->
       <CalendarWeekComponent
         v-if="props.modeView == 'week'"
         :calendar-data="generateCalendar || []"
-        :mode-view="props.modeView"
         @update-event="
           idEvent = $event.idEvent;
           isOpenModalAddEvent = true;
@@ -105,6 +116,7 @@ import RescheduleComponent from "@/components/events/schedule-elements/Reschedul
 import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
 import RightMenuEventComponent from "../RightMenuEventComponent.vue";
 import CalendarWeekComponent from "@/components/calendar/week/CalendarWeekComponent.vue";
+import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent.vue";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";

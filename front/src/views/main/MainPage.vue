@@ -34,7 +34,10 @@
           @add="calendarComponentRef.openModalAdd({ event: $event })"
           @reschedule="calendarComponentRef.reschedule()"
           @sync="calendarComponentRef.syncAction()"
-          @view-mode="calendarComponent.modeView = $event"
+          @view-mode="
+            calendarComponent.modeView = $event;
+            setCalendarModeView({ mode: $event });
+          "
         />
 
         <!-- integrations -->
@@ -120,6 +123,11 @@ import { IonContent, IonHeader, IonPage } from "@ionic/vue";
 import { reactive } from "vue";
 import { ref } from "vue";
 import { useRoute } from "vue-router";
+
+// controllers
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
+
 // components
 import SessionHeaderComponent from "@/views/sesion/header/SessionHeaderComponent.vue";
 import SessionContentComponent from "@/views/sesion/SessionContentComponent.vue";
@@ -135,11 +143,15 @@ import TasksHeaderComponent from "@/views/tasks/header/TasksHeaderComponent.vue"
 import TasksContentComponent from "@/views/tasks/content/TasksContentComponent.vue";
 import PoliciesHeaderComponent from "@/views/policies/header/PoliciesHeaderComponent.vue";
 import PoliciesContentComponent from "@/views/policies/content/PoliciesContentComponent.vue";
+import { onMounted } from "vue";
+import { ViewCalendar } from "@/utils/types";
 
 // vars
 const route = useRoute();
+
 // refs
 const calendarComponentRef = ref();
+
 // reactive
 const sessionComponent = reactive({
   mainSegment: route.path == "/login" ? "login" : "signup",
@@ -167,6 +179,20 @@ const policiesComponent = reactive({
   pageTitle: route.path == "Politicas",
   mainOption: "privacy",
 });
+
+onMounted(() => {
+  (async (): Promise<void> => {
+    calendarComponent.modeView = await systemController.getCalendarModeView();
+  })();
+});
+
+// functions
+async function setCalendarModeView(params: {
+  mode: ViewCalendar;
+}): Promise<void> {
+  const { mode } = params;
+  await systemController.setCalendarModeView({ mode });
+}
 </script>
 
 <style scoped>

@@ -2,7 +2,7 @@ import { toastController } from "@ionic/vue";
 import timeZones from "../assets/files/timezones.json";
 import { SystemMessage } from "@/utils/interfaces";
 import { Clipboard } from "@capacitor/clipboard";
-import { Theme, ViewMode } from "@/utils/types";
+import { Theme, ViewCalendar, ViewMode } from "@/utils/types";
 import axios from "axios";
 import { DocumentNode } from "graphql";
 import gql from "graphql-tag";
@@ -196,5 +196,14 @@ export class SystemService {
     if (events) await this.eventController.deleteReminders();
     if (events) await this.eventController.deleteEvents();
     if (schedule) await this.scheduleController.deleteSchedule();
+  }
+
+  async setCalendarModeView(params: { mode: ViewCalendar }): Promise<void> {
+    const { mode } = params;
+    await storage.set("calendarModeView", mode);
+  }
+
+  async getCalendarModeView(): Promise<ViewCalendar> {
+    return (await storage.get("calendarModeView")) ?? "week";
   }
 }
