@@ -15,12 +15,12 @@
 
         <div v-if="!isPlatform('mobile')">
           <!-- previous button -->
-          <ion-button fill="clear" size="small" @click="previousWeek()"
+          <ion-button fill="clear" size="small" @click="previousDate()"
             ><ion-icon :icon="chevronBackOutline"></ion-icon
           ></ion-button>
 
           <!-- next button -->
-          <ion-button fill="clear" size="small" @click="nextWeek()"
+          <ion-button fill="clear" size="small" @click="nextDate()"
             ><ion-icon :icon="chevronForwardOutline"></ion-icon
           ></ion-button>
 
@@ -80,6 +80,7 @@
           @ion-change="
             eventController.setCurrentDate({
               date: new Date($event.target.value as any),
+              mode: modeViewCalendar,
             })
           "
         ></ion-datetime>
@@ -101,12 +102,12 @@
           <ion-row>
             <ion-col>
               <!-- previous button -->
-              <ion-button fill="clear" size="small" @click="previousWeek()"
+              <ion-button fill="clear" size="small" @click="previousDate()"
                 ><ion-icon :icon="chevronBackOutline"></ion-icon
               ></ion-button>
 
               <!-- next button -->
-              <ion-button fill="clear" size="small" @click="nextWeek()"
+              <ion-button fill="clear" size="small" @click="nextDate()"
                 ><ion-icon :icon="chevronForwardOutline"></ion-icon
               ></ion-button>
 
@@ -144,8 +145,15 @@
           <ion-item>
             <ion-select
               label="Vista"
-              :value="props.modeView"
-              @ion-change="emits('viewMode', $event.detail.value)"
+              :value="modeViewCalendar"
+              @ion-change="
+                systemController.setCalendarModeView({
+                  mode: $event.detail.value,
+                });
+                systemController.setStoredCalendarModeView({
+                  mode: $event.detail.value,
+                });
+              "
             >
               <ion-select-option value="diary" disabled
                 >Agenda</ion-select-option
@@ -238,6 +246,7 @@ import { watch } from "vue";
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
+import { ViewCalendar } from "@/utils/types";
 const systemController = new SystemController();
 const eventController = new EventController();
 
@@ -245,13 +254,6 @@ interface Day {
   date: Date;
 }
 
-const props = defineProps({
-  modeView: {
-    type: String,
-    required: true,
-    default: "week",
-  },
-});
 const emits = defineEmits(["add", "reschedule", "sync", "viewMode"]);
 
 const pageTitle = "Agenda";
@@ -280,21 +282,41 @@ const popOverMainOptions = reactive({
   event: Event,
 });
 const toastProps = ref({ isOpen: false, message: {} });
+const modeViewCalendar = ref(systemController.getCalendarModeView());
 
 // mounted
 onMounted(async () => {
   days.value = getDaysForCurrentWeek({ date: new Date() });
   // await eventController.loadEvents();
-  currentDate.value = await eventController.getCurrentDateStored();
-  eventController.setCurrentDate({ date: currentDate.value });
+  // console.log(
+  //   await eventController.getCurrentDateStored({
+  //     mode: systemController.getCalendarModeView(),
+  //   })
+  // );
+  currentDate.value = await eventController.getCurrentDateStored({
+    mode: modeViewCalendar.value,
+  });
+  eventController.setCurrentDate({
+    date: currentDate.value,
+    mode: modeViewCalendar.value,
+  });
 });
 
 // watch
 watch(
-  () => eventController.getCurrentDate(),
-
+  () =>
+    eventController.getCurrentDate({
+      mode: modeViewCalendar.value,
+    }),
   async (date) => {
     currentDate.value = date;
+  }
+);
+
+watch(
+  () => systemController.getCalendarModeView(),
+  async (mode) => {
+    modeViewCalendar.value = mode;
   }
 );
 
@@ -318,29 +340,62 @@ function getDaysForCurrentWeek(params: { date: Date }): Day[] {
   return days;
 }
 
-function previousWeek(): void {
-  const nextDate = new Date(
-    sub(eventController.getCurrentDate(), {
-      days: 7,
-    })
-  );
-  eventController.setCurrentDate({ date: nextDate });
-  eventController.setCurrentDateStored({ date: nextDate });
+function previousDate(): void {
+  let newDate = new Date();
+  const mode = modeViewCalendar.value;
+  const currentDate = eventController.getCurrentDate({ mode });
+
+  if (mode == "week") {
+    newDate = new Date(
+      sub(currentDate, {
+        days: 7,
+      })
+    );
+  }
+  if (mode == "day") {
+    newDate = new Date(
+      sub(currentDate, {
+        days: 1,
+      })
+    );
+  }
+  eventController.setCurrentDate({ date: newDate, mode });
+  eventController.setCurrentDateStored({ date: newDate, mode });
 }
 
-function nextWeek(): void {
-  const nextDate = new Date(
-    add(eventController.getCurrentDate(), {
-      days: 7,
-    })
-  );
-  eventController.setCurrentDate({ date: nextDate });
-  eventController.setCurrentDateStored({ date: nextDate });
+function nextDate(): void {
+  let newDate = new Date();
+  const mode = modeViewCalendar.value;
+  const currentDate = eventController.getCurrentDate({ mode });
+
+  if (mode == "week") {
+    newDate = new Date(
+      add(currentDate, {
+        days: 7,
+      })
+    );
+  }
+  if (mode == "day") {
+    newDate = new Date(
+      add(currentDate, {
+        days: 1,
+      })
+    );
+  }
+
+  eventController.setCurrentDate({ date: newDate, mode });
+  eventController.setCurrentDateStored({ date: newDate, mode });
 }
 
 function today(): void {
-  eventController.setCurrentDate({ date: new Date() });
-  eventController.setCurrentDateStored({ date: new Date() });
+  eventController.setCurrentDate({
+    date: new Date(),
+    mode: modeViewCalendar.value,
+  });
+  eventController.setCurrentDateStored({
+    date: new Date(),
+    mode: modeViewCalendar.value,
+  });
 }
 
 function translateMonth(params: { monthName: string }): string {

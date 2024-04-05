@@ -1,10 +1,10 @@
-import { Event } from "@/utils/interfaces";
+import { CalendarViewDates, Event } from "@/utils/interfaces";
 import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
 import { DBService } from "@/services/dbService";
 import lodash from "lodash";
 import { storage } from "@/main";
-import { ViewCalendar } from "@/utils/types";
+import { ViewCalendar, ViewMode } from "@/utils/types";
 import { EventService } from "@/services/event";
 import { ReminderController } from "./reminderController";
 
@@ -588,9 +588,14 @@ export class EventController {
     }
   }
 
-  setCurrentDate(params: { date: Date }): void {
-    const { date } = params;
-    this.eventStore.updateCurrentDate({ date });
+  setCurrentDate(params: { date: Date; mode: ViewCalendar }): void {
+    const { date, mode } = params;
+    this.eventStore.updateCalendarDate({ date, mode });
+  }
+
+  setCurrentDates(params: { dates: CalendarViewDates }): void {
+    const { dates } = params;
+    this.eventStore.updateCalendarDates({ dates });
   }
 
   async saveLocalEvent(params: { event: Event }): Promise<void> {
@@ -631,21 +636,57 @@ export class EventController {
     );
   }
 
-  getCurrentDate(): Date {
-    return this.eventStore.date;
+  getCurrentDate(params: { mode: ViewCalendar }): Date {
+    const { mode } = params;
+    return this.eventStore.calendarDate[mode];
   }
 
-  async getCurrentDateStored(): Promise<Date> {
-    return (await storage.get("currentDate")) ?? new Date();
+  async getCurrentDateStored(params: { mode: ViewCalendar }): Promise<Date> {
+    const { mode } = params;
+    const date = await storage.get("calendarViewDates");
+    return new Date(JSON.parse(date)[mode]) ?? new Date();
   }
 
-  async setCurrentDateStored(params: { date: Date }): Promise<Date> {
-    const { date } = params;
-    return (await storage.set("currentDate", date)) ?? new Date();
+  async getCurrentDatesStored(): Promise<CalendarViewDates> {
+    const dates = JSON.parse(
+      await storage.get("calendarViewDates")
+    ) as CalendarViewDates;
+    dates.day = new Date(dates.day);
+    dates.diary = new Date(dates.diary);
+    dates.month = new Date(dates.month);
+    dates.week = new Date(dates.week);
+    dates.year = new Date(dates.year);
+
+    return dates;
+  }
+
+  async setCurrentDateStored(params: {
+    date: Date;
+    mode: ViewCalendar;
+  }): Promise<Date> {
+    const { date, mode } = params;
+    const currentDates =
+      JSON.parse(await storage.get("calendarViewDates")) ??
+      ({
+        diary: new Date(),
+        day: new Date(),
+        week: new Date(),
+        month: new Date(),
+        year: new Date(),
+      } as CalendarViewDates);
+
+    currentDates[mode] = date;
+    // console.log({
+    //   mode,
+    //   1: currentDates[mode],
+    //   2: currentDates,
+    //   3: JSON.stringify(currentDates),
+    // });
+    return await storage.set("calendarViewDates", JSON.stringify(currentDates));
   }
 
   async getViewCalendarStored(): Promise<ViewCalendar> {
-    return (await storage.get("viewCalendar")) ?? "weekly";
+    return (await storage.get("viewCalendar")) ?? "week";
   }
 
   async setViewCalendarStored(params: {

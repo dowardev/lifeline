@@ -53,7 +53,7 @@
                   </td>
                   <td>
                     <div
-                      v-for="(event, index) in props.calendarData"
+                      v-for="(event, index) in props.eventsData"
                       :key="index"
                     >
                       <div
@@ -107,12 +107,17 @@
 </template>
 
 <script setup lang="ts">
-// controllers
-import { SystemController } from "@/controllers/systemController";
 import { format } from "date-fns";
-const systemController = new SystemController();
+import { watch } from "vue";
+import { onMounted, ref } from "vue";
 
-interface CalendarData {
+// controllers
+import { EventController } from "@/controllers/eventController";
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
+const eventController = new EventController();
+
+interface EventsData {
   year: string;
   month: string;
   day: string;
@@ -123,15 +128,35 @@ interface CalendarData {
 }
 
 const props = defineProps({
-  calendarData: {
-    type: Object as () => Array<CalendarData>,
+  eventsData: {
+    type: Object as () => Array<EventsData>,
+    required: true,
+  },
+  date: {
+    type: Date,
     required: true,
   },
 });
 const emits = defineEmits(["updateEvent", "openPopoverRightEventMenu"]);
 
+watch(
+  () => props.date,
+  async (date) => {
+    try {
+      day.value = date;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+);
+
+// mounted
+onMounted(async () => {
+  day.value = props.date;
+});
+
 // vars
-const day = new Date();
+const day = ref(new Date());
 const daysOfWeek = [
   "sunday",
   "monday",

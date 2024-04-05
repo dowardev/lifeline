@@ -119,6 +119,14 @@ export interface GetEvents {
   graphql: Graphql;
 }
 
+export interface CalendarViewDates {
+  diary: Date;
+  day: Date;
+  week: Date;
+  month: Date;
+  year: Date;
+}
+
 //document
 export interface Document {
   id: string;

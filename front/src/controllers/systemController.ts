@@ -10,9 +10,13 @@ import {
 import { DBService } from "@/services/dbService";
 import { SystemService } from "@/services/system";
 import { cloneDeep } from "lodash";
+import { useEventsStore } from "@/store/eventsStore";
 
 export class SystemController {
+  // store
   systemStore = useSystemStore();
+  eventsStore = useEventsStore();
+  // services
   dbService = new DBService();
   systemService = new SystemService();
 
@@ -204,12 +208,23 @@ export class SystemController {
     return cloneDeep(obj);
   }
 
-  async setCalendarModeView(params: { mode: ViewCalendar }): Promise<void> {
+  async setStoredCalendarModeView(params: {
+    mode: ViewCalendar;
+  }): Promise<void> {
     const { mode } = params;
     await this.systemService.setCalendarModeView({ mode });
   }
 
-  async getCalendarModeView(): Promise<ViewCalendar> {
+  async getStoredCalendarModeView(): Promise<ViewCalendar> {
     return await this.systemService.getCalendarModeView();
+  }
+
+  getCalendarModeView(): ViewCalendar {
+    return this.eventsStore.calendarModeView;
+  }
+
+  setCalendarModeView(params: { mode: ViewCalendar }): void {
+    const { mode } = params;
+    this.eventsStore.updateCalendarModeView({ mode });
   }
 }

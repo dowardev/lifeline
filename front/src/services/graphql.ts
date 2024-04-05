@@ -14,7 +14,7 @@ export class GrapQLService {
   constructor() {
     const mode = process.env.NODE_ENV;
     if (mode == "development") {
-      this.uri = "http://192.168.1.74:8000/graphql";
+      this.uri = "http://localhost:8000/graphql";
     } else {
       this.uri = "https://lifeline-back.dowar.xyz/graphql";
     }

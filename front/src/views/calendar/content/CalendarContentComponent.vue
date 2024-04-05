@@ -3,9 +3,14 @@
     <section>
       <!-- calendar day -->
       <CalendarDayComponent
+        v-if="systemController.getCalendarModeView() == 'day'"
         class="center"
-        v-if="props.modeView == 'day'"
-        :calendar-data="generateCalendar || []"
+        :events-data="generateCalendar || []"
+        :date="
+          eventController.getCurrentDate({
+            mode: systemController.getCalendarModeView(),
+          })
+        "
         @update-event="
           idEvent = $event.idEvent;
           isOpenModalAddEvent = true;
@@ -14,8 +19,13 @@
       />
       <!-- calendar week -->
       <CalendarWeekComponent
-        v-if="props.modeView == 'week'"
-        :calendar-data="generateCalendar || []"
+        v-if="systemController.getCalendarModeView() == 'week'"
+        :events-data="generateCalendar || []"
+        :date="
+          eventController.getCurrentDate({
+            mode: systemController.getCalendarModeView(),
+          })
+        "
         @update-event="
           idEvent = $event.idEvent;
           isOpenModalAddEvent = true;
@@ -122,21 +132,14 @@ import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
 import { computed } from "vue";
+import { ViewCalendar } from "@/utils/types";
+import { onMounted } from "vue";
 const systemController = new SystemController();
 const eventController = new EventController();
 
 interface Day {
   date: Date;
 }
-
-// props
-const props = defineProps({
-  modeView: {
-    type: String,
-    required: true,
-    default: "week",
-  },
-});
 
 const modalRescheduleElements = ref(null);
 const idEvent = ref(0);
@@ -145,22 +148,9 @@ const isOpenModalRecheduleTasks = ref(false);
 const isOpenPopOverMainOptions = ref(false);
 const isOpenModalAddEvent = ref(false);
 const eventModalAddEvent = ref(null as CustomEvent | null);
-const eventComposable = eventController;
 const events = ref([] as Event[]);
 
 // watch
-// watch date
-watch(
-  () => eventController.getCurrentDate(),
-  async (date) => {
-    try {
-      await syncData({ date });
-    } catch (error) {
-      console.error(error);
-    }
-  }
-);
-
 // watch events
 watch(
   () => eventController.getEvents(),
@@ -168,6 +158,11 @@ watch(
     events.value = response;
   }
 );
+
+// mounted
+onMounted(async () => {
+  await syncAction();
+});
 
 // computed
 const generateCalendar = computed(() => {
@@ -208,7 +203,7 @@ async function deleteEvent(params: { eventId: number }): Promise<void> {
   try {
     await eventController.deleteEvent({ id: eventId });
     await systemController.openToast({ message: "Evento eliminado" });
-    await syncData({ date: eventController.getCurrentDate() });
+    await syncData();
   } catch (error) {
     console.error(error);
     await systemController.openToast({
@@ -217,28 +212,16 @@ async function deleteEvent(params: { eventId: number }): Promise<void> {
   }
 }
 
-async function syncData(params: { date: Date }): Promise<void> {
-  const { date } = params;
-
+async function syncData(): Promise<void> {
   try {
-    const viewCalendar = await eventController.getViewCalendarStored();
+    const mode = await eventController.getViewCalendarStored();
+
     const dates = {
-      start: new Date(startOfMonth(eventController.getCurrentDate())),
-      end: new Date(endOfMonth(eventController.getCurrentDate())),
+      start: new Date(startOfMonth(eventController.getCurrentDate({ mode }))),
+      end: new Date(endOfMonth(eventController.getCurrentDate({ mode }))),
     };
 
-    // if (viewCalendar == "weekly") {
-    //   dates.start = startOfWeek(date, {
-    //     weekStartsOn: 1,
-    //   });
-    //   dates.end = new Date(
-    //     add(dates.start, {
-    //       days: 7,
-    //     })
-    //   );
-    // }
-
-    await eventComposable.sync();
+    await eventController.sync();
     await eventController.loadEvents({
       dates,
     });
@@ -333,7 +316,7 @@ function reschedule(): void {
 async function syncAction(): Promise<void> {
   try {
     await systemController.openToast({ message: "Sincronización iniciada" });
-    await syncData({ date: eventController.getCurrentDate() });
+    await syncData();
     await systemController.openToast({ message: "Sincronización terminada" });
   } catch (error) {
     await systemController.openToast({ message: "Problema al sincronizar" });

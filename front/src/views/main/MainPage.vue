@@ -28,16 +28,10 @@
 
         <!-- calendar -->
         <CalendarHeaderComponent
-          v-if="$route.path == '/calendar'"
-          :page-title="calendarComponent.pageTitle"
-          :mode-view="calendarComponent.modeView"
+          v-if="$route.path == '/calendar' && calendarComponent.ready"
           @add="calendarComponentRef.openModalAdd({ event: $event })"
           @reschedule="calendarComponentRef.reschedule()"
           @sync="calendarComponentRef.syncAction()"
-          @view-mode="
-            calendarComponent.modeView = $event;
-            setCalendarModeView({ mode: $event });
-          "
         />
 
         <!-- integrations -->
@@ -88,10 +82,8 @@
 
         <!-- calendar-->
         <CalendarContentComponent
-          v-if="$route.path == '/calendar'"
+          v-if="$route.path == '/calendar' && calendarComponent.ready"
           ref="calendarComponentRef"
-          :page-title="calendarComponent.pageTitle"
-          :mode-view="calendarComponent.modeView"
         />
 
         <!-- integrations -->
@@ -126,7 +118,9 @@ import { useRoute } from "vue-router";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
+import { EventController } from "@/controllers/eventController";
 const systemController = new SystemController();
+const eventController = new EventController();
 
 // components
 import SessionHeaderComponent from "@/views/sesion/header/SessionHeaderComponent.vue";
@@ -164,9 +158,7 @@ const homeComponent = reactive({
   pageTitle: route.path == "Inicio",
 });
 const calendarComponent = reactive({
-  pageTitle: route.path == "Calendario",
-  currentDate: new Date(),
-  modeView: "week",
+  ready: false,
 });
 const integrationsComponent = reactive({
   pageTitle: route.path == "Integraciones",
@@ -180,18 +172,21 @@ const policiesComponent = reactive({
   mainOption: "privacy",
 });
 
-onMounted(() => {
-  (async (): Promise<void> => {
-    calendarComponent.modeView = await systemController.getCalendarModeView();
-  })();
+onMounted(async () => {
+  await loadPropsCalendarComponent();
+  calendarComponent.ready = true;
 });
 
 // functions
-async function setCalendarModeView(params: {
-  mode: ViewCalendar;
-}): Promise<void> {
-  const { mode } = params;
-  await systemController.setCalendarModeView({ mode });
+async function loadPropsCalendarComponent(): Promise<void> {
+  // load calendar view mode
+  const mode = await systemController.getStoredCalendarModeView();
+  const currentDates = await eventController.getCurrentDatesStored();
+
+  eventController.setCurrentDates({
+    dates: currentDates,
+  });
+  systemController.setCalendarModeView({ mode });
 }
 </script>
 

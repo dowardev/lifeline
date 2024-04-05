@@ -53,7 +53,7 @@
                   </td>
                   <td v-for="day in days" :key="day.date.toString()">
                     <div
-                      v-for="(event, index) in props.calendarData"
+                      v-for="(event, index) in props.eventsData"
                       :key="index"
                     >
                       <div
@@ -112,9 +112,10 @@ import { onMounted, ref } from "vue";
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { format } from "date-fns";
+import { watch } from "vue";
 const systemController = new SystemController();
 
-interface CalendarData {
+interface EventsData {
   year: string;
   month: string;
   day: string;
@@ -125,16 +126,36 @@ interface CalendarData {
 }
 
 const props = defineProps({
-  calendarData: {
-    type: Object as () => Array<CalendarData>,
+  eventsData: {
+    type: Object as () => Array<EventsData>,
+    required: true,
+  },
+  date: {
+    type: Date,
     required: true,
   },
 });
 const emits = defineEmits(["updateEvent", "openPopoverRightEventMenu"]);
 
+// watch date
+watch(
+  () => props.date,
+  async (date) => {
+    try {
+      days.value = getDaysForCurrentWeek({
+        date,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+);
+
 // mounted
 onMounted(async () => {
-  days.value = getDaysForCurrentWeek({ date: new Date() });
+  days.value = getDaysForCurrentWeek({
+    date: props.date,
+  });
 });
 
 // vars
