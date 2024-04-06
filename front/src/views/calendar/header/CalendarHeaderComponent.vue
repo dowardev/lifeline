@@ -40,8 +40,18 @@
               })
             }}
           </ion-button>
+
           <!-- today button -->
-          <ion-button size="small" fill="clear" @click="today()">
+          <ion-button
+            size="small"
+            fill="clear"
+            :disabled="
+              currentDate.getDate() == new Date().getDate() &&
+              currentDate.getMonth() == new Date().getMonth() &&
+              currentDate.getFullYear() == new Date().getFullYear()
+            "
+            @click="today()"
+          >
             <ion-icon :icon="todayOutline"></ion-icon>
           </ion-button>
         </div>
@@ -142,7 +152,7 @@
           </ion-list-header>
 
           <!-- mode view -->
-          <ion-item>
+          <!-- <ion-item>
             <ion-select
               label="Vista"
               :value="modeViewCalendar"
@@ -164,7 +174,67 @@
                 >Mensual</ion-select-option
               >
             </ion-select>
-          </ion-item>
+          </ion-item> -->
+          <ion-accordion-group>
+            <ion-accordion value="first">
+              <ion-item slot="header">
+                <ion-label>Vista</ion-label>
+              </ion-item>
+
+              <div slot="content" class="ion-padding">
+                <ion-item
+                  button
+                  disabled
+                  @click="
+                    setCalendarModView({
+                      mode: 'diary',
+                    })
+                  "
+                  ><ion-label
+                    :color="modeViewCalendar == 'diary' ? 'primary' : ''"
+                    >Agenda</ion-label
+                  ></ion-item
+                >
+                <ion-item
+                  button
+                  @click="
+                    setCalendarModView({
+                      mode: 'day',
+                    })
+                  "
+                  ><ion-label
+                    :color="modeViewCalendar == 'day' ? 'primary' : ''"
+                    >Dia</ion-label
+                  ></ion-item
+                >
+                <ion-item
+                  button
+                  @click="
+                    setCalendarModView({
+                      mode: 'week',
+                    })
+                  "
+                  ><ion-label
+                    :color="modeViewCalendar == 'week' ? 'primary' : ''"
+                    >Semanal</ion-label
+                  ></ion-item
+                >
+                <ion-item
+                  button
+                  disabled
+                  @click="
+                    setCalendarModView({
+                      mode: 'month',
+                    })
+                  "
+                  ><ion-label
+                    :color="modeViewCalendar == 'month' ? 'primary' : ''"
+                    >Mensual</ion-label
+                  ></ion-item
+                >
+              </div>
+            </ion-accordion>
+          </ion-accordion-group>
         </ion-list>
 
         <ion-list>
@@ -237,6 +307,8 @@ import {
   syncOutline,
   todayOutline,
 } from "ionicons/icons";
+
+// interface
 import { Months } from "@/utils/interfaces";
 import { ref } from "vue";
 import { onMounted } from "vue";
@@ -247,6 +319,7 @@ import { watch } from "vue";
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
 import { CalendarController } from "@/controllers/calendarController";
+import { ViewCalendar } from "@/utils/types";
 const systemController = new SystemController();
 const eventController = new EventController();
 const calendarController = new CalendarController();
@@ -409,14 +482,17 @@ function translateMonth(params: { monthName: string }): string {
   return result;
 }
 
-// TODO: remove;
-async function syncData(): Promise<void> {
-  toastProps.value.message = "Sincronización iniciada";
-  toastProps.value.isOpen = true;
-  await eventController.sync();
-  await eventController.loadEvents();
-  toastProps.value.message = "Sincronización terminada";
-  toastProps.value.isOpen = true;
+async function setCalendarModView(params: {
+  mode: ViewCalendar;
+}): Promise<void> {
+  const { mode } = params;
+
+  calendarController.setCalendarModeView({
+    mode,
+  });
+  await calendarController.setStoredCalendarModeView({
+    mode,
+  });
 }
 </script>
 
