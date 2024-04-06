@@ -119,8 +119,10 @@ import { useRoute } from "vue-router";
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
+import { CalendarController } from "@/controllers/calendarController";
 const systemController = new SystemController();
 const eventController = new EventController();
+const calendarController = new CalendarController();
 
 // components
 import SessionHeaderComponent from "@/views/sesion/header/SessionHeaderComponent.vue";
@@ -180,13 +182,13 @@ onMounted(async () => {
 // functions
 async function loadPropsCalendarComponent(): Promise<void> {
   // load calendar view mode
-  const mode = await systemController.getStoredCalendarModeView();
+  const mode = await calendarController.getStoredCalendarModeView();
   const currentDates = await eventController.getCurrentDatesStored();
 
-  eventController.setCurrentDates({
+  calendarController.setCurrentDates({
     dates: currentDates,
   });
-  systemController.setCalendarModeView({ mode });
+  calendarController.setCalendarModeView({ mode });
 }
 </script>
 

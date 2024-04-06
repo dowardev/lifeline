@@ -1,18 +1,9 @@
 import { defineStore } from "pinia";
-import { CalendarViewDates, Event } from "@/utils/interfaces";
-import { Ref, ref } from "vue";
-import { ViewCalendar } from "@/utils/types";
+import { Event } from "@/utils/interfaces";
+import { ref } from "vue";
 
 export const useEventsStore = defineStore("events", () => {
   const events = ref([] as Event[]);
-  const calendarDate: Ref<CalendarViewDates> = ref({
-    diary: new Date(),
-    day: new Date(),
-    week: new Date(),
-    month: new Date(),
-    year: new Date(),
-  });
-  const calendarModeView: Ref<ViewCalendar> = ref(undefined);
 
   function getEvents() {
     return events.value;
@@ -153,42 +144,19 @@ export const useEventsStore = defineStore("events", () => {
   // );
   //
 
-  function updateCalendarDate(params: {
-    date: Date;
-    mode: ViewCalendar;
-  }): void {
-    const { date, mode } = params;
-    calendarDate.value[mode!] = date;
-  }
-
-  function updateCalendarDates(params: { dates: CalendarViewDates }): void {
-    const { dates } = params;
-    calendarDate.value = dates;
-  }
-
   function setEvents(params: { events: Event[] }): void {
     const { events: newEvents } = params;
     events.value = newEvents;
   }
 
-  function updateCalendarModeView(params: { mode: ViewCalendar }): void {
-    const { mode } = params;
-    calendarModeView.value = mode;
-  }
-
   return {
     addEvent,
     addEvents,
-    calendarDate,
-    calendarModeView,
     events,
     getEvent,
     getEvents,
     removeEvent,
     setEvents,
-    updateCalendarDate,
-    updateCalendarDates,
-    updateCalendarModeView,
     updateEvent,
     updateEvents,
   };

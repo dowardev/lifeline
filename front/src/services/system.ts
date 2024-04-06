@@ -197,13 +197,4 @@ export class SystemService {
     if (events) await this.eventController.deleteEvents();
     if (schedule) await this.scheduleController.deleteSchedule();
   }
-
-  async setCalendarModeView(params: { mode: ViewCalendar }): Promise<void> {
-    const { mode } = params;
-    await storage.set("calendarModeView", mode);
-  }
-
-  async getCalendarModeView(): Promise<ViewCalendar> {
-    return (await storage.get("calendarModeView")) ?? "week";
-  }
 }

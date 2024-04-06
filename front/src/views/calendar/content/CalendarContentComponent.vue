@@ -3,12 +3,12 @@
     <section>
       <!-- calendar day -->
       <CalendarDayComponent
-        v-if="systemController.getCalendarModeView() == 'day'"
+        v-if="calendarController.getCalendarModeView() == 'day'"
         class="center"
         :events-data="generateCalendar || []"
         :date="
-          eventController.getCurrentDate({
-            mode: systemController.getCalendarModeView(),
+          calendarController.getCurrentDate({
+            mode: calendarController.getCalendarModeView(),
           })
         "
         @update-event="
@@ -19,11 +19,11 @@
       />
       <!-- calendar week -->
       <CalendarWeekComponent
-        v-if="systemController.getCalendarModeView() == 'week'"
+        v-if="calendarController.getCalendarModeView() == 'week'"
         :events-data="generateCalendar || []"
         :date="
-          eventController.getCurrentDate({
-            mode: systemController.getCalendarModeView(),
+          calendarController.getCurrentDate({
+            mode: calendarController.getCalendarModeView(),
           })
         "
         @update-event="
@@ -117,6 +117,7 @@ import { closeOutline } from "ionicons/icons";
 import { ref } from "vue";
 import { add, compareAsc, endOfMonth, getDay, startOfMonth } from "date-fns";
 import { watch } from "vue";
+import { onMounted } from "vue";
 
 // interfaces
 import { Event } from "@/utils/interfaces";
@@ -132,10 +133,10 @@ import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
 import { computed } from "vue";
-import { ViewCalendar } from "@/utils/types";
-import { onMounted } from "vue";
+import { CalendarController } from "@/controllers/calendarController";
 const systemController = new SystemController();
 const eventController = new EventController();
+const calendarController = new CalendarController();
 
 interface Day {
   date: Date;
@@ -217,8 +218,10 @@ async function syncData(): Promise<void> {
     const mode = await eventController.getViewCalendarStored();
 
     const dates = {
-      start: new Date(startOfMonth(eventController.getCurrentDate({ mode }))),
-      end: new Date(endOfMonth(eventController.getCurrentDate({ mode }))),
+      start: new Date(
+        startOfMonth(calendarController.getCurrentDate({ mode }))
+      ),
+      end: new Date(endOfMonth(calendarController.getCurrentDate({ mode }))),
     };
 
     await eventController.sync();
@@ -289,7 +292,7 @@ async function updateEvent(params: { event: Event }): Promise<void> {
     // await eventController.updateLocalEvent({
     //   event,
     // });
-    // await syncData({ date: eventController.getCurrentDate() });
+    // await syncData({ date: calendarController.getCurrentDate() });
     event.syncStatus = true;
     await eventController.updateLocalEvent({
       event,

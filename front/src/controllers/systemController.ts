@@ -207,24 +207,4 @@ export class SystemController {
     const { obj } = params;
     return cloneDeep(obj);
   }
-
-  async setStoredCalendarModeView(params: {
-    mode: ViewCalendar;
-  }): Promise<void> {
-    const { mode } = params;
-    await this.systemService.setCalendarModeView({ mode });
-  }
-
-  async getStoredCalendarModeView(): Promise<ViewCalendar> {
-    return await this.systemService.getCalendarModeView();
-  }
-
-  getCalendarModeView(): ViewCalendar {
-    return this.eventsStore.calendarModeView;
-  }
-
-  setCalendarModeView(params: { mode: ViewCalendar }): void {
-    const { mode } = params;
-    this.eventsStore.updateCalendarModeView({ mode });
-  }
 }

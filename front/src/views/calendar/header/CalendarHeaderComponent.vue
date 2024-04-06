@@ -78,7 +78,7 @@
           "
           :first-day-of-week="1"
           @ion-change="
-            eventController.setCurrentDate({
+            calendarController.setCurrentDate({
               date: new Date($event.target.value as any),
               mode: modeViewCalendar,
             })
@@ -147,10 +147,10 @@
               label="Vista"
               :value="modeViewCalendar"
               @ion-change="
-                systemController.setCalendarModeView({
+                calendarController.setCalendarModeView({
                   mode: $event.detail.value,
                 });
-                systemController.setStoredCalendarModeView({
+                calendarController.setStoredCalendarModeView({
                   mode: $event.detail.value,
                 });
               "
@@ -246,9 +246,10 @@ import { watch } from "vue";
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
-import { ViewCalendar } from "@/utils/types";
+import { CalendarController } from "@/controllers/calendarController";
 const systemController = new SystemController();
 const eventController = new EventController();
+const calendarController = new CalendarController();
 
 interface Day {
   date: Date;
@@ -282,7 +283,7 @@ const popOverMainOptions = reactive({
   event: Event,
 });
 const toastProps = ref({ isOpen: false, message: {} });
-const modeViewCalendar = ref(systemController.getCalendarModeView());
+const modeViewCalendar = ref(calendarController.getCalendarModeView());
 
 // mounted
 onMounted(async () => {
@@ -296,7 +297,7 @@ onMounted(async () => {
   currentDate.value = await eventController.getCurrentDateStored({
     mode: modeViewCalendar.value,
   });
-  eventController.setCurrentDate({
+  calendarController.setCurrentDate({
     date: currentDate.value,
     mode: modeViewCalendar.value,
   });
@@ -305,7 +306,7 @@ onMounted(async () => {
 // watch
 watch(
   () =>
-    eventController.getCurrentDate({
+    calendarController.getCurrentDate({
       mode: modeViewCalendar.value,
     }),
   async (date) => {
@@ -314,7 +315,7 @@ watch(
 );
 
 watch(
-  () => systemController.getCalendarModeView(),
+  () => calendarController.getCalendarModeView(),
   async (mode) => {
     modeViewCalendar.value = mode;
   }
@@ -343,7 +344,7 @@ function getDaysForCurrentWeek(params: { date: Date }): Day[] {
 function previousDate(): void {
   let newDate = new Date();
   const mode = modeViewCalendar.value;
-  const currentDate = eventController.getCurrentDate({ mode });
+  const currentDate = calendarController.getCurrentDate({ mode });
 
   if (mode == "week") {
     newDate = new Date(
@@ -359,14 +360,14 @@ function previousDate(): void {
       })
     );
   }
-  eventController.setCurrentDate({ date: newDate, mode });
-  eventController.setCurrentDateStored({ date: newDate, mode });
+  calendarController.setCurrentDate({ date: newDate, mode });
+  calendarController.setCurrentDateStored({ date: newDate, mode });
 }
 
 function nextDate(): void {
   let newDate = new Date();
   const mode = modeViewCalendar.value;
-  const currentDate = eventController.getCurrentDate({ mode });
+  const currentDate = calendarController.getCurrentDate({ mode });
 
   if (mode == "week") {
     newDate = new Date(
@@ -383,16 +384,16 @@ function nextDate(): void {
     );
   }
 
-  eventController.setCurrentDate({ date: newDate, mode });
-  eventController.setCurrentDateStored({ date: newDate, mode });
+  calendarController.setCurrentDate({ date: newDate, mode });
+  calendarController.setCurrentDateStored({ date: newDate, mode });
 }
 
 function today(): void {
-  eventController.setCurrentDate({
+  calendarController.setCurrentDate({
     date: new Date(),
     mode: modeViewCalendar.value,
   });
-  eventController.setCurrentDateStored({
+  calendarController.setCurrentDateStored({
     date: new Date(),
     mode: modeViewCalendar.value,
   });
@@ -408,6 +409,7 @@ function translateMonth(params: { monthName: string }): string {
   return result;
 }
 
+// TODO: remove;
 async function syncData(): Promise<void> {
   toastProps.value.message = "Sincronización iniciada";
   toastProps.value.isOpen = true;

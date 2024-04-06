@@ -588,16 +588,6 @@ export class EventController {
     }
   }
 
-  setCurrentDate(params: { date: Date; mode: ViewCalendar }): void {
-    const { date, mode } = params;
-    this.eventStore.updateCalendarDate({ date, mode });
-  }
-
-  setCurrentDates(params: { dates: CalendarViewDates }): void {
-    const { dates } = params;
-    this.eventStore.updateCalendarDates({ dates });
-  }
-
   async saveLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
 
@@ -636,11 +626,6 @@ export class EventController {
     );
   }
 
-  getCurrentDate(params: { mode: ViewCalendar }): Date {
-    const { mode } = params;
-    return this.eventStore.calendarDate[mode];
-  }
-
   async getCurrentDateStored(params: { mode: ViewCalendar }): Promise<Date> {
     const { mode } = params;
     const date = await storage.get("calendarViewDates");
@@ -658,31 +643,6 @@ export class EventController {
     dates.year = new Date(dates.year);
 
     return dates;
-  }
-
-  async setCurrentDateStored(params: {
-    date: Date;
-    mode: ViewCalendar;
-  }): Promise<Date> {
-    const { date, mode } = params;
-    const currentDates =
-      JSON.parse(await storage.get("calendarViewDates")) ??
-      ({
-        diary: new Date(),
-        day: new Date(),
-        week: new Date(),
-        month: new Date(),
-        year: new Date(),
-      } as CalendarViewDates);
-
-    currentDates[mode] = date;
-    // console.log({
-    //   mode,
-    //   1: currentDates[mode],
-    //   2: currentDates,
-    //   3: JSON.stringify(currentDates),
-    // });
-    return await storage.set("calendarViewDates", JSON.stringify(currentDates));
   }
 
   async getViewCalendarStored(): Promise<ViewCalendar> {
