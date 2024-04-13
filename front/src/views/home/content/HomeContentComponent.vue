@@ -1,73 +1,69 @@
 <template>
   <div ref="mainDiv" style="overflow: auto; height: 95dvh">
-    <!-- calendar -->
-    <section>
-      <ion-row class="center">
-        <ion-col sieze-xs="12" size-lg="8">
-          <ion-card>
-            <div class="ion-padding-start ion-padding-end">
-              <ion-row class="scroll-horizontal">
-                <ion-col size-xs="12" size-md="6" size-lg="6">
-                  <ion-card class="scroll-card-calendar element-selected">
+    <ion-row class="center">
+      <ion-col size-xs="12" size-lg="8">
+        <ion-card>
+          <div class="ion-padding-start ion-padding-end">
+            <ion-row class="scroll-horizontal">
+              <!-- calendar -->
+              <ion-col size-xs="12" size-md="6" size-lg="6">
+                <ion-card class="scroll-card-calendar element-selected">
+                  <div
+                    class="card-calendar-content ion-padding-start ion-padding-end"
+                  >
+                    <CalendarComponent />
+                  </div>
+                </ion-card>
+              </ion-col>
+
+              <ion-col size-xs="12" size-md="6" size-lg="6">
+                <ion-card class="element-selected">
+                  <ion-card-header>
+                    <div style="display: flex; justify-content: space-between">
+                      <div class="center-vertical">
+                        <ion-card-title>Wakatime</ion-card-title>
+                      </div>
+
+                      <div>
+                        <ion-button
+                          fill="clear"
+                          size="small"
+                          @click="refreshTodayComponent()"
+                          ><ion-icon :icon="refreshOutline"></ion-icon
+                        ></ion-button>
+
+                        <ion-button
+                          fill="clear"
+                          size="small"
+                          @click="logoutWakaTime()"
+                          ><ion-icon :icon="logOutOutline"></ion-icon
+                        ></ion-button>
+                      </div>
+                    </div>
+                  </ion-card-header>
+
+                  <div>
+                    <!-- input api key -->
                     <div
-                      class="card-calendar-content ion-padding-start ion-padding-end"
+                      v-if="!systemController.getWakaTimeApiKey()"
+                      class="ion-padding"
                     >
-                      <CalendarComponent />
+                      <WakaTimeApiKeyComponent />
                     </div>
-                  </ion-card>
-                </ion-col>
-
-                <ion-col size-xs="12" size-md="6" size-lg="6">
-                  <ion-card class="element-selected">
-                    <ion-card-header>
-                      <div
-                        style="display: flex; justify-content: space-between"
-                      >
-                        <div class="center-vertical">
-                          <ion-card-title>Wakatime</ion-card-title>
-                        </div>
-
-                        <div>
-                          <ion-button
-                            fill="clear"
-                            size="small"
-                            @click="refreshTodayComponent()"
-                            ><ion-icon :icon="refreshOutline"></ion-icon
-                          ></ion-button>
-
-                          <ion-button
-                            fill="clear"
-                            size="small"
-                            @click="logoutWakaTime()"
-                            ><ion-icon :icon="logOutOutline"></ion-icon
-                          ></ion-button>
-                        </div>
-                      </div>
-                    </ion-card-header>
-
-                    <div>
-                      <!-- input api key -->
-                      <div
-                        v-if="!systemController.getWakaTimeApiKey()"
-                        class="ion-padding"
-                      >
-                        <WakaTimeApiKeyComponent />
-                      </div>
-                      <div v-if="systemController.getWakaTimeApiKey()">
-                        <WakaTimeToday
-                          ref="todayComponentRef"
-                          :api-key="systemController.getWakaTimeApiKey()"
-                        />
-                      </div>
+                    <div v-if="systemController.getWakaTimeApiKey()">
+                      <WakaTimeToday
+                        ref="todayComponentRef"
+                        :api-key="systemController.getWakaTimeApiKey()"
+                      />
                     </div>
-                  </ion-card>
-                </ion-col>
-              </ion-row>
-            </div>
-          </ion-card>
-        </ion-col>
-      </ion-row>
-    </section>
+                  </div>
+                </ion-card>
+              </ion-col>
+            </ion-row>
+          </div>
+        </ion-card>
+      </ion-col>
+    </ion-row>
   </div>
 </template>
 

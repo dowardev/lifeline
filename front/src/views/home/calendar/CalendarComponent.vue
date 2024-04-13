@@ -29,35 +29,15 @@
     </section>
 
     <section class="calendar-body">
-      <!-- <table class="schedule-table"> -->
-      <!--   <thead> -->
-      <!--     <tr> -->
-      <!--       <th class="hour-column">Hora</th> -->
-      <!--       <th class="event-column">Eventos</th> -->
-      <!--     </tr> -->
-      <!--   </thead> -->
-      <!---->
-      <!--   <tbody> -->
-      <!--     <tr v-for="hour in hours" :key="hour"> -->
-      <!--       <td class="hour-cell">{{ hour }}</td> -->
-      <!--       <td class="event-cell"> -->
-      <!--         <div -->
-      <!--           v-for="event in filteredEvents({ hour: parseInt(hour) })" -->
-      <!--           :key="event.id" -->
-      <!--         > -->
-      <!--           <ion-card class="card-event"> -->
-      <!--             <ion-card-header> -->
-      <!--               <ion-card-title>{{ event.title }}</ion-card-title> -->
-      <!--             </ion-card-header> -->
-      <!--             <ion-card-content> -->
-      <!--               {{ format(new Date(event.date), "Pp") }} -->
-      <!--             </ion-card-content> -->
-      <!--           </ion-card> -->
-      <!--         </div> -->
-      <!--       </td> -->
-      <!--     </tr> -->
-      <!--   </tbody> -->
-      <!-- </table> -->
+      <CalendarDayComponent
+        :show-current-day="false"
+        :events-data="generateCalendar || []"
+        :date="
+          calendarController.getCurrentDate({
+            mode: calendarController.getCalendarModeView(),
+          })
+        "
+      />
     </section>
   </section>
 
@@ -97,44 +77,256 @@
 
 <script setup lang="ts">
 import { IonDatetime, IonPopover } from "@ionic/vue";
-import { computed, ref } from "vue";
-import { format } from "date-fns";
+import { computed, onMounted, ref, watch } from "vue";
+import { add, compareAsc, format, getDay } from "date-fns";
 import { addOutline } from "ionicons/icons";
+
+//controllers
+import { SystemController } from "@/controllers/systemController";
+import { CalendarController } from "@/controllers/calendarController";
+import { EventController } from "@/controllers/eventController";
+const systemController = new SystemController();
+const calendarController = new CalendarController();
+const eventController = new EventController();
 
 // components
 import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
+import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent.vue";
 
+//vars
 const currentDate = ref(new Date());
 const hours = Array.from(
   { length: 24 },
   (_, i) => `${i.toString().padStart(2, "0")}:00`
 );
 const miniCalendar = ref(null);
+const events = ref([] as Event[]);
 
 // computed
-// const generateSchedule = computed(() => {
-//   const schedule = useSchedule().getSchedule();
-//   if (!schedule) return [];
-//
-//   const year = currentDate.value.getFullYear();
-//   const month = currentDate.value.getMonth();
-//   const day = currentDate.value.getDate();
-//
-//   const events = schedule[year]?.[month]?.[day];
-//   if (!events) return [];
-//   return events;
-// });
+const generateCalendar = computed(() => {
+  if (events.value.length == 0) return;
+  const response = groupEvents({ events: events.value });
+  return flattenEvents({ events: response });
+});
+
+watch(
+  () => eventController.getEvents(),
+  async (response) => {
+    events.value = response;
+  }
+);
+
+onMounted(() => {
+  events.value = eventController.getEvents();
+});
 
 // functions
-// function filteredEvents(params: { hour: number }): ScheduleElement[] {
-//   return generateSchedule.value.filter((event) => {
-//     const eventHour = new Date(event.date).getHours();
-//     if (eventHour === params.hour) {
-//       return true;
-//     }
-//     return false;
-//   });
-// }
+function groupEvents(params: { events: Event[] }): {
+  [year: string]: {
+    [month: string]: {
+      [day: string]: {
+        [time: string]: {
+          id: number;
+          name: string;
+          reminders: any;
+        }[];
+      };
+    };
+  };
+} {
+  const events = systemController.cloneObjet({
+    obj: params.events,
+  }) as Event[];
+
+  return events.reduce(
+    (
+      groupedEvents: {
+        [year: string]: {
+          [month: string]: {
+            [day: string]: {
+              [time: string]: {
+                id: number;
+                name: string;
+                reminders: any;
+              }[];
+            };
+          };
+        };
+      },
+      event: Event
+    ) => {
+      const reminderStart = event.reminders.start;
+      const reminderEnd = event.reminders.end;
+      const repeatType = event.reminders.repeat?.type ?? "daily";
+      const daysWeek = event.reminders.repeat!.daysWeek;
+      const frecuency = event.reminders.repeat?.frecuency ?? 1;
+
+      reminderStart.setMilliseconds(0);
+      reminderStart.setSeconds(0);
+
+      const dates = eachPeriodOfInterval({
+        start: reminderStart,
+        end: reminderEnd,
+        repeatType,
+        frecuency,
+        daysWeek,
+      }).dates;
+
+      dates.forEach((date) => {
+        const yearKey = date.getFullYear().toString();
+        const monthKey = (date.getMonth() + 1).toString();
+        const dayKey = date.getDate().toString();
+        const timeKey = `${date.getHours().toString()}:00`;
+
+        if (!groupedEvents[yearKey]) {
+          groupedEvents[yearKey] = {};
+        }
+
+        if (!groupedEvents[yearKey][monthKey]) {
+          groupedEvents[yearKey][monthKey] = {};
+        }
+
+        if (!groupedEvents[yearKey][monthKey][dayKey]) {
+          groupedEvents[yearKey][monthKey][dayKey] = {};
+        }
+
+        if (!groupedEvents[yearKey][monthKey][dayKey][timeKey]) {
+          groupedEvents[yearKey][monthKey][dayKey][timeKey] = [];
+        }
+
+        groupedEvents[yearKey][monthKey][dayKey][timeKey].push({
+          id: event.id!,
+          name: event.name ?? "",
+          reminders: event.reminders,
+        });
+
+        // Ordenar los eventos por hora
+        groupedEvents[yearKey][monthKey][dayKey][timeKey].sort((a, b) => {
+          const aTime =
+            a.reminders.start.getHours() * 60 + a.reminders.start.getMinutes();
+          const bTime =
+            b.reminders.start.getHours() * 60 + b.reminders.start.getMinutes();
+          return aTime - bTime;
+        });
+      });
+
+      return groupedEvents;
+    },
+    {} as {
+      [year: string]: {
+        [month: string]: {
+          [day: string]: {
+            [time: string]: {
+              id: number;
+              name: string;
+              reminders: any;
+            }[];
+          };
+        };
+      };
+    }
+  );
+}
+
+function eachPeriodOfInterval(params: {
+  start: Date;
+  end: Date;
+  repeatType: string;
+  frecuency: number;
+  daysWeek?: string[];
+}): { dates: Date[] } {
+  const { end, repeatType, frecuency, daysWeek } = params;
+  let { start: currentDate } = params;
+  const dates = [];
+
+  const repeatDict = {
+    daily: "days",
+    weekly: "weeks",
+    monthly: "months",
+    annually: "years",
+  };
+
+  const rep = repeatDict[repeatType as keyof typeof repeatDict];
+
+  while (compareAsc(currentDate, end) <= 0) {
+    if (repeatType === "weekly" && daysWeek) {
+      const daysOfWeekNames = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
+      for (let i = 0; i < 7; i++) {
+        if (
+          daysWeek
+            .map((day) => day.toLowerCase())
+            .includes(daysOfWeekNames[getDay(currentDate)])
+        ) {
+          dates.push(new Date(currentDate));
+        }
+        currentDate = add(currentDate, { days: 1 });
+      }
+    } else {
+      dates.push(new Date(currentDate));
+      currentDate = add(currentDate, { [rep]: frecuency });
+    }
+  }
+
+  return { dates };
+}
+
+function flattenEvents(params: {
+  events: {
+    [year: string]: {
+      [month: string]: {
+        [day: string]: {
+          [time: string]: {
+            id: number;
+            name: string;
+            reminders: any;
+          }[];
+        };
+      };
+    };
+  };
+}): {
+  year: string;
+  month: string;
+  day: string;
+  time: string;
+  id: number;
+  name: string;
+  reminders: any;
+}[] {
+  const { events } = params;
+  const flattened = [];
+
+  for (const year in events) {
+    for (const month in events[year]) {
+      for (const day in events[year][month]) {
+        for (const time in events[year][month][day]) {
+          if (Array.isArray(events[year][month][day][time])) {
+            for (const event of events[year][month][day][time]) {
+              flattened.push({
+                year: year,
+                month: month,
+                day: day,
+                time: time,
+                id: event.id,
+                name: event.name,
+                reminders: event.reminders,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+  return flattened;
+}
 </script>
 
 <style scoped>

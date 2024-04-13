@@ -628,14 +628,36 @@ export class EventController {
 
   async getCurrentDateStored(params: { mode: ViewCalendar }): Promise<Date> {
     const { mode } = params;
-    const date = await storage.get("calendarViewDates");
-    return new Date(JSON.parse(date)[mode]) ?? new Date();
+    let dates = JSON.parse(
+      await storage.get("calendarViewDates")
+    ) as CalendarViewDates;
+
+    if (!dates) {
+      dates = {
+        day: new Date(),
+        diary: new Date(),
+        month: new Date(),
+        week: new Date(),
+        year: new Date(),
+      };
+    }
+    return new Date(dates[mode]) ?? new Date();
   }
 
   async getCurrentDatesStored(): Promise<CalendarViewDates> {
-    const dates = JSON.parse(
+    let dates = JSON.parse(
       await storage.get("calendarViewDates")
     ) as CalendarViewDates;
+
+    if (!dates) {
+      dates = {
+        day: new Date(),
+        diary: new Date(),
+        month: new Date(),
+        week: new Date(),
+        year: new Date(),
+      };
+    }
     dates.day = new Date(dates.day);
     dates.diary = new Date(dates.diary);
     dates.month = new Date(dates.month);

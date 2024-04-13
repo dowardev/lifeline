@@ -2,21 +2,22 @@
   <div ref="mainDiv" style="overflow: auto; height: 95dvh">
     <section>
       <!-- calendar day -->
-      <CalendarDayComponent
-        v-if="calendarController.getCalendarModeView() == 'day'"
-        class="center"
-        :events-data="generateCalendar || []"
-        :date="
-          calendarController.getCurrentDate({
-            mode: calendarController.getCalendarModeView(),
-          })
-        "
-        @update-event="
-          idEvent = $event.idEvent;
-          isOpenModalAddEvent = true;
-        "
-        @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
-      />
+      <div class="ion-padding calendar-day-container">
+        <CalendarDayComponent
+          v-if="calendarController.getCalendarModeView() == 'day'"
+          :events-data="generateCalendar || []"
+          :date="
+            calendarController.getCurrentDate({
+              mode: calendarController.getCalendarModeView(),
+            })
+          "
+          @update-event="
+            idEvent = $event.idEvent;
+            isOpenModalAddEvent = true;
+          "
+          @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
+        />
+      </div>
       <!-- calendar week -->
       <CalendarWeekComponent
         v-if="calendarController.getCalendarModeView() == 'week'"
@@ -536,3 +537,26 @@ function eachPeriodOfInterval(params: {
 
 defineExpose({ openModalAdd, reschedule, syncAction });
 </script>
+
+<style scoped>
+@media only screen and (min-width: 992px) {
+  .modal-event {
+    --width: 80vw;
+    --height: 90vh;
+  }
+}
+
+@media only screen and (min-width: 1024px) and (max-width: 1280px) {
+  .calendar-day-container {
+    height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+@media only screen and (min-width: 1281px) {
+  .calendar-day-container {
+    height: 92vh;
+    overflow-y: auto;
+  }
+}
+</style>

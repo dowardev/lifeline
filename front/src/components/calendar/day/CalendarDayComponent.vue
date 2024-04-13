@@ -1,109 +1,99 @@
 <template>
-  <ion-row>
-    <!-- calendar calendar -->
-    <!-- button options -->
-    <ion-col size-xs="12" size-lg="12">
-      <!-- table -->
-      <ion-card class="card-main-content">
-        <ion-card-content>
-          <div>
-            <table class="schedule-table">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th style="width: 100%">
-                    <!-- day -->
-                    <div
-                      :class="{
-                        today:
-                          day.getDate() == new Date().getDate() &&
-                          day.getMonth() == new Date().getMonth() &&
-                          day.getFullYear() == new Date().getFullYear(),
-                      }"
-                    >
-                      {{
-                        translateDayHeaderTable({
-                          dayName: daysOfWeek[day.getDay()],
-                        })
-                      }}
-                    </div>
+  <!-- table -->
+  <div>
+    <table class="schedule-table" style="width: 100%">
+      <thead>
+        <tr>
+          <th></th>
+          <th style="width: 100%; position: sticky; top: 0">
+            <!-- day -->
+            <div
+              v-if="props.showCurrentDay"
+              :class="{
+                today:
+                  day.getDate() == new Date().getDate() &&
+                  day.getMonth() == new Date().getMonth() &&
+                  day.getFullYear() == new Date().getFullYear(),
+              }"
+            >
+              {{
+                translateDayHeaderTable({
+                  dayName: daysOfWeek[day.getDay()],
+                })
+              }}
+            </div>
 
-                    <!-- day number -->
-                    <div
-                      :class="{
-                        today:
-                          day.getDate() == new Date().getDate() &&
-                          day.getMonth() == new Date().getMonth() &&
-                          day.getFullYear() == new Date().getFullYear(),
-                      }"
-                    >
-                      {{ day.getDate() }}
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="hour in hoursOfDay" :key="hour">
-                  <td
-                    :class="{
-                      today: parseInt(hour) == new Date().getHours(),
-                    }"
-                  >
-                    {{ hour }}
-                  </td>
-                  <td>
-                    <div
-                      v-for="(event, index) in props.eventsData"
-                      :key="index"
-                    >
-                      <div
-                        v-if="
-                          `${event.day}/${event.month}/${event.year}` ==
-                            `${day.getDate()}/${
-                              day.getMonth() + 1
-                            }/${day.getFullYear()}` && hour == event.time
-                        "
-                      >
-                        <ion-card
-                          class="card-event"
-                          style="cursor: pointer"
-                          @click="
-                            emits('updateEvent', {
-                              idEvent: event.id,
-                            })
-                          "
-                          @contextmenu.prevent="
-                            emits('openPopoverRightEventMenu', {
-                              ev: $event,
-                              eventId: event.id,
-                            })
-                          "
-                          @press="
-                            emits('openPopoverRightEventMenu', {
-                              ev: $event,
-                              eventId: event.id,
-                            })
-                          "
-                        >
-                          <ion-card-header>
-                            <ion-card-title>{{ event.name }}</ion-card-title>
-                          </ion-card-header>
+            <!-- day number -->
+            <div
+              v-if="props.showCurrentDay"
+              :class="{
+                today:
+                  day.getDate() == new Date().getDate() &&
+                  day.getMonth() == new Date().getMonth() &&
+                  day.getFullYear() == new Date().getFullYear(),
+              }"
+            >
+              {{ day.getDate() }}
+            </div>
+          </th>
+        </tr>
+      </thead>
 
-                          <ion-card-content>{{
-                            format(new Date(event.reminders.start), "Pp")
-                          }}</ion-card-content>
-                        </ion-card>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </ion-card-content>
-      </ion-card>
-    </ion-col>
-  </ion-row>
+      <tbody>
+        <tr v-for="hour in hoursOfDay" :key="hour">
+          <td
+            :class="{
+              today: parseInt(hour) == new Date().getHours(),
+            }"
+          >
+            {{ hour }}
+          </td>
+          <td>
+            <div v-for="(event, index) in props.eventsData" :key="index">
+              <div
+                v-if="
+                  `${event.day}/${event.month}/${event.year}` ==
+                    `${day.getDate()}/${
+                      day.getMonth() + 1
+                    }/${day.getFullYear()}` && hour == event.time
+                "
+              >
+                <ion-card
+                  class="card-event"
+                  style="cursor: pointer"
+                  @click="
+                    emits('updateEvent', {
+                      idEvent: event.id,
+                    })
+                  "
+                  @contextmenu.prevent="
+                    emits('openPopoverRightEventMenu', {
+                      ev: $event,
+                      eventId: event.id,
+                    })
+                  "
+                  @press="
+                    emits('openPopoverRightEventMenu', {
+                      ev: $event,
+                      eventId: event.id,
+                    })
+                  "
+                >
+                  <ion-card-header>
+                    <ion-card-title>{{ event.name }}</ion-card-title>
+                  </ion-card-header>
+
+                  <ion-card-content>{{
+                    format(new Date(event.reminders.start), "Pp")
+                  }}</ion-card-content>
+                </ion-card>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -135,6 +125,11 @@ const props = defineProps({
   date: {
     type: Date,
     required: true,
+  },
+  showCurrentDay: {
+    type: Boolean,
+    required: false,
+    default: true,
   },
 });
 const emits = defineEmits(["updateEvent", "openPopoverRightEventMenu"]);
@@ -232,24 +227,24 @@ table.schedule-table td {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-table.schedule-table td:first-child {
+/* table.schedule-table td:first-child {
   position: sticky;
   left: 0;
-}
+} */
 
 table.schedule-table td:not(:first-child) {
   position: relative;
   /* width: 150px; */
 }
 
-table.schedule-table thead {
+/* table.schedule-table thead {
   font-weight: bold;
   border: none !important;
   position: sticky;
   top: 0;
   z-index: 2;
   background-color: var(--ion-background-light-color);
-}
+} */
 
 table.schedule-table tr td:first-child,
 table.schedule-table th:first-child {
@@ -272,16 +267,6 @@ table.schedule-table td:nth-child(n + 2) {
   border-style: solid;
   border-width: 1px;
   border-color: #ffb4b4;
-}
-
-ion-content {
-  --offset-bottom: auto !important;
-  --overflow: hidden;
-  overflow: auto;
-}
-
-ion-content::-webkit-scrollbar {
-  display: none;
 }
 
 .today {
@@ -327,10 +312,5 @@ ion-radio.ios::part(container) {
 
 .radio-checked.ios::part(container) {
   border-color: #6815ec;
-}
-
-.card-main-content {
-  max-height: 82vh;
-  overflow: auto;
 }
 </style>
