@@ -19,6 +19,7 @@
 import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
 import { onMounted } from "vue";
 import { ref } from "vue";
+import { endOfMonth, startOfMonth } from "date-fns";
 
 // components
 import MenuComponent from "@/components/menu/MenuComponent.vue";
@@ -27,13 +28,16 @@ import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
 import { UserController } from "@/controllers/userController";
+import { CalendarController } from "./controllers/calendarController";
 const systemController = new SystemController();
 const eventController = new EventController();
 const userController = new UserController();
+const calendarController = new CalendarController();
 
 // services
 import { SystemService } from "./services/system";
 import { UserService } from "./services/user";
+
 const systemService = new SystemService();
 const userService = new UserService();
 
@@ -44,12 +48,7 @@ onMounted(async () => {
   await systemController.createTableTokens();
   await eventController.createTableEvents();
   await eventController.createTableReminders();
-  await start();
-  componentLoaded.value = true;
-});
 
-// functions
-const start = async (): Promise<void> => {
   loadUserProps();
   // await useDocument().loadUserDocuments();
 
@@ -60,12 +59,20 @@ const start = async (): Promise<void> => {
   await systemController.updateThemeSelected({ theme });
 
   try {
+    await eventController.syncAction({ message: { show: true } });
+  } catch (error: any) {
+    console.error(error);
+  }
+
+  try {
     // await deleteData();
   } catch (error: any) {
     console.error(error);
   }
-};
+  componentLoaded.value = true;
+});
 
+// functions
 function loadUserProps(): void {
   const userToken = userService.getUserToken();
   if (userToken != "") {

@@ -115,11 +115,9 @@ import {
   popoverController,
 } from "@ionic/vue";
 import { closeOutline } from "ionicons/icons";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { add, compareAsc, endOfMonth, getDay, startOfMonth } from "date-fns";
 import { watch } from "vue";
-import { onMounted } from "vue";
-
 // interfaces
 import { Event } from "@/utils/interfaces";
 
@@ -162,8 +160,8 @@ watch(
 );
 
 // mounted
-onMounted(async () => {
-  await syncAction();
+onMounted(() => {
+  events.value = eventController.getEvents();
 });
 
 // computed
@@ -214,26 +212,6 @@ async function deleteEvent(params: { eventId: number }): Promise<void> {
   }
 }
 
-async function syncData(): Promise<void> {
-  try {
-    const mode = await eventController.getViewCalendarStored();
-
-    const dates = {
-      start: new Date(
-        startOfMonth(calendarController.getCurrentDate({ mode }))
-      ),
-      end: new Date(endOfMonth(calendarController.getCurrentDate({ mode }))),
-    };
-
-    await eventController.sync();
-    await eventController.loadEvents({
-      dates,
-    });
-  } catch (error: any) {
-    throw new Error(error);
-  }
-}
-
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   try {
@@ -254,7 +232,7 @@ async function saveEvent(params: { event: Event }): Promise<void> {
     await eventController.saveEvent({
       event,
     });
-    await syncAction();
+    await sync();
   } catch (error) {
     console.error(error);
   }
@@ -315,17 +293,6 @@ function openModalAdd(params: { event: Event }): void {
 function reschedule(): void {
   isOpenModalRecheduleTasks.value = true;
   isOpenPopOverMainOptions.value = false;
-}
-
-async function syncAction(): Promise<void> {
-  try {
-    await systemController.openToast({ message: "Sincronización iniciada" });
-    await syncData();
-    await systemController.openToast({ message: "Sincronización terminada" });
-  } catch (error) {
-    await systemController.openToast({ message: "Problema al sincronizar" });
-    console.error(error);
-  }
 }
 
 function groupEvents(params: { events: Event[] }): {
@@ -535,7 +502,7 @@ function eachPeriodOfInterval(params: {
   return { dates };
 }
 
-defineExpose({ openModalAdd, reschedule, syncAction });
+defineExpose({ openModalAdd, reschedule });
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { CalendarViewDates } from "@/utils/interfaces";
 import { Ref, ref } from "vue";
-import { ViewCalendar } from "@/utils/types";
+import { ViewCalendar, CalendarDataStatus } from "@/utils/types";
 
 export const useCalendar = defineStore("calendar", () => {
   const viewDates: Ref<CalendarViewDates> = ref({
@@ -12,6 +12,7 @@ export const useCalendar = defineStore("calendar", () => {
     year: new Date(),
   });
   const calendarModeView: Ref<ViewCalendar> = ref(undefined);
+  const dataStatus: Ref<CalendarDataStatus> = ref("loading");
 
   function updateCalendarViewDate(params: {
     date: Date;
@@ -31,11 +32,18 @@ export const useCalendar = defineStore("calendar", () => {
     calendarModeView.value = mode;
   }
 
+  function setDataStatus(params: { status: CalendarDataStatus }): void {
+    const { status } = params;
+    dataStatus.value = status;
+  }
+
   return {
-    viewDates,
     calendarModeView,
+    dataStatus,
+    setDataStatus,
+    updateCalendarModeView,
     updateCalendarViewDate,
     updateCalendarViewDates,
-    updateCalendarModeView,
+    viewDates,
   };
 });

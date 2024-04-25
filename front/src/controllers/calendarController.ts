@@ -6,7 +6,7 @@ import { CalendarService } from "@/services/calendar";
 
 // types and interface
 import { CalendarViewDates } from "@/utils/interfaces";
-import { ViewCalendar } from "@/utils/types";
+import { ViewCalendar, CalendarDataStatus } from "@/utils/types";
 
 export class CalendarController {
   private calendarStore = useCalendar();
@@ -64,5 +64,14 @@ export class CalendarController {
 
   getCalendarModeView(): ViewCalendar {
     return this.calendarStore.calendarModeView;
+  }
+
+  getCalendarDataStatus(): CalendarDataStatus {
+    return this.calendarStore.dataStatus;
+  }
+
+  setCalendarDataStatus(params: { status: CalendarDataStatus }): void {
+    const { status } = params;
+    this.calendarStore.setDataStatus({ status });
   }
 }

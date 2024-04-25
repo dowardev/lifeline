@@ -9,6 +9,9 @@
               <ion-col size-xs="12" size-md="6" size-lg="6">
                 <ion-card class="scroll-card-calendar element-selected">
                   <div
+                    v-if="
+                      calendarController.getCalendarDataStatus() == 'success'
+                    "
                     class="card-calendar-content ion-padding-start ion-padding-end"
                   >
                     <CalendarComponent />
@@ -79,7 +82,9 @@ import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
+import { CalendarController } from "@/controllers/calendarController";
 const systemController = new SystemController();
+const calendarController = new CalendarController();
 
 const todayComponentRef = ref();
 

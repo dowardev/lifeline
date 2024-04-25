@@ -32,11 +32,7 @@
       <CalendarDayComponent
         :show-current-day="false"
         :events-data="generateCalendar || []"
-        :date="
-          calendarController.getCurrentDate({
-            mode: calendarController.getCalendarModeView(),
-          })
-        "
+        :date="new Date()"
       />
     </section>
   </section>
@@ -71,7 +67,13 @@
     class="modal-event"
     :backdrop-dismiss="false"
   >
-    <AdminEventComponent />
+    <AdminEventComponent
+      @create="
+        saveEvent({
+          event: $event.data.event,
+        })
+      "
+    />
   </ion-modal>
 </template>
 
@@ -92,6 +94,9 @@ const eventController = new EventController();
 // components
 import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
 import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent.vue";
+
+// interfaces
+import { Event } from "@/utils/interfaces";
 
 //vars
 const currentDate = ref(new Date());
@@ -326,6 +331,37 @@ function flattenEvents(params: {
     }
   }
   return flattened;
+}
+
+async function saveEvent(params: { event: Event }): Promise<void> {
+  const { event } = params;
+  try {
+    const remindersId = (
+      await eventController.setEventReminder({
+        daysWeek: event.reminders.repeat!.daysWeek!,
+        description: event.description,
+        frecuency: event.reminders.repeat!.frecuency!,
+        name: event.name!,
+        notifications: event.reminders.notifications!,
+        reminderEnd: event.reminders.end,
+        reminderStart: event.reminders.start,
+        repeatType: event.reminders.repeat!.type!,
+      })
+    ).remindersId;
+    event.reminders.idReminders = remindersId;
+
+    await eventController.saveEvent({
+      event,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+
+  try {
+    await eventController.syncAction({ message: { show: true } });
+  } catch (error: any) {
+    console.error(error);
+  }
 }
 </script>
 

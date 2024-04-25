@@ -1,3 +1,4 @@
+import { SystemController } from "./systemController";
 import { CalendarViewDates, Event } from "@/utils/interfaces";
 import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
@@ -7,12 +8,16 @@ import { storage } from "@/main";
 import { ViewCalendar, ViewMode } from "@/utils/types";
 import { EventService } from "@/services/event";
 import { ReminderController } from "./reminderController";
+import { CalendarController } from "./calendarController";
+import { endOfMonth, startOfMonth } from "date-fns";
+import messages from "./messages.json";
 
 export class EventController {
   private dbService = new DBService();
   private eventService = new EventService();
   private eventStore = useEventsStore();
   private reminderController = new ReminderController();
+  private calendarController = new CalendarController();
 
   /**
    * Perform all the necessary procedure to add a event both generally, locally and from the store
@@ -419,6 +424,46 @@ export class EventController {
       await this.syncEventsFromServer();
       await this.deleteInativeEventOnServer();
     } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
+  async syncAction(params: { message: { show: boolean } }): Promise<void> {
+    const { message } = params;
+    const systemController = new SystemController();
+
+    if (message.show)
+      await systemController.openToast({
+        message: "Sincronización iniciada",
+      });
+
+    const mode = await this.getViewCalendarStored();
+    const dates = {
+      start: new Date(
+        startOfMonth(this.calendarController.getCurrentDate({ mode }))
+      ),
+      end: new Date(
+        endOfMonth(this.calendarController.getCurrentDate({ mode }))
+      ),
+    };
+
+    try {
+      await this.sync();
+      await this.loadEvents({
+        dates,
+      });
+
+      this.calendarController.setCalendarDataStatus({ status: "success" });
+      if (message.show)
+        await systemController.openToast({
+          message: "Sincronización terminada",
+        });
+    } catch (error: any) {
+      this.calendarController.setCalendarDataStatus({ status: "error" });
+      if (message.show)
+        await systemController.openToast({
+          message: "Problema al sincronizar",
+        });
       throw new Error(error);
     }
   }

@@ -32,3 +32,5 @@ export type ViewCalendar =
   | "year";
 
 export type RepeatType = "daily" | "weekly" | "monthly" | "annually";
+
+export type CalendarDataStatus = "loading" | "success" | "error";
