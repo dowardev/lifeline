@@ -22,7 +22,7 @@
       </div>
 
       <div class="center-vertical">
-        <ion-button id="modal-add-event" fill="clear"
+        <ion-button @click="isOpenModalAddEvent = true" fill="clear"
           ><ion-icon :icon="addOutline"></ion-icon
         ></ion-button>
       </div>
@@ -62,10 +62,10 @@
 
   <!-- modals -->
   <ion-modal
-    ref="modalAddEvent"
-    trigger="modal-add-event"
+    :is-open="isOpenModalAddEvent"
     class="modal-event"
     :backdrop-dismiss="false"
+    @dismiss="isOpenModalAddEvent = false"
   >
     <AdminEventComponent
       @create="
@@ -78,7 +78,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonDatetime, IonPopover } from "@ionic/vue";
+import {
+  IonDatetime,
+  IonPopover,
+  IonModal,
+  IonButton,
+  IonButtons,
+} from "@ionic/vue";
 import { computed, onMounted, ref, watch } from "vue";
 import { add, compareAsc, format, getDay } from "date-fns";
 import { addOutline } from "ionicons/icons";
@@ -90,6 +96,7 @@ import { EventController } from "@/controllers/eventController";
 const systemController = new SystemController();
 const calendarController = new CalendarController();
 const eventController = new EventController();
+const isOpenModalAddEvent = ref(false);
 
 // components
 import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
