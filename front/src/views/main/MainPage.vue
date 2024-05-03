@@ -56,7 +56,10 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-card class="card-main-content">
+      <ion-card
+        style="height: var(--card-main-height); margin-bottom: 16px"
+        class="ion-padding"
+      >
         <!-- session -->
         <SessionContentComponent
           v-if="
@@ -105,6 +108,7 @@
           :page-title="policiesComponent.pageTitle"
           @main-option="policiesComponent.mainOption = $event"
         />
+        <div style="margin-bottom: 16px"></div>
       </ion-card>
     </ion-content>
   </ion-page>
@@ -191,9 +195,3 @@ async function loadPropsCalendarComponent(): Promise<void> {
   calendarController.setCalendarModeView({ mode });
 }
 </script>
-
-<style scoped>
-.card-main-content {
-  height: 97%;
-}
-</style>

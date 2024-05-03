@@ -4,6 +4,10 @@
 @import url("./light.css");
 @import url("./cherry.css");
 
+:root {
+  --card-main-height: 89dvh
+}
+
 @font-face {
   font-family: "OpenSans-Regular";
   src: url("../assets/fonts/open_sans/static/OpenSans/OpenSans-Regular.ttf");
@@ -110,3 +114,4 @@ ion-accordion > div[slot="content"] {
 ion-button {
   --box-shadow: none !important;
 }
+

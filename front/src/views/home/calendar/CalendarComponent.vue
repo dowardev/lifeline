@@ -1,13 +1,18 @@
 <template>
-  <!-- calendar -->
-  <section class="calendar-section">
+  <section style="margin: 16px">
+    <!-- header -->
     <section style="display: flex; justify-content: space-between">
       <div class="calendar-header">
-        <div class="day-header-container">
-          <span class="day-header" style="color: var(--ion-color-primary)">{{
-            new Date().getDate()
-          }}</span>
-        </div>
+        <span
+          class="day-header"
+          style="
+            color: var(--ion-color-primary);
+            line-height: 1;
+            margin-right: 16px;
+          "
+        >
+          {{ new Date().getDate() }}
+        </span>
 
         <div
           style="display: flex; flex-direction: column; align-items: stretch"
@@ -22,13 +27,14 @@
       </div>
 
       <div class="center-vertical">
-        <ion-button @click="isOpenModalAddEvent = true" fill="clear"
+        <ion-button fill="clear" @click="isOpenModalAddEvent = true"
           ><ion-icon :icon="addOutline"></ion-icon
         ></ion-button>
       </div>
     </section>
 
-    <section class="calendar-body">
+    <!-- content -->
+    <section>
       <CalendarDayComponent
         :show-current-day="false"
         :events-data="generateCalendar || []"
@@ -376,7 +382,6 @@ async function saveEvent(params: { event: Event }): Promise<void> {
 .calendar-section {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 .calendar-header {
@@ -385,11 +390,6 @@ async function saveEvent(params: { event: Event }): Promise<void> {
   flex-direction: row;
   align-items: center;
   flex-wrap: nowrap;
-}
-
-.calendar-body {
-  flex: 1;
-  overflow: auto;
 }
 
 .schedule-table {
@@ -433,10 +433,6 @@ async function saveEvent(params: { event: Event }): Promise<void> {
 .day-header {
   font-size: 70px;
   font-weight: bold;
-}
-
-.day-header-container {
-  padding-right: 16px;
 }
 
 .month-header {

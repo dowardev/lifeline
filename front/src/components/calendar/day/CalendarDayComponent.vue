@@ -1,6 +1,6 @@
 <template>
   <!-- table -->
-  <div>
+  <div style="height: calc(var(--card-main-height) - 143px); overflow: auto">
     <table class="schedule-table" style="width: 100%">
       <thead>
         <tr>
