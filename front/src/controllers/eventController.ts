@@ -800,4 +800,13 @@ export class EventController {
     event.reminders.idReminders = [];
     await this.updateLocalEvent({ event });
   }
+
+  countEvents(params: { date: Date }): number {
+    const { date } = params;
+    const events = this.getEvents();
+    const count = events.filter(
+      (event) => event.reminders.start.getDate() == date.getDate()
+    ).length;
+    return count;
+  }
 }

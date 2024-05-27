@@ -1,5 +1,5 @@
 <template>
-  <section style="margin: 16px">
+  <section>
     <!-- header -->
     <section style="display: flex; justify-content: space-between">
       <div class="calendar-header">

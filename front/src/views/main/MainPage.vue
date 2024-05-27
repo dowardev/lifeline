@@ -108,7 +108,6 @@
           :page-title="policiesComponent.pageTitle"
           @main-option="policiesComponent.mainOption = $event"
         />
-        <div style="margin-bottom: 16px"></div>
       </ion-card>
     </ion-content>
   </ion-page>

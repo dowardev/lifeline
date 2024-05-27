@@ -1,13 +1,35 @@
 <template>
-  <ion-row>
+  <ion-row style="max-height: 100%; overflow: scroll">
     <!-- calendar -->
-    <ion-col size-xs="12" size-md="6" size-lg="4">
+    <ion-col
+      size-xs="12"
+      size-md="6"
+      size-lg="4"
+      style="max-height: calc(var(--card-main-height) - 33px)"
+    >
       <ion-card
-        style="margin: 0"
         v-if="calendarController.getCalendarDataStatus() == 'success'"
+        style="margin: 0; max-height: 100%"
         class="element-selected"
       >
-        <CalendarComponent />
+        <ion-card-header>
+          <ion-card-title>Calendario</ion-card-title>
+          <ion-card-subtitle>{{ totalEventsToday }}</ion-card-subtitle>
+        </ion-card-header>
+
+        <ion-accordion-group style="max-height: 100%">
+          <ion-accordion value="first" style="max-height: 100%">
+            <ion-item slot="header">
+              <ion-label>Mostrar mas</ion-label>
+            </ion-item>
+            <div
+              slot="content"
+              class="ion-padding-start ion-padding-end ion-padding-bottom"
+            >
+              <CalendarComponent />
+            </div>
+          </ion-accordion>
+        </ion-accordion-group>
       </ion-card>
     </ion-col>
 
@@ -54,7 +76,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonCard, IonCardTitle } from "@ionic/vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 
 import { logOutOutline, refreshOutline } from "ionicons/icons";
 // components
@@ -65,10 +87,24 @@ import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { CalendarController } from "@/controllers/calendarController";
+import { EventController } from "@/controllers/eventController";
+
 const systemController = new SystemController();
 const calendarController = new CalendarController();
+const eventsController = new EventController();
 
 const todayComponentRef = ref();
+
+const totalEventsToday = computed(() => {
+  const count = eventsController.countEvents({ date: new Date() });
+  if (count === 0) {
+    return "No hay eventos para el día de hoy";
+  } else if (count === 1) {
+    return `${count} evento para el día de hoy`;
+  } else {
+    return `${count} eventos para el día de hoy`;
+  }
+});
 
 onMounted(() => {
   systemController.loadWakaTimeApiKey();

@@ -1,98 +1,100 @@
 <template>
   <!-- table -->
-  <div style="height: calc(var(--card-main-height) - 143px); overflow: auto">
-    <table class="schedule-table" style="width: 100%">
-      <thead>
-        <tr>
-          <th></th>
-          <th style="width: 100%; position: sticky; top: 0">
-            <!-- day -->
-            <div
-              v-if="props.showCurrentDay"
-              :class="{
-                today:
-                  day.getDate() == new Date().getDate() &&
-                  day.getMonth() == new Date().getMonth() &&
-                  day.getFullYear() == new Date().getFullYear(),
-              }"
-            >
-              {{
-                translateDayHeaderTable({
-                  dayName: daysOfWeek[day.getDay()],
-                })
-              }}
-            </div>
-
-            <!-- day number -->
-            <div
-              v-if="props.showCurrentDay"
-              :class="{
-                today:
-                  day.getDate() == new Date().getDate() &&
-                  day.getMonth() == new Date().getMonth() &&
-                  day.getFullYear() == new Date().getFullYear(),
-              }"
-            >
-              {{ day.getDate() }}
-            </div>
-          </th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr v-for="hour in hoursOfDay" :key="hour">
-          <td
-            :class="{
-              today: parseInt(hour) == new Date().getHours(),
-            }"
-          >
-            {{ hour }}
-          </td>
-          <td>
-            <div v-for="(event, index) in props.eventsData" :key="index">
+  <div style="height: calc(var(--card-main-height) - 250px)">
+    <div style="height: calc(var(--card-main-height) - 266px); overflow: auto">
+      <table class="schedule-table" style="width: 100%">
+        <thead>
+          <tr>
+            <th></th>
+            <th style="width: 100%; position: sticky; top: 0">
+              <!-- day -->
               <div
-                v-if="
-                  `${event.day}/${event.month}/${event.year}` ==
-                    `${day.getDate()}/${
-                      day.getMonth() + 1
-                    }/${day.getFullYear()}` && hour == event.time
-                "
+                v-if="props.showCurrentDay"
+                :class="{
+                  today:
+                    day.getDate() == new Date().getDate() &&
+                    day.getMonth() == new Date().getMonth() &&
+                    day.getFullYear() == new Date().getFullYear(),
+                }"
               >
-                <ion-card
-                  class="card-event"
-                  style="cursor: pointer"
-                  @click="
-                    emits('updateEvent', {
-                      idEvent: event.id,
-                    })
-                  "
-                  @contextmenu.prevent="
-                    emits('openPopoverRightEventMenu', {
-                      ev: $event,
-                      eventId: event.id,
-                    })
-                  "
-                  @press="
-                    emits('openPopoverRightEventMenu', {
-                      ev: $event,
-                      eventId: event.id,
-                    })
+                {{
+                  translateDayHeaderTable({
+                    dayName: daysOfWeek[day.getDay()],
+                  })
+                }}
+              </div>
+
+              <!-- day number -->
+              <div
+                v-if="props.showCurrentDay"
+                :class="{
+                  today:
+                    day.getDate() == new Date().getDate() &&
+                    day.getMonth() == new Date().getMonth() &&
+                    day.getFullYear() == new Date().getFullYear(),
+                }"
+              >
+                {{ day.getDate() }}
+              </div>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr v-for="hour in hoursOfDay" :key="hour">
+            <td
+              :class="{
+                today: parseInt(hour) == new Date().getHours(),
+              }"
+            >
+              {{ hour }}
+            </td>
+            <td>
+              <div v-for="(event, index) in props.eventsData" :key="index">
+                <div
+                  v-if="
+                    `${event.day}/${event.month}/${event.year}` ==
+                      `${day.getDate()}/${
+                        day.getMonth() + 1
+                      }/${day.getFullYear()}` && hour == event.time
                   "
                 >
-                  <ion-card-header>
-                    <ion-card-title>{{ event.name }}</ion-card-title>
-                  </ion-card-header>
+                  <ion-card
+                    class="card-event"
+                    style="cursor: pointer"
+                    @click="
+                      emits('updateEvent', {
+                        idEvent: event.id,
+                      })
+                    "
+                    @contextmenu.prevent="
+                      emits('openPopoverRightEventMenu', {
+                        ev: $event,
+                        eventId: event.id,
+                      })
+                    "
+                    @press="
+                      emits('openPopoverRightEventMenu', {
+                        ev: $event,
+                        eventId: event.id,
+                      })
+                    "
+                  >
+                    <ion-card-header>
+                      <ion-card-title>{{ event.name }}</ion-card-title>
+                    </ion-card-header>
 
-                  <ion-card-content>{{
-                    format(new Date(event.reminders.start), "Pp")
-                  }}</ion-card-content>
-                </ion-card>
+                    <ion-card-content>{{
+                      format(new Date(event.reminders.start), "Pp")
+                    }}</ion-card-content>
+                  </ion-card>
+                </div>
               </div>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
