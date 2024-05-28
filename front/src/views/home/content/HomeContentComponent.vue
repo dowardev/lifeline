@@ -14,8 +14,11 @@
       >
         <ion-card-header>
           <ion-card-title>Calendario</ion-card-title>
-          <ion-card-subtitle>{{ totalEventsToday }}</ion-card-subtitle>
         </ion-card-header>
+
+        <ion-label class="ion-padding">
+          {{ totalEventsToday }}
+        </ion-label>
 
         <ion-accordion-group style="max-height: 100%">
           <ion-accordion value="first" style="max-height: 100%">
