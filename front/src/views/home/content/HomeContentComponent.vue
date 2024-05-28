@@ -53,20 +53,24 @@
               <ion-button fill="clear" size="small" @click="logoutWakaTime()"
                 ><ion-icon :icon="logOutOutline"></ion-icon
               ></ion-button>
+
+              <ion-button fill="clear" size="small">
+                <ion-icon :icon="openOutline"></ion-icon>
+              </ion-button>
             </div>
           </div>
         </ion-card-header>
+
+        <WakaTimeToday
+          v-if="systemController.getWakaTimeApiKey()"
+          ref="todayComponentRef"
+          :api-key="systemController.getWakaTimeApiKey()"
+        />
 
         <div>
           <!-- input api key -->
           <div v-if="!systemController.getWakaTimeApiKey()" class="ion-padding">
             <WakaTimeApiKeyComponent />
-          </div>
-          <div v-if="systemController.getWakaTimeApiKey()">
-            <WakaTimeToday
-              ref="todayComponentRef"
-              :api-key="systemController.getWakaTimeApiKey()"
-            />
           </div>
         </div>
       </ion-card>
@@ -78,7 +82,7 @@
 import { IonButton, IonCard, IonCardTitle } from "@ionic/vue";
 import { onMounted, ref, computed } from "vue";
 
-import { logOutOutline, refreshOutline } from "ionicons/icons";
+import { logOutOutline, refreshOutline, openOutline } from "ionicons/icons";
 // components
 import CalendarComponent from "../calendar/CalendarComponent.vue";
 import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";

@@ -1,5 +1,5 @@
 <template>
-  <ion-item lines="none">
+  <ion-item lines="none" class="transparent">
     <ion-label class="ion-text-wrap">Tiempo invertido hoy</ion-label>
 
     <ion-label slot="end">{{
