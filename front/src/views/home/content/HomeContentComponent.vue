@@ -1,44 +1,53 @@
 <template>
-  <ion-row style="max-height: 100%; overflow: scroll">
+  <ion-row>
     <!-- calendar -->
-    <ion-col
-      size-xs="12"
-      size-md="6"
-      size-lg="4"
-      style="max-height: calc(var(--card-main-height) - 33px)"
-    >
+    <ion-col size-xs="12" size-md="6" size-lg="3">
       <ion-card
         v-if="calendarController.getCalendarDataStatus() == 'success'"
-        style="margin: 0; max-height: 100%"
         class="element-selected"
       >
         <ion-card-header>
-          <ion-card-title>Calendario</ion-card-title>
+          <div style="display: flex; justify-content: space-between">
+            <div class="center-vertical">
+              <ion-card-title>Calendario</ion-card-title>
+            </div>
+
+            <div>
+              <ion-button
+                fill="clear"
+                size="small"
+                @click="$router.push('/calendar')"
+              >
+                <ion-icon :icon="openOutline"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
         </ion-card-header>
 
-        <ion-label class="ion-padding">
-          {{ totalEventsToday }}
-        </ion-label>
+        <ion-card-content>
+          <ion-label>
+            {{ totalEventsToday }}
+          </ion-label>
 
-        <ion-accordion-group style="max-height: 100%">
-          <ion-accordion value="first" style="max-height: 100%">
-            <ion-item slot="header">
-              <ion-label>Mostrar mas</ion-label>
-            </ion-item>
-            <div
-              slot="content"
-              class="ion-padding-start ion-padding-end ion-padding-bottom"
-            >
-              <CalendarComponent />
-            </div>
-          </ion-accordion>
-        </ion-accordion-group>
+          <ion-accordion-group>
+            <ion-accordion value="first">
+              <ion-item slot="header">
+                <ion-label>Mostrar mas</ion-label>
+              </ion-item>
+
+              <div slot="content">
+                <!-- calendar component -->
+                <CalendarComponent />
+              </div>
+            </ion-accordion>
+          </ion-accordion-group>
+        </ion-card-content>
       </ion-card>
     </ion-col>
 
     <!-- wakatime -->
     <ion-col size-xs="12" size-md="6" size-lg="4">
-      <ion-card class="element-selected" style="margin: 0">
+      <ion-card class="element-selected">
         <ion-card-header>
           <div style="display: flex; justify-content: space-between">
             <div class="center-vertical">

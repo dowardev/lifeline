@@ -1,46 +1,42 @@
 <template>
-  <section>
-    <!-- header -->
-    <section style="display: flex; justify-content: space-between">
-      <div class="calendar-header">
-        <span
-          class="day-header"
-          style="
-            color: var(--ion-color-primary);
-            line-height: 1;
-            margin-right: 16px;
-          "
-        >
-          {{ new Date().getDate() }}
-        </span>
+  <!-- header -->
+  <section style="display: flex; justify-content: space-between">
+    <div class="calendar-header">
+      <span
+        class="day-header"
+        style="
+          color: var(--ion-color-primary);
+          line-height: 1;
+          margin-right: 16px;
+        "
+      >
+        {{ new Date().getDate() }}
+      </span>
 
-        <div
-          style="display: flex; flex-direction: column; align-items: stretch"
-        >
-          <div style="display: flex">
-            <span class="month-header">{{ new Date().getMonth() }}</span>
-          </div>
-          <div>
-            <span class="year-header">{{ new Date().getFullYear() }}</span>
-          </div>
+      <div style="display: flex; flex-direction: column; align-items: stretch">
+        <div style="display: flex">
+          <span class="month-header">{{ new Date().getMonth() }}</span>
+        </div>
+        <div>
+          <span class="year-header">{{ new Date().getFullYear() }}</span>
         </div>
       </div>
+    </div>
 
-      <div class="center-vertical">
-        <ion-button fill="clear" @click="isOpenModalAddEvent = true"
-          ><ion-icon :icon="addOutline"></ion-icon
-        ></ion-button>
-      </div>
-    </section>
+    <div class="center-vertical">
+      <ion-button fill="clear" @click="isOpenModalAddEvent = true"
+        ><ion-icon :icon="addOutline"></ion-icon
+      ></ion-button>
+    </div>
+  </section>
 
-    <!-- content -->
-    <section>
-      <CalendarDayComponent
-        :show-current-day="false"
-        :events-data="generateCalendar || []"
-        :date="new Date()"
-      />
-    </section>
+  <!-- content -->
+  <section style="height: calc(calc(100vh - 308px) - 16px)">
+    <CalendarDayComponent
+      :show-current-day="false"
+      :events-data="generateCalendar || []"
+      :date="new Date()"
+    />
   </section>
 
   <!-- popovers -->

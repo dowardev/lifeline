@@ -1,104 +1,101 @@
 <template>
-  <div ref="mainDiv" style="overflow: auto; height: 95dvh">
-    <section>
-      <!-- calendar day -->
-      <CalendarDayComponent
-        v-if="calendarController.getCalendarModeView() == 'day'"
-        :events-data="generateCalendar || []"
-        :date="
-          calendarController.getCurrentDate({
-            mode: calendarController.getCalendarModeView(),
-          })
-        "
-        @update-event="
-          idEvent = $event.idEvent;
-          isOpenModalAddEvent = true;
-        "
-        @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
-      />
-      <!-- calendar week -->
-      <CalendarWeekComponent
-        v-if="calendarController.getCalendarModeView() == 'week'"
-        :events-data="generateCalendar || []"
-        :date="
-          calendarController.getCurrentDate({
-            mode: calendarController.getCalendarModeView(),
-          })
-        "
-        @update-event="
-          idEvent = $event.idEvent;
-          isOpenModalAddEvent = true;
-        "
-        @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
-      />
-    </section>
+  <section style="height: 100%">
+    <!-- calendar day -->
+    <CalendarDayComponent
+      v-if="calendarController.getCalendarModeView() == 'day'"
+      :events-data="generateCalendar || []"
+      :date="
+        calendarController.getCurrentDate({
+          mode: calendarController.getCalendarModeView(),
+        })
+      "
+      @update-event="
+        idEvent = $event.idEvent;
+        isOpenModalAddEvent = true;
+      "
+      @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
+    />
+    <!-- calendar week -->
+    <CalendarWeekComponent
+      v-if="calendarController.getCalendarModeView() == 'week'"
+      :events-data="generateCalendar || []"
+      :date="
+        calendarController.getCurrentDate({
+          mode: calendarController.getCalendarModeView(),
+        })
+      "
+      @update-event="
+        idEvent = $event.idEvent;
+        isOpenModalAddEvent = true;
+      "
+      @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
+    />
+  </section>
 
-    <!-- modals -->
-    <!-- modal reschedule elements -->
-    <ion-modal
-      ref="modalRescheduleElements"
-      trigger="modal-reschedule-elements"
-      :is-open="isOpenModalRecheduleTasks"
-      @did-dismiss="isOpenModalRecheduleTasks = false"
-    >
-      <ion-page>
-        <ion-header :translucent="true" mode="ios" class="ion-no-border">
-          <ion-toolbar>
-            <ion-buttons slot="start">
-              <ion-button
-                @click="(modalRescheduleElements as any).$el.dismiss()"
-                ><ion-icon :icon="closeOutline"></ion-icon
-              ></ion-button>
-            </ion-buttons>
-            <ion-title>Reagendar elementos vencidos</ion-title>
-          </ion-toolbar>
-        </ion-header>
+  <!-- modals -->
+  <!-- modal reschedule elements -->
+  <ion-modal
+    ref="modalRescheduleElements"
+    trigger="modal-reschedule-elements"
+    :is-open="isOpenModalRecheduleTasks"
+    @did-dismiss="isOpenModalRecheduleTasks = false"
+  >
+    <ion-page>
+      <ion-header :translucent="true" mode="ios" class="ion-no-border">
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button @click="(modalRescheduleElements as any).$el.dismiss()"
+              ><ion-icon :icon="closeOutline"></ion-icon
+            ></ion-button>
+          </ion-buttons>
+          <ion-title>Reagendar elementos vencidos</ion-title>
+        </ion-toolbar>
+      </ion-header>
 
-        <ion-content :fullscreen="true">
-          <div style="overflow-y: scroll; height: 100vh">
-            <RescheduleComponent />
-          </div>
-        </ion-content>
-      </ion-page>
-    </ion-modal>
+      <ion-content :fullscreen="true">
+        <div style="overflow-y: scroll; height: 100vh">
+          <RescheduleComponent />
+        </div>
+      </ion-content>
+    </ion-page>
+  </ion-modal>
 
-    <!-- modal add event -->
-    <ion-modal
-      ref="modalAddEvent"
-      class="modal-event"
-      :backdrop-dismiss="false"
-      :is-open="isOpenModalAddEvent"
-      :event="eventModalAddEvent"
-      @did-dismiss="isOpenModalAddEvent = false"
-    >
-      <AdminEventComponent
-        @create="
-          saveEvent({
-            event: $event.data.event,
-          })
-        "
-      />
-    </ion-modal>
+  <!-- modal add event -->
+  <ion-modal
+    ref="modalAddEvent"
+    class="modal-event"
+    :backdrop-dismiss="false"
+    :is-open="isOpenModalAddEvent"
+    :event="eventModalAddEvent"
+    @did-dismiss="isOpenModalAddEvent = false"
+  >
+    <AdminEventComponent
+      @create="
+        saveEvent({
+          event: $event.data.event,
+        })
+      "
+    />
+  </ion-modal>
 
-    <!-- modal update event -->
-    <ion-modal
-      class="modal-event"
-      :backdrop-dismiss="false"
-      :is-open="isOpenModalUpdateEvent"
-      @did-dismiss="isOpenModalUpdateEvent = false"
-    >
-      <AdminEventComponent
-        :event-data="eventController.getEvent({ idEvent })"
-        @update="
-          updateEvent({
-            event: $event.data.event,
-          })
-        "
-        @delete="deleteEvent({ eventId: $event.data.id })"
-      />
-    </ion-modal>
-    <!-- end modals -->
-  </div>
+  <!-- modal update event -->
+  <ion-modal
+    class="modal-event"
+    :backdrop-dismiss="false"
+    :is-open="isOpenModalUpdateEvent"
+    @did-dismiss="isOpenModalUpdateEvent = false"
+  >
+    <AdminEventComponent
+      :event-data="eventController.getEvent({ idEvent })"
+      @update="
+        updateEvent({
+          event: $event.data.event,
+        })
+      "
+      @delete="deleteEvent({ eventId: $event.data.id })"
+    />
+  </ion-modal>
+  <!-- end modals -->
 </template>
 
 <script setup lang="ts">

@@ -56,58 +56,57 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-card
-        style="height: var(--card-main-height); margin-bottom: 16px"
-        class="ion-padding"
-      >
-        <!-- session -->
-        <SessionContentComponent
-          v-if="
-            $route.path == '/session' ||
-            $route.path == '/signup' ||
-            $route.path == '/login'
-          "
-          :main-segment="sessionComponent.mainSegment"
-          :page-title="sessionComponent.pageTitle"
-        />
+      <ion-card style="height: calc(100% - 16px)">
+        <ion-card-content style="padding-top: 0px">
+          <!-- session -->
+          <SessionContentComponent
+            v-if="
+              $route.path == '/session' ||
+              $route.path == '/signup' ||
+              $route.path == '/login'
+            "
+            :main-segment="sessionComponent.mainSegment"
+            :page-title="sessionComponent.pageTitle"
+          />
 
-        <!-- landing -->
-        <LandingContentComponent
-          v-if="$route.path == '/landing'"
-          :page-title="landingComponent.pageTitle"
-        />
+          <!-- landing -->
+          <LandingContentComponent
+            v-if="$route.path == '/landing'"
+            :page-title="landingComponent.pageTitle"
+          />
 
-        <!-- home -->
-        <HomeContentComponent
-          v-if="$route.path == '/home'"
-          :page-title="homeComponent.pageTitle"
-        />
+          <!-- home -->
+          <HomeContentComponent
+            v-if="$route.path == '/home'"
+            :page-title="homeComponent.pageTitle"
+          />
 
-        <!-- calendar-->
-        <CalendarContentComponent
-          v-if="$route.path == '/calendar' && calendarComponent.ready"
-          ref="calendarComponentRef"
-        />
+          <!-- calendar-->
+          <CalendarContentComponent
+            v-if="$route.path == '/calendar' && calendarComponent.ready"
+            ref="calendarComponentRef"
+          />
 
-        <!-- integrations -->
-        <IntegrationsContentComponent
-          v-if="$route.path == '/integrations'"
-          :page-title="integrationsComponent.pageTitle"
-          :main-option="integrationsComponent.mainOption"
-        />
+          <!-- integrations -->
+          <IntegrationsContentComponent
+            v-if="$route.path == '/integrations'"
+            :page-title="integrationsComponent.pageTitle"
+            :main-option="integrationsComponent.mainOption"
+          />
 
-        <!-- tasks -->
-        <TasksContentComponent
-          v-if="$route.path == '/tasks'"
-          :page-title="tasksComponent.pageTitle"
-        />
+          <!-- tasks -->
+          <TasksContentComponent
+            v-if="$route.path == '/tasks'"
+            :page-title="tasksComponent.pageTitle"
+          />
 
-        <!-- policies -->
-        <PoliciesContentComponent
-          v-if="$route.path == '/policies'"
-          :page-title="policiesComponent.pageTitle"
-          @main-option="policiesComponent.mainOption = $event"
-        />
+          <!-- policies -->
+          <PoliciesContentComponent
+            v-if="$route.path == '/policies'"
+            :page-title="policiesComponent.pageTitle"
+            @main-option="policiesComponent.mainOption = $event"
+          />
+        </ion-card-content>
       </ion-card>
     </ion-content>
   </ion-page>

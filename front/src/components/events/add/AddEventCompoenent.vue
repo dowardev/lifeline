@@ -28,11 +28,11 @@
 
     <ion-content :fullscreen="true">
       <!-- form -->
-      <ion-row>
+      <ion-row class="container">
         <ion-col
           size-lg="7"
           size-xl="8"
-          class="hidde-scroll-chrome hidde-scroll-others form-container"
+          class="hidde-scroll-chrome hidde-scroll-others container"
         >
           <!-- basic -->
           <ion-list>
@@ -280,7 +280,7 @@
           </ion-list>
         </ion-col>
 
-        <ion-col size-lg="5" size-xl="4">
+        <ion-col size-lg="5" size-xl="4" class="container">
           <div class="center">
             <ion-item lines="none">
               <ion-button
@@ -302,13 +302,14 @@
           </div>
 
           <div>
-            <ion-card class="calendar-container">
-              <ion-card-content>
+            <ion-card id="card">
+              <ion-card-content style="height: 73dvh">
                 <CalendarDayComponent
                   :events-data="generateCalendar || []"
                   :date="currentDate"
                   :show-current-day="false"
-              /></ion-card-content>
+                />
+              </ion-card-content>
             </ion-card>
           </div>
         </ion-col>
@@ -1038,5 +1039,10 @@ function flattenEvents(params: {
   .calendar-container {
     height: 75vh;
   }
+}
+
+.container {
+  height: 84dvh;
+  overflow: auto;
 }
 </style>
