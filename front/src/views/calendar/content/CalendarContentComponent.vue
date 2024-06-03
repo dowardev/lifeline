@@ -1,36 +1,38 @@
 <template>
-  <section style="height: 100%">
-    <!-- calendar day -->
-    <CalendarDayComponent
-      v-if="calendarController.getCalendarModeView() == 'day'"
-      :events-data="generateCalendar || []"
-      :date="
-        calendarController.getCurrentDate({
-          mode: calendarController.getCalendarModeView(),
-        })
-      "
-      @update-event="
-        idEvent = $event.idEvent;
-        isOpenModalAddEvent = true;
-      "
-      @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
-    />
-    <!-- calendar week -->
-    <CalendarWeekComponent
-      v-if="calendarController.getCalendarModeView() == 'week'"
-      :events-data="generateCalendar || []"
-      :date="
-        calendarController.getCurrentDate({
-          mode: calendarController.getCalendarModeView(),
-        })
-      "
-      @update-event="
-        idEvent = $event.idEvent;
-        isOpenModalAddEvent = true;
-      "
-      @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
-    />
-  </section>
+  <ion-row style="height: 100%; overflow: auto">
+    <ion-col size="12" style="height: 100%">
+      <!-- calendar day -->
+      <CalendarDayComponent
+        v-if="calendarController.getCalendarModeView() == 'day'"
+        :events-data="generateCalendar || []"
+        :date="
+          calendarController.getCurrentDate({
+            mode: calendarController.getCalendarModeView(),
+          })
+        "
+        @update-event="
+          idEvent = $event.idEvent;
+          isOpenModalAddEvent = true;
+        "
+        @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
+      />
+      <!-- calendar week -->
+      <CalendarWeekComponent
+        v-if="calendarController.getCalendarModeView() == 'week'"
+        :events-data="generateCalendar || []"
+        :date="
+          calendarController.getCurrentDate({
+            mode: calendarController.getCalendarModeView(),
+          })
+        "
+        @update-event="
+          idEvent = $event.idEvent;
+          isOpenModalAddEvent = true;
+        "
+        @open-popover-right-event-menu="openPopoverRightEventMenu($event)"
+      />
+    </ion-col>
+  </ion-row>
 
   <!-- modals -->
   <!-- modal reschedule elements -->

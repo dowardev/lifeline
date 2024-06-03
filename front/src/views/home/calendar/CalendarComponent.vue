@@ -31,7 +31,7 @@
   </section>
 
   <!-- content -->
-  <section style="height: calc(100dvh - 364px)">
+  <section style="height: calc(100dvh - 371px)">
     <CalendarDayComponent
       :show-current-day="false"
       :events-data="generateCalendar || []"

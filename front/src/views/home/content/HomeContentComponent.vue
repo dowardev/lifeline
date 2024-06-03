@@ -4,6 +4,7 @@
     <ion-col size-xs="12" size-md="6" size-lg="3">
       <ion-card
         v-if="calendarController.getCalendarDataStatus() == 'success'"
+        style="margin: 0"
         class="element-selected"
       >
         <ion-card-header>
@@ -57,7 +58,7 @@
 
     <!-- wakatime -->
     <ion-col size-xs="12" size-md="6" size-lg="4">
-      <ion-card class="element-selected">
+      <ion-card class="element-selected" style="margin: 0">
         <ion-card-header>
           <div style="display: flex; justify-content: space-between">
             <div class="center-vertical">

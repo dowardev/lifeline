@@ -59,7 +59,7 @@
       <ion-card
         style="height: calc(100% - 10px); margin-bottom: 0; overflow: auto"
       >
-        <ion-card-content style="height: calc(100% - 16px)">
+        <ion-card-content style="height: 100%">
           <div></div>
           <!-- session -->
           <SessionContentComponent
