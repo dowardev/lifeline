@@ -55,9 +55,12 @@
       </div>
     </ion-header>
 
-    <ion-content :fullscreen="true">
-      <ion-card style="height: calc(100% - 16px)">
-        <ion-card-content style="padding-top: 0px">
+    <ion-content>
+      <ion-card
+        style="height: calc(100% - 10px); margin-bottom: 0; overflow: auto"
+      >
+        <ion-card-content style="height: calc(100% - 16px)">
+          <div></div>
           <!-- session -->
           <SessionContentComponent
             v-if="

@@ -1,5 +1,5 @@
 <template>
-  <ion-row>
+  <ion-row style="max-height: 100%">
     <!-- calendar -->
     <ion-col size-xs="12" size-md="6" size-lg="3">
       <ion-card
@@ -25,9 +25,19 @@
         </ion-card-header>
 
         <ion-card-content>
-          <ion-label>
-            {{ totalEventsToday }}
-          </ion-label>
+          <div
+            style="display: flex; align-items: center"
+            class="ion-padding-start"
+          >
+            <ion-icon
+              :icon="informationCircleOutline"
+              class="ion-padding-end"
+            ></ion-icon>
+
+            <ion-label>
+              {{ totalEventsToday }}
+            </ion-label>
+          </div>
 
           <ion-accordion-group>
             <ion-accordion value="first">
@@ -94,7 +104,12 @@
 import { IonButton, IonCard, IonCardTitle } from "@ionic/vue";
 import { onMounted, ref, computed } from "vue";
 
-import { logOutOutline, refreshOutline, openOutline } from "ionicons/icons";
+import {
+  logOutOutline,
+  refreshOutline,
+  openOutline,
+  informationCircleOutline,
+} from "ionicons/icons";
 // components
 import CalendarComponent from "../calendar/CalendarComponent.vue";
 import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";

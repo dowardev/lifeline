@@ -1,5 +1,5 @@
 <template>
-  <ion-app v-if="componentLoaded">
+  <ion-app v-if="componentLoaded" style="margin-bottom: 16px">
     <ion-split-pane when="lg" content-id="menu-content">
       <ion-menu
         content-id="menu-content"
