@@ -102,7 +102,14 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCard, IonCardTitle } from "@ionic/vue";
+import {
+  IonButton,
+  IonCard,
+  IonCardTitle,
+  IonAccordion,
+  IonAccordionGroup,
+  IonCardContent,
+} from "@ionic/vue";
 import { onMounted, ref, computed } from "vue";
 
 import {
@@ -111,6 +118,7 @@ import {
   openOutline,
   informationCircleOutline,
 } from "ionicons/icons";
+
 // components
 import CalendarComponent from "../calendar/CalendarComponent.vue";
 import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
