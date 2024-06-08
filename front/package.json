@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test:e2e": "cypress run",
     "test:unit": "vitest",
-    "lint": "eslint"
+    "lint": "biome"
   },
   "dependencies": {
     "@apollo/client": "^3.9.5",
@@ -54,6 +54,7 @@
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.8.0",
     "@capacitor/assets": "^2.0.4",
     "@capacitor/cli": "^5.7.1",
     "@types/lodash": "^4.14.202",
@@ -63,14 +64,9 @@
     "@vue/eslint-config-typescript": "^11.0.3",
     "@vue/test-utils": "^2.4.4",
     "cypress": "^12.17.4",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^8.10.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-vue": "^9.22.0",
-    "eslint_d": "^12.2.1",
     "jsdom": "^21.1.2",
     "prettier": "^2.8.8",
-    "typescript": "^5.3.3",
+    "typescript": "^5.4.5",
     "vite": "^5.1.4",
     "vite-plugin-pwa": "^0.16.7",
     "vitest": "^0.30.1",
