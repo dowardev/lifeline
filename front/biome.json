@@ -11,7 +11,7 @@
 			},
 			"correctness": {
 				"noPrecisionLoss": "error",
-				"noUnusedVariables": "warn",
+				"noUnusedVariables": "error",
 				"useArrayLiterals": "off"
 			},
 			"style": {
@@ -30,6 +30,7 @@
 				"noExplicitAny": "off",
 				"noExtraNonNullAssertion": "error",
 				"noMisleadingInstantiator": "error",
+				"noUnsafeDeclarationMerging": "error",
 				"useNamespaceKeyword": "error"
 			}
 		}
@@ -64,6 +65,7 @@
 						"noConstAssign": "off",
 						"noGlobalObjectCalls": "off",
 						"noInvalidConstructorSuper": "off",
+						"noInvalidNewBuiltin": "off",
 						"noNewSymbol": "off",
 						"noSetterReturn": "off",
 						"noUndeclaredVariables": "off",
@@ -83,8 +85,7 @@
 						"noImportAssign": "off",
 						"noRedeclare": "off",
 						"noUnsafeNegation": "off",
-						"useGetterReturn": "off",
-						"useValidTypeof": "off"
+						"useGetterReturn": "off"
 					}
 				}
 			}
@@ -97,6 +98,7 @@
 						"noConstAssign": "off",
 						"noGlobalObjectCalls": "off",
 						"noInvalidConstructorSuper": "off",
+						"noInvalidNewBuiltin": "off",
 						"noNewSymbol": "off",
 						"noSetterReturn": "off",
 						"noUndeclaredVariables": "off",
@@ -116,8 +118,7 @@
 						"noImportAssign": "off",
 						"noRedeclare": "off",
 						"noUnsafeNegation": "off",
-						"useGetterReturn": "off",
-						"useValidTypeof": "off"
+						"useGetterReturn": "off"
 					}
 				}
 			}
