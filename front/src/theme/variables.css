@@ -42,6 +42,11 @@ ul {
   line-height: 2em;
 }
 
+ion-button {
+  font-family: OpenSans-Regular;
+  opacity: var(--text-opacity);
+}
+
 .transparent {
   --background: transparent;
   background: transparent;
@@ -110,4 +115,3 @@ ion-accordion > div[slot="content"] {
 ion-button {
   --box-shadow: none !important;
 }
-
