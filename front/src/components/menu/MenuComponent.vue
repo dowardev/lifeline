@@ -18,7 +18,7 @@
             <ion-col size="12">
               <!-- logged -->
               <ion-item
-                v-if="userController.refs.isLogged.value == true"
+                v-if="verifyUserLogged() == true"
                 lines="none"
                 class="transparent"
               >
@@ -44,7 +44,7 @@
 
               <!-- no logged -->
               <ion-item
-                v-if="userController.refs.isLogged.value == false"
+                v-if="verifyUserLogged() == false"
                 class="transparent"
                 lines="none"
               >
@@ -392,6 +392,10 @@ async function logout(): Promise<void> {
   } catch (error) {
     console.error(error);
   }
+}
+
+function verifyUserLogged(): boolean {
+  return userController.verifyUserLogged();
 }
 </script>
 

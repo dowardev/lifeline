@@ -86,4 +86,8 @@ export class UserController {
       throw new Error(error);
     }
   }
+
+  verifyUserLogged(): boolean {
+    return this.userStore.islogged;
+  }
 }

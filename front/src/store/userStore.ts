@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { User } from "../utils/interfaces";
 import userAvatar from "@/assets/otros/user.png";
+import { ref } from "vue";
 
 interface UserState {
   user: User;
@@ -8,41 +9,47 @@ interface UserState {
   isLogged: boolean;
 }
 
-export const useUserStore = defineStore("user", {
-  state: (): UserState => ({
-    user: {} as User,
-    token: "",
-    isLogged: false,
-  }),
+export const useUserStore = defineStore("user", () => {
+  const user = ref({} as User);
+  const token = "";
+  const islogged = ref(false);
 
-  getters: {
-    imageProfile(state) {
-      const imageProfile = state.user.imageProfile;
-      if (imageProfile) return "data:image/png;base64," + imageProfile;
-      return userAvatar;
-    },
-  },
+  function imageProfile() {
+    const imageProfile = user.value.imageProfile;
+    if (imageProfile) return "data:image/png;base64," + imageProfile;
+    return userAvatar;
+  }
 
-  actions: {
-    updateUserProps(props: User) {
-      const userProps = this.user;
-      const merge = {
-        ...userProps,
-        ...props,
-      };
-      this.user = merge;
-    },
+  function updateUserProps(props: User) {
+    const userProps = user;
+    const merge = {
+      ...userProps,
+      ...props,
+    };
+    user.value = merge;
+  }
 
-    updateUserLoggedProp(isLogged: boolean) {
-      this.isLogged = isLogged;
-    },
+  function updateUserLoggedProp(isLogged: boolean) {
+    isLogged = isLogged;
+  }
 
-    updateTokenProp(token: string) {
-      this.token = token;
-    },
+  function updateTokenProp(token: string) {
+    token = token;
+  }
 
-    logout() {
-      this.user = {};
-    },
-  },
+  function logout() {
+    user.value = {};
+    islogged.value = false;
+  }
+
+  return {
+    user,
+    token,
+    islogged,
+    imageProfile,
+    updateUserProps,
+    updateUserLoggedProp,
+    updateTokenProp,
+    logout,
+  };
 });
