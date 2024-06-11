@@ -27,7 +27,7 @@
                 <!-- </ion-avatar> -->
 
                 <ion-label class="labelOptionMenu">{{
-                  userController.refs.user.value
+                  userController.getUserLogged().user
                 }}</ion-label>
 
                 <ion-button
@@ -340,8 +340,8 @@ const imageKeyPath = computed(() => {
 });
 
 // mounted
-onMounted(() => {
-  loadUser();
+onMounted(async () => {
+  await loadUser();
 });
 
 // functions
@@ -351,8 +351,11 @@ const openRoute = (route: string) => {
 };
 
 const loadUser = async (): Promise<void> => {
+  const queryName = "USER_MENU";
+  const fragmentName = "UserMenu";
+
   try {
-    await userController.loadUser();
+    await userController.loadUser({ queryName, fragmentName });
   } catch (error) {
     console.error(error);
   }

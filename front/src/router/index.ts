@@ -19,8 +19,11 @@ import { UserController } from "@/controllers/userController";
 
 async function loadUser(): Promise<void> {
   const userController = new UserController();
+  const queryName = "USER_MENU";
+  const fragmentName = "UserMenu";
+
   try {
-    await userController.loadUser();
+    await userController.loadUser({ queryName, fragmentName });
   } catch (error: any) {
     throw new Error(error.message);
   }

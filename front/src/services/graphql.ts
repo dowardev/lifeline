@@ -9,6 +9,9 @@ import {
 import { DocumentNode } from "graphql";
 import gql from "graphql-tag";
 
+// queries
+import { USER_MENU } from "@/utils/graphql";
+
 export class GrapQLService {
   uri = "";
   constructor() {
@@ -79,6 +82,9 @@ export class GrapQLService {
     const { query, options } = params;
 
     const cache = new InMemoryCache();
+    const token = await storage.get("authToken");
+    if (!token) throw new Error("No token found");
+
     const apolloClient = new ApolloClient({
       cache,
       uri: this.uri,
@@ -89,7 +95,7 @@ export class GrapQLService {
     const { refetch, result } = provideApolloClient(apolloClient)(() =>
       useQuery(query, null, {
         fetchPolicy: "cache-first",
-      })
+      }),
     );
     if (options.refetch) await refetch();
     return result;
@@ -123,5 +129,12 @@ export class GrapQLService {
 
       onError((error) => reject(error));
     });
+  }
+
+  getQuery(params: { name: string }): DocumentNode {
+    const { name } = params;
+
+    if (name == "USER_MENU") return USER_MENU;
+    throw new Error("Query not found");
   }
 }

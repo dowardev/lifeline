@@ -34,3 +34,12 @@ export type ViewCalendar =
 export type RepeatType = "daily" | "weekly" | "monthly" | "annually";
 
 export type CalendarDataStatus = "loading" | "success" | "error";
+
+export type GraphQLQueryNameUser =
+  | "USER_PERMISSIONS"
+  | "USER_MENU"
+  | "USER_NAME"
+  | "USER_CALENDARS"
+  | "USER_EVENTS";
+
+export type GraphQLFragmentNameUser = "UserMenu";

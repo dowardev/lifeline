@@ -16,6 +16,7 @@ import { USER_MENU } from "@/utils/graphql";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { DBService } from "@/services/dbService";
 import { GrapQLService } from "./graphql";
+import { GraphQLFragmentNameUser, GraphQLQueryNameUser } from "@/utils/types";
 
 export class UserService {
   dbService = new DBService();
@@ -47,24 +48,26 @@ export class UserService {
     }
   }
 
-  getUserToken(): string {
-    const name = "token=";
-    const cDecoded = decodeURIComponent(document.cookie);
-    const cArr = cDecoded.split("; ");
-    let token = "";
-    cArr.forEach((val) => {
-      if (val.indexOf(name) === 0) token = val.substring(name.length);
-    });
-    return token;
+  async getUserToken(): Promise<string> {
+    try {
+      return await storage.get("authToken");
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 
-  async getUser(params: { refetch: boolean }): Promise<User> {
-    const { refetch } = params;
-    const graphql = { name: USER_MENU, fragment: "UserMenu" };
+  async getUser(params: {
+    refetch: boolean;
+    queryName: GraphQLQueryNameUser;
+    fragmentName: GraphQLFragmentNameUser;
+  }): Promise<User> {
+    const { refetch, queryName, fragmentName } = params;
+    const graphql = { name: queryName, fragment: fragmentName };
+    const queryDocument = this.grapQLService.getQuery({ name: queryName });
 
     try {
       const query = this.grapQLService.graphqlQueryBuilder({
-        name: graphql.name,
+        name: queryDocument,
         fragment: graphql.fragment,
         mutationName: "userAuth",
       });
@@ -95,7 +98,7 @@ export class UserService {
   }
 
   async resendEmailConfirmation(
-    params: ResendEmailConfirmation
+    params: ResendEmailConfirmation,
   ): Promise<void> {
     const { onError, onDone } = useMutation(
       gql`
@@ -107,7 +110,7 @@ export class UserService {
         variables: {
           email: params.email,
         },
-      }
+      },
     );
 
     onError((error) => {

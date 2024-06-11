@@ -49,17 +49,23 @@ onMounted(async () => {
   await eventController.createTableEvents();
   await eventController.createTableReminders();
 
-  loadUserProps();
-  // await useDocument().loadUserDocuments();
-
   await systemController.loadThemeSelected();
   const theme = systemController.getTheme();
   // TODO: use composable instead of service
   systemService.setTheme({ theme: theme, currentTheme: theme });
   await systemController.updateThemeSelected({ theme });
 
+  let status = false;
   try {
-    await eventController.syncAction({ message: { show: true } });
+    await loadUserProps();
+    status = true;
+  } catch (error: any) {
+    console.error(error);
+  }
+  // await useDocument().loadUserDocuments();
+
+  try {
+    if (status) await eventController.syncAction({ message: { show: true } });
   } catch (error: any) {
     console.error(error);
   }
@@ -73,11 +79,15 @@ onMounted(async () => {
 });
 
 // functions
-function loadUserProps(): void {
-  const userToken = userService.getUserToken();
-  if (userToken != "") {
-    userController.updateUserLoggedProp(true);
+async function loadUserProps(): Promise<void> {
+  let userToken = null;
+  try {
+    userToken = await userController.getUserToken();
+    if (!userToken) throw new Error("Token not found");
+    userController.updateUserLoggedProp({ isLogged: true });
     userController.updateUserTokenProp(userToken);
+  } catch (error: any) {
+    throw new Error(error);
   }
 }
 

@@ -3,16 +3,10 @@ import { User } from "../utils/interfaces";
 import userAvatar from "@/assets/otros/user.png";
 import { ref } from "vue";
 
-interface UserState {
-  user: User;
-  token: string;
-  isLogged: boolean;
-}
-
 export const useUserStore = defineStore("user", () => {
   const user = ref({} as User);
   const token = "";
-  const islogged = ref(false);
+  const isLogged = ref(false);
 
   function imageProfile() {
     const imageProfile = user.value.imageProfile;
@@ -20,17 +14,14 @@ export const useUserStore = defineStore("user", () => {
     return userAvatar;
   }
 
-  function updateUserProps(props: User) {
-    const userProps = user;
-    const merge = {
-      ...userProps,
-      ...props,
-    };
-    user.value = merge;
+  function updateUserProps(params: { user: User }): void {
+    const { user: userData } = params;
+    user.value = userData;
   }
 
-  function updateUserLoggedProp(isLogged: boolean) {
-    isLogged = isLogged;
+  function updateUserLoggedProp(params: { isLogged: boolean }): void {
+    const { isLogged: isUserLogged } = params;
+    isLogged.value = isUserLogged;
   }
 
   function updateTokenProp(token: string) {
@@ -39,13 +30,13 @@ export const useUserStore = defineStore("user", () => {
 
   function logout() {
     user.value = {};
-    islogged.value = false;
+    isLogged.value = false;
   }
 
   return {
     user,
     token,
-    islogged,
+    isLogged,
     imageProfile,
     updateUserProps,
     updateUserLoggedProp,

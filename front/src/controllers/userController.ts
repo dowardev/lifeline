@@ -12,6 +12,7 @@ import { UserService } from "@/services/user";
 import { SessionService } from "@/services/session";
 import { CapacitorCookies } from "@capacitor/core";
 import { storage } from "@/main";
+import { GraphQLFragmentNameUser, GraphQLQueryNameUser } from "@/utils/types";
 
 export class UserController {
   userStore = useUserStore();
@@ -19,10 +20,16 @@ export class UserController {
   userService = new UserService();
   sessionService = new SessionService();
 
-  async loadUser(): Promise<void> {
+  async loadUser(params: {
+    queryName: GraphQLQueryNameUser;
+    fragmentName: GraphQLFragmentNameUser;
+  }): Promise<void> {
+    const { queryName, fragmentName } = params;
     try {
       const user = await this.userService.getUser({
         refetch: true,
+        queryName,
+        fragmentName,
       });
 
       this.updateUserProps({ user });
@@ -32,21 +39,23 @@ export class UserController {
   }
 
   updateUserProps(params: { user: User }): void {
-    this.userStore.updateUserProps(params.user);
+    const { user } = params;
+    this.userStore.updateUserProps({ user });
   }
 
   async logout(): Promise<void> {
     try {
+      this.updateUserLoggedProp({ isLogged: false });
+      await storage.remove("authToken");
       await this.sessionService.logout();
-      document.cookie =
-        "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     } catch (e: any) {
       throw new Error(e);
     }
   }
 
-  updateUserLoggedProp(isLogged: boolean): void {
-    this.userStore.updateUserLoggedProp(isLogged);
+  updateUserLoggedProp(params: { isLogged: boolean }): void {
+    const { isLogged } = params;
+    this.userStore.updateUserLoggedProp({ isLogged });
   }
 
   updateUserTokenProp(token: string): void {
@@ -88,6 +97,18 @@ export class UserController {
   }
 
   verifyUserLogged(): boolean {
-    return this.userStore.islogged;
+    return this.userStore.isLogged;
+  }
+
+  async getUserToken(): Promise<string | null> {
+    try {
+      return this.userService.getUserToken() ?? null;
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
+  getUserLogged(): User {
+    return this.userStore.user;
   }
 }
