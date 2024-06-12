@@ -1,12 +1,23 @@
 import { defineStore } from "pinia";
-import { User } from "../utils/interfaces";
+import { User, User2 } from "../utils/interfaces";
 import userAvatar from "@/assets/otros/user.png";
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import { UserController } from "@/controllers/userController";
 
 export const useUserStore = defineStore("user", () => {
   const user = ref({} as User);
   const token = "";
   const isLogged = ref(false);
+  const userController = new UserController();
+
+  watch(user, (newVal: User2, oldVal: User2) => {
+    if (newVal !== oldVal) {
+      const definedValues = Object.fromEntries(
+        Object.entries(newVal).filter(([key, value]) => value !== undefined),
+      );
+      userController.upateUserOnDatabase({ user: definedValues });
+    }
+  });
 
   function imageProfile() {
     const imageProfile = user.value.imageProfile;

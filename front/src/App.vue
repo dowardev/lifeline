@@ -32,7 +32,6 @@ import { CalendarController } from "./controllers/calendarController";
 const systemController = new SystemController();
 const eventController = new EventController();
 const userController = new UserController();
-const calendarController = new CalendarController();
 
 // services
 import { SystemService } from "./services/system";
@@ -48,6 +47,7 @@ onMounted(async () => {
   await systemController.createTableTokens();
   await eventController.createTableEvents();
   await eventController.createTableReminders();
+  await userController.createTableUsers();
 
   await systemController.loadThemeSelected();
   const theme = systemController.getTheme();

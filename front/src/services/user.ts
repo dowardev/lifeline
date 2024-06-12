@@ -10,6 +10,8 @@ import {
   ResendEmailConfirmation,
   Graphql,
   User,
+  UserDBLocal,
+  User2,
 } from "../utils/interfaces";
 import { errorBuilder } from "@/utils/errors";
 import { USER_MENU } from "@/utils/graphql";
@@ -122,5 +124,61 @@ export class UserService {
         resolve(response.data);
       });
     });
+  }
+
+  async updateLocalUser(params: { user: User2 }): Promise<void> {
+    const { name, user: userName, email, token, idSync } = params.user;
+
+    try {
+      const values = [];
+      const fields = [];
+
+      if (name != undefined) {
+        values.push(name);
+        fields.push("name");
+      }
+
+      if (userName != undefined) {
+        values.push(userName);
+        fields.push("user_name");
+      }
+
+      if (email != undefined) {
+        values.push(email);
+        fields.push("email");
+      }
+
+      // if (!imageProfile) {
+      //   values.push(imageProfile);
+      //   fields.push("image_profile");
+      // }
+
+      if (token != undefined) {
+        values.push(token);
+        fields.push("token");
+      }
+
+      if (idSync != undefined) {
+        values.push(idSync);
+        fields.push("id_sync");
+      }
+
+      let query = `UPDATE Users SET  `;
+
+      fields.forEach((field, index) => {
+        query += `${field} = ?`;
+        if (index < fields.length - 1) {
+          query += ", ";
+        }
+      });
+
+      query += ` WHERE id="0"`;
+      await this.dbService.executeQuery({
+        query: query,
+        values: values,
+      });
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 }

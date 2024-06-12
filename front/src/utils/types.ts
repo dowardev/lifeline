@@ -1,4 +1,4 @@
-import { NewList, NewNote, NewRichText, NewTodo } from "./interfaces";
+import { NewList, NewNote, NewRichText, NewTodo, User } from "./interfaces";
 
 export type TypeDocumentElement = "note" | "richtext" | "list" | "todo";
 
@@ -43,3 +43,8 @@ export type GraphQLQueryNameUser =
   | "USER_EVENTS";
 
 export type GraphQLFragmentNameUser = "UserMenu";
+
+export type UserDBLocalType = Pick<
+  User,
+  "name" | "user" | "email" | "imageProfile"
+>;

@@ -223,7 +223,7 @@ export class EventService {
   }
 
   async getUserCalendars(
-    params: GetCalendars
+    params: GetCalendars,
   ): Promise<Array<GetCalendarsResponse>> {
     const { onError, onResult, result } = useQuery(
       gql`
@@ -233,7 +233,7 @@ export class EventService {
         }
       }
       ${params.graphql.name}
-    `
+    `,
     );
 
     return new Promise((resolve, reject) => {
@@ -361,6 +361,7 @@ export class EventService {
     }
   }
 
+  // TODO: improve
   async updateLocalEvent(params: {
     availability?: string;
     daysWeek?: string[];
@@ -589,7 +590,7 @@ export class EventService {
   async getEvent(params: { id: string }): Promise<Event | null> {
     const id = params.id;
     const event = (await storage.get("events")).filter(
-      (event: Event) => event.id == id
+      (event: Event) => event.id == id,
     );
     return event[0];
   }

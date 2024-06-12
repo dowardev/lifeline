@@ -605,8 +605,7 @@ export class EventController {
   }
 
   async createTableReminders(): Promise<void> {
-    const query = `CREATE TABLE IF NOT EXISTS Reminders
-    (
+    const query = `CREATE TABLE IF NOT EXISTS Reminders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       event_id INTEGER REFERENCES EVENTS(id),
       start TEXT,

@@ -3,6 +3,9 @@ import { storeToRefs } from "pinia";
 import {
   SetUserToken,
   User,
+  User2,
+  UserDBLocal,
+  UserLocalDatabaseInterface,
   UserLogin,
   UserLoginResponse,
   UserRegister,
@@ -13,12 +16,14 @@ import { SessionService } from "@/services/session";
 import { CapacitorCookies } from "@capacitor/core";
 import { storage } from "@/main";
 import { GraphQLFragmentNameUser, GraphQLQueryNameUser } from "@/utils/types";
+import { DBService } from "@/services/dbService";
 
 export class UserController {
   userStore = useUserStore();
   refs = storeToRefs(this.userStore);
   userService = new UserService();
   sessionService = new SessionService();
+  private dbService = new DBService();
 
   async loadUser(params: {
     queryName: GraphQLQueryNameUser;
@@ -110,5 +115,37 @@ export class UserController {
 
   getUserLogged(): User {
     return this.userStore.user;
+  }
+
+  async createTableUsers(): Promise<void> {
+    const query = `CREATE TABLE IF NOT EXISTS Users
+    (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      user_name TEXT,
+      email TEXT,
+      is_admin BOOLEAN,
+      rol TEXT
+      image_profile TEXT,
+      token TEXT,
+      id_sync TEXT
+    );`;
+    await this.createTable({ query });
+  }
+
+  async createTable(params: { query: any }): Promise<void> {
+    try {
+      const { query } = params;
+      const db = await this.dbService.dbConnection();
+      // await db.open();
+      await this.dbService.createTable({ query, db });
+      // await db.close();
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
+  async upateUserOnDatabase(params: { user: User2 }): Promise<void> {
+    this.userService.updateLocalUser({ user: params.user });
   }
 }
