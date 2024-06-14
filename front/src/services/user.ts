@@ -11,7 +11,6 @@ import {
   Graphql,
   User,
   UserDBLocal,
-  User2,
 } from "../utils/interfaces";
 import { errorBuilder } from "@/utils/errors";
 import { USER_MENU } from "@/utils/graphql";
@@ -126,7 +125,7 @@ export class UserService {
     });
   }
 
-  async updateLocalUser(params: { user: User2 }): Promise<void> {
+  async updateLocalUser(params: { user: User }): Promise<void> {
     const { name, user: userName, email, token, idSync } = params.user;
 
     try {
@@ -173,10 +172,106 @@ export class UserService {
       });
 
       query += ` WHERE id="0"`;
+
       await this.dbService.executeQuery({
         query: query,
         values: values,
       });
+      const queryss = `SELECT * FROM Users `;
+      const result = (await this.dbService.executeQuery({ query: queryss }))
+        .values![0] as any;
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
+  async insertLocalUser(params: { user: User2 }): Promise<void> {
+    const { name, user: userName, email, token, idSync } = params.user;
+
+    try {
+      const values = [];
+      const fields = [];
+
+      if (name != undefined) {
+        values.push(name);
+        fields.push("name");
+      }
+
+      if (userName != undefined) {
+        values.push(userName);
+        fields.push("user_name");
+      }
+
+      if (email != undefined) {
+        values.push(email);
+        fields.push("email");
+      }
+
+      // if (!imageProfile) {
+      //   values.push(imageProfile);
+      //   fields.push("image_profile");
+      // }
+
+      if (token != undefined) {
+        values.push(token);
+        fields.push("token");
+      }
+
+      if (idSync != undefined) {
+        values.push(idSync);
+        fields.push("id_sync");
+      }
+
+      let query = `
+        INSERT INTO Users(
+       ${fields.join(", ")}
+     )
+     
+   `;
+      query += `values (`;
+      for (let index = 0; index < values.length; index++) {
+        if (index < fields.length - 1) query += "?, ";
+        else query += "? ";
+      }
+      query += `)RETURNING "Id"`;
+      await this.dbService.executeQuery({
+        query: query,
+        values: values,
+      });
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
+  async getLocalUser(): Promise<User2> {
+    const query = `SELECT * FROM Users `;
+    try {
+      const result = (await this.dbService.executeQuery({ query }))
+        .values![0] as any;
+      return result;
+      // const user = {
+      //   id: result.id,
+      //   name: result.name,
+      //   guests: JSON.parse(result.guests as any),
+      //   reminders: {
+      //     start: new Date(result.start),
+      //     end: new Date(result.end),
+      //     notifications: JSON.parse(result.notifications),
+      //     repeat: {
+      //       frecuency: result.frecuency,
+      //       type: result.type,
+      //       daysWeek: JSON.parse(result.daysWeek),
+      //     },
+      //     idReminders: JSON.parse(result.id_reminders ?? []),
+      //   },
+      //   timezone: result.timezone,
+      //   description: result.description,
+      //   availability: result.availability,
+      //   idSync: result.idSync,
+      //   syncStatus: result.syncStatus == 0 ? false : true,
+      //   status: result.status,
+      // };
+      // return user;
     } catch (error: any) {
       throw new Error(error);
     }

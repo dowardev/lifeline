@@ -36,6 +36,7 @@ const userController = new UserController();
 // services
 import { SystemService } from "./services/system";
 import { UserService } from "./services/user";
+import { DBService } from "./services/dbService";
 
 const systemService = new SystemService();
 const userService = new UserService();
@@ -44,6 +45,8 @@ const componentLoaded = ref(false);
 
 // mounted
 onMounted(async () => {
+  const dbs = new DBService();
+  await dbs.dbConnection();
   await systemController.createTableTokens();
   await eventController.createTableEvents();
   await eventController.createTableReminders();
@@ -80,14 +83,21 @@ onMounted(async () => {
 
 // functions
 async function loadUserProps(): Promise<void> {
-  let userToken = null;
+  // let userToken = null;
+  // try {
+  //   userToken = await userController.getUserToken();
+  //   if (!userToken) throw new Error("Token not found");
+  //   userController.updateUserLoggedProp({ isLogged: true });
+  //   userController.updateUserTokenProp(userToken);
+  // } catch (error: any) {
+  //   throw new Error(error);
+  // }
+  //
+
   try {
-    userToken = await userController.getUserToken();
-    if (!userToken) throw new Error("Token not found");
-    userController.updateUserLoggedProp({ isLogged: true });
-    userController.updateUserTokenProp(userToken);
-  } catch (error: any) {
-    throw new Error(error);
+    await userController.updateUserInDB({ dataType: "menu" });
+  } catch (error) {
+    console.error(error);
   }
 }
 

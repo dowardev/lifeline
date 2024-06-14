@@ -23,18 +23,6 @@ export interface User {
   idSync?: string;
 }
 
-export interface User2 {
-  id?: string;
-  name?: string;
-  user?: string;
-  email?: string;
-  isAdmin?: boolean;
-  rol?: Array<any>;
-  imageProfile?: string;
-  token?: string;
-  idSync?: string;
-}
-
 export interface UserRegister {
   name: User["name"];
   user: User["user"];
@@ -66,11 +54,6 @@ export interface UserLoginResponse {
     access_token?: string;
     token_type?: string;
   };
-}
-
-export interface UserDBLocal extends User {
-  token: string;
-  idSync: string;
 }
 
 // system

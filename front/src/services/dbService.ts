@@ -19,7 +19,7 @@ export class DBService {
     }
   }
 
-  private async dbConnection(): Promise<SQLiteDBConnection> {
+  async dbConnection(): Promise<SQLiteDBConnection> {
     const sqlite = new SQLiteConnection(CapacitorSQLite);
     const ret = await sqlite.checkConnectionsConsistency();
     const isConn = (await sqlite.isConnection("db_vite", false)).result;
@@ -32,9 +32,16 @@ export class DBService {
         false,
         "no-encryption",
         1,
-        false
+        false,
       );
     }
+    // try {
+    //   if (!(await db.isDBOpen())) {
+    //     await db.open();
+    //   }
+    // } catch (error) {
+    //   console.error("Failed to open the database:", error);
+    // }
     return db;
   }
 
@@ -42,7 +49,7 @@ export class DBService {
     try {
       const { query } = params;
       const db = await this.dbConnection();
-      if ((await db.isDBOpen()).result == false) await db.open();
+      await db.open();
       const queryCreateTable = query;
       const respCT = await db.execute(queryCreateTable);
       if (

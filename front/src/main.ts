@@ -48,28 +48,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const dbs = new DBService();
     await dbs.init();
-    await dbs.dbConnection();
-    (await dbs.dbConnection()).open();
-
-    // const apolloProvider = createApolloProvider({
-    //   defaultClient: apolloClient,
-    // });
-
-    // const app = createApp({
-    //   setup() {
-    //     provide(DefaultApolloClient, apolloClient);
-    //   },
-    //
-    //   render: () => h(App),
-    // })
-    //   .use(apolloProvider)
-    //   .use(IonicVue)
-    //   .use(i18n)
-    //   .use(pinia)
-    //   .use(router);
-    // router.isReady().then(() => {
-    //   app.mount("#app");
-    // });
+    // await dbs.dbConnection();
+    // (await dbs.dbConnection()).open();
 
     const app = createApp(App).use(IonicVue).use(i18n).use(pinia).use(router);
     router.isReady().then(() => {

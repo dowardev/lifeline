@@ -198,7 +198,8 @@ export class SystemController {
     (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
-      token TEXT
+      token TEXT,
+      user_id INTEGER REFERENCES Users(id)
     );`;
     await this.dbService.createTable({ query });
   }

@@ -10,14 +10,14 @@ export const useUserStore = defineStore("user", () => {
   const isLogged = ref(false);
   const userController = new UserController();
 
-  watch(user, (newVal: User2, oldVal: User2) => {
-    if (newVal !== oldVal) {
-      const definedValues = Object.fromEntries(
-        Object.entries(newVal).filter(([key, value]) => value !== undefined),
-      );
-      userController.upateUserOnDatabase({ user: definedValues });
-    }
-  });
+  // watch(user, async (newVal: User2, oldVal: User2) => {
+  //   if (newVal !== oldVal) {
+  //     const definedValues = Object.fromEntries(
+  //       Object.entries(newVal).filter(([key, value]) => value !== undefined),
+  //     );
+  //     await userController.upateUserOnDatabase({ user: definedValues });
+  //   }
+  // });
 
   function imageProfile() {
     const imageProfile = user.value.imageProfile;

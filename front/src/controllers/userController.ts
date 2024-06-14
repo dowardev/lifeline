@@ -3,7 +3,6 @@ import { storeToRefs } from "pinia";
 import {
   SetUserToken,
   User,
-  User2,
   UserDBLocal,
   UserLocalDatabaseInterface,
   UserLogin,
@@ -15,7 +14,11 @@ import { UserService } from "@/services/user";
 import { SessionService } from "@/services/session";
 import { CapacitorCookies } from "@capacitor/core";
 import { storage } from "@/main";
-import { GraphQLFragmentNameUser, GraphQLQueryNameUser } from "@/utils/types";
+import {
+  GraphQLFragmentNameUser,
+  GraphQLQueryNameUser,
+  userGrapQLTypeData,
+} from "@/utils/types";
 import { DBService } from "@/services/dbService";
 
 export class UserController {
@@ -127,7 +130,6 @@ export class UserController {
       is_admin BOOLEAN,
       rol TEXT
       image_profile TEXT,
-      token TEXT,
       id_sync TEXT
     );`;
     await this.createTable({ query });
@@ -145,7 +147,41 @@ export class UserController {
     }
   }
 
-  async upateUserOnDatabase(params: { user: User2 }): Promise<void> {
-    this.userService.updateLocalUser({ user: params.user });
+  async upateUserOnDatabase(params: { user: User }): Promise<void> {
+    await this.userService.updateLocalUser({ user: params.user });
+  }
+
+  async getLocalUser(): Promise<User> {
+    return await this.userService.getLocalUser();
+  }
+
+  async insertLocalUser(params: { user: User }): Promise<void> {
+    await this.userService.insertLocalUser({ user: params.user });
+  }
+
+  async updateUserInDB(params: {
+    dataType: userGrapQLTypeData;
+  }): Promise<void> {
+    const { dataType } = params;
+    let queryName = "" as GraphQLQueryNameUser;
+    let fragmentName = "" as GraphQLFragmentNameUser;
+
+    if (dataType == "menu") {
+      queryName = "USER_MENU";
+      fragmentName = "UserMenu";
+    }
+
+    try {
+      const userToken = await this.getUserToken();
+      if (!userToken) throw new Error("Token not found");
+      await this.loadUser({ queryName, fragmentName });
+      const userLogged = this.getUserLogged();
+      const user = await this.getLocalUser();
+      userLogged.token = userToken;
+      if (!user) await this.insertLocalUser({ user: userLogged });
+      else await this.upateUserOnDatabase({ user: userLogged });
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
