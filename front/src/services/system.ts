@@ -11,6 +11,7 @@ import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 
 import { EventController } from "@/controllers/eventController";
 import { ScheduleController } from "@/controllers/scheduleController";
+import { DBService } from "./dbService";
 
 interface WakaTimeDuration {
   data: {
@@ -28,6 +29,7 @@ interface WakaTimeDuration {
 export class SystemService {
   eventController = new EventController();
   scheduleController = new ScheduleController();
+  dbService = new DBService();
 
   async getTheme(): Promise<Theme> {
     return await storage.get("theme");

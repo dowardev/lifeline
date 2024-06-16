@@ -129,7 +129,7 @@ export class EventController {
 
     for (const event of eventsServer) {
       const result = eventsStored?.filter(
-        (eventF) => eventF.idSync == event.idSync
+        (eventF) => eventF.idSync == event.idSync,
       );
       if (result?.length == 0 || result == undefined) {
         event.reminders.start = new Date(event.reminders.start);
@@ -150,8 +150,8 @@ export class EventController {
     const sharedIds = lodash.filter(serverEvents, (event) =>
       lodash.some(
         localEvents,
-        (otherEvent) => event.idSync === otherEvent.idSync
-      )
+        (otherEvent) => event.idSync === otherEvent.idSync,
+      ),
     );
 
     const newArray: Event[] = [];
@@ -159,7 +159,7 @@ export class EventController {
     lodash.forEach(sharedIds, (event) => {
       const found = lodash.find(
         localEvents,
-        (element) => element.idSync == event.idSync
+        (element) => element.idSync == event.idSync,
       );
 
       if (found) {
@@ -177,11 +177,11 @@ export class EventController {
             if (
               !lodash.isEqual(
                 element.reminders.start.getHours(),
-                event.reminders.start.getHours()
+                event.reminders.start.getHours(),
               ) ||
               !lodash.isEqual(
                 element.reminders.start.getMinutes(),
-                event.reminders.start.getMinutes()
+                event.reminders.start.getMinutes(),
               )
             ) {
               differences++;
@@ -189,11 +189,11 @@ export class EventController {
             if (
               !lodash.isEqual(
                 element.reminders.end.getHours(),
-                event.reminders.end.getHours()
+                event.reminders.end.getHours(),
               ) ||
               !lodash.isEqual(
                 element.reminders.end.getMinutes(),
-                event.reminders.end.getMinutes()
+                event.reminders.end.getMinutes(),
               )
             ) {
               differences++;
@@ -201,7 +201,7 @@ export class EventController {
             if (
               !lodash.isEqual(
                 element.reminders.notifications,
-                event.reminders.notifications
+                event.reminders.notifications,
               )
             ) {
               differences++;
@@ -246,7 +246,7 @@ export class EventController {
 
     for (let i = 0; i < eventsStored.length; i++) {
       const encontrado = eventsServer.find(
-        (obj) => obj.idSync === eventsStored[i].idSync
+        (obj) => obj.idSync === eventsStored[i].idSync,
       );
       if (!encontrado) {
         deleted.push(...eventsStored.splice(i, 1));
@@ -287,14 +287,14 @@ export class EventController {
     const events = await this.eventService.getEventsLocal();
 
     const result = events.filter(
-      (event) => event.idSync != null && event.syncStatus == false
+      (event) => event.idSync != null && event.syncStatus == false,
     );
 
     try {
       await Promise.all(
         result.map(async (event) => {
           await this.eventService.updateEventServer({ event });
-        })
+        }),
       );
     } catch (error: any) {
       throw new Error(error);
@@ -323,7 +323,7 @@ export class EventController {
     const eventsServerDeleted = localEvents.filter((event) => {
       if (event.idSync == null) return;
       const found = serverEvents.find(
-        (element) => element.idSync == event.idSync
+        (element) => element.idSync == event.idSync,
       );
       if (!found) {
         return event;
@@ -334,7 +334,7 @@ export class EventController {
 
     problems.forEach((event) => {
       const found = serverEvents.find(
-        (element) => element.idSync == event.idSync
+        (element) => element.idSync == event.idSync,
       );
       if (found) {
         found.id = event.id;
@@ -345,7 +345,7 @@ export class EventController {
     const newServerEvents = lodash.filter(serverEvents, (event) => {
       return !lodash.some(
         localEvents,
-        (otherEvent) => event.idSync === otherEvent.idSync
+        (otherEvent) => event.idSync === otherEvent.idSync,
       );
     });
 
@@ -440,10 +440,10 @@ export class EventController {
     const mode = await this.getViewCalendarStored();
     const dates = {
       start: new Date(
-        startOfMonth(this.calendarController.getCurrentDate({ mode }))
+        startOfMonth(this.calendarController.getCurrentDate({ mode })),
       ),
       end: new Date(
-        endOfMonth(this.calendarController.getCurrentDate({ mode }))
+        endOfMonth(this.calendarController.getCurrentDate({ mode })),
       ),
     };
 
@@ -666,14 +666,14 @@ export class EventController {
         await this.eventService.deleteEventServer({
           id: event.idSync as number,
         });
-      })
+      }),
     );
   }
 
   async getCurrentDateStored(params: { mode: ViewCalendar }): Promise<Date> {
     const { mode } = params;
     let dates = JSON.parse(
-      await storage.get("calendarViewDates")
+      await storage.get("calendarViewDates"),
     ) as CalendarViewDates;
 
     if (!dates) {
@@ -690,7 +690,7 @@ export class EventController {
 
   async getCurrentDatesStored(): Promise<CalendarViewDates> {
     let dates = JSON.parse(
-      await storage.get("calendarViewDates")
+      await storage.get("calendarViewDates"),
     ) as CalendarViewDates;
 
     if (!dates) {
@@ -804,7 +804,7 @@ export class EventController {
     const { date } = params;
     const events = this.getEvents();
     const count = events.filter(
-      (event) => event.reminders.start.getDate() == date.getDate()
+      (event) => event.reminders.start.getDate() == date.getDate(),
     ).length;
     return count;
   }

@@ -63,7 +63,7 @@ onMounted(async () => {
     await loadUserProps();
     status = true;
   } catch (error: any) {
-    console.error(error);
+    console.error("Opps", error.error);
   }
   // await useDocument().loadUserDocuments();
 
@@ -96,8 +96,8 @@ async function loadUserProps(): Promise<void> {
 
   try {
     await userController.updateUserInDB({ dataType: "menu" });
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
+    throw new Error(error);
   }
 }
 

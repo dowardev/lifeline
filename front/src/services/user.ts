@@ -18,10 +18,12 @@ import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { DBService } from "@/services/dbService";
 import { GrapQLService } from "./graphql";
 import { GraphQLFragmentNameUser, GraphQLQueryNameUser } from "@/utils/types";
+import { SystemService } from "./system";
 
 export class UserService {
   dbService = new DBService();
   grapQLService = new GrapQLService();
+  systemService = new SystemService();
 
   async setUserToken(params: { token: string }): Promise<void> {
     const { token } = params;
@@ -49,9 +51,10 @@ export class UserService {
     }
   }
 
-  async getUserToken(): Promise<string> {
+  // TODO: remove
+  async getAuthUserToken(): Promise<string> {
     try {
-      return await storage.get("authToken");
+      return await this.systemService.getToken({ name: "auth_token" });
     } catch (error: any) {
       throw new Error(error);
     }
@@ -125,8 +128,9 @@ export class UserService {
     });
   }
 
+  // TODO: create new interface for user database
   async updateLocalUser(params: { user: User }): Promise<void> {
-    const { name, user: userName, email, token, idSync } = params.user;
+    const { name, user: userName, email, idSync } = params.user;
 
     try {
       const values = [];
@@ -152,11 +156,6 @@ export class UserService {
       //   fields.push("image_profile");
       // }
 
-      if (token != undefined) {
-        values.push(token);
-        fields.push("token");
-      }
-
       if (idSync != undefined) {
         values.push(idSync);
         fields.push("id_sync");
@@ -178,8 +177,7 @@ export class UserService {
         values: values,
       });
       const queryss = `SELECT * FROM Users `;
-      const result = (await this.dbService.executeQuery({ query: queryss }))
-        .values![0] as any;
+      (await this.dbService.executeQuery({ query: queryss })).values![0] as any;
     } catch (error: any) {
       throw new Error(error);
     }
@@ -238,6 +236,11 @@ export class UserService {
         query: query,
         values: values,
       });
+
+      // const queryss = `SELECT * FROM Users `;
+      // const result = (await this.dbService.executeQuery({ query: queryss }))
+      //   .values![0] as any;
+      // console.log(result)
     } catch (error: any) {
       throw new Error(error);
     }

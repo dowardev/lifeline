@@ -20,13 +20,19 @@ import {
   userGrapQLTypeData,
 } from "@/utils/types";
 import { DBService } from "@/services/dbService";
+import { SystemController } from "./systemController";
+import { TokenService } from "@/services/tokenService";
+import { SystemService } from "@/services/system";
 
 export class UserController {
+  private dbService = new DBService();
   userStore = useUserStore();
   refs = storeToRefs(this.userStore);
   userService = new UserService();
   sessionService = new SessionService();
-  private dbService = new DBService();
+  systemController = new SystemController();
+  tokenService = new TokenService();
+  systemService = new SystemService();
 
   async loadUser(params: {
     queryName: GraphQLQueryNameUser;
@@ -83,7 +89,11 @@ export class UserController {
   async storeUserToken(params: SetUserToken): Promise<void> {
     try {
       const { token } = params;
-      await storage.set("authToken", token);
+      await this.tokenService.setToken({
+        name: "auth_token",
+        value: token,
+        userId: "1",
+      });
     } catch (error: any) {
       throw new Error(error);
     }
@@ -108,9 +118,9 @@ export class UserController {
     return this.userStore.isLogged;
   }
 
-  async getUserToken(): Promise<string | null> {
+  async getAuthUserToken(): Promise<string | null> {
     try {
-      return this.userService.getUserToken() ?? null;
+      return (await this.tokenService.getToken({ name: "auth_token" })) ?? null;
     } catch (error: any) {
       throw new Error(error);
     }
@@ -172,8 +182,8 @@ export class UserController {
     }
 
     try {
-      const userToken = await this.getUserToken();
-      if (!userToken) throw new Error("Token not found");
+      const userToken = await this.getAuthUserToken();
+      if (userToken == null) throw new Error("Token not found");
       await this.loadUser({ queryName, fragmentName });
       const userLogged = this.getUserLogged();
       const user = await this.getLocalUser();

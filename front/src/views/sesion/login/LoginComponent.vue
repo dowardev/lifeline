@@ -74,7 +74,7 @@
                   @ion-input="form.password = $event.target.value as string"
                   @ion-focus="
                     ($refs.inputPassword as any).$el.classList.add(
-                      'ion-touched'
+                      'ion-touched',
                     );
                     v$.form.password.$touch();
                   "
@@ -206,6 +206,7 @@ import keyImageGruvbox from "@/assets/otros/key-gruvbox.png";
 import keyImageCherry from "@/assets/otros/key-cherry.png";
 import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
 import loginImageCherry from "@/assets/otros/login-cherry.png";
+import { User } from "@/utils/interfaces";
 
 const router = useRouter();
 
@@ -288,6 +289,7 @@ async function login(): Promise<void> {
     });
 
     const token = "Bearer " + response.auth.access_token;
+    await userController.insertLocalUser({ user: { idSync: "0" } });
     await userController.storeUserToken({ token });
 
     spinners.buttonLogin = false;
@@ -306,7 +308,7 @@ async function login(): Promise<void> {
     if (e.message == "Disabled user") {
       presentToast(
         "Cuenta de usuario deshabilitada, para mas información contacte a soporte.",
-        "danger"
+        "danger",
       );
       return;
     }

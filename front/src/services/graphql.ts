@@ -11,9 +11,12 @@ import gql from "graphql-tag";
 
 // queries
 import { USER_MENU } from "@/utils/graphql";
+import { TokenService } from "./tokenService";
 
 export class GrapQLService {
   uri = "";
+  tokenService = new TokenService();
+
   constructor() {
     const mode = process.env.NODE_ENV;
     if (mode == "development") {
@@ -81,24 +84,28 @@ export class GrapQLService {
   }): Promise<any> {
     const { query, options } = params;
 
-    const cache = new InMemoryCache();
-    const token = await storage.get("authToken");
-    if (!token) throw new Error("No token found");
+    try {
+      const cache = new InMemoryCache();
+      const token = await this.tokenService.getToken({ name: "auth_token" });
+      if (!token) throw new Error("No token found");
 
-    const apolloClient = new ApolloClient({
-      cache,
-      uri: this.uri,
-      headers: {
-        Authorization: await storage.get("authToken"),
-      },
-    });
-    const { refetch, result } = provideApolloClient(apolloClient)(() =>
-      useQuery(query, null, {
-        fetchPolicy: "cache-first",
-      }),
-    );
-    if (options.refetch) await refetch();
-    return result;
+      const apolloClient = new ApolloClient({
+        cache,
+        uri: this.uri,
+        headers: {
+          Authorization: token,
+        },
+      });
+      const { refetch, result } = provideApolloClient(apolloClient)(() =>
+        useQuery(query, null, {
+          fetchPolicy: "cache-first",
+        }),
+      );
+      if (options.refetch) await refetch();
+      return result;
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 
   async executeGrapMutation(params: { query: any; input?: any }): Promise<any> {

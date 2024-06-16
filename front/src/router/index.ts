@@ -67,9 +67,9 @@ const routes: Array<RouteRecordRaw> = [
     path: "/home",
     name: "home",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
+    // beforeEnter: async (to, from) => {
+    //   return await userLoggedGuard();
+    // },
   },
   {
     path: "/calendar",
