@@ -18,7 +18,7 @@
             <ion-col size="12">
               <!-- logged -->
               <ion-item
-                v-if="verifyUserLogged() == true"
+                v-if="userController.getUserLogged().user "
                 lines="none"
                 class="transparent"
               >
@@ -44,7 +44,7 @@
 
               <!-- no logged -->
               <ion-item
-                v-if="verifyUserLogged() == false"
+                v-if="!userController.getUserLogged().user "
                 class="transparent"
                 lines="none"
               >
@@ -356,8 +356,8 @@ const loadUser = async (): Promise<void> => {
 
   try {
     await userController.loadUser({ queryName, fragmentName });
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
+    console.error(error.message);
   }
 };
 

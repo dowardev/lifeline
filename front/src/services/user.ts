@@ -17,7 +17,11 @@ import { USER_MENU } from "@/utils/graphql";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { DBService } from "@/services/dbService";
 import { GrapQLService } from "./graphql";
-import { GraphQLFragmentNameUser, GraphQLQueryNameUser } from "@/utils/types";
+import {
+  GraphQLFragmentNameUser,
+  GraphQLQueryNameUser,
+  UserDBType,
+} from "@/utils/types";
 import { SystemService } from "./system";
 
 export class UserService {
@@ -93,7 +97,7 @@ export class UserService {
       }
       return {} as User;
     } catch (error: any) {
-      throw new Error(error);
+      throw error;
     }
   }
 
@@ -183,7 +187,7 @@ export class UserService {
     }
   }
 
-  async insertLocalUser(params: { user: User2 }): Promise<void> {
+  async insertLocalUser(params: { user: UserDBType }): Promise<void> {
     const { name, user: userName, email, token, idSync } = params.user;
 
     try {
@@ -246,37 +250,14 @@ export class UserService {
     }
   }
 
-  async getLocalUser(): Promise<User2> {
-    const query = `SELECT * FROM Users `;
+  async getLocalUser(): Promise<UserDBType> {
+    const query = `SELECT * FROM Users inner join Tokens on user_id=1`;
     try {
       const result = (await this.dbService.executeQuery({ query }))
         .values![0] as any;
-      return result;
-      // const user = {
-      //   id: result.id,
-      //   name: result.name,
-      //   guests: JSON.parse(result.guests as any),
-      //   reminders: {
-      //     start: new Date(result.start),
-      //     end: new Date(result.end),
-      //     notifications: JSON.parse(result.notifications),
-      //     repeat: {
-      //       frecuency: result.frecuency,
-      //       type: result.type,
-      //       daysWeek: JSON.parse(result.daysWeek),
-      //     },
-      //     idReminders: JSON.parse(result.id_reminders ?? []),
-      //   },
-      //   timezone: result.timezone,
-      //   description: result.description,
-      //   availability: result.availability,
-      //   idSync: result.idSync,
-      //   syncStatus: result.syncStatus == 0 ? false : true,
-      //   status: result.status,
-      // };
-      // return user;
+      return result ?? null;
     } catch (error: any) {
-      throw new Error(error);
+      throw Error(error);
     }
   }
 }

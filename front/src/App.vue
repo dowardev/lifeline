@@ -58,19 +58,20 @@ onMounted(async () => {
   systemService.setTheme({ theme: theme, currentTheme: theme });
   await systemController.updateThemeSelected({ theme });
 
-  let status = false;
-  try {
-    await loadUserProps();
-    status = true;
-  } catch (error: any) {
-    console.error("Opps", error.error);
-  }
-  // await useDocument().loadUserDocuments();
+  const user = await userController.getLocalUser();
+  if (!user) {
+    try {
+      // await loadUserProps();
+    } catch (error: any) {
+      console.error(error.message);
+    }
+    // await useDocument().loadUserDocuments();
 
-  try {
-    if (status) await eventController.syncAction({ message: { show: true } });
-  } catch (error: any) {
-    console.error(error);
+    try {
+      await eventController.syncAction({ message: { show: true } });
+    } catch (error: any) {
+      console.error(error.message);
+    }
   }
 
   try {

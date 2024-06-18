@@ -11,6 +11,7 @@ import { DBService } from "@/services/dbService";
 import { SystemService } from "@/services/system";
 import { cloneDeep } from "lodash";
 import { useEventsStore } from "@/store/eventsStore";
+import { UserService } from "@/services/user";
 
 export class SystemController {
   // store
@@ -19,6 +20,7 @@ export class SystemController {
   // services
   dbService = new DBService();
   systemService = new SystemService();
+  userServuce = new UserService();
 
   async loadThemeSelected() {
     const theme =

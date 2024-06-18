@@ -581,9 +581,7 @@ export class EventService {
       });
       return response;
     } catch (error: any) {
-      if (error.message != "Unauthorized")
-        throw errorBuilder({ message: error.message, typeError: "authError" });
-      throw errorBuilder({ message: error.message });
+      if (error.message != "Unauthorized") throw error;
     }
   }
 

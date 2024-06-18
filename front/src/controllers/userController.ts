@@ -17,6 +17,7 @@ import { storage } from "@/main";
 import {
   GraphQLFragmentNameUser,
   GraphQLQueryNameUser,
+  UserDBType,
   userGrapQLTypeData,
 } from "@/utils/types";
 import { DBService } from "@/services/dbService";
@@ -39,17 +40,25 @@ export class UserController {
     fragmentName: GraphQLFragmentNameUser;
   }): Promise<void> {
     const { queryName, fragmentName } = params;
+    let user = {} as User;
+
     try {
-      const user = await this.userService.getUser({
+      user = await this.userService.getLocalUser();
+    } catch (error: any) {
+      throw error;
+    }
+
+    try {
+      user = await this.userService.getUser({
         refetch: true,
         queryName,
         fragmentName,
       });
-
-      this.updateUserProps({ user });
     } catch (error: any) {
-      if (error.message != "Unauthorized") throw new Error(error);
+      if (error.message != "Unauthorized") throw error;
     }
+
+    this.updateUserProps({ user });
   }
 
   updateUserProps(params: { user: User }): void {
@@ -114,6 +123,7 @@ export class UserController {
     }
   }
 
+  // TODO: remove
   verifyUserLogged(): boolean {
     return this.userStore.isLogged;
   }
@@ -161,6 +171,7 @@ export class UserController {
     await this.userService.updateLocalUser({ user: params.user });
   }
 
+  // TODO: remove
   async getLocalUser(): Promise<User> {
     return await this.userService.getLocalUser();
   }

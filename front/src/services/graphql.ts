@@ -104,7 +104,7 @@ export class GrapQLService {
       if (options.refetch) await refetch();
       return result;
     } catch (error: any) {
-      throw new Error(error);
+      throw error;
     }
   }
 
@@ -112,11 +112,12 @@ export class GrapQLService {
     const { query, input } = params;
 
     const cache = new InMemoryCache();
+    const token = await this.tokenService.getToken({ name: "auth_token" });
     const apolloClient = new ApolloClient({
       cache,
       uri: this.uri,
       headers: {
-        Authorization: await storage.get("authToken"),
+        Authorization: token,
       },
     });
 

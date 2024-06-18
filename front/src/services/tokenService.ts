@@ -8,7 +8,8 @@ export class TokenService {
     const query = `SELECT token FROM Tokens WHERE user_id=1 AND name='${name}'`;
     const result = (await this.dbService.executeQuery({ query: query }))
       .values![0] as any;
-    return result.token;
+    if (result) return result.token;
+    else return null;
   }
 
   async setToken(params: {

@@ -45,3 +45,8 @@ export type GraphQLQueryNameUser =
 export type GraphQLFragmentNameUser = "UserMenu";
 
 export type userGrapQLTypeData = "menu";
+
+export type UserDBType = Pick<
+  User,
+  "name" | "user" | "email" | "token" | "idSync"
+>;

@@ -116,10 +116,14 @@ export class EventController {
   }
 
   async getEventsServer(): Promise<Array<Event>> {
-    const events = await this.eventService.getEvents({
-      graphql: { name: USER_EVENTS, fragment: "Events", refetch: true },
-    });
-    return events ?? ([] as Event[]);
+    try {
+      const events = await this.eventService.getEvents({
+        graphql: { name: USER_EVENTS, fragment: "Events", refetch: true },
+      });
+      return events ?? ([] as Event[]);
+    } catch (error: any) {
+      throw error;
+    }
   }
 
   async storeEventsServer(): Promise<void> {
@@ -315,7 +319,9 @@ export class EventController {
   }
 
   async syncEventsFromServer(): Promise<void> {
-    const serverEvents = (await this.getEventsServer()) ?? [];
+    let serverEvents: Event[] = [];
+
+    serverEvents = (await this.getEventsServer()) ?? [];
     const localEvents = await this.getStoredEvents({ filterType: "none" });
     const problems = await this.getConflictingLocalEvents({
       events: serverEvents,
@@ -424,7 +430,7 @@ export class EventController {
       await this.syncEventsFromServer();
       await this.deleteInativeEventOnServer();
     } catch (error: any) {
-      throw new Error(error);
+      throw error;
     }
   }
 
@@ -464,7 +470,7 @@ export class EventController {
         await systemController.openToast({
           message: "Problema al sincronizar",
         });
-      throw new Error(error);
+      throw error;
     }
   }
 
