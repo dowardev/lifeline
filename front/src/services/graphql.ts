@@ -86,7 +86,10 @@ export class GrapQLService {
 
     try {
       const cache = new InMemoryCache();
-      const token = await this.tokenService.getToken({ name: "auth_token" });
+      const token = await this.tokenService.getToken({
+        name: "auth_token",
+        userId: "1",
+      });
       if (!token) throw new Error("No token found");
 
       const apolloClient = new ApolloClient({
@@ -112,7 +115,10 @@ export class GrapQLService {
     const { query, input } = params;
 
     const cache = new InMemoryCache();
-    const token = await this.tokenService.getToken({ name: "auth_token" });
+    const token = await this.tokenService.getToken({
+      name: "auth_token",
+      userId: "1",
+    });
     const apolloClient = new ApolloClient({
       cache,
       uri: this.uri,

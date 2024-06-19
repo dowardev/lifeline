@@ -54,7 +54,7 @@ onMounted(async () => {
   systemService.setTheme({ theme: theme, currentTheme: theme });
   await systemController.updateThemeSelected({ theme });
 
-  const user = await userController.getLocalUser();
+  const user = userController.getUserLogged().user;
   if (!user) {
     try {
     } catch (error: any) {

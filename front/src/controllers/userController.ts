@@ -123,11 +123,6 @@ export class UserController {
     }
   }
 
-  // TODO: remove
-  verifyUserLogged(): boolean {
-    return this.userStore.isLogged;
-  }
-
   async getAuthUserToken(): Promise<string | null> {
     try {
       return (await this.tokenService.getToken({ name: "auth_token" })) ?? null;
@@ -169,11 +164,6 @@ export class UserController {
 
   async upateUserOnDatabase(params: { user: User }): Promise<void> {
     await this.userService.updateLocalUser({ user: params.user });
-  }
-
-  // TODO: remove
-  async getLocalUser(): Promise<User> {
-    return await this.userService.getLocalUser();
   }
 
   async insertLocalUser(params: { user: User }): Promise<void> {

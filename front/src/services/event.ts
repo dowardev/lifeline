@@ -708,17 +708,6 @@ export class EventService {
     return Math.random().toString(36).slice(2, 18);
   }
 
-  // TODO: remove
-  formatEvent(params: { event: Event }): {
-    event: Event;
-  } {
-    const { event } = params;
-    // event = toRaw(event);
-    event.reminders.start = new Date(event.reminders.start);
-    event.reminders.end = new Date(event.reminders.end);
-    return { event };
-  }
-
   async getEventsLocalByDate(params: {
     dates: { start: Date; end: Date };
   }): Promise<Array<Event>> {

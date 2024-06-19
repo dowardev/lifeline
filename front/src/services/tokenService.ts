@@ -3,9 +3,9 @@ import { DBService } from "@/services/dbService";
 export class TokenService {
   dbService = new DBService();
 
-  async getToken(params: { name: string }): Promise<any> {
-    const { name } = params;
-    const query = `SELECT token FROM Tokens WHERE user_id=1 AND name='${name}'`;
+  async getToken(params: { name: string; userId: string }): Promise<any> {
+    const { name, userId } = params;
+    const query = `SELECT token FROM Tokens WHERE user_id=${userId} AND name='${name}'`;
     const result = (await this.dbService.executeQuery({ query: query }))
       .values![0] as any;
     if (result) return result.token;
