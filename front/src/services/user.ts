@@ -55,15 +55,6 @@ export class UserService {
     }
   }
 
-  // TODO: remove
-  async getAuthUserToken(): Promise<string> {
-    try {
-      return await this.systemService.getToken({ name: "auth_token" });
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
   async getUser(params: {
     refetch: boolean;
     queryName: GraphQLQueryNameUser;
