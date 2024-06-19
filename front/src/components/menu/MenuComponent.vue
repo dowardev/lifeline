@@ -18,7 +18,7 @@
             <ion-col size="12">
               <!-- logged -->
               <ion-item
-                v-if="userController.getUserLogged().user "
+                v-if="userController.getUserLogged().user"
                 lines="none"
                 class="transparent"
               >
@@ -44,7 +44,7 @@
 
               <!-- no logged -->
               <ion-item
-                v-if="!userController.getUserLogged().user "
+                v-if="!userController.getUserLogged().user"
                 class="transparent"
                 lines="none"
               >
@@ -345,12 +345,12 @@ onMounted(async () => {
 });
 
 // functions
-const openRoute = (route: string) => {
+function openRoute(route: string): void {
   menuController.close();
   router.push(route);
-};
+}
 
-const loadUser = async (): Promise<void> => {
+async function loadUser(): Promise<void> {
   const queryName = "USER_MENU";
   const fragmentName = "UserMenu";
 
@@ -359,9 +359,9 @@ const loadUser = async (): Promise<void> => {
   } catch (error: any) {
     console.error(error.message);
   }
-};
+}
 
-const openModalDesktop = async () => {
+async function openModalDesktop(): Promise<void> {
   const modal = await modalController.create({
     component: ThemeSelectorComponent,
     cssClass: "my-custom-class",
@@ -370,21 +370,21 @@ const openModalDesktop = async () => {
     },
   });
   return modal.present();
-};
+}
 
-const openModalMobile = async () => {
+async function openModalMobile(): Promise<void> {
   const modal = await modalController.create({
     component: ThemeSelectorComponent,
     initialBreakpoint: 0.5,
     breakpoints: [0, 0.5, 1],
   });
   return modal.present();
-};
+}
 
-const changeLanguage = (language: string) => {
+function changeLanguage(language: string): void {
   // $i18n.locale = language;
   setLanguage(language);
-};
+}
 
 async function logout(): Promise<void> {
   spinners.buttonLogout = true;

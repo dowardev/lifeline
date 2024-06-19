@@ -19,7 +19,6 @@
 import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
 import { onMounted } from "vue";
 import { ref } from "vue";
-import { endOfMonth, startOfMonth } from "date-fns";
 
 // components
 import MenuComponent from "@/components/menu/MenuComponent.vue";
@@ -28,18 +27,15 @@ import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
 import { UserController } from "@/controllers/userController";
-import { CalendarController } from "./controllers/calendarController";
 const systemController = new SystemController();
 const eventController = new EventController();
 const userController = new UserController();
 
 // services
 import { SystemService } from "./services/system";
-import { UserService } from "./services/user";
 import { DBService } from "./services/dbService";
 
 const systemService = new SystemService();
-const userService = new UserService();
 
 const componentLoaded = ref(false);
 
@@ -61,7 +57,6 @@ onMounted(async () => {
   const user = await userController.getLocalUser();
   if (!user) {
     try {
-      // await loadUserProps();
     } catch (error: any) {
       console.error(error.message);
     }
@@ -83,25 +78,6 @@ onMounted(async () => {
 });
 
 // functions
-async function loadUserProps(): Promise<void> {
-  // let userToken = null;
-  // try {
-  //   userToken = await userController.getUserToken();
-  //   if (!userToken) throw new Error("Token not found");
-  //   userController.updateUserLoggedProp({ isLogged: true });
-  //   userController.updateUserTokenProp(userToken);
-  // } catch (error: any) {
-  //   throw new Error(error);
-  // }
-  //
-
-  try {
-    await userController.updateUserInDB({ dataType: "menu" });
-  } catch (error: any) {
-    throw new Error(error);
-  }
-}
-
 async function deleteData(): Promise<void> {
   await systemController.deleteData({
     events: true,
