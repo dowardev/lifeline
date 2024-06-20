@@ -4,6 +4,7 @@ import { RouteRecordRaw } from "vue-router";
 import MainPage from "@/views/main/MainPage.vue";
 
 import { UserController } from "@/controllers/userController";
+import { User } from "@/utils/interfaces";
 
 async function loadUser(): Promise<void> {
   const userController = new UserController();
@@ -67,51 +68,31 @@ const routes: Array<RouteRecordRaw> = [
     path: "/home",
     name: "home",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
   },
   {
     path: "/calendar",
     name: "CalendarPage",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
   },
   {
     path: "/signup",
     name: "SignUp",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userSignOutGuard();
-    },
   },
   {
     path: "/login",
     name: "Login",
     component: MainPage,
-    beforeEnter: (to, from) => {
-      return userSignOutGuard().then((response) => {
-        return response;
-      });
-    },
   },
   {
     path: "/prueba",
     name: "PruebaPage",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
   },
   {
     path: "/document/:url",
     name: "DocumentPage",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
   },
   {
     path: "/policies",
@@ -122,25 +103,16 @@ const routes: Array<RouteRecordRaw> = [
     path: "/documents",
     name: "DocumentsPage",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
   },
   {
     path: "/tasks",
     name: "TasksPage",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
   },
   {
     path: "/integrations",
     name: "IntegrationsPage",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userLoggedGuard();
-    },
   },
   {
     path: "/about",
@@ -151,15 +123,55 @@ const routes: Array<RouteRecordRaw> = [
     path: "/landing",
     name: "LandingPage",
     component: MainPage,
-    beforeEnter: async (to, from) => {
-      return await userSignOutGuard();
-    },
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+});
+
+router.beforeEach(async (to, from, next) => {
+  const userController = new UserController();
+  const queryName = "USER_MENU";
+  const fragmentName = "UserMenu";
+  let user = {} as User;
+  const path = to.path;
+
+  const authorizedRoutes = [
+    "/home",
+    "/calendar",
+    "/document/:url",
+    "/documents",
+    "/tasks",
+    "/integrations",
+  ];
+  const unauthorizedRoutes = ["/signup", "/login", "/landing"];
+  const publicRoutes = ["/policies", "/about"];
+
+  try {
+    await userController.loadUser({ queryName, fragmentName });
+    user = userController.refs.user.value;
+  } catch (error: any) {
+    if (
+      error.message !=
+        "Error: Query failed: SelectSQL: queryAll: no such table: Users" &&
+      error.message != "No token found"
+    )
+      return next("/error"); // Redirect to error page or show error message
+  }
+
+  if (publicRoutes.includes(path)) return next();
+
+  if (Object.keys(user).length > 0) {
+    if (authorizedRoutes.includes(path)) return next();
+    if (unauthorizedRoutes.includes(path)) return next("/home");
+  }
+
+  if (Object.keys(user).length <= 0) {
+    if (unauthorizedRoutes.includes(path)) return next();
+    return next("/landing");
+  }
 });
 
 export default router;
