@@ -68,17 +68,13 @@ export class UserController {
 
   async logout(): Promise<void> {
     try {
-      this.updateUserLoggedProp({ isLogged: false });
-      await storage.remove("authToken");
-      await this.sessionService.logout();
+      await this.sessionService.logoutOnServer();
+      await this.systemController.deleteUserdata({
+        userId: "1",
+      });
     } catch (e: any) {
-      throw new Error(e);
+      throw e;
     }
-  }
-
-  updateUserLoggedProp(params: { isLogged: boolean }): void {
-    const { isLogged } = params;
-    this.userStore.updateUserLoggedProp({ isLogged });
   }
 
   updateUserTokenProp(token: string): void {

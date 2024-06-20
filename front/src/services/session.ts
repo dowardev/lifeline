@@ -65,7 +65,13 @@ export class SessionService {
     }
   }
 
-  async logout(): Promise<void> {
+  /**
+   * Logs out a user on the server.
+   * This method builds a GraphQL mutation for user logout and executes it.
+   * If the server responds with an "Unauthorized" error, it is suppressed.
+   * @throws Will throw an error if the logout fails for reasons other than "Unauthorized".
+   */
+  async logoutOnServer(): Promise<void> {
     try {
       const query = this.grapQLService.graphqlMutationBuilder({
         name: USER_LOGOUT,
@@ -77,9 +83,7 @@ export class SessionService {
         query,
       });
     } catch (error: any) {
-      if (error.message != "Unauthorized")
-        throw errorBuilder({ message: error.message, typeError: "authError" });
-      throw errorBuilder({ message: error.message });
+      if (error.message != "Unauthorized") throw error;
     }
   }
 }

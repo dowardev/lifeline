@@ -79,7 +79,7 @@ onMounted(async () => {
 
 // functions
 async function deleteData(): Promise<void> {
-  await systemController.deleteData({
+  await systemController.deleteAllDataSystem({
     events: true,
     schedule: true,
     reminders: true,

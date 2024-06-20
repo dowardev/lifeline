@@ -251,4 +251,10 @@ export class UserService {
       throw Error(error);
     }
   }
+
+  async deleteUser(paramas: { userId: string }): Promise<void> {
+    const { userId } = paramas;
+    const query = `DELETE FROM Users WHERE id=${userId}`;
+    await this.dbService.executeQuery({ query });
+  }
 }

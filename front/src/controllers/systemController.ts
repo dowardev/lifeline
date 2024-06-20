@@ -12,6 +12,8 @@ import { SystemService } from "@/services/system";
 import { cloneDeep } from "lodash";
 import { useEventsStore } from "@/store/eventsStore";
 import { UserService } from "@/services/user";
+import { EventService } from "@/services/event";
+import { TokenService } from "@/services/tokenService";
 
 export class SystemController {
   // store
@@ -20,7 +22,9 @@ export class SystemController {
   // services
   dbService = new DBService();
   systemService = new SystemService();
-  userServuce = new UserService();
+  userService = new UserService();
+  eventService = new EventService();
+  tokensService = new TokenService();
 
   async loadThemeSelected() {
     const theme =
@@ -185,7 +189,7 @@ export class SystemController {
     return await this.systemService.openToast({ color, message });
   }
 
-  async deleteData(params: {
+  async deleteAllDataSystem(params: {
     events: boolean;
     schedule: boolean;
     reminders: boolean;
@@ -193,6 +197,13 @@ export class SystemController {
     const { events, schedule, reminders } = params;
     const db = await this.dbService.dbConnection();
     await this.systemService.deleteData({ events, schedule, reminders, db });
+  }
+
+  async deleteUserdata(params: { userId: string }): Promise<void> {
+    const { userId } = params;
+    await this.eventService.deleteUserEvents({ userId });
+    await this.tokensService.removeToken({ name: "authToken", userId });
+    await this.userService.deleteUser({ userId });
   }
 
   async createTableTokens(): Promise<void> {

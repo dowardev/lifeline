@@ -8,7 +8,7 @@ export class ScheduleService {
 
     await storage.set(
       "schedule",
-      JSON.parse(JSON.stringify(Object.assign({}, schedule)))
+      JSON.parse(JSON.stringify(Object.assign({}, schedule))),
     );
   }
 

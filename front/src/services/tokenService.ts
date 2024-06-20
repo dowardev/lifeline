@@ -41,4 +41,10 @@ export class TokenService {
     (await this.dbService.executeQuery({ query: "SELECT * FROM Tokens" }))
       .values![0] as any;
   }
+
+  async removeToken(params: { name: string; userId: string }): Promise<void> {
+    const { name, userId } = params;
+    const query = `DELETE FROM Tokens WHERE name='${name}' AND user_id=${userId}`;
+    await this.dbService.executeQuery({ query: query });
+  }
 }

@@ -644,6 +644,7 @@ export class EventService {
     }
   }
 
+  //TODO: remove
   async removeAllLocalEvents(): Promise<void> {
     await storage.remove("events");
   }
@@ -748,6 +749,33 @@ export class EventService {
       return events;
     } catch (error: any) {
       throw new Error(error);
+    }
+  }
+
+  async deleteUserEvents(params: { userId: string }): Promise<void> {
+    const { userId } = params;
+
+    // const query = `Delete FROM Events WHERE userId='${userId}'`;
+    const query = `Delete FROM Events`;
+    try {
+      const db = await dbService.dbConnection();
+      if ((await db.isDBOpen()).result == false) await db.open();
+      await db.query(query);
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
+  async deleteUserReminders(params: { userId: string }): Promise<void> {
+    const { userId } = params;
+
+    const query = `Delete FROM Reminders WHERE userId='${userId}'`;
+    try {
+      const db = await dbService.dbConnection();
+      if ((await db.isDBOpen()).result == false) await db.open();
+      await db.query(query);
+    } catch (error: any) {
+      throw error;
     }
   }
 }
