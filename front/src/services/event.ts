@@ -36,6 +36,9 @@ const dbService = new DBService();
 const grapService = new GrapQLService();
 
 export class EventService {
+  // services
+  dbService = new DBService();
+
   async createEvent(params: { event: Event }): Promise<{ id: number }> {
     const { event } = params;
     const data = {
@@ -653,9 +656,10 @@ export class EventService {
     // await storage.remove("events");
     const query = `Delete FROM Events`;
     try {
-      const db = await dbService.dbConnection();
-      if ((await db.isDBOpen()).result == false) await db.open();
-      await db.query(query);
+      await this.dbService.executeQuery({
+        query: query,
+        operationType: "delete",
+      });
     } catch (error: any) {
       throw new Error(error);
     }
@@ -665,7 +669,7 @@ export class EventService {
     // await storage.remove("events");
     const query = `Delete FROM Reminders`;
     try {
-      await dbService.executeQuery({ query });
+      await dbService.executeQuery({ query, operationType: "delete" });
     } catch (error: any) {
       throw new Error(error);
     }

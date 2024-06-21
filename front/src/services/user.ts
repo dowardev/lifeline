@@ -260,6 +260,6 @@ export class UserService {
 
   async deleteUsers(): Promise<void> {
     const query = `DELETE FROM Users`;
-    await this.dbService.executeQuery({ query });
+    await this.dbService.executeQuery({ query, operationType: "delete" });
   }
 }

@@ -3,8 +3,6 @@ import { storeToRefs } from "pinia";
 import {
   SetUserToken,
   User,
-  UserDBLocal,
-  UserLocalDatabaseInterface,
   UserLogin,
   UserLoginResponse,
   UserRegister,
@@ -12,12 +10,9 @@ import {
 import { errorBuilder } from "@/utils/errors";
 import { UserService } from "@/services/user";
 import { SessionService } from "@/services/session";
-import { CapacitorCookies } from "@capacitor/core";
-import { storage } from "@/main";
 import {
   GraphQLFragmentNameUser,
   GraphQLQueryNameUser,
-  UserDBType,
   userGrapQLTypeData,
 } from "@/utils/types";
 import { DBService } from "@/services/dbService";
@@ -26,14 +21,18 @@ import { TokenService } from "@/services/tokenService";
 import { SystemService } from "@/services/system";
 
 export class UserController {
-  private dbService = new DBService();
+  // store
   userStore = useUserStore();
-  refs = storeToRefs(this.userStore);
+
+  // services
+  private dbService = new DBService();
   userService = new UserService();
   sessionService = new SessionService();
   systemController = new SystemController();
   tokenService = new TokenService();
   systemService = new SystemService();
+
+  refs = storeToRefs(this.userStore);
 
   async loadUser(params: {
     queryName: GraphQLQueryNameUser;

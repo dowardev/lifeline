@@ -65,21 +65,27 @@ export class DBService {
   }
 
   async executeQuery(params: {
+    operationType: "select" | "insert" | "update" | "delete";
     query: string;
     values?: any[];
   }): Promise<{ values: any[] }> {
-    const { query, values: valuesData } = params;
+    const { query, values: valuesData, operationType } = params;
 
     const db = await this.dbConnection();
     if ((await db.isDBOpen()).result == false) await db.open();
 
     let values: any[] = [];
 
-    if (valuesData) {
+    if (operationType === "insert") {
       values = (await db.query(query, valuesData)).values ?? [];
     }
-    if (!valuesData) {
+
+    if (operationType == "select") {
       values = (await db.query(query)).values ?? [];
+    }
+
+    if (operationType == "update" || operationType == "delete") {
+      await db.query(query);
     }
 
     return { values };

@@ -189,22 +189,4 @@ export class SystemService {
       `;
     return query;
   }
-
-  async deleteData(params: {
-    events: boolean;
-    schedule: boolean;
-    reminders: boolean;
-    tokens: boolean;
-    users: boolean;
-    db: SQLiteDBConnection;
-  }): Promise<void> {
-    const { events, schedule, tokens, users } = params;
-    if (events) await this.eventController.deleteReminders();
-    if (events) await this.eventController.deleteEvents();
-    if (schedule) await this.scheduleController.deleteSchedule();
-    if (tokens) await this.tokenService.removeTokens();
-    // if (users) await this.userService.deleteUsers();
-    const query = `DELETE FROM Users`;
-    await this.dbService.executeQuery({ query });
-  }
 }

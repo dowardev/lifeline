@@ -12,12 +12,17 @@ import { CalendarController } from "./calendarController";
 import { endOfMonth, startOfMonth } from "date-fns";
 import messages from "./messages.json";
 
+// services
+import { ReminderService } from "@/services/reminderService";
+
 export class EventController {
   private dbService = new DBService();
   private eventService = new EventService();
   private eventStore = useEventsStore();
-  private reminderController = new ReminderController();
   private calendarController = new CalendarController();
+
+  // services
+  private reminderService = new ReminderService();
 
   /**
    * Perform all the necessary procedure to add a event both generally, locally and from the store
@@ -763,8 +768,7 @@ export class EventController {
       reminderStart,
       repeatType,
     } = params;
-
-    const dates = this.reminderController.generatorReminder({
+    const dates = this.reminderService.generatorReminder({
       frecuency,
       reminderEnd,
       reminderStart,
@@ -776,7 +780,7 @@ export class EventController {
 
     for (let index = 0; index < dates.length; index++) {
       const date = dates[index];
-      const { reminderId } = await this.reminderController.setReminder({
+      const { reminderId } = await this.reminderService.setReminder({
         reminder: date,
         extraInfo: "",
         message: description,
@@ -796,7 +800,7 @@ export class EventController {
       const id = idReminders[index];
       // console.log({ deleted: id });
       try {
-        await this.reminderController.cancelReminder({ id });
+        await this.reminderService.cancelReminder({ id });
       } catch (error: any) {
         throw new Error(error);
       }

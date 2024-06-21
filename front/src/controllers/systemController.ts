@@ -14,6 +14,7 @@ import { useEventsStore } from "@/store/eventsStore";
 import { UserService } from "@/services/user";
 import { EventService } from "@/services/event";
 import { TokenService } from "@/services/tokenService";
+import { ScheduleService } from "@/services/schedule";
 
 export class SystemController {
   // store
@@ -24,7 +25,8 @@ export class SystemController {
   systemService = new SystemService();
   userService = new UserService();
   eventService = new EventService();
-  tokensService = new TokenService();
+  tokenService = new TokenService();
+  scheduleService = new ScheduleService();
 
   async loadThemeSelected() {
     const theme =
@@ -197,21 +199,17 @@ export class SystemController {
     users: boolean;
   }): Promise<void> {
     const { events, schedule, reminders, tokens, users } = params;
-    const db = await this.dbService.dbConnection();
-    await this.systemService.deleteData({
-      events,
-      schedule,
-      reminders,
-      tokens,
-      users,
-      db,
-    });
+    if (reminders) await this.eventService.deleteReminders();
+    if (events) await this.eventService.deleteEvents();
+    if (schedule) await this.scheduleService.deleteSchedule();
+    if (tokens) await this.tokenService.removeTokens();
+    if (users) await this.userService.deleteUsers();
   }
 
   async deleteUserdata(params: { userId: string }): Promise<void> {
     const { userId } = params;
     await this.eventService.deleteUserEvents({ userId });
-    await this.tokensService.removeToken({ name: "authToken", userId });
+    await this.tokenService.removeToken({ name: "authToken", userId });
     await this.userService.deleteUser({ userId });
   }
 

@@ -50,6 +50,9 @@ export class TokenService {
 
   async removeTokens(): Promise<void> {
     const query = `DELETE FROM Tokens`;
-    await this.dbService.executeQuery({ query: query });
+    await this.dbService.executeQuery({
+      query: query,
+      operationType: "delete",
+    });
   }
 }
