@@ -83,6 +83,8 @@ async function deleteData(): Promise<void> {
     events: true,
     schedule: true,
     reminders: true,
+    tokens: true,
+    users: true,
   });
   // location.reload();
 }

@@ -257,4 +257,9 @@ export class UserService {
     const query = `DELETE FROM Users WHERE id=${userId}`;
     await this.dbService.executeQuery({ query });
   }
+
+  async deleteUsers(): Promise<void> {
+    const query = `DELETE FROM Users`;
+    await this.dbService.executeQuery({ query });
+  }
 }

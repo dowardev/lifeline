@@ -193,10 +193,19 @@ export class SystemController {
     events: boolean;
     schedule: boolean;
     reminders: boolean;
+    tokens: boolean;
+    users: boolean;
   }): Promise<void> {
-    const { events, schedule, reminders } = params;
+    const { events, schedule, reminders, tokens, users } = params;
     const db = await this.dbService.dbConnection();
-    await this.systemService.deleteData({ events, schedule, reminders, db });
+    await this.systemService.deleteData({
+      events,
+      schedule,
+      reminders,
+      tokens,
+      users,
+      db,
+    });
   }
 
   async deleteUserdata(params: { userId: string }): Promise<void> {

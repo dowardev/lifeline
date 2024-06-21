@@ -12,6 +12,7 @@ import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { EventController } from "@/controllers/eventController";
 import { ScheduleController } from "@/controllers/scheduleController";
 import { DBService } from "./dbService";
+import { TokenService } from "./tokenService";
 
 interface WakaTimeDuration {
   data: {
@@ -30,6 +31,7 @@ export class SystemService {
   eventController = new EventController();
   scheduleController = new ScheduleController();
   dbService = new DBService();
+  tokenService = new TokenService();
 
   async getTheme(): Promise<Theme> {
     return await storage.get("theme");
@@ -192,11 +194,17 @@ export class SystemService {
     events: boolean;
     schedule: boolean;
     reminders: boolean;
+    tokens: boolean;
+    users: boolean;
     db: SQLiteDBConnection;
   }): Promise<void> {
-    const { events, schedule } = params;
+    const { events, schedule, tokens, users } = params;
     if (events) await this.eventController.deleteReminders();
     if (events) await this.eventController.deleteEvents();
     if (schedule) await this.scheduleController.deleteSchedule();
+    if (tokens) await this.tokenService.removeTokens();
+    // if (users) await this.userService.deleteUsers();
+    const query = `DELETE FROM Users`;
+    await this.dbService.executeQuery({ query });
   }
 }

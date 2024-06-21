@@ -769,7 +769,7 @@ export class EventService {
   async deleteUserReminders(params: { userId: string }): Promise<void> {
     const { userId } = params;
 
-    const query = `Delete FROM Reminders WHERE userId='${userId}'`;
+    const query = `Delete FROM Reminders `;
     try {
       const db = await dbService.dbConnection();
       if ((await db.isDBOpen()).result == false) await db.open();
