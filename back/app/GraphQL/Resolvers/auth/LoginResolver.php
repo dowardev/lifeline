@@ -16,35 +16,35 @@ class LoginResolver
     GraphQLContext $context = null,
     ResolveInfo $resolveInfo
   ) {
-    $user = $args['user'];
-    $password = $args['password'];
+    $user = $args["user"];
+    $password = $args["password"];
 
-    if ($user == '' || $user == 'null') {
-      return Error::createLocatedError('User is required');
+    if ($user == "" || $user == "null") {
+      return Error::createLocatedError("User is required");
     }
-    if ($password == '' || $password == 'null') {
-      return Error::createLocatedError('Password is required');
+    if ($password == "" || $password == "null") {
+      return Error::createLocatedError("Password is required");
     }
 
-    $userData = User::where('user', '=', $user)
-      ->orWhere('email', '=', $user)
+    $userData = User::where("user", "=", $user)
+      ->orWhere("email", "=", $user)
       ->get();
 
     if (count($userData) == 0) {
-      return Error::createLocatedError('Not found');
+      return Error::createLocatedError("Not found");
     }
 
     if ($userData[0]->is_user_disabled) {
-      return Error::createLocatedError('Disabled user');
+      return Error::createLocatedError("Disabled user");
     }
 
     $credentials = [
-      'email' => $userData[0]->email,
-      'password' => $password,
+      "email" => $userData[0]->email,
+      "password" => $password,
     ];
     try {
-      if (count($userData) == 0 || !Auth::guard('web')->attempt($credentials)) {
-        return Error::createLocatedError('Unauthorized');
+      if (count($userData) == 0 || !Auth::guard("web")->attempt($credentials)) {
+        return Error::createLocatedError("Unauthorized");
       }
     } catch (\Throwable $error) {
       $errorPool = app(\Nuwave\Lighthouse\Execution\ErrorPool::class);
@@ -52,15 +52,15 @@ class LoginResolver
     }
 
     if (!$userData[0]->is_email_verified) {
-      return Error::createLocatedError('Unverified email');
+      return Error::createLocatedError("Unverified email");
     }
 
-    $token = $userData[0]->createToken('Personal Access Token')->accessToken;
+    $token = $userData[0]->createToken("Personal Access Token")->accessToken;
 
     return [
-      'auth' => [
-        'access_token' => $token,
-        'token_type' => 'Bearer',
+      "auth" => [
+        "access_token" => $token,
+        "token_type" => "Bearer",
       ],
     ];
   }

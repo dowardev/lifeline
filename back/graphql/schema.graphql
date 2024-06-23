@@ -55,6 +55,7 @@ type User {
 type UserAuth {
   access_token: String!
   token_type: String!
+  user: User
 }
 type Calendar {
   id: String!
@@ -135,6 +136,7 @@ input DeleteEventInput {
 # payloads
 type LoginPayload {
   auth: UserAuth!
+    user:User
 }
 type UserAuthPayload {
   user: User!
