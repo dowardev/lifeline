@@ -137,7 +137,6 @@ router.beforeEach(async (to, from, next) => {
   const fragmentName = "UserMenu";
   let user = {} as User;
   const path = to.path;
-
   const authorizedRoutes = [
     "/home",
     "/calendar",
@@ -151,14 +150,14 @@ router.beforeEach(async (to, from, next) => {
 
   try {
     await userController.loadUser({ queryName, fragmentName });
-    user = userController.refs.user.value;
   } catch (error: any) {
     if (
       error.message !=
         "Error: Query failed: SelectSQL: queryAll: no such table: Users" &&
       error.message != "No token found"
-    )
-      return next("/error"); // Redirect to error page or show error message
+    ) {
+      console.error(error);
+    }
   }
 
   if (publicRoutes.includes(path)) return next();

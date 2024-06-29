@@ -47,6 +47,7 @@ onMounted(async () => {
   await eventController.createTableEvents();
   await eventController.createTableReminders();
   await userController.createTableUsers();
+  await systemController.createTableUsersLogged();
 
   await systemController.loadThemeSelected();
   const theme = systemController.getTheme();
@@ -54,8 +55,9 @@ onMounted(async () => {
   systemService.setTheme({ theme: theme, currentTheme: theme });
   await systemController.updateThemeSelected({ theme });
 
-  const user = userController.getUserLogged().user;
-  if (!user) {
+  let user = userController.getUserLogged();
+  user = user == null ? {} : userController.getUserLogged();
+  if (Object.keys(user).length > 0) {
     try {
     } catch (error: any) {
       console.error(error.message);

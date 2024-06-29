@@ -283,14 +283,22 @@ async function login(): Promise<void> {
   const password = form.password;
 
   try {
-    const response = await userController.userLogin({
+    const responseLogin = await userController.userLogin({
       user,
       password,
     });
 
-    const token = "Bearer " + response.auth.access_token;
-    await userController.insertLocalUser({ user: { idSync: "0" } });
-    await userController.storeUserToken({ token });
+    const token = "Bearer " + responseLogin.auth.access_token;
+    const insertLocalUserResponse = await userController.insertLocalUser({
+      user: { idSync: responseLogin.user!.id },
+    });
+    await userController.storeUserToken({
+      token,
+      userId: insertLocalUserResponse.rowID,
+    });
+    await systemController.insertUserLogged({
+      userId: insertLocalUserResponse.rowID,
+    });
 
     spinners.buttonLogin = false;
     clearInputs();
@@ -313,7 +321,7 @@ async function login(): Promise<void> {
       return;
     }
     // systemController.openToastError(e);
-    console.error(e);
+    console.error(e.message);
   }
 }
 

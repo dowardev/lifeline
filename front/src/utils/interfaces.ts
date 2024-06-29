@@ -31,6 +31,7 @@ export interface UserRegister {
 }
 export interface SetUserToken {
   token: string;
+  userId: string;
 }
 export interface ResendEmailConfirmation {
   email: string;

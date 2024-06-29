@@ -80,6 +80,9 @@ export const USER_LOGIN = gql`
     auth {
       access_token
     }
+    user {
+      id
+    }
   }
 `;
 

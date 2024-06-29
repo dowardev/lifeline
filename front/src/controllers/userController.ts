@@ -19,6 +19,9 @@ import { DBService } from "@/services/dbService";
 import { SystemController } from "./systemController";
 import { TokenService } from "@/services/tokenService";
 import { SystemService } from "@/services/system";
+import { ApiController } from "./apiController";
+import { GrapQLService } from "@/services/graphql";
+import { USER_LOGIN } from "@/utils/graphql";
 
 export class UserController {
   // store
@@ -31,6 +34,8 @@ export class UserController {
   systemController = new SystemController();
   tokenService = new TokenService();
   systemService = new SystemService();
+  // apiController = new ApiController();
+  grapQLService = new GrapQLService();
 
   refs = storeToRefs(this.userStore);
 
@@ -42,20 +47,21 @@ export class UserController {
     let user = {} as User;
 
     try {
-      user = await this.userService.getLocalUser();
+      user = await this.getUserLogged2();
     } catch (error: any) {
       throw error;
     }
 
-    try {
-      user = await this.userService.getUser({
-        refetch: true,
-        queryName,
-        fragmentName,
-      });
-    } catch (error: any) {
-      if (error.message != "Unauthorized") throw error;
-    }
+    // try {
+    //   user = await this.userService.getUser({
+    //     refetch: true,
+    //     queryName,
+    //     fragmentName,
+    //   });
+    // } catch (error: any) {
+    //   if (error.message != "Unauthorized" && error.message != "No token found")
+    //     throw error;
+    // }
 
     this.updateUserProps({ user });
   }
@@ -82,22 +88,64 @@ export class UserController {
 
   async userLogin(params: UserLogin): Promise<UserLoginResponse> {
     const { user, password } = params;
+    const apiController = new ApiController();
 
     try {
-      return await this.sessionService.userLogin({ user, password });
+      const query = apiController.graphqlMutationBuilder({
+        name: USER_LOGIN,
+        fragment: "UserLogin",
+        mutationName: "login",
+        inputName: "LoginInput",
+      });
+
+      let response = await apiController.executeGrapMutatation({
+        query,
+        input: { user, password },
+      });
+
+      if (!response.login.auth) return {} as UserLoginResponse;
+      response = {
+        user: response.login.user,
+        auth: {
+          access_token: response.login.auth.access_token,
+          token_type: response.login.auth.token_type,
+        },
+      };
+      return response;
     } catch (error: any) {
-      throw errorBuilder({ message: error.message });
+      if (error.message != "Unauthorized") throw error;
     }
   }
 
   async storeUserToken(params: SetUserToken): Promise<void> {
     try {
-      const { token } = params;
-      await this.tokenService.setToken({
-        name: "auth_token",
-        value: token,
-        userId: "1",
+      const { token, userId } = params;
+      const values = ["auth_token", token, userId];
+      const fields = ["name", "token", "user_id"];
+
+      let query = `
+        INSERT INTO Tokens(
+       ${fields.join(", ")}
+     )
+   `;
+      query += `values (`;
+      for (let index = 0; index < values.length; index++) {
+        if (index < fields.length - 1) query += "?, ";
+        else query += "? ";
+      }
+      query += `)RETURNING "Id"`;
+      await this.dbService.executeQuery({
+        query: query,
+        values: values,
+        operationType: "insert",
       });
+
+      // (
+      //   await this.dbService.executeQuery({
+      //     query: "SELECT * FROM Tokens",
+      //     operationType: "select",
+      //   })
+      // ).values![0] as any;
     } catch (error: any) {
       throw new Error(error);
     }
@@ -126,8 +174,10 @@ export class UserController {
     }
   }
 
+  // TODO:remove
   getUserLogged(): User {
-    return this.userStore.user;
+    const user = this.userStore.user == null ? {} : this.userStore.user;
+    return user;
   }
 
   async createTableUsers(): Promise<void> {
@@ -161,8 +211,72 @@ export class UserController {
     await this.userService.updateLocalUser({ user: params.user });
   }
 
-  async insertLocalUser(params: { user: User }): Promise<void> {
-    await this.userService.insertLocalUser({ user: params.user });
+  async insertLocalUser(params: { user: User }): Promise<{ rowID: string }> {
+    const { name, user: userName, email, token, idSync } = params.user;
+
+    try {
+      const values = [];
+      const fields = [];
+
+      if (name != undefined) {
+        values.push(name);
+        fields.push("name");
+      }
+
+      if (userName != undefined) {
+        values.push(userName);
+        fields.push("user_name");
+      }
+
+      if (email != undefined) {
+        values.push(email);
+        fields.push("email");
+      }
+
+      // if (!imageProfile) {
+      //   values.push(imageProfile);
+      //   fields.push("image_profile");
+      // }
+
+      if (token != undefined) {
+        values.push(token);
+        fields.push("token");
+      }
+
+      if (idSync != undefined) {
+        values.push(idSync);
+        fields.push("id_sync");
+      }
+
+      let query = `
+        INSERT INTO Users(
+       ${fields.join(", ")}
+     )
+     
+   `;
+      query += `values (`;
+      for (let index = 0; index < values.length; index++) {
+        if (index < fields.length - 1) query += "?, ";
+        else query += "? ";
+      }
+      query += `)RETURNING "Id"`;
+      const response = await this.dbService.executeQuery({
+        query: query,
+        values: values,
+        operationType: "insert",
+      });
+
+      // const queryss = `SELECT * FROM Users `;
+      // const result = (
+      //   await this.dbService.executeQuery({
+      //     query: queryss,
+      //     operationType: "select",
+      //   })
+      // ).values as any;
+      return { rowID: response.values[0].id };
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 
   async updateUserInDB(params: {
@@ -188,6 +302,58 @@ export class UserController {
       else await this.upateUserOnDatabase({ user: userLogged });
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  async getUserLogged2(): Promise<User> {
+    const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id inner join tokens on tokens.user_id = users.id`;
+    try {
+      const result = (
+        await this.dbService.executeQuery({ query, operationType: "select" })
+      ).values![0] as any;
+      return result ?? {};
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
+  async getUserLoggedFromServer(params: {
+    refetch: boolean;
+    queryName: GraphQLQueryNameUser;
+    fragmentName: GraphQLFragmentNameUser;
+  }): Promise<User> {
+    const { refetch, queryName, fragmentName } = params;
+    const graphql = { name: queryName, fragment: fragmentName };
+    const apiController = new ApiController();
+    const queryDocument = apiController.getQuery({ name: queryName });
+
+    try {
+      //TODO: move to controller
+      const query = apiController.graphqlQueryBuilder({
+        name: queryDocument,
+        fragment: graphql.fragment,
+        mutationName: "userAuth",
+      });
+
+      let response = await apiController.executeGrapQuery({
+        query,
+        options: { refetch },
+      });
+
+      if (response) {
+        response = {
+          id: response.value.userAuth.user.id,
+          name: response.value.userAuth.user.name,
+          email: response.value.userAuth.user.email,
+          user: response.value.userAuth.user.user,
+          imageProfile: response.value.userAuth.user.image_profile,
+          isAdmin: response.value.userAuth.user.is_admin,
+        };
+        return response;
+      }
+      return {} as User;
+    } catch (error: any) {
+      throw error;
     }
   }
 }

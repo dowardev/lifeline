@@ -33,38 +33,6 @@ export class SessionService {
     }
   }
 
-  async userLogin(params: UserLogin): Promise<UserLoginResponse> {
-    const { user, password } = params;
-
-    try {
-      const query = this.grapQLService.graphqlMutationBuilder({
-        name: USER_LOGIN,
-        fragment: "UserLogin",
-        mutationName: "login",
-        inputName: "LoginInput",
-      });
-
-      let response = await this.grapQLService.executeGrapMutation({
-        query,
-        input: { user, password },
-      });
-
-      if (!response.login.auth) return {} as UserLoginResponse;
-      response = {
-        user: response.login.user,
-        auth: {
-          access_token: response.login.auth.access_token,
-          token_type: response.login.auth.token_type,
-        },
-      };
-      return response;
-    } catch (error: any) {
-      if (error.message != "Unauthorized")
-        throw errorBuilder({ message: error.message, typeError: "authError" });
-      throw errorBuilder({ message: error.message });
-    }
-  }
-
   /**
    * Logs out a user on the server.
    * This method builds a GraphQL mutation for user logout and executes it.

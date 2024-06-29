@@ -60,7 +60,7 @@ export class DBService {
         throw new Error(`Error: execute failed`);
       }
     } catch (error: any) {
-      throw new Error(error);
+      throw error;
     }
   }
 
@@ -70,24 +70,31 @@ export class DBService {
     values?: any[];
   }): Promise<{ values: any[] }> {
     const { query, values: valuesData, operationType } = params;
+    let db = null as any;
 
-    const db = await this.dbConnection();
-    if ((await db.isDBOpen()).result == false) await db.open();
+    try {
+      db = await this.dbConnection();
+      if ((await db.isDBOpen()).result == false) await db.open();
 
-    let values: any[] = [];
+      let values: any[] = [];
 
-    if (operationType === "insert") {
-      values = (await db.query(query, valuesData)).values ?? [];
+      if (operationType === "insert") {
+        values = (await db.query(query, valuesData)).values ?? [];
+      }
+
+      if (operationType == "select") {
+        values = (await db.query(query)).values ?? [];
+      }
+
+      if (operationType == "update" || operationType == "delete") {
+        await db.query(query);
+      }
+
+      return { values };
+    } catch (error) {
+      throw error;
+    } finally {
+      await db.close();
     }
-
-    if (operationType == "select") {
-      values = (await db.query(query)).values ?? [];
-    }
-
-    if (operationType == "update" || operationType == "delete") {
-      await db.query(query);
-    }
-
-    return { values };
   }
 }

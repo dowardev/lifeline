@@ -25,6 +25,7 @@ import {
 import { SystemService } from "./system";
 
 export class UserService {
+  // services
   dbService = new DBService();
   grapQLService = new GrapQLService();
   systemService = new SystemService();
@@ -52,43 +53,6 @@ export class UserService {
       await db.run(query, values);
     } catch (error: any) {
       throw new Error(error);
-    }
-  }
-
-  async getUser(params: {
-    refetch: boolean;
-    queryName: GraphQLQueryNameUser;
-    fragmentName: GraphQLFragmentNameUser;
-  }): Promise<User> {
-    const { refetch, queryName, fragmentName } = params;
-    const graphql = { name: queryName, fragment: fragmentName };
-    const queryDocument = this.grapQLService.getQuery({ name: queryName });
-
-    try {
-      const query = this.grapQLService.graphqlQueryBuilder({
-        name: queryDocument,
-        fragment: graphql.fragment,
-        mutationName: "userAuth",
-      });
-
-      let response = await this.grapQLService.executeGrapQuery({
-        query,
-        options: { refetch },
-      });
-      if (response) {
-        response = {
-          id: response.value.userAuth.user.id,
-          name: response.value.userAuth.user.name,
-          email: response.value.userAuth.user.email,
-          user: response.value.userAuth.user.user,
-          imageProfile: response.value.userAuth.user.image_profile,
-          isAdmin: response.value.userAuth.user.is_admin,
-        };
-        return response;
-      }
-      return {} as User;
-    } catch (error: any) {
-      throw error;
     }
   }
 
@@ -178,69 +142,7 @@ export class UserService {
     }
   }
 
-  async insertLocalUser(params: { user: UserDBType }): Promise<void> {
-    const { name, user: userName, email, token, idSync } = params.user;
-
-    try {
-      const values = [];
-      const fields = [];
-
-      if (name != undefined) {
-        values.push(name);
-        fields.push("name");
-      }
-
-      if (userName != undefined) {
-        values.push(userName);
-        fields.push("user_name");
-      }
-
-      if (email != undefined) {
-        values.push(email);
-        fields.push("email");
-      }
-
-      // if (!imageProfile) {
-      //   values.push(imageProfile);
-      //   fields.push("image_profile");
-      // }
-
-      if (token != undefined) {
-        values.push(token);
-        fields.push("token");
-      }
-
-      if (idSync != undefined) {
-        values.push(idSync);
-        fields.push("id_sync");
-      }
-
-      let query = `
-        INSERT INTO Users(
-       ${fields.join(", ")}
-     )
-     
-   `;
-      query += `values (`;
-      for (let index = 0; index < values.length; index++) {
-        if (index < fields.length - 1) query += "?, ";
-        else query += "? ";
-      }
-      query += `)RETURNING "Id"`;
-      await this.dbService.executeQuery({
-        query: query,
-        values: values,
-      });
-
-      // const queryss = `SELECT * FROM Users `;
-      // const result = (await this.dbService.executeQuery({ query: queryss }))
-      //   .values![0] as any;
-      // console.log(result)
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
+  // TODO: remove
   async getLocalUser(): Promise<UserDBType> {
     const query = `SELECT * FROM Users inner join Tokens on user_id=1`;
     try {

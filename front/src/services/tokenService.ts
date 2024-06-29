@@ -6,12 +6,17 @@ export class TokenService {
   async getToken(params: { name: string; userId: string }): Promise<any> {
     const { name, userId } = params;
     const query = `SELECT token FROM Tokens WHERE user_id=${userId} AND name='${name}'`;
-    const result = (await this.dbService.executeQuery({ query: query }))
-      .values![0] as any;
+    const result = (
+      await this.dbService.executeQuery({
+        query: query,
+        operationType: "select",
+      })
+    ).values![0] as any;
     if (result) return result.token;
     else return null;
   }
 
+  // TODO: move to controller
   async setToken(params: {
     name: string;
     value: string;

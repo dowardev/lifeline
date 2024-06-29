@@ -324,6 +324,7 @@ export class EventController {
   }
 
   async syncEventsFromServer(): Promise<void> {
+    debugger;
     let serverEvents: Event[] = [];
 
     serverEvents = (await this.getEventsServer()) ?? [];

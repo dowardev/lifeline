@@ -1,100 +1,41 @@
-import { storage } from "@/main";
 import { ApolloClient, InMemoryCache } from "@apollo/client/core";
-import { CapacitorCookies } from "@capacitor/core";
 import {
   provideApolloClient,
   useMutation,
   useQuery,
 } from "@vue/apollo-composable";
-import { DocumentNode } from "graphql";
-import gql from "graphql-tag";
 
-// queries
-import { USER_MENU } from "@/utils/graphql";
+// services
 import { TokenService } from "./tokenService";
 
 export class GrapQLService {
   uri = "";
   tokenService = new TokenService();
 
-  constructor() {
-    const mode = process.env.NODE_ENV;
-    if (mode == "development") {
-      this.uri = "http://localhost:8000/graphql";
-    } else {
-      this.uri = "https://lifeline-back.dowar.xyz/graphql";
-    }
-    // this.uri = "https://lifeline-back.dowar.xyz/graphql";
-  }
-
-  graphqlQueryBuilder(params: {
-    name: DocumentNode;
-    fragment: string;
-    mutationName: string;
-  }): DocumentNode {
-    const { name, fragment, mutationName } = params;
-
-    const query = gql`
-        query ${mutationName}{
-          ${mutationName}{
-           ...${fragment}
-          }
-        }
-        ${name}
-      `;
-
-    return query;
-  }
-
-  graphqlMutationBuilder(params: {
-    name: DocumentNode;
-    fragment: string;
-    mutationName: string;
-    inputName?: string;
-  }): DocumentNode {
-    const { name, fragment, mutationName, inputName } = params;
-    let query = "" as any;
-
-    if (inputName)
-      query = gql`
-        mutation ${mutationName}($input:${inputName}){
-          ${mutationName}(input: $input){
-           ...${fragment}
-          }
-        }
-        ${name}
-      `;
-
-    if (!inputName)
-      query = gql`
-        mutation ${mutationName}{
-          ${mutationName}{
-           ...${fragment}
-          }
-        }
-        ${name}
-      `;
-
-    return query;
-  }
+  // TODO:remove
+  // constructor() {
+  //   const mode = process.env.NODE_ENV;
+  //   if (mode == "development") {
+  //     this.uri = "http://localhost:8000/graphql";
+  //   } else {
+  //     this.uri = "https://lifeline-back.dowar.xyz/graphql";
+  //   }
+  //   // this.uri = "https://lifeline-back.dowar.xyz/graphql";
+  // }
 
   async executeGrapQuery(params: {
     query: any;
     options: { refetch: boolean };
+    uri: string;
+    token: string;
+    cache: InMemoryCache;
   }): Promise<any> {
-    const { query, options } = params;
+    const { query, options, uri, token, cache } = params;
 
     try {
-      const cache = new InMemoryCache();
-      const token = await this.tokenService.getToken({
-        name: "auth_token",
-        userId: "1",
-      });
-      if (!token) throw new Error("No token found");
-
       const apolloClient = new ApolloClient({
         cache,
-        uri: this.uri,
+        uri: uri,
         headers: {
           Authorization: token,
         },
@@ -111,17 +52,18 @@ export class GrapQLService {
     }
   }
 
-  async executeGrapMutation(params: { query: any; input?: any }): Promise<any> {
-    const { query, input } = params;
+  async executeGrapMutation(params: {
+    query: any;
+    input?: any;
+    cache: any;
+    uri: string;
+    token: string;
+  }): Promise<any> {
+    const { query, input, cache, token, uri } = params;
 
-    const cache = new InMemoryCache();
-    const token = await this.tokenService.getToken({
-      name: "auth_token",
-      userId: "1",
-    });
     const apolloClient = new ApolloClient({
       cache,
-      uri: this.uri,
+      uri,
       headers: {
         Authorization: token,
       },
@@ -143,12 +85,5 @@ export class GrapQLService {
 
       onError((error) => reject(error));
     });
-  }
-
-  getQuery(params: { name: string }): DocumentNode {
-    const { name } = params;
-
-    if (name == "USER_MENU") return USER_MENU;
-    throw new Error("Query not found");
   }
 }

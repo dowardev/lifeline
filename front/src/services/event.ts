@@ -31,6 +31,7 @@ import { DBService } from "@/services/dbService";
 import { format, formatISO } from "date-fns";
 import { GrapQLService } from "./graphql";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import { ApiController } from "@/controllers/apiController";
 
 const dbService = new DBService();
 const grapService = new GrapQLService();
@@ -547,15 +548,16 @@ export class EventService {
 
   async getEvents(params: { graphql: Graphql }): Promise<Event[] | null> {
     const { refetch = false, name, fragment } = params.graphql;
+    const apiController = new ApiController();
 
     try {
-      const query = grapService.graphqlQueryBuilder({
+      const query = apiController.graphqlQueryBuilder({
         name,
         fragment,
         mutationName: "events",
       });
 
-      let response = await grapService.executeGrapQuery({
+      let response = await apiController.executeGrapQuery({
         query,
         options: { refetch },
       });

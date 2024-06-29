@@ -228,4 +228,21 @@ export class SystemController {
     const { obj } = params;
     return cloneDeep(obj);
   }
+
+  async createTableUsersLogged(): Promise<void> {
+    const query = `CREATE TABLE IF NOT EXISTS users_logged
+    (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER REFERENCES users(id),
+      status INTEGER
+    );`;
+    await this.dbService.createTable({ query });
+  }
+
+  // TODO: move to controller
+  async insertUserLogged(params: { userId: string }): Promise<void> {
+    const { userId } = params;
+    const query = `INSERT INTO users_logged (user_id, status) VALUES (${userId}, 1)`;
+    await this.dbService.executeQuery({ query, operationType: "insert" });
+  }
 }
