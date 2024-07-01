@@ -22,13 +22,15 @@ import { SystemService } from "@/services/system";
 import { ApiController } from "./apiController";
 import { GrapQLService } from "@/services/graphql";
 import { USER_LOGIN } from "@/utils/graphql";
+import { DBCOntroller } from "./DBController";
 
 export class UserController {
   // store
   userStore = useUserStore();
 
-  // services
-  private dbService = new DBService();
+  private dbc = new DBCOntroller({
+    dbService: new DBService({ dbName: "db_vite" }),
+  });
   userService = new UserService();
   sessionService = new SessionService();
   systemController = new SystemController();
@@ -123,21 +125,10 @@ export class UserController {
       const values = ["auth_token", token, userId];
       const fields = ["name", "token", "user_id"];
 
-      let query = `
-        INSERT INTO Tokens(
-       ${fields.join(", ")}
-     )
-   `;
-      query += `values (`;
-      for (let index = 0; index < values.length; index++) {
-        if (index < fields.length - 1) query += "?, ";
-        else query += "? ";
-      }
-      query += `)RETURNING "Id"`;
-      await this.dbService.executeQuery({
-        query: query,
+      await this.dbc.insertData({
         values: values,
-        operationType: "insert",
+        fields,
+        tableName: "Tokens",
       });
 
       // (
@@ -180,32 +171,32 @@ export class UserController {
     return user;
   }
 
-  async createTableUsers(): Promise<void> {
-    const query = `CREATE TABLE IF NOT EXISTS Users
-    (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      user_name TEXT,
-      email TEXT,
-      is_admin BOOLEAN,
-      rol TEXT
-      image_profile TEXT,
-      id_sync TEXT
-    );`;
-    await this.createTable({ query });
-  }
+  // async createTableUsers(): Promise<void> {
+  //   const query = `CREATE TABLE IF NOT EXISTS users
+  //   (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     name TEXT,
+  //     user_name TEXT,
+  //     email TEXT,
+  //     is_admin BOOLEAN,
+  //     rol TEXT
+  //     image_profile TEXT,
+  //     id_sync TEXT
+  //   );`;
+  //   await this.dbc.createTable({ query });
+  // }
 
-  async createTable(params: { query: any }): Promise<void> {
-    try {
-      const { query } = params;
-      const db = await this.dbService.dbConnection();
-      // await db.open();
-      await this.dbService.createTable({ query, db });
-      // await db.close();
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
+  // async createTable(params: { query: any }): Promise<void> {
+  //   try {
+  //     const { query } = params;
+  //     const db = await this.dbService.dbConnection();
+  //     // await db.open();
+  //     await this.dbc.createTable({ query, db });
+  //     // await db.close();
+  //   } catch (error: any) {
+  //     throw new Error(error);
+  //   }
+  // }
 
   async upateUserOnDatabase(params: { user: User }): Promise<void> {
     await this.userService.updateLocalUser({ user: params.user });
@@ -248,23 +239,12 @@ export class UserController {
         fields.push("id_sync");
       }
 
-      let query = `
-        INSERT INTO Users(
-       ${fields.join(", ")}
-     )
-     
-   `;
-      query += `values (`;
-      for (let index = 0; index < values.length; index++) {
-        if (index < fields.length - 1) query += "?, ";
-        else query += "? ";
-      }
-      query += `)RETURNING "Id"`;
-      const response = await this.dbService.executeQuery({
-        query: query,
+      const response = await this.dbc.insertData({
         values: values,
-        operationType: "insert",
+        tableName: "Users",
+        fields,
       });
+      console.log(response);
 
       // const queryss = `SELECT * FROM Users `;
       // const result = (
@@ -273,7 +253,7 @@ export class UserController {
       //     operationType: "select",
       //   })
       // ).values as any;
-      return { rowID: response.values[0].id };
+      return { rowID: response[0].id };
     } catch (error: any) {
       throw new Error(error);
     }
@@ -308,9 +288,7 @@ export class UserController {
   async getUserLogged2(): Promise<User> {
     const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id inner join tokens on tokens.user_id = users.id`;
     try {
-      const result = (
-        await this.dbService.executeQuery({ query, operationType: "select" })
-      ).values![0] as any;
+      const result = (await this.dbc.getData({ query })).values![0] as any;
       return result ?? {};
     } catch (error: any) {
       throw error;

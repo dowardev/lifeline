@@ -43,13 +43,21 @@ export { storage };
 import { createPinia } from "pinia";
 const pinia = createPinia();
 // import { createApolloProvider } from "@vue/apollo-option";
+import { DBCOntroller } from "./controllers/DBController";
+import { TempController } from "./controllers/TempController";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
-    const dbs = new DBService();
-    await dbs.init();
-    // await dbs.dbConnection();
-    // (await dbs.dbConnection()).open();
+    const dbc = new DBCOntroller({
+      dbService: new DBService({ dbName: "db_vite" }),
+    });
+    await dbc.initDB();
+    const tmpc = new TempController();
+    await tmpc.createTableUsers();
+    await tmpc.createTableUsersLogged();
+    await tmpc.createTableTokens();
+    await tmpc.createTableEvents();
+    await tmpc.createTableReminders();
 
     const app = createApp(App).use(IonicVue).use(i18n).use(pinia).use(router);
     router.isReady().then(() => {

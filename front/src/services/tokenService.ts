@@ -1,7 +1,7 @@
 import { DBService } from "@/services/dbService";
 
 export class TokenService {
-  dbService = new DBService();
+  // dbService = new DBService();
 
   async getToken(params: { name: string; userId: string }): Promise<any> {
     const { name, userId } = params;

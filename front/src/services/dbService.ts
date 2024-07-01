@@ -1,13 +1,19 @@
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 import {
   CapacitorSQLite,
-  DBSQLiteValues,
   SQLiteConnection,
   SQLiteDBConnection,
 } from "@capacitor-community/sqlite";
 import { Capacitor } from "@capacitor/core";
 
 export class DBService {
+  dbName = "";
+
+  constructor(params: { dbName: string }) {
+    const { dbName } = params;
+    this.dbName = dbName;
+  }
+
   async init(): Promise<void> {
     const platform = Capacitor.getPlatform();
     const sqlite = new SQLiteConnection(CapacitorSQLite);
@@ -64,37 +70,78 @@ export class DBService {
     }
   }
 
-  async executeQuery(params: {
-    operationType: "select" | "insert" | "update" | "delete";
+  async insertData(params: {
+    values: any[];
     query: string;
-    values?: any[];
-  }): Promise<{ values: any[] }> {
-    const { query, values: valuesData, operationType } = params;
+  }): Promise<Array<any>> {
+    const { values, query } = params;
     let db = null as any;
 
     try {
       db = await this.dbConnection();
       if ((await db.isDBOpen()).result == false) await db.open();
-
-      let values: any[] = [];
-
-      if (operationType === "insert") {
-        values = (await db.query(query, valuesData)).values ?? [];
-      }
-
-      if (operationType == "select") {
-        values = (await db.query(query)).values ?? [];
-      }
-
-      if (operationType == "update" || operationType == "delete") {
-        await db.query(query);
-      }
-
-      return { values };
     } catch (error) {
       throw error;
-    } finally {
-      await db.close();
+    }
+
+    try {
+      return (await db.query(query, values)).values ?? [];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getData(params: { query: string }): Promise<any> {
+    const { query } = params;
+    let db = null as any;
+
+    try {
+      db = await this.dbConnection();
+      if ((await db.isDBOpen()).result == false) await db.open();
+    } catch (error) {
+      throw error;
+    }
+
+    try {
+      return (await db.query(query)).values ?? [];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateData(params: { query: string }): Promise<void> {
+    const { query } = params;
+    let db = null as any;
+
+    try {
+      db = await this.dbConnection();
+      if ((await db.isDBOpen()).result == false) await db.open();
+    } catch (error) {
+      throw error;
+    }
+
+    try {
+      await db.query(query);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteData(params: { query: string }): Promise<void> {
+    const { query } = params;
+    let db = null as any;
+
+    try {
+      db = await this.dbConnection();
+      if ((await db.isDBOpen()).result == false) await db.open();
+    } catch (error) {
+      throw error;
+    }
+
+    try {
+      await db.query(query);
+    } catch (error) {
+      throw error;
     }
   }
 }

@@ -67,13 +67,6 @@ export class ApiController {
         if (!token) throw new Error("No token found");
       }
 
-      console.log({
-        query,
-        input,
-        cache,
-        token,
-        uri: this.uri,
-      });
       return await this.graphqlService.executeGrapMutation({
         query,
         input,

@@ -33,12 +33,11 @@ import { GrapQLService } from "./graphql";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { ApiController } from "@/controllers/apiController";
 
-const dbService = new DBService();
 const grapService = new GrapQLService();
 
 export class EventService {
   // services
-  dbService = new DBService();
+  // dbService = new DBService();
 
   async createEvent(params: { event: Event }): Promise<{ id: number }> {
     const { event } = params;
@@ -188,9 +187,10 @@ export class EventService {
 
     const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id where events.id=${id}`;
     try {
-      const result = (await dbService.executeQuery({ query }))
-        .values![0] as any;
-      console.log(result);
+      // const result = (await dbService.executeQuery({ query }))
+      //   .values![0] as any;
+      // console.log(result);
+      const result: any = {};
       const event = {
         id: result.id,
         name: result.name,

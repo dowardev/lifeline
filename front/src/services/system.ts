@@ -30,7 +30,7 @@ interface WakaTimeDuration {
 export class SystemService {
   eventController = new EventController();
   scheduleController = new ScheduleController();
-  dbService = new DBService();
+  // dbService = new DBService();
   tokenService = new TokenService();
 
   async getTheme(): Promise<Theme> {

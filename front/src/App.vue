@@ -33,7 +33,6 @@ const userController = new UserController();
 
 // services
 import { SystemService } from "./services/system";
-import { DBService } from "./services/dbService";
 
 const systemService = new SystemService();
 
@@ -41,14 +40,6 @@ const componentLoaded = ref(false);
 
 // mounted
 onMounted(async () => {
-  const dbs = new DBService();
-  await dbs.dbConnection();
-  await systemController.createTableTokens();
-  await eventController.createTableEvents();
-  await eventController.createTableReminders();
-  await userController.createTableUsers();
-  await systemController.createTableUsersLogged();
-
   await systemController.loadThemeSelected();
   const theme = systemController.getTheme();
   // TODO: use composable instead of service

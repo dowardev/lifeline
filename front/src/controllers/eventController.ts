@@ -14,9 +14,12 @@ import messages from "./messages.json";
 
 // services
 import { ReminderService } from "@/services/reminderService";
+import { DBCOntroller } from "./DBController";
 
 export class EventController {
-  private dbService = new DBService();
+  dbc = new DBCOntroller({
+    dbService: new DBService({ dbName: "db_vite" }),
+  });
   private eventService = new EventService();
   private eventStore = useEventsStore();
   private calendarController = new CalendarController();
@@ -549,7 +552,7 @@ export class EventController {
    */
   async deleteEvent(params: { id: number }): Promise<void> {
     const { id } = params;
-    const db = await this.dbService.dbConnection();
+    // const db = await this.dbService.dbConnection();
 
     let status = false;
     try {
@@ -574,12 +577,12 @@ export class EventController {
 
     if (status == false) {
       try {
-        const event = await this.getEventLocal({ db, id });
-        event.status = "inactive";
-        const { event: eventFormated } = this.eventService.formatEvent({
-          event,
-        });
-        await this.updateLocalEvent({ event: eventFormated });
+        // const event = await this.getEventLocal({ db, id });
+        // event.status = "inactive";
+        // const { event: eventFormated } = this.eventService.formatEvent({
+        //   event,
+        // });
+        // await this.updateLocalEvent({ event: eventFormated });
       } catch (error: any) {
         throw new Error(error);
       }
@@ -587,62 +590,50 @@ export class EventController {
     // await db.close();
   }
 
-  async createTableEvents(): Promise<void> {
-    // const query = `CREATE TABLE IF NOT EXISTS Events
-    // (
-    //   id INTEGER PRIMARY KEY AUTOINCREMENT,
-    //   name TEXT,
-    //   guests TEXT,
-    //   timezone TEXT,
-    //   description TEXT,
-    //   availability TEXT,
-    //   idSync INT,
-    //   syncStatus BOOLEAN,
-    //   status TEXT
-    // );`;
-    const query = `CREATE TABLE IF NOT EXISTS Events
-    (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      guests TEXT,
-      timezone TEXT,
-      description TEXT,
-      availability TEXT,
-      idSync INT,
-      syncStatus BOOLEAN,
-      status TEXT,
-      UNIQUE(idSync)
-    );`;
-    await this.createTable({ query });
-  }
+  // async createTableEvents(): Promise<void> {
+  //   // const query = `CREATE TABLE IF NOT EXISTS Events
+  //   // (
+  //   //   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //   //   name TEXT,
+  //   //   guests TEXT,
+  //   //   timezone TEXT,
+  //   //   description TEXT,
+  //   //   availability TEXT,
+  //   //   idSync INT,
+  //   //   syncStatus BOOLEAN,
+  //   //   status TEXT
+  //   // );`;
+  //   const query = `CREATE TABLE IF NOT EXISTS Events
+  //   (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     name TEXT,
+  //     guests TEXT,
+  //     timezone TEXT,
+  //     description TEXT,
+  //     availability TEXT,
+  //     idSync INT,
+  //     syncStatus BOOLEAN,
+  //     status TEXT,
+  //     UNIQUE(idSync)
+  //   );`;
+  //   await this.dbc.createTable({ query });
+  // }
 
-  async createTableReminders(): Promise<void> {
-    const query = `CREATE TABLE IF NOT EXISTS Reminders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      event_id INTEGER REFERENCES EVENTS(id),
-      start TEXT,
-      end TEXT,
-      notifications TEXT NULL,
-      repeat Boolean NULL,
-      frecuency INT NULL,
-      type TEXT NULL,
-      daysWeek TEXT NULL,
-      id_reminders TEXT NULL
-    );`;
-    await this.createTable({ query });
-  }
-
-  async createTable(params: { query: any }): Promise<void> {
-    try {
-      const { query } = params;
-      const db = await this.dbService.dbConnection();
-      // await db.open();
-      await this.dbService.createTable({ query, db });
-      // await db.close();
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
+  // async createTableReminders(): Promise<void> {
+  //   const query = `CREATE TABLE IF NOT EXISTS Reminders (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     event_id INTEGER REFERENCES EVENTS(id),
+  //     start TEXT,
+  //     end TEXT,
+  //     notifications TEXT NULL,
+  //     repeat Boolean NULL,
+  //     frecuency INT NULL,
+  //     type TEXT NULL,
+  //     daysWeek TEXT NULL,
+  //     id_reminders TEXT NULL
+  //   );`;
+  //   await this.dbc.createTable({ query });
+  // }
 
   async saveLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;

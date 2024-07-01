@@ -26,7 +26,7 @@ import { SystemService } from "./system";
 
 export class UserService {
   // services
-  dbService = new DBService();
+  // dbService = new DBService();
   grapQLService = new GrapQLService();
   systemService = new SystemService();
 

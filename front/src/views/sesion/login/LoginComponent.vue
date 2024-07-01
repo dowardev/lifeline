@@ -296,6 +296,7 @@ async function login(): Promise<void> {
       token,
       userId: insertLocalUserResponse.rowID,
     });
+    debugger;
     await systemController.insertUserLogged({
       userId: insertLocalUserResponse.rowID,
     });

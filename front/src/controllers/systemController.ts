@@ -15,13 +15,16 @@ import { UserService } from "@/services/user";
 import { EventService } from "@/services/event";
 import { TokenService } from "@/services/tokenService";
 import { ScheduleService } from "@/services/schedule";
+import { DBCOntroller } from "./DBController";
 
 export class SystemController {
   // store
   systemStore = useSystemStore();
   eventsStore = useEventsStore();
   // services
-  dbService = new DBService();
+  dbc = new DBCOntroller({
+    dbService: new DBService({ dbName: "db_vite" }),
+  });
   systemService = new SystemService();
   userService = new UserService();
   eventService = new EventService();
@@ -213,36 +216,37 @@ export class SystemController {
     await this.userService.deleteUser({ userId });
   }
 
-  async createTableTokens(): Promise<void> {
-    const query = `CREATE TABLE IF NOT EXISTS Tokens
-    (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      token TEXT,
-      user_id INTEGER REFERENCES Users(id)
-    );`;
-    await this.dbService.createTable({ query });
-  }
+  // async createTableTokens(): Promise<void> {
+  //   const query = `CREATE TABLE IF NOT EXISTS Tokens
+  //   (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     name TEXT,
+  //     token TEXT,
+  //     user_id INTEGER REFERENCES Users(id)
+  //   );`;
+  //   await this.dbc.createTable({ query });
+  // }
 
   cloneObjet(params: { obj: any }): any {
     const { obj } = params;
     return cloneDeep(obj);
   }
 
-  async createTableUsersLogged(): Promise<void> {
-    const query = `CREATE TABLE IF NOT EXISTS users_logged
-    (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER REFERENCES users(id),
-      status INTEGER
-    );`;
-    await this.dbService.createTable({ query });
-  }
+  // async createTableUsersLogged(): Promise<void> {
+  //   const query = `CREATE TABLE IF NOT EXISTS users_logged
+  //   (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     user_id INTEGER REFERENCES users(id),
+  //     status INTEGER
+  //   );`;
+  //   await this.dbc.createTable({ query });
+  // }
 
   // TODO: move to controller
   async insertUserLogged(params: { userId: string }): Promise<void> {
     const { userId } = params;
-    const query = `INSERT INTO users_logged (user_id, status) VALUES (${userId}, 1)`;
-    await this.dbService.executeQuery({ query, operationType: "insert" });
+    const values = [userId, 1];
+    const fields = ["user_id", "status"];
+    await this.dbc.insertData({ tableName: "users_logged", values, fields });
   }
 }
