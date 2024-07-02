@@ -56,7 +56,7 @@ onMounted(async () => {
     // await useDocument().loadUserDocuments();
 
     try {
-      await eventController.syncAction({ message: { show: true } });
+      // await eventController.syncAction({ message: { show: true } });
     } catch (error: any) {
       console.error(error.message);
     }

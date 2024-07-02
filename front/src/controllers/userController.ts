@@ -244,7 +244,6 @@ export class UserController {
         tableName: "Users",
         fields,
       });
-      console.log(response);
 
       // const queryss = `SELECT * FROM Users `;
       // const result = (
@@ -253,7 +252,7 @@ export class UserController {
       //     operationType: "select",
       //   })
       // ).values as any;
-      return { rowID: response[0].id };
+      return { rowID: response.id };
     } catch (error: any) {
       throw new Error(error);
     }
@@ -288,7 +287,7 @@ export class UserController {
   async getUserLogged2(): Promise<User> {
     const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id inner join tokens on tokens.user_id = users.id`;
     try {
-      const result = (await this.dbc.getData({ query })).values![0] as any;
+      const result = (await this.dbc.getData({ query }))[0] as any;
       return result ?? {};
     } catch (error: any) {
       throw error;

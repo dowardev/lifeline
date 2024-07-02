@@ -248,5 +248,6 @@ export class SystemController {
     const values = [userId, 1];
     const fields = ["user_id", "status"];
     await this.dbc.insertData({ tableName: "users_logged", values, fields });
+    await this.dbc.getData({ query: "SELECT * FROM users_logged" });
   }
 }

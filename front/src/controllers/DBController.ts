@@ -21,7 +21,7 @@ export class DBCOntroller {
     values: any[];
     fields: string[];
     tableName: string;
-  }): Promise<Array<any>> {
+  }): Promise<{ id: string }> {
     const { values, fields, tableName } = params;
     let query = `
         INSERT INTO ${tableName}(
@@ -35,10 +35,10 @@ export class DBCOntroller {
     }
     query += `)RETURNING "Id"`;
 
-    return await this.dbService.insertData({ values, query });
+    return { id: (await this.dbService.insertData({ values, query })).id };
   }
 
-  async getData(params: { query: string }): Promise<any> {
+  async getData(params: { query: string }): Promise<Array<any>> {
     const { query } = params;
     return await this.dbService.getData({ query });
   }

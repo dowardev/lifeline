@@ -73,7 +73,7 @@ export class DBService {
   async insertData(params: {
     values: any[];
     query: string;
-  }): Promise<Array<any>> {
+  }): Promise<{ id: string }> {
     const { values, query } = params;
     let db = null as any;
 
@@ -85,7 +85,9 @@ export class DBService {
     }
 
     try {
-      return (await db.query(query, values)).values ?? [];
+      const result = (await db.query(query, values)).values;
+      await db.query("Select * from Users");
+      return { id: result[0].id };
     } catch (error) {
       throw error;
     }
