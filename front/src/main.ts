@@ -1,4 +1,4 @@
-import { DBService } from "@/services/dbService";
+import { SQLite } from "@/js/sqlite";
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 customElements.define("jeep-sqlite", JeepSqlite);
 
@@ -43,13 +43,13 @@ export { storage };
 import { createPinia } from "pinia";
 const pinia = createPinia();
 // import { createApolloProvider } from "@vue/apollo-option";
-import { DBCOntroller } from "./controllers/DBController";
+import { DB } from "./js/db";
 import { TempController } from "./controllers/TempController";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
-    const dbc = new DBCOntroller({
-      dbService: new DBService({ dbName: "db_vite" }),
+    const dbc = new DB({
+      dbSystem: new SQLite({ dbName: "db_vite" }),
     });
     await dbc.initDB();
     const tmpc = new TempController();

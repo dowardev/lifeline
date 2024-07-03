@@ -7,7 +7,7 @@ import {
   Months,
   SystemMessage,
 } from "@/utils/interfaces";
-import { DBService } from "@/services/dbService";
+import { SQLite } from "@/js/sqlite";
 import { SystemService } from "@/services/system";
 import { cloneDeep } from "lodash";
 import { useEventsStore } from "@/store/eventsStore";
@@ -15,15 +15,15 @@ import { UserService } from "@/services/user";
 import { EventService } from "@/services/event";
 import { TokenService } from "@/services/tokenService";
 import { ScheduleService } from "@/services/schedule";
-import { DBCOntroller } from "./DBController";
+import { DB } from "../js/db";
 
 export class SystemController {
   // store
   systemStore = useSystemStore();
   eventsStore = useEventsStore();
   // services
-  dbc = new DBCOntroller({
-    dbService: new DBService({ dbName: "db_vite" }),
+  dbc = new DB({
+    dbSystem: new SQLite({ dbName: "db_vite" }),
   });
   systemService = new SystemService();
   userService = new UserService();

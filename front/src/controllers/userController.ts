@@ -15,21 +15,21 @@ import {
   GraphQLQueryNameUser,
   userGrapQLTypeData,
 } from "@/utils/types";
-import { DBService } from "@/services/dbService";
+import { SQLite } from "@/js/sqlite";
 import { SystemController } from "./systemController";
 import { TokenService } from "@/services/tokenService";
 import { SystemService } from "@/services/system";
 import { ApiController } from "./apiController";
 import { GrapQLService } from "@/services/graphql";
 import { USER_LOGIN } from "@/utils/graphql";
-import { DBCOntroller } from "./DBController";
+import { DB } from "../js/db";
 
 export class UserController {
   // store
   userStore = useUserStore();
 
-  private dbc = new DBCOntroller({
-    dbService: new DBService({ dbName: "db_vite" }),
+  private dbc = new DB({
+    dbSystem: new SQLite({ dbName: "db_vite" }),
   });
   userService = new UserService();
   sessionService = new SessionService();

@@ -6,7 +6,7 @@ import {
 } from "@capacitor-community/sqlite";
 import { Capacitor } from "@capacitor/core";
 
-export class DBService {
+export class SQLite {
   dbName = "";
 
   constructor(params: { dbName: string }) {

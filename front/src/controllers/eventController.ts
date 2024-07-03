@@ -2,7 +2,7 @@ import { SystemController } from "./systemController";
 import { CalendarViewDates, Event } from "@/utils/interfaces";
 import { useEventsStore } from "../store/eventsStore";
 import { USER_EVENTS } from "@/utils/graphql";
-import { DBService } from "@/services/dbService";
+import { SQLite } from "@/js/sqlite";
 import lodash from "lodash";
 import { storage } from "@/main";
 import { ViewCalendar, ViewMode } from "@/utils/types";
@@ -14,11 +14,11 @@ import messages from "./messages.json";
 
 // services
 import { ReminderService } from "@/services/reminderService";
-import { DBCOntroller } from "./DBController";
+import { DB } from "../js/db";
 
 export class EventController {
-  dbc = new DBCOntroller({
-    dbService: new DBService({ dbName: "db_vite" }),
+  dbc = new DB({
+    dbSystem: new SQLite({ dbName: "db_vite" }),
   });
   private eventService = new EventService();
   private eventStore = useEventsStore();

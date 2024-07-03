@@ -15,7 +15,7 @@ import {
 import { errorBuilder } from "@/utils/errors";
 import { USER_MENU } from "@/utils/graphql";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
-import { DBService } from "@/services/dbService";
+import { DBService } from "@/js/dbService";
 import { GrapQLService } from "./graphql";
 import {
   GraphQLFragmentNameUser,

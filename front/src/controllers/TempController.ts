@@ -1,9 +1,9 @@
-import { DBService } from "@/services/dbService";
-import { DBCOntroller } from "./DBController";
+import { SQLite } from "@/js/sqlite";
+import { DB } from "../js/db";
 
 export class TempController {
-  private dbc = new DBCOntroller({
-    dbService: new DBService({ dbName: "db_vite" }),
+  private dbc = new DB({
+    dbSystem: new SQLite({ dbName: "db_vite" }),
   });
 
   async createTableUsers(): Promise<void> {

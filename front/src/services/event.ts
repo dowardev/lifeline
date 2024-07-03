@@ -27,7 +27,7 @@ import { storage } from "@/main";
 import { toRaw } from "vue";
 import { cloneDeep, parseInt } from "lodash";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
-import { DBService } from "@/services/dbService";
+import { DBService } from "@/js/sqlite";
 import { format, formatISO } from "date-fns";
 import { GrapQLService } from "./graphql";
 import { LocalNotifications } from "@capacitor/local-notifications";
