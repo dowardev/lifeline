@@ -326,7 +326,7 @@ const eventOpenPopoverUserOptions = ref(CustomEvent);
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { UserController } from "@/controllers/userController";
+import { UserController } from "@/js/userController";
 const systemController = new SystemController();
 const userController = new UserController();
 

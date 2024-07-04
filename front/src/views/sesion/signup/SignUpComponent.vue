@@ -141,7 +141,9 @@
                     label-placement="floating"
                     autocomplete="new-password"
                     :type="isPasswordVisible1 ? 'text' : 'password'"
-                    :error-text="v$.form.password.$errors[0]?.$message as string"
+                    :error-text="
+                      v$.form.password.$errors[0]?.$message as string
+                    "
                     :class="[
                       v$.form.password.$errors.length == 0
                         ? 'ion-valid'
@@ -151,7 +153,7 @@
                     @ion-input="form.password = $event.target.value as string"
                     @ion-focus="
                       ($refs.inputPassword as any).$el.classList.add(
-                        'ion-touched'
+                        'ion-touched',
                       );
                       v$.form.password.$touch();
                     "
@@ -308,7 +310,7 @@ import { useRouter } from "vue-router";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { UserController } from "@/controllers/userController";
+import { UserController } from "@/js/userController";
 const systemController = new SystemController();
 const userController = new UserController();
 
@@ -368,7 +370,7 @@ const rules = {
       required: helpers.withMessage(messageError.required, required),
       alpha: helpers.withMessage(
         messageError.text,
-        helpers.regex(/^[a-zA-Z ]*$/)
+        helpers.regex(/^[a-zA-Z ]*$/),
       ),
     },
     user: {
@@ -382,7 +384,7 @@ const rules = {
       required: helpers.withMessage(messageError.required, required),
       minLength: helpers.withMessage(
         "La contraseña debe tener almenos una mayúscula, un numero y tener un tamaño de 8",
-        helpers.regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+        helpers.regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/),
       ),
     },
     // password2: {

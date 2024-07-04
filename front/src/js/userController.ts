@@ -1,6 +1,7 @@
 import { useUserStore } from "../store/userStore";
 import { storeToRefs } from "pinia";
 import {
+  ResendEmailConfirmation,
   SetUserToken,
   User,
   UserLogin,
@@ -8,21 +9,24 @@ import {
   UserRegister,
 } from "../utils/interfaces";
 import { errorBuilder } from "@/utils/errors";
-import { UserService } from "@/services/user";
 import { SessionService } from "@/services/session";
 import {
   GraphQLFragmentNameUser,
   GraphQLQueryNameUser,
+  UserDBType,
   userGrapQLTypeData,
 } from "@/utils/types";
 import { SQLite } from "@/js/sqlite";
-import { SystemController } from "./systemController";
+import { SystemController } from "../controllers/systemController";
 import { TokenService } from "@/services/tokenService";
 import { SystemService } from "@/services/system";
-import { ApiController } from "./apiController";
+import { ApiController } from "../controllers/apiController";
 import { GrapQLService } from "@/services/graphql";
 import { USER_LOGIN } from "@/utils/graphql";
-import { DB } from "../js/db";
+import { DB } from "./db";
+import gql from "graphql-tag";
+import { useMutation } from "@vue/apollo-composable";
+import { storage } from "@/main";
 
 export class UserController {
   // store
@@ -31,7 +35,6 @@ export class UserController {
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
-  userService = new UserService();
   sessionService = new SessionService();
   systemController = new SystemController();
   tokenService = new TokenService();
@@ -157,13 +160,13 @@ export class UserController {
     }
   }
 
-  async getAuthUserToken(): Promise<string | null> {
-    try {
-      return (await this.tokenService.getToken({ name: "auth_token" })) ?? null;
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
+  // async getAuthUserToken(): Promise<string | null> {
+  //   try {
+  //     return (await this.tokenService.getUserToken({ name: "auth_token" })) ?? null;
+  //   } catch (error: any) {
+  //     throw new Error(error);
+  //   }
+  // }
 
   // TODO:remove
   getUserLogged(): User {
@@ -332,5 +335,126 @@ export class UserController {
     } catch (error: any) {
       throw error;
     }
+  }
+
+  // TODO:improve name
+  async setUserToken(params: { token: string }): Promise<void> {
+    const { token } = params;
+    const fields = ["name", "token"];
+    const values = ["user_auth", token];
+
+    try {
+      await this.dbc.insertData({ fields, values, tableName: "Tokens" });
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
+  getUserLang(): Promise<any> {
+    return storage.get("lang");
+  }
+
+  async resendEmailConfirmation(
+    params: ResendEmailConfirmation,
+  ): Promise<void> {
+    const { onError, onDone } = useMutation(
+      gql`
+        mutation resendEmailConfirmation($email: String!) {
+          resendEmailConfirmation(input: { email: $email })
+        }
+      `,
+      {
+        variables: {
+          email: params.email,
+        },
+      },
+    );
+
+    onError((error) => {
+      throw new Error(error.message);
+    });
+
+    return new Promise((resolve) => {
+      onDone((response) => {
+        resolve(response.data);
+      });
+    });
+  }
+
+  // TODO: create new interface for user database
+  async updateLocalUser(params: { user: User }): Promise<void> {
+    const { name, user: userName, email, idSync } = params.user;
+
+    try {
+      const values = [];
+      const fields = [];
+
+      if (name != undefined) {
+        values.push(name);
+        fields.push("name");
+      }
+
+      if (userName != undefined) {
+        values.push(userName);
+        fields.push("user_name");
+      }
+
+      if (email != undefined) {
+        values.push(email);
+        fields.push("email");
+      }
+
+      // if (!imageProfile) {
+      //   values.push(imageProfile);
+      //   fields.push("image_profile");
+      // }
+
+      if (idSync != undefined) {
+        values.push(idSync);
+        fields.push("id_sync");
+      }
+
+      let query = `UPDATE Users SET  `;
+
+      fields.forEach((field, index) => {
+        query += `${field} = ?`;
+        if (index < fields.length - 1) {
+          query += ", ";
+        }
+      });
+
+      query += ` WHERE id="0"`;
+
+      await this.dbc.updateData({
+        query: query,
+        values: values,
+      });
+      const queryss = `SELECT * FROM Users `;
+      (await this.dbc.getData({ query: queryss }))[0] as any;
+    } catch (error: any) {
+      throw new Error(error);
+    }
+  }
+
+  // TODO: remove
+  async getLocalUser(): Promise<UserDBType> {
+    const query = `SELECT * FROM Users inner join Tokens on user_id=1`;
+    try {
+      const result = (await this.dbc.getData({ query }))![0] as any;
+      return result ?? null;
+    } catch (error: any) {
+      throw Error(error);
+    }
+  }
+
+  async deleteUser(paramas: { userId: string }): Promise<void> {
+    const { userId } = paramas;
+    const query = `DELETE FROM Users WHERE id=${userId}`;
+    await this.dbc.deleteData({ query });
+  }
+
+  async deleteUsers(): Promise<void> {
+    const query = `DELETE FROM Users`;
+    await this.dbc.deleteData({ query });
   }
 }

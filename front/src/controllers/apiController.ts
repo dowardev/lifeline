@@ -1,5 +1,5 @@
 import { DocumentNode, InMemoryCache, gql } from "@apollo/client/core";
-import { UserController } from "./userController";
+import { UserController } from "../js/userController";
 import { TokenService } from "@/services/tokenService";
 import { GrapQLService } from "@/services/graphql";
 
@@ -33,7 +33,7 @@ export class ApiController {
     const { query, options } = params;
     const cache = new InMemoryCache();
     const user = await this.userController.getUserLogged2();
-    const token = await this.tokenService.getToken({
+    const token = await this.tokenService.getUserToken({
       name: "auth_token",
       userId: user.id!,
     });
@@ -60,7 +60,7 @@ export class ApiController {
       let token = "";
 
       if (Object.keys(user).length > 0) {
-        token = await this.tokenService.getToken({
+        token = await this.tokenService.getUserToken({
           name: "auth_token",
           userId: user.id!,
         });

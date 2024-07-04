@@ -111,8 +111,8 @@ export class SQLite {
     }
   }
 
-  async updateData(params: { query: string }): Promise<void> {
-    const { query } = params;
+  async updateData(params: { query: string; values: any[] }): Promise<void> {
+    const { query, values } = params;
     let db = null as any;
 
     try {
@@ -123,7 +123,7 @@ export class SQLite {
     }
 
     try {
-      await db.query(query);
+      await db.query(query, values);
     } catch (error) {
       throw error;
     }

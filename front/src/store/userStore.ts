@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { User, User2 } from "../utils/interfaces";
 import userAvatar from "@/assets/otros/user.png";
 import { ref, watch } from "vue";
-import { UserController } from "@/controllers/userController";
+import { UserController } from "@/js/userController";
 
 export const useUserStore = defineStore("user", () => {
   const user = ref({} as User);

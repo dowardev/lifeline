@@ -43,9 +43,9 @@ export class DB {
     return await this.dbSystem.getData({ query });
   }
 
-  async updateData(): Promise<any> {
-    const query = "";
-    return await this.dbSystem.updateData({ query });
+  async updateData(params: { query: string; values: any[] }): Promise<any> {
+    const { query, values } = params;
+    return await this.dbSystem.updateData({ query, values });
   }
 
   async deleteData(params: { query: string }): Promise<any> {

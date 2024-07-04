@@ -52,7 +52,9 @@
                         label-placement="floating"
                         autocomplete="email"
                         type="email"
-                        :error-text="v$.form.email.$errors[0]?.$message as string"
+                        :error-text="
+                          v$.form.email.$errors[0]?.$message as string
+                        "
                         :class="[
                           v$.form.email.$errors.length == 0
                             ? 'ion-valid'
@@ -62,7 +64,7 @@
                         @ion-input="form.email = $event.target.value as string"
                         @ion-focus="
                           ($refs.inputMail as any).$el.classList.add(
-                            'ion-touched'
+                            'ion-touched',
                           );
                           v$.form.email.$touch();
                         "
@@ -94,7 +96,9 @@
                         label-placement="floating"
                         autocomplete="current-password"
                         :type="isPasswordVisible ? 'text' : 'password'"
-                        :error-text="v$.form.password.$errors[0]?.$message as string"
+                        :error-text="
+                          v$.form.password.$errors[0]?.$message as string
+                        "
                         :class="[
                           v$.form.password.$errors.length == 0
                             ? 'ion-valid'
@@ -106,7 +110,7 @@
                         "
                         @ion-focus="
                           ($refs.inputPassword as any).$el.classList.add(
-                            'ion-touched'
+                            'ion-touched',
                           );
                           v$.form.password.$touch();
                         "
@@ -235,7 +239,7 @@ import { useRouter } from "vue-router";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { UserController } from "@/controllers/userController";
+import { UserController } from "@/js/userController";
 const systemController = new SystemController();
 const userController = new UserController();
 
@@ -345,7 +349,7 @@ async function login(): Promise<void> {
     if (e.message == "Disabled user") {
       presentToast(
         "Cuenta de usuario deshabilitada, para mas información contacte a soporte.",
-        "danger"
+        "danger",
       );
       return;
     }

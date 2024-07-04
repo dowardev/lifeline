@@ -3,7 +3,7 @@ import { RouteRecordRaw } from "vue-router";
 // import HomePage from '../views/HomePage.vue'
 import MainPage from "@/views/main/MainPage.vue";
 
-import { UserController } from "@/controllers/userController";
+import { UserController } from "@/js/userController";
 import { User } from "@/utils/interfaces";
 
 async function loadUser(): Promise<void> {

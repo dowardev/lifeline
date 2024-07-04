@@ -5,10 +5,11 @@ export class TokenService {
   dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
+  private tableName = "Tokens";
 
-  async getToken(params: { name: string; userId: string }): Promise<any> {
+  async getUserToken(params: { name: string; userId: string }): Promise<any> {
     const { name, userId } = params;
-    const query = `SELECT token FROM Tokens WHERE user_id=${userId} AND name='${name}'`;
+    const query = `SELECT token FROM ${this.tableName} WHERE user_id=${userId} AND name='${name}'`;
     const result = await this.dbc.getData({
       query,
     });
@@ -17,7 +18,7 @@ export class TokenService {
   }
 
   // TODO: move to controller
-  async setToken(params: {
+  async setUserToken(params: {
     name: string;
     value: string;
     userId: string;
@@ -32,17 +33,22 @@ export class TokenService {
       tableName: "Tokens",
     });
 
-    (await this.dbc.getData({ query: "SELECT * FROM Tokens" }))[0] as any;
+    (
+      await this.dbc.getData({ query: "SELECT * FROM ${this.tableName}" })
+    )[0] as any;
   }
 
-  async removeToken(params: { name: string; userId: string }): Promise<void> {
+  async removeUserToken(params: {
+    name: string;
+    userId: string;
+  }): Promise<void> {
     const { name, userId } = params;
-    const query = `DELETE FROM Tokens WHERE name='${name}' AND user_id=${userId}`;
+    const query = `DELETE FROM ${this.tableName} WHERE name='${name}' AND user_id=${userId}`;
     await this.dbc.deleteData({ query: query });
   }
 
-  async removeTokens(): Promise<void> {
-    const query = `DELETE FROM Tokens`;
+  async removeAllTokens(): Promise<void> {
+    const query = `DELETE FROM ${this.tableName}`;
     await this.dbc.deleteData({
       query: query,
     });

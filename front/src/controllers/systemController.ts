@@ -11,22 +11,20 @@ import { SQLite } from "@/js/sqlite";
 import { SystemService } from "@/services/system";
 import { cloneDeep } from "lodash";
 import { useEventsStore } from "@/store/eventsStore";
-import { UserService } from "@/services/user";
 import { EventService } from "@/services/event";
 import { TokenService } from "@/services/tokenService";
 import { ScheduleService } from "@/services/schedule";
 import { DB } from "../js/db";
+import { UserController } from "../js/userController";
 
 export class SystemController {
   // store
   systemStore = useSystemStore();
   eventsStore = useEventsStore();
-  // services
   dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
   systemService = new SystemService();
-  userService = new UserService();
   eventService = new EventService();
   tokenService = new TokenService();
   scheduleService = new ScheduleService();
@@ -202,18 +200,20 @@ export class SystemController {
     users: boolean;
   }): Promise<void> {
     const { events, schedule, reminders, tokens, users } = params;
+    const userController = new UserController();
     if (reminders) await this.eventService.deleteReminders();
     if (events) await this.eventService.deleteEvents();
     if (schedule) await this.scheduleService.deleteSchedule();
-    if (tokens) await this.tokenService.removeTokens();
-    if (users) await this.userService.deleteUsers();
+    if (tokens) await this.tokenService.removeAllTokens();
+    if (users) await userController.deleteUsers();
   }
 
   async deleteUserdata(params: { userId: string }): Promise<void> {
     const { userId } = params;
+    const userController = new UserController();
     await this.eventService.deleteUserEvents({ userId });
-    await this.tokenService.removeToken({ name: "authToken", userId });
-    await this.userService.deleteUser({ userId });
+    await this.tokenService.removeUserToken({ name: "authToken", userId });
+    await userController.deleteUser({ userId });
   }
 
   // async createTableTokens(): Promise<void> {
