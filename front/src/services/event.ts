@@ -29,15 +29,13 @@ import { cloneDeep, parseInt } from "lodash";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { DBService } from "@/js/sqlite";
 import { format, formatISO } from "date-fns";
-import { GrapQLService } from "./graphql";
 import { LocalNotifications } from "@capacitor/local-notifications";
-import { ApiController } from "@/controllers/apiController";
-
-const grapService = new GrapQLService();
+import { ApiController } from "@/js/apiController";
 
 export class EventService {
   // services
   // dbService = new DBService();
+  apiController = new ApiController();
 
   async createEvent(params: { event: Event }): Promise<{ id: number }> {
     const { event } = params;

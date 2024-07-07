@@ -20,8 +20,7 @@ import { SQLite } from "@/js/sqlite";
 import { SystemController } from "../controllers/systemController";
 import { TokenService } from "@/services/tokenService";
 import { SystemService } from "@/services/system";
-import { ApiController } from "../controllers/apiController";
-import { GrapQLService } from "@/services/graphql";
+import { ApiController } from "../js/apiController";
 import { USER_LOGIN } from "@/utils/graphql";
 import { DB } from "./db";
 import gql from "graphql-tag";
@@ -39,8 +38,6 @@ export class UserController {
   systemController = new SystemController();
   tokenService = new TokenService();
   systemService = new SystemService();
-  // apiController = new ApiController();
-  grapQLService = new GrapQLService();
 
   refs = storeToRefs(this.userStore);
 

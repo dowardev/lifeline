@@ -6,23 +6,23 @@ import {
 
 import { errorBuilder } from "@/utils/errors";
 import { USER_LOGIN, USER_LOGOUT, USER_REGISTER } from "@/utils/graphql";
-import { GrapQLService } from "./graphql";
+import { ApiController } from "@/js/apiController";
 
 export class SessionService {
-  grapQLService = new GrapQLService();
+  grapQLController = new ApiController();
 
   async userRegister(params: UserRegister): Promise<void> {
     const { name, email, user, password } = params;
 
     try {
-      const query = this.grapQLService.graphqlMutationBuilder({
+      const query = this.grapQLController.graphqlMutationBuilder({
         name: USER_REGISTER,
         fragment: "UserRegister",
         mutationName: "register",
         inputName: "RegisterInput",
       });
 
-      await this.grapQLService.executeGrapMutation({
+      await this.grapQLController.executeGrapMutation({
         query,
         input: { name, email, user, password },
       });
@@ -41,13 +41,13 @@ export class SessionService {
    */
   async logoutOnServer(): Promise<void> {
     try {
-      const query = this.grapQLService.graphqlMutationBuilder({
+      const query = this.grapQLController.graphqlMutationBuilder({
         name: USER_LOGOUT,
         fragment: "UserLogout",
         mutationName: "userLogout",
       });
 
-      await this.grapQLService.executeGrapMutation({
+      await this.grapQLController.executeGrapMutation({
         query,
       });
     } catch (error: any) {

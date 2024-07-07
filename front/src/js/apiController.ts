@@ -1,29 +1,37 @@
-import { DocumentNode, InMemoryCache, gql } from "@apollo/client/core";
+import {
+  ApolloClient,
+  DocumentNode,
+  InMemoryCache,
+  gql,
+} from "@apollo/client/core";
 import { UserController } from "../js/userController";
 import { TokenService } from "@/services/tokenService";
-import { GrapQLService } from "@/services/graphql";
 
 // queries
 import { USER_MENU } from "@/utils/graphql";
+import {
+  provideApolloClient,
+  useMutation,
+  useQuery,
+} from "@vue/apollo-composable";
 
 export class ApiController {
-  uri = "";
+  grapQLUri = "";
 
   // controllers
-  userController = new UserController();
+  // userController = new UserController();
 
   // services
   tokenService = new TokenService();
-  graphqlService = new GrapQLService();
 
   constructor() {
     const mode = process.env.NODE_ENV;
     if (mode == "development") {
-      this.uri = "http://localhost:8000/graphql";
+      this.grapQLUri = "http://localhost:8000/graphql";
     } else {
-      this.uri = "https://lifeline-back.dowar.xyz/graphql";
+      this.grapQLUri = "https://lifeline-back.dowar.xyz/graphql";
     }
-    // this.uri = "https://lifeline-back.dowar.xyz/graphql";
+    // this.grapQLUri = "https://lifeline-back.dowar.xyz/graphql";
   }
 
   async executeGrapQuery(params: {
@@ -32,20 +40,32 @@ export class ApiController {
   }): Promise<any> {
     const { query, options } = params;
     const cache = new InMemoryCache();
-    const user = await this.userController.getUserLogged2();
+    const userController = new UserController();
+    const user = await userController.getUserLogged2();
     const token = await this.tokenService.getUserToken({
       name: "auth_token",
       userId: user.id!,
     });
     if (!token) throw new Error("No token found");
 
-    return await this.graphqlService.executeGrapQuery({
-      query,
-      options,
-      uri: this.uri,
-      token,
-      cache,
-    });
+    try {
+      const apolloClient = new ApolloClient({
+        cache,
+        uri: this.grapQLUri,
+        headers: {
+          Authorization: token,
+        },
+      });
+      const { refetch, result } = provideApolloClient(apolloClient)(() =>
+        useQuery(query, null, {
+          fetchPolicy: "cache-first",
+        }),
+      );
+      if (options.refetch) await refetch();
+      return result;
+    } catch (error: any) {
+      throw error;
+    }
   }
 
   async executeGrapMutatation(params: {
@@ -54,9 +74,10 @@ export class ApiController {
   }): Promise<any> {
     const { query, input } = params;
     const cache = new InMemoryCache();
+    const userController = new UserController();
 
     try {
-      const user = await this.userController.getUserLogged2();
+      const user = await userController.getUserLogged2();
       let token = "";
 
       if (Object.keys(user).length > 0) {
@@ -67,12 +88,29 @@ export class ApiController {
         if (!token) throw new Error("No token found");
       }
 
-      return await this.graphqlService.executeGrapMutation({
-        query,
-        input,
+      const apolloClient = new ApolloClient({
         cache,
-        token,
-        uri: this.uri,
+        uri: this.grapQLUri,
+        headers: {
+          Authorization: token,
+        },
+      });
+
+      const {
+        mutate: mutate,
+        onDone,
+        onError,
+      } = provideApolloClient(apolloClient)(() => useMutation(query));
+
+      if (!input) mutate();
+      if (input) mutate({ input });
+
+      return new Promise((resolve, reject) => {
+        onDone((response) => {
+          resolve(response.data);
+        });
+
+        onError((error) => reject(error));
       });
     } catch (error) {
       throw error;
