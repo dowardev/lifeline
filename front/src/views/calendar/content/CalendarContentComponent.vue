@@ -26,7 +26,7 @@ import CalendarComponent from "@/components/calendar/CalendarComponent.vue";
 
 // controllers
 import { EventController } from "@/controllers/eventController";
-import { CalendarController } from "@/controllers/calendarController";
+import { CalendarController } from "@/js/calendarController";
 const eventController = new EventController();
 const calendarController = new CalendarController();
 
@@ -40,7 +40,7 @@ watch(
   () => eventController.getEvents(),
   async (response) => {
     events.value = response;
-  }
+  },
 );
 
 // mounted

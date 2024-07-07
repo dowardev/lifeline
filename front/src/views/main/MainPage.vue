@@ -124,7 +124,7 @@ import { useRoute } from "vue-router";
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { EventController } from "@/controllers/eventController";
-import { CalendarController } from "@/controllers/calendarController";
+import { CalendarController } from "@/js/calendarController";
 const systemController = new SystemController();
 const eventController = new EventController();
 const calendarController = new CalendarController();

@@ -8,7 +8,7 @@ import { storage } from "@/main";
 import { ViewCalendar, ViewMode } from "@/utils/types";
 import { EventService } from "@/services/event";
 import { ReminderController } from "./reminderController";
-import { CalendarController } from "./calendarController";
+import { CalendarController } from "../js/calendarController";
 import { endOfMonth, startOfMonth } from "date-fns";
 import messages from "./messages.json";
 

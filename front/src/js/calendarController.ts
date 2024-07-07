@@ -10,7 +10,7 @@ import { ViewCalendar, CalendarDataStatus } from "@/utils/types";
 
 export class CalendarController {
   private calendarStore = useCalendar();
-  private CalendarService = new CalendarService();
+  // private CalendarService = new CalendarService();
 
   setCurrentDates(params: { dates: CalendarViewDates }): void {
     const { dates } = params;
@@ -55,11 +55,11 @@ export class CalendarController {
     mode: ViewCalendar;
   }): Promise<void> {
     const { mode } = params;
-    await this.CalendarService.setCalendarModeView({ mode });
+    await storage.set("calendarModeView", mode);
   }
 
   async getStoredCalendarModeView(): Promise<ViewCalendar> {
-    return await this.CalendarService.getCalendarModeView();
+    return (await storage.get("calendarModeView")) ?? "week";
   }
 
   getCalendarModeView(): ViewCalendar {
