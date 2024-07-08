@@ -148,7 +148,7 @@ import ShareComponent from "./share/ShareComponent.vue";
 import RemindersComponent from "./reminder/RemindersComponent.vue";
 
 // controllers
-import { DocumentController } from "@/controllers/documentController";
+import { DocumentController } from "@/js/documentController";
 const documentController = new DocumentController();
 
 const props = defineProps({ documentId: { default: "", type: String } });

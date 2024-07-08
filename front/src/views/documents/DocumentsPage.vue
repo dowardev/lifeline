@@ -102,7 +102,7 @@ storage.create();
 const router = useRouter();
 
 // controllers
-import { DocumentController } from "@/controllers/documentController";
+import { DocumentController } from "@/js/documentController";
 const documentController = new DocumentController();
 
 // refs
