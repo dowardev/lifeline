@@ -11,11 +11,11 @@ import { SQLite } from "@/js/sqlite";
 import { SystemService } from "@/services/system";
 import { cloneDeep } from "lodash";
 import { useEventsStore } from "@/store/eventsStore";
-import { EventService } from "@/services/event";
 import { TokenService } from "@/services/tokenService";
 import { ScheduleService } from "@/services/schedule";
 import { DB } from "../js/db";
 import { UserController } from "../js/userController";
+import { EventController } from "@/js/eventController";
 
 export class SystemController {
   // store
@@ -25,7 +25,6 @@ export class SystemController {
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
   systemService = new SystemService();
-  eventService = new EventService();
   tokenService = new TokenService();
   scheduleService = new ScheduleService();
 
@@ -201,8 +200,10 @@ export class SystemController {
   }): Promise<void> {
     const { events, schedule, reminders, tokens, users } = params;
     const userController = new UserController();
-    if (reminders) await this.eventService.deleteReminders();
-    if (events) await this.eventService.deleteEvents();
+    const eventController = new EventController();
+
+    if (reminders) await eventController.deleteReminders();
+    if (events) await eventController.deleteEvents();
     if (schedule) await this.scheduleService.deleteSchedule();
     if (tokens) await this.tokenService.removeAllTokens();
     if (users) await userController.deleteUsers();
@@ -211,7 +212,9 @@ export class SystemController {
   async deleteUserdata(params: { userId: string }): Promise<void> {
     const { userId } = params;
     const userController = new UserController();
-    await this.eventService.deleteUserEvents({ userId });
+    const eventController = new EventController();
+
+    await eventController.deleteUserEvents({ userId });
     await this.tokenService.removeUserToken({ name: "authToken", userId });
     await userController.deleteUser({ userId });
   }

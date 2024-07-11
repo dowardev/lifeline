@@ -1189,4 +1189,16 @@ export class EventController {
       if (error.message != "Unauthorized") throw error;
     }
   }
+
+  async deleteUserEvents(params: { userId: string }): Promise<void> {
+    const { userId } = params;
+
+    const query = `Delete FROM Events WHERE userId='${userId}'`;
+    // const query = `Delete FROM Events`;
+    try {
+      await this.dbc.deleteData({ query });
+    } catch (error: any) {
+      throw error;
+    }
+  }
 }
