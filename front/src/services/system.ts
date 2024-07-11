@@ -9,7 +9,7 @@ import gql from "graphql-tag";
 import { storage } from "@/main";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 import { ScheduleController } from "@/controllers/scheduleController";
 import { DBService } from "../js/sqlite";
 import { TokenService } from "./tokenService";

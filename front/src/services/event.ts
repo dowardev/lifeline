@@ -37,78 +37,78 @@ export class EventService {
   // dbService = new DBService();
   apiController = new ApiController();
 
-  async createEvent(params: { event: Event }): Promise<{ id: number }> {
-    const { event } = params;
-    const data = {
-      name: event.name,
-      dateStart: event.reminders.start,
-      dateEnd: event.reminders.end,
-      notifications: JSON.stringify(event.reminders.notifications),
-      repeat: JSON.stringify(event.reminders.repeat),
-      guests: JSON.stringify(event.guests),
-      timeZone: event.timezone,
-      description: event.description,
-      availability: event.availability,
-      syncStatus: event.syncStatus ?? false,
-    };
+  // async createEvent(params: { event: Event }): Promise<{ id: number }> {
+  //   const { event } = params;
+  //   const data = {
+  //     name: event.name,
+  //     dateStart: event.reminders.start,
+  //     dateEnd: event.reminders.end,
+  //     notifications: JSON.stringify(event.reminders.notifications),
+  //     repeat: JSON.stringify(event.reminders.repeat),
+  //     guests: JSON.stringify(event.guests),
+  //     timeZone: event.timezone,
+  //     description: event.description,
+  //     availability: event.availability,
+  //     syncStatus: event.syncStatus ?? false,
+  //   };
+  //
+  //   try {
+  //     const query = grapService.graphqlMutationBuilder({
+  //       name: CREATE_EVENTS,
+  //       fragment: "CreateEvent",
+  //       mutationName: "createEvent",
+  //       inputName: "CreateEventInput",
+  //     });
+  //
+  //     const { id } = (
+  //       await grapService.executeGrapMutation({
+  //         query,
+  //         input: data,
+  //       })
+  //     ).createEvent;
+  //
+  //     return { id };
+  //   } catch (error: any) {
+  //     if (error.message != "Unauthorized")
+  //       throw errorBuilder({ message: error.message, typeError: "authError" });
+  //     throw errorBuilder({ message: error.message });
+  //   }
+  // }
 
-    try {
-      const query = grapService.graphqlMutationBuilder({
-        name: CREATE_EVENTS,
-        fragment: "CreateEvent",
-        mutationName: "createEvent",
-        inputName: "CreateEventInput",
-      });
-
-      const { id } = (
-        await grapService.executeGrapMutation({
-          query,
-          input: data,
-        })
-      ).createEvent;
-
-      return { id };
-    } catch (error: any) {
-      if (error.message != "Unauthorized")
-        throw errorBuilder({ message: error.message, typeError: "authError" });
-      throw errorBuilder({ message: error.message });
-    }
-  }
-
-  async updateEventServer(params: { event: Event }): Promise<void> {
-    const { event } = params;
-    const data = {
-      id: event.idSync,
-      name: event.name,
-      dateStart: event.reminders.start,
-      dateEnd: event.reminders.end,
-      notifications: JSON.stringify(event.reminders.notifications),
-      repeat: JSON.stringify(event.reminders.repeat),
-      guests: JSON.stringify(event.guests),
-      timeZone: event.timezone,
-      description: event.description,
-      availability: event.availability,
-      syncStatus: event.syncStatus ?? false,
-    };
-
-    try {
-      const query = grapService.graphqlMutationBuilder({
-        name: UPDATE_EVENTS,
-        fragment: "UpdateEvent",
-        mutationName: "updateEvent",
-        inputName: "UpdateEventInput",
-      });
-
-      await grapService.executeGrapMutation({
-        query,
-        input: data,
-      });
-    } catch (error: any) {
-      if (error.message != "Unauthorized")
-        throw errorBuilder({ message: error.message, typeError: "authError" });
-      throw errorBuilder({ message: error.message });
-    }
-  }
+  // async updateEventServer(params: { event: Event }): Promise<void> {
+  //   const { event } = params;
+  //   const data = {
+  //     id: event.idSync,
+  //     name: event.name,
+  //     dateStart: event.reminders.start,
+  //     dateEnd: event.reminders.end,
+  //     notifications: JSON.stringify(event.reminders.notifications),
+  //     repeat: JSON.stringify(event.reminders.repeat),
+  //     guests: JSON.stringify(event.guests),
+  //     timeZone: event.timezone,
+  //     description: event.description,
+  //     availability: event.availability,
+  //     syncStatus: event.syncStatus ?? false,
+  //   };
+  //
+  //   try {
+  //     const query = grapService.graphqlMutationBuilder({
+  //       name: UPDATE_EVENTS,
+  //       fragment: "UpdateEvent",
+  //       mutationName: "updateEvent",
+  //       inputName: "UpdateEventInput",
+  //     });
+  //
+  //     await grapService.executeGrapMutation({
+  //       query,
+  //       input: data,
+  //     });
+  //   } catch (error: any) {
+  //     if (error.message != "Unauthorized")
+  //       throw errorBuilder({ message: error.message, typeError: "authError" });
+  //     throw errorBuilder({ message: error.message });
+  //   }
+  // }
 
   //  async  getEvents(params: GetEvents): Promise<Array<Event>> {
   //   const { onResult, onError, result, refetch } = useQuery(
@@ -180,6 +180,7 @@ export class EventService {
   //   }
   // );
   // }
+
   async getEventLocal(params: { id: number }): Promise<Event> {
     const { id } = params;
 
@@ -268,100 +269,100 @@ export class EventService {
   // );
   // }
 
-  async saveLocalEvent(params: { event: Event }): Promise<void> {
-    const { event } = params;
-
-    try {
-      const valuesEvent = [
-        event.availability,
-        event.description,
-        JSON.stringify(event.guests),
-        event.idSync,
-        event.name,
-        event.syncStatus,
-        event.timezone,
-        event.status,
-      ];
-      const fieldsEvent = [
-        "availability",
-        "description",
-        "guests",
-        "idSync",
-        "name",
-        "syncStatus",
-        "timezone",
-        "status",
-      ];
-
-      let queryEvents = `
-        INSERT INTO Events(
-       ${fieldsEvent.join(", ")}
-     )
-     
-   `;
-      queryEvents += `values (`;
-      for (let index = 0; index < valuesEvent.length; index++) {
-        if (index < fieldsEvent.length - 1) queryEvents += "?, ";
-        else queryEvents += "? ";
-      }
-      queryEvents += `)RETURNING "Id"`;
-      const eventId = (
-        await dbService.executeQuery({
-          query: queryEvents,
-          values: valuesEvent,
-        })
-      ).values![0].id;
-
-      const valuesReminders = [
-        eventId,
-        event.reminders.start
-          .toISOString()
-          .replace(/T/, " ")
-          .replace(/\..+/, "") + "Z",
-        event.reminders.end
-          .toISOString()
-          .replace(/T/, " ")
-          .replace(/\..+/, "") + "Z",
-        JSON.stringify(event.reminders.notifications),
-        false,
-        event.reminders.repeat?.frecuency,
-        event.reminders.repeat?.type,
-        JSON.stringify(event.reminders.repeat?.daysWeek ?? []),
-        JSON.stringify(event.reminders.idReminders ?? []),
-      ];
-      const fieldsReminders = [
-        "event_id",
-        "start",
-        "end",
-        "notifications",
-        "repeat",
-        "frecuency",
-        "type",
-        "daysWeek",
-        "id_reminders",
-      ];
-
-      let queryReminders = `
-        INSERT INTO Reminders(
-       ${fieldsReminders.join(", ")}
-     )
-   `;
-
-      queryReminders += `values (`;
-      for (let index = 0; index < valuesReminders.length; index++) {
-        if (index < fieldsReminders.length - 1) queryReminders += "?, ";
-        else queryReminders += "? ";
-      }
-      queryReminders += `)`;
-      await dbService.executeQuery({
-        query: queryReminders,
-        values: valuesReminders,
-      });
-      // console.log(await this.getEventsLocal());
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
+  // async saveLocalEvent(params: { event: Event }): Promise<void> {
+  //   const { event } = params;
+  //
+  //   try {
+  //     const valuesEvent = [
+  //       event.availability,
+  //       event.description,
+  //       JSON.stringify(event.guests),
+  //       event.idSync,
+  //       event.name,
+  //       event.syncStatus,
+  //       event.timezone,
+  //       event.status,
+  //     ];
+  //     const fieldsEvent = [
+  //       "availability",
+  //       "description",
+  //       "guests",
+  //       "idSync",
+  //       "name",
+  //       "syncStatus",
+  //       "timezone",
+  //       "status",
+  //     ];
+  //
+  //     let queryEvents = `
+  //       INSERT INTO Events(
+  //      ${fieldsEvent.join(", ")}
+  //    )
+  //
+  //  `;
+  //     queryEvents += `values (`;
+  //     for (let index = 0; index < valuesEvent.length; index++) {
+  //       if (index < fieldsEvent.length - 1) queryEvents += "?, ";
+  //       else queryEvents += "? ";
+  //     }
+  //     queryEvents += `)RETURNING "Id"`;
+  //     const eventId = (
+  //       await dbService.executeQuery({
+  //         query: queryEvents,
+  //         values: valuesEvent,
+  //       })
+  //     ).values![0].id;
+  //
+  //     const valuesReminders = [
+  //       eventId,
+  //       event.reminders.start
+  //         .toISOString()
+  //         .replace(/T/, " ")
+  //         .replace(/\..+/, "") + "Z",
+  //       event.reminders.end
+  //         .toISOString()
+  //         .replace(/T/, " ")
+  //         .replace(/\..+/, "") + "Z",
+  //       JSON.stringify(event.reminders.notifications),
+  //       false,
+  //       event.reminders.repeat?.frecuency,
+  //       event.reminders.repeat?.type,
+  //       JSON.stringify(event.reminders.repeat?.daysWeek ?? []),
+  //       JSON.stringify(event.reminders.idReminders ?? []),
+  //     ];
+  //     const fieldsReminders = [
+  //       "event_id",
+  //       "start",
+  //       "end",
+  //       "notifications",
+  //       "repeat",
+  //       "frecuency",
+  //       "type",
+  //       "daysWeek",
+  //       "id_reminders",
+  //     ];
+  //
+  //     let queryReminders = `
+  //       INSERT INTO Reminders(
+  //      ${fieldsReminders.join(", ")}
+  //    )
+  //  `;
+  //
+  //     queryReminders += `values (`;
+  //     for (let index = 0; index < valuesReminders.length; index++) {
+  //       if (index < fieldsReminders.length - 1) queryReminders += "?, ";
+  //       else queryReminders += "? ";
+  //     }
+  //     queryReminders += `)`;
+  //     await dbService.executeQuery({
+  //       query: queryReminders,
+  //       values: valuesReminders,
+  //     });
+  //     // console.log(await this.getEventsLocal());
+  //   } catch (error: any) {
+  //     throw new Error(error);
+  //   }
+  // }
 
   // TODO: improve
   async updateLocalEvent(params: {
@@ -505,88 +506,88 @@ export class EventService {
     }
   }
 
-  async getEventsLocal(): Promise<Array<Event>> {
-    const db = await dbService.dbConnection();
-    if ((await db.isDBOpen()).result == false) await db.open();
+  // async getEventsLocal(): Promise<Array<Event>> {
+  //   const db = await dbService.dbConnection();
+  //   if ((await db.isDBOpen()).result == false) await db.open();
+  //
+  //   const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id`;
+  //   try {
+  //     const result = (await db.query(query)).values as any[];
+  //     const events: Event[] = [];
+  //
+  //     result.forEach((event: any) => {
+  //       events.push({
+  //         id: event.id,
+  //         name: event.name,
+  //         guests: JSON.parse(event.guests as any),
+  //         reminders: {
+  //           start: new Date(event.start),
+  //           end: new Date(event.end),
+  //           notifications: JSON.parse(event.notifications),
+  //           repeat: {
+  //             frecuency: event.frecuency,
+  //             type: event.type,
+  //             daysWeek: JSON.parse(event.daysWeek),
+  //           },
+  //           idReminders: JSON.parse(event.id_reminders ?? []),
+  //         },
+  //         timezone: event.timezone,
+  //         description: event.description,
+  //         availability: event.availability,
+  //         idSync: event.idSync,
+  //         syncStatus: event.syncStatus == 0 ? false : true,
+  //         status: event.status,
+  //       });
+  //     });
+  //     return events;
+  //   } catch (error: any) {
+  //     throw new Error(error);
+  //   }
+  // }
 
-    const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id`;
-    try {
-      const result = (await db.query(query)).values as any[];
-      const events: Event[] = [];
-
-      result.forEach((event: any) => {
-        events.push({
-          id: event.id,
-          name: event.name,
-          guests: JSON.parse(event.guests as any),
-          reminders: {
-            start: new Date(event.start),
-            end: new Date(event.end),
-            notifications: JSON.parse(event.notifications),
-            repeat: {
-              frecuency: event.frecuency,
-              type: event.type,
-              daysWeek: JSON.parse(event.daysWeek),
-            },
-            idReminders: JSON.parse(event.id_reminders ?? []),
-          },
-          timezone: event.timezone,
-          description: event.description,
-          availability: event.availability,
-          idSync: event.idSync,
-          syncStatus: event.syncStatus == 0 ? false : true,
-          status: event.status,
-        });
-      });
-      return events;
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
-  async getEvents(params: { graphql: Graphql }): Promise<Event[] | null> {
-    const { refetch = false, name, fragment } = params.graphql;
-    const apiController = new ApiController();
-
-    try {
-      const query = apiController.graphqlQueryBuilder({
-        name,
-        fragment,
-        mutationName: "events",
-      });
-
-      let response = await apiController.executeGrapQuery({
-        query,
-        options: { refetch },
-      });
-      if (!response.value.events.events) return [] as Event[];
-      response = (response.value.events.events as any[]).map((event: any) => {
-        return {
-          description: event.description,
-          guests: JSON.parse(event.guests),
-          idSync: parseInt(event.id),
-          timezone: event.time_zone,
-          name: event.title,
-          reminders: {
-            start: new Date(event.date_start),
-            end: new Date(event.date_end),
-            repeat: {
-              frecuency: JSON.parse(event.repeat).frecuency,
-              type: JSON.parse(event.repeat).type,
-              daysWeek: JSON.parse(event.repeat).daysWeek ?? [],
-            },
-            notifications: JSON.parse(event.notifications) ?? [],
-          },
-          availability: event.availability,
-          syncStatus: true,
-          status: "active",
-        };
-      });
-      return response;
-    } catch (error: any) {
-      if (error.message != "Unauthorized") throw error;
-    }
-  }
+  // async getEvents(params: { graphql: Graphql }): Promise<Event[] | null> {
+  //   const { refetch = false, name, fragment } = params.graphql;
+  //   const apiController = new ApiController();
+  //
+  //   try {
+  //     const query = apiController.graphqlQueryBuilder({
+  //       name,
+  //       fragment,
+  //       mutationName: "events",
+  //     });
+  //
+  //     let response = await apiController.executeGrapQuery({
+  //       query,
+  //       options: { refetch },
+  //     });
+  //     if (!response.value.events.events) return [] as Event[];
+  //     response = (response.value.events.events as any[]).map((event: any) => {
+  //       return {
+  //         description: event.description,
+  //         guests: JSON.parse(event.guests),
+  //         idSync: parseInt(event.id),
+  //         timezone: event.time_zone,
+  //         name: event.title,
+  //         reminders: {
+  //           start: new Date(event.date_start),
+  //           end: new Date(event.date_end),
+  //           repeat: {
+  //             frecuency: JSON.parse(event.repeat).frecuency,
+  //             type: JSON.parse(event.repeat).type,
+  //             daysWeek: JSON.parse(event.repeat).daysWeek ?? [],
+  //           },
+  //           notifications: JSON.parse(event.notifications) ?? [],
+  //         },
+  //         availability: event.availability,
+  //         syncStatus: true,
+  //         status: "active",
+  //       };
+  //     });
+  //     return response;
+  //   } catch (error: any) {
+  //     if (error.message != "Unauthorized") throw error;
+  //   }
+  // }
 
   async getEvent(params: { id: string }): Promise<Event | null> {
     const id = params.id;
@@ -612,68 +613,68 @@ export class EventService {
     }
   }
 
-  async pushEvent(params: { event: Event }): Promise<void> {
-    const { event } = params;
-    const data = {
-      id: event.idSync ?? "",
-      name: event.name,
-      dateStart: event.reminders.start,
-      dateEnd: event.reminders.end,
-      notifications: JSON.stringify(event.reminders.notifications),
-      repeat: JSON.stringify(event.reminders.repeat),
-      guests: JSON.stringify(event.guests),
-      timeZone: event.timezone,
-      description: event.description,
-      availability: event.availability,
-      syncStatus: event.syncStatus ?? false,
-    };
-
-    try {
-      const query = grapService.graphqlMutationBuilder({
-        name: SYNC_EVENTS,
-        fragment: "SyncEvents",
-        mutationName: "syncEvents",
-        inputName: "SyncEventsInput",
-      });
-
-      await grapService.executeGrapMutation({
-        query,
-        input: data,
-      });
-    } catch (error: any) {
-      if (error.message != "Unauthorized")
-        throw errorBuilder({ message: error.message, typeError: "authError" });
-      throw errorBuilder({ message: error.message });
-    }
-  }
+  // async pushEvent(params: { event: Event }): Promise<void> {
+  //   const { event } = params;
+  //   const data = {
+  //     id: event.idSync ?? "",
+  //     name: event.name,
+  //     dateStart: event.reminders.start,
+  //     dateEnd: event.reminders.end,
+  //     notifications: JSON.stringify(event.reminders.notifications),
+  //     repeat: JSON.stringify(event.reminders.repeat),
+  //     guests: JSON.stringify(event.guests),
+  //     timeZone: event.timezone,
+  //     description: event.description,
+  //     availability: event.availability,
+  //     syncStatus: event.syncStatus ?? false,
+  //   };
+  //
+  //   try {
+  //     const query = grapService.graphqlMutationBuilder({
+  //       name: SYNC_EVENTS,
+  //       fragment: "SyncEvents",
+  //       mutationName: "syncEvents",
+  //       inputName: "SyncEventsInput",
+  //     });
+  //
+  //     await grapService.executeGrapMutation({
+  //       query,
+  //       input: data,
+  //     });
+  //   } catch (error: any) {
+  //     if (error.message != "Unauthorized")
+  //       throw errorBuilder({ message: error.message, typeError: "authError" });
+  //     throw errorBuilder({ message: error.message });
+  //   }
+  // }
 
   //TODO: remove
-  async removeAllLocalEvents(): Promise<void> {
-    await storage.remove("events");
-  }
+  // async removeAllLocalEvents(): Promise<void> {
+  //   await storage.remove("events");
+  // }
 
-  async deleteEvents(): Promise<void> {
-    // await storage.remove("events");
-    const query = `Delete FROM Events`;
-    try {
-      await this.dbService.executeQuery({
-        query: query,
-        operationType: "delete",
-      });
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
+  // async deleteEvents(): Promise<void> {
+  //   // await storage.remove("events");
+  //   const query = `Delete FROM Events`;
+  //   try {
+  //     await this.dbService.executeQuery({
+  //       query: query,
+  //       operationType: "delete",
+  //     });
+  //   } catch (error: any) {
+  //     throw new Error(error);
+  //   }
+  // }
 
-  async deleteReminders(): Promise<void> {
-    // await storage.remove("events");
-    const query = `Delete FROM Reminders`;
-    try {
-      await dbService.executeQuery({ query, operationType: "delete" });
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
+  // async deleteReminders(): Promise<void> {
+  //   // await storage.remove("events");
+  //   const query = `Delete FROM Reminders`;
+  //   try {
+  //     await dbService.executeQuery({ query, operationType: "delete" });
+  //   } catch (error: any) {
+  //     throw new Error(error);
+  //   }
+  // }
 
   /**
    * Delete event on the server

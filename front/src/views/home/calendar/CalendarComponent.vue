@@ -49,7 +49,7 @@ import { onMounted, ref, watch } from "vue";
 import { addOutline } from "ionicons/icons";
 
 //controllers
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 const eventController = new EventController();
 
 // components
@@ -66,7 +66,7 @@ watch(
   () => eventController.getEvents(),
   async (response) => {
     events.value = response;
-  }
+  },
 );
 
 onMounted(() => {

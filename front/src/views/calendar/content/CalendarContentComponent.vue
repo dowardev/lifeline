@@ -25,7 +25,7 @@ import { Event } from "@/utils/interfaces";
 import CalendarComponent from "@/components/calendar/CalendarComponent.vue";
 
 // controllers
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 import { CalendarController } from "@/js/calendarController";
 const eventController = new EventController();
 const calendarController = new CalendarController();

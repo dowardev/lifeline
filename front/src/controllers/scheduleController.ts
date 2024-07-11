@@ -7,7 +7,7 @@ import { ScheduleService } from "@/services/schedule";
 const scheduleService = new ScheduleService();
 
 import { ReminderController } from "./reminderController";
-import { EventController } from "./eventController";
+import { EventController } from "../js/eventController";
 
 export class ScheduleController {
   scheduleStore = useScheduleStore();
@@ -437,7 +437,7 @@ export class ScheduleController {
             }
             obj[year][month][day].forEach((element) => {
               const existingElement = newSchedule[year][month][day].find(
-                (e) => e.idElement === element.idElement
+                (e) => e.idElement === element.idElement,
               );
 
               if (existingElement) {
@@ -473,7 +473,7 @@ export class ScheduleController {
             title: event.name!,
             message: event.description,
           });
-        })
+        }),
       );
     }
   }
@@ -497,10 +497,10 @@ export class ScheduleController {
                 title: event.name!,
                 message: event.description,
               });
-            })
+            }),
           );
         }
-      })
+      }),
     );
   }
 

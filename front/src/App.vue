@@ -25,7 +25,7 @@ import MenuComponent from "@/components/menu/MenuComponent.vue";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 import { UserController } from "@/js/userController";
 const systemController = new SystemController();
 const eventController = new EventController();

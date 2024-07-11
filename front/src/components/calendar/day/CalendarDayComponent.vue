@@ -102,7 +102,7 @@ import { watch } from "vue";
 import { onMounted, ref } from "vue";
 
 // controllers
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 import { SystemController } from "@/controllers/systemController";
 const systemController = new SystemController();
 const eventController = new EventController();
@@ -142,7 +142,7 @@ watch(
     } catch (error) {
       console.error(error);
     }
-  }
+  },
 );
 
 // mounted

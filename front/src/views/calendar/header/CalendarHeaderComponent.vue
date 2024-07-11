@@ -317,7 +317,7 @@ import { watch } from "vue";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 import { CalendarController } from "@/js/calendarController";
 import { ViewCalendar } from "@/utils/types";
 const systemController = new SystemController();

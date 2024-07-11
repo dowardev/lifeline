@@ -516,7 +516,7 @@ import RemindersComponent from "../reminders/RemindersComponent.vue";
 import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent.vue";
 
 // controllers
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 import { ScheduleController } from "@/controllers/scheduleController";
 import { SystemController } from "@/controllers/systemController";
 import { ReminderController } from "@/controllers/reminderController";

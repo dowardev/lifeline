@@ -127,7 +127,7 @@ import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { CalendarController } from "@/js/calendarController";
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 
 const systemController = new SystemController();
 const calendarController = new CalendarController();

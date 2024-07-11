@@ -388,7 +388,7 @@ import RightMenuEventComponent from "./RightMenuEventComponent.vue";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 const systemController = new SystemController();
 const eventController = new EventController();
 
@@ -529,7 +529,7 @@ function previousWeek(): void {
     date.setMonth(currentMonth - 1);
     date.setDate(
       new Date(date.getFullYear(), currentMonth, 0).getDate() -
-        (7 - date.getDate())
+        (7 - date.getDate()),
     );
   } else {
     date.setDate(date.getDate() - 7);
@@ -543,7 +543,7 @@ function nextWeek(): void {
   const lastDayOfMonth = new Date(
     currentDate.getFullYear(),
     nextMonth,
-    0
+    0,
   ).getDate();
   const date = new Date(currentDate);
   if (date.getDate() + 7 > lastDayOfMonth) {

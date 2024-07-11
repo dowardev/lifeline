@@ -123,7 +123,7 @@ import { useRoute } from "vue-router";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 import { CalendarController } from "@/js/calendarController";
 const systemController = new SystemController();
 const eventController = new EventController();

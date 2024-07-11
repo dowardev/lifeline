@@ -103,7 +103,7 @@ import RescheduleComponent from "@/components/events/schedule-elements/Reschedul
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { EventController } from "@/controllers/eventController";
+import { EventController } from "@/js/eventController";
 const systemController = new SystemController();
 const eventController = new EventController();
 
