@@ -19,7 +19,6 @@ import messages from "./messages.json";
 import { ApiController } from "./apiController";
 
 // services
-import { ReminderService } from "@/services/reminderService";
 import { DB } from "./db";
 
 export class EventController {
@@ -30,8 +29,6 @@ export class EventController {
   private eventStore = useEventsStore();
   private calendarController = new CalendarController();
   apiController = new ApiController();
-
-  private reminderService = new ReminderService();
 
   /**
    * Perform all the necessary procedure to add a event both generally, locally and from the store
@@ -982,7 +979,8 @@ export class EventController {
       reminderStart,
       repeatType,
     } = params;
-    const dates = this.reminderService.generatorReminder({
+    const remindersController = new ReminderController();
+    const dates = remindersController.generatorReminder({
       frecuency,
       reminderEnd,
       reminderStart,
@@ -994,7 +992,7 @@ export class EventController {
 
     for (let index = 0; index < dates.length; index++) {
       const date = dates[index];
-      const { reminderId } = await this.reminderService.setReminder({
+      const { reminderId } = await remindersController.setReminder({
         reminder: date,
         extraInfo: "",
         message: description,
@@ -1009,12 +1007,13 @@ export class EventController {
     idReminders: number[];
   }): Promise<void> {
     const { idReminders } = params;
+    const remindersController = new ReminderController();
 
     for (let index = 0; index < idReminders.length; index++) {
       const id = idReminders[index];
       // console.log({ deleted: id });
       try {
-        await this.reminderService.cancelReminder({ id });
+        await remindersController.cancelReminder({ id });
       } catch (error: any) {
         throw new Error(error);
       }
