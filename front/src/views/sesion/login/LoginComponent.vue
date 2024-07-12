@@ -195,7 +195,7 @@ import { USER_LOGIN, USER_MENU } from "../../../utils/graphql";
 import { useRouter } from "vue-router";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { UserController } from "@/js/userController";
 const systemController = new SystemController();
 const userController = new UserController();

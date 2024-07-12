@@ -17,9 +17,8 @@ import {
   userGrapQLTypeData,
 } from "@/utils/types";
 import { SQLite } from "@/js/sqlite";
-import { SystemController } from "../controllers/systemController";
+import { SystemController } from "./systemController";
 import { TokenService } from "@/services/tokenService";
-import { SystemService } from "@/services/system";
 import { ApiController } from "../js/apiController";
 import { USER_LOGIN } from "@/utils/graphql";
 import { DB } from "./db";
@@ -37,7 +36,6 @@ export class UserController {
   sessionService = new SessionService();
   systemController = new SystemController();
   tokenService = new TokenService();
-  systemService = new SystemService();
 
   refs = storeToRefs(this.userStore);
 

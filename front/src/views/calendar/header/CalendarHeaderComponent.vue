@@ -316,7 +316,7 @@ import { reactive } from "vue";
 import { watch } from "vue";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { EventController } from "@/js/eventController";
 import { CalendarController } from "@/js/calendarController";
 import { ViewCalendar } from "@/utils/types";
@@ -384,14 +384,14 @@ watch(
     }),
   async (date) => {
     currentDate.value = date;
-  }
+  },
 );
 
 watch(
   () => calendarController.getCalendarModeView(),
   async (mode) => {
     modeViewCalendar.value = mode;
-  }
+  },
 );
 
 // functions
@@ -423,14 +423,14 @@ function previousDate(): void {
     newDate = new Date(
       sub(currentDate, {
         days: 7,
-      })
+      }),
     );
   }
   if (mode == "day") {
     newDate = new Date(
       sub(currentDate, {
         days: 1,
-      })
+      }),
     );
   }
   calendarController.setCurrentDate({ date: newDate, mode });
@@ -446,14 +446,14 @@ function nextDate(): void {
     newDate = new Date(
       add(currentDate, {
         days: 7,
-      })
+      }),
     );
   }
   if (mode == "day") {
     newDate = new Date(
       add(currentDate, {
         days: 1,
-      })
+      }),
     );
   }
 

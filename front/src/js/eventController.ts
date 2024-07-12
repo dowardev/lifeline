@@ -1,4 +1,4 @@
-import { SystemController } from "../controllers/systemController";
+import { SystemController } from "./systemController";
 import { CalendarViewDates, Event, Graphql } from "@/utils/interfaces";
 import { useEventsStore } from "../store/eventsStore";
 import {

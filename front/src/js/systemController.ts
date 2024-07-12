@@ -8,14 +8,16 @@ import {
   SystemMessage,
 } from "@/utils/interfaces";
 import { SQLite } from "@/js/sqlite";
-import { SystemService } from "@/services/system";
 import { cloneDeep } from "lodash";
 import { useEventsStore } from "@/store/eventsStore";
 import { TokenService } from "@/services/tokenService";
-import { DB } from "../js/db";
-import { UserController } from "../js/userController";
+import { DB } from "./db";
+import { UserController } from "./userController";
 import { EventController } from "@/js/eventController";
 import { ScheduleController } from "@/js/scheduleController";
+import { storage } from "@/main";
+import { toastController } from "@ionic/core";
+import axios from "axios";
 
 export class SystemController {
   // store
@@ -24,14 +26,11 @@ export class SystemController {
   dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
-  systemService = new SystemService();
   tokenService = new TokenService();
 
   async loadThemeSelected() {
     const theme =
-      (await this.systemService.getTheme()) != null
-        ? await this.systemService.getTheme()
-        : "light";
+      (await this.getTheme2()) != null ? await this.getTheme2() : "light";
     this.systemStore.setThemeSelected({ theme });
   }
 
@@ -42,13 +41,13 @@ export class SystemController {
   applyTheme(params: { theme: Theme }) {
     const theme = params.theme;
     const currentTheme = this.getTheme();
-    this.systemService.setTheme({ theme, currentTheme });
-    this.systemStore.setThemeSelected({ theme });
+    this.setTheme({ theme, currentTheme });
+    this.setThemeSelected({ theme });
   }
 
   async updateThemeSelected(params: { theme: Theme }) {
     const theme = params.theme;
-    await this.systemService.saveTheme({ theme });
+    await this.saveTheme({ theme });
   }
 
   translateDay(params: { dayName: keyof Days }) {
@@ -124,16 +123,18 @@ export class SystemController {
 
   async setTasksViewMode(params: { viewMode: ViewMode }) {
     const { viewMode } = params;
-    await this.systemService.setTasksViewMode({ viewMode });
+    await storage.set("tasksViewMode", viewMode);
   }
 
   async getTasksViewMode(): Promise<ViewMode> {
-    return await this.systemService.getTasksViewMode();
+    const viewMode = await storage.get("tasksViewMode");
+    if (!viewMode) return "list";
+    return viewMode;
   }
 
   async storeWakaTimeApiKey(params: { apiKey: string }): Promise<void> {
     const { apiKey } = params;
-    await this.systemService.storeWakaTimeApiKey({ apiKey });
+    await storage.set("wakaTimeApiKey", apiKey);
   }
 
   getWakaTimeApiKey(): string {
@@ -145,11 +146,17 @@ export class SystemController {
     date: string;
   }): Promise<boolean> {
     const { apiKey, date } = params;
-    return await this.systemService.testWakaTimeApiKey({ apiKey, date });
+    try {
+      const response = await this.getWakaTimeDurations({ apiKey, date });
+      if (response) return true;
+      else return false;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async loadWakaTimeApiKey(): Promise<void> {
-    const apiKey = await this.systemService.getWakaTimeApiKey();
+    const apiKey = await this.getWakaTimeApiKey2();
     this.systemStore.setWakaTimeApiKey({ apiKey });
   }
 
@@ -164,7 +171,7 @@ export class SystemController {
     date: string;
   }): Promise<number> {
     const { apiKey, date } = params;
-    const response = await this.systemService.getWakaTimeDurations({
+    const response = await this.getWakaTimeDurations({
       apiKey,
       date,
     });
@@ -176,18 +183,18 @@ export class SystemController {
   }
 
   async clearWakaTimeApiKey(): Promise<void> {
-    await this.systemService.deleteWakaTimeApiKey();
+    await this.deleteWakaTimeApiKey();
     this.systemStore.removeWakaTimeApiKey();
   }
 
   async openToast(params: SystemMessage): Promise<void> {
     const { color = "dark", message } = params;
-    (await this.systemService.openToast({ color, message })).present();
+    (await this.openToast2({ color, message })).present();
   }
 
   async openToastFixed(params: SystemMessage): Promise<HTMLIonToastElement> {
     const { color = "dark", message } = params;
-    return await this.systemService.openToast({ color, message });
+    return await this.openToast2({ color, message });
   }
 
   async deleteAllDataSystem(params: {
@@ -252,5 +259,70 @@ export class SystemController {
     const fields = ["user_id", "status"];
     await this.dbc.insertData({ tableName: "users_logged", values, fields });
     await this.dbc.getData({ query: "SELECT * FROM users_logged" });
+  }
+
+  async getTheme2(): Promise<Theme> {
+    return await storage.get("theme");
+  }
+
+  setTheme(params: { theme: Theme; currentTheme: Theme }): void {
+    const theme = params.theme;
+    const currentTheme = params.currentTheme;
+
+    document.getElementsByTagName("body")[0].classList.remove(currentTheme);
+    document.getElementsByTagName("body")[0].classList.add(theme);
+  }
+
+  async saveTheme(params: { theme: Theme }): Promise<void> {
+    const theme = params.theme;
+    await storage.set("theme", theme);
+  }
+
+  async getWakaTimeApiKey2(): Promise<string> {
+    return await storage.get("wakaTimeApiKey");
+  }
+
+  async getWakaTimeDurations(params: {
+    apiKey: string;
+    date: string;
+  }): Promise<WakaTimeDuration> {
+    const { apiKey, date } = params;
+
+    const response = await axios.request({
+      url: "http://127.0.0.1:8000/api/wakatime-durations",
+      method: "get",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      params: {
+        apiKey: apiKey,
+        date,
+      },
+    });
+
+    try {
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteWakaTimeApiKey(): Promise<void> {
+    await storage.remove("wakaTimeApiKey");
+  }
+
+  async openToast2(params: {
+    message: string;
+    color: string;
+  }): Promise<HTMLIonToastElement> {
+    const { color, message } = params;
+
+    const toast = await toastController.create({
+      message,
+      duration: 2000,
+      color,
+      position: "bottom",
+    });
+    return toast;
   }
 }

@@ -387,7 +387,7 @@ import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue"
 import RightMenuEventComponent from "./RightMenuEventComponent.vue";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { EventController } from "@/js/eventController";
 const systemController = new SystemController();
 const eventController = new EventController();

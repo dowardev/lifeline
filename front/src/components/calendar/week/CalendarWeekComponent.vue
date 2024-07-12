@@ -110,7 +110,7 @@
 import { onMounted, ref } from "vue";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { format } from "date-fns";
 import { watch } from "vue";
 const systemController = new SystemController();

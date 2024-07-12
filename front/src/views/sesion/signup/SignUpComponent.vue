@@ -309,7 +309,7 @@ import { required, email, helpers, sameAs } from "@vuelidate/validators";
 import { useRouter } from "vue-router";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { UserController } from "@/js/userController";
 const systemController = new SystemController();
 const userController = new UserController();

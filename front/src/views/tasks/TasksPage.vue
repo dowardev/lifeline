@@ -159,7 +159,7 @@ import { onMounted, ref } from "vue";
 
 // controllers
 import { TaskController } from "@/js/taskController";
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 const taskController = new TaskController();
 const systemController = new SystemController();
 

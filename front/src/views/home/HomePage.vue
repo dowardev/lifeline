@@ -158,7 +158,7 @@ import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
 import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 const systemController = new SystemController();
 
 const pageTitle = "Inicio";

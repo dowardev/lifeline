@@ -125,7 +125,7 @@ import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
 import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { CalendarController } from "@/js/calendarController";
 import { EventController } from "@/js/eventController";
 

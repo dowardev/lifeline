@@ -102,7 +102,7 @@ import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue"
 import RescheduleComponent from "@/components/events/schedule-elements/RescheduleElements.vue";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { EventController } from "@/js/eventController";
 const systemController = new SystemController();
 const eventController = new EventController();
@@ -179,7 +179,7 @@ function groupEvents(params: { events: Event[] }): {
           };
         };
       },
-      event: Event
+      event: Event,
     ) => {
       const reminderStart = event.reminders.start;
       const reminderEnd = event.reminders.end;
@@ -250,7 +250,7 @@ function groupEvents(params: { events: Event[] }): {
           };
         };
       };
-    }
+    },
   );
 }
 

@@ -53,7 +53,7 @@ const pageTitle = "Selector de tema";
 const currentTheme = ref("" as Theme);
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 const systemController = new SystemController();
 
 onMounted(() => {

@@ -518,7 +518,7 @@ import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent
 // controllers
 import { EventController } from "@/js/eventController";
 import { ScheduleController } from "@/js/scheduleController";
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { ReminderController } from "@/js/reminderController";
 import { CalendarController } from "@/js/calendarController";
 const eventController = new EventController();

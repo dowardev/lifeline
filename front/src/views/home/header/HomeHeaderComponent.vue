@@ -61,7 +61,7 @@ const isOpenPopOverMainOptions = ref(false);
 const eventPopOverMainOptions = ref(null as CustomEvent | null);
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 const systemController = new SystemController();
 
 onMounted(() => {

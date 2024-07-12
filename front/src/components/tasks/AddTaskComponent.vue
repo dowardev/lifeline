@@ -406,7 +406,7 @@ import useVuelidate from "@vuelidate/core";
 import RemindersComponent from "./reminders/RemindersComponent.vue";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { ScheduleController } from "@/js/scheduleController";
 import { TaskController } from "@/js/taskController";
 import { ReminderController } from "@/js/reminderController";

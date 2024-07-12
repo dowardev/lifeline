@@ -24,17 +24,12 @@ import { ref } from "vue";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
+import { SystemController } from "@/js/systemController";
 import { EventController } from "@/js/eventController";
 import { UserController } from "@/js/userController";
 const systemController = new SystemController();
 const eventController = new EventController();
 const userController = new UserController();
-
-// services
-import { SystemService } from "./services/system";
-
-const systemService = new SystemService();
 
 const componentLoaded = ref(false);
 
@@ -43,7 +38,7 @@ onMounted(async () => {
   await systemController.loadThemeSelected();
   const theme = systemController.getTheme();
   // TODO: use composable instead of service
-  systemService.setTheme({ theme: theme, currentTheme: theme });
+  systemController.setTheme({ theme: theme, currentTheme: theme });
   await systemController.updateThemeSelected({ theme });
 
   let user = userController.getUserLogged();
