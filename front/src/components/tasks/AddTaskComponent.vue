@@ -406,8 +406,8 @@ import RemindersComponent from "./reminders/RemindersComponent.vue";
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { ScheduleController } from "@/controllers/scheduleController";
-import { TaskController } from "@/controllers/taskController";
-import { ReminderController } from "@/controllers/reminderController";
+import { TaskController } from "@/js/taskController";
+import { ReminderController } from "@/js/reminderController";
 const systemController = new SystemController();
 const scheduleController = new ScheduleController();
 const taskController = new TaskController();

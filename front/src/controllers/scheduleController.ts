@@ -6,7 +6,7 @@ import { ScheduleService } from "@/services/schedule";
 
 const scheduleService = new ScheduleService();
 
-import { ReminderController } from "./reminderController";
+import { ReminderController } from "../js/reminderController";
 import { EventController } from "../js/eventController";
 
 export class ScheduleController {

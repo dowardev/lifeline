@@ -116,7 +116,7 @@ import { onMounted, ref } from "vue";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { TaskController } from "@/controllers/taskController";
+import { TaskController } from "@/js/taskController";
 const systemController = new SystemController();
 const taskController = new TaskController();
 

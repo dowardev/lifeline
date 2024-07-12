@@ -158,7 +158,7 @@ import { addOutline, albumsOutline, appsOutline } from "ionicons/icons";
 import { onMounted, ref } from "vue";
 
 // controllers
-import { TaskController } from "@/controllers/taskController";
+import { TaskController } from "@/js/taskController";
 import { SystemController } from "@/controllers/systemController";
 const taskController = new TaskController();
 const systemController = new SystemController();

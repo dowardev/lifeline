@@ -12,7 +12,7 @@ import lodash from "lodash";
 import { storage } from "@/main";
 import { ViewCalendar, ViewMode } from "@/utils/types";
 import { EventService } from "@/services/event";
-import { ReminderController } from "../controllers/reminderController";
+import { ReminderController } from "./reminderController";
 import { CalendarController } from "./calendarController";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import messages from "./messages.json";
