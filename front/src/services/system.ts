@@ -10,7 +10,7 @@ import { storage } from "@/main";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 
 import { EventController } from "@/js/eventController";
-import { ScheduleController } from "@/controllers/scheduleController";
+import { ScheduleController } from "@/js/scheduleController";
 import { DBService } from "../js/sqlite";
 import { TokenService } from "./tokenService";
 

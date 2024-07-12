@@ -2,12 +2,10 @@ import { useScheduleStore } from "@/store/scheduleStore";
 import { Schedule, Event, ScheduleElement } from "@/utils/interfaces";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { useEventsStore } from "@/store/eventsStore";
-import { ScheduleService } from "@/services/schedule";
+import { storage } from "@/main";
 
-const scheduleService = new ScheduleService();
-
-import { ReminderController } from "../js/reminderController";
-import { EventController } from "../js/eventController";
+import { ReminderController } from "./reminderController";
+import { EventController } from "./eventController";
 
 export class ScheduleController {
   scheduleStore = useScheduleStore();
@@ -351,7 +349,7 @@ export class ScheduleController {
   }
 
   async loadSchedule(): Promise<void> {
-    const schedule = (await scheduleService.getSchedule()) ?? ({} as Schedule);
+    const schedule = (await this.getSchedule2()) ?? ({} as Schedule);
     this.setSchedule({ schedule });
   }
 
@@ -361,7 +359,7 @@ export class ScheduleController {
   }
 
   async getLocalSchedule(): Promise<Schedule> {
-    return await scheduleService.getSchedule();
+    return await this.getSchedule2();
   }
 
   removeElementSchedule(params: { id: string; schedule: Schedule }): Schedule {
@@ -403,7 +401,10 @@ export class ScheduleController {
 
   async saveScheduleLocal(params: { schedule: Schedule }): Promise<void> {
     const { schedule } = params;
-    await scheduleService.storeSchedule({ schedule });
+    await storage.set(
+      "schedule",
+      JSON.parse(JSON.stringify(Object.assign({}, schedule))),
+    );
   }
 
   setSchedule(params: { schedule: Schedule }): void {
@@ -540,7 +541,7 @@ export class ScheduleController {
   }
 
   async deleteSchedule(): Promise<void> {
-    await scheduleService.deleteSchedule();
+    await storage.remove("schedule");
   }
 
   async generateSchedules(params: {
@@ -662,5 +663,10 @@ export class ScheduleController {
     }
 
     return eventsByDate;
+  }
+
+  async getSchedule2(): Promise<Schedule> {
+    const schedule = await storage.get("schedule");
+    return schedule == null ? ({} as Schedule) : schedule;
   }
 }

@@ -143,12 +143,12 @@
                     :value="
                       format(
                         new Date(task.reminders.value.start ?? new Date()),
-                        'Pp'
+                        'Pp',
                       ) +
                       '\n' +
                       format(
                         new Date(task.reminders.value.end ?? new Date()),
-                        'Pp'
+                        'Pp',
                       )
                     "
                     @click="
@@ -228,7 +228,9 @@
                       autocomplete="on"
                       autocorrect="on"
                       type="email"
-                      :error-text="v2$.emailGuest.$errors[0]?.$message as string"
+                      :error-text="
+                        v2$.emailGuest.$errors[0]?.$message as string
+                      "
                       :class="[
                         v2$.emailGuest.$errors.length == 0
                           ? 'ion-valid'
@@ -238,12 +240,12 @@
                       @ion-input="emailGuest = $event.target.value as string"
                       @ion-focus="
                         ($refs.inputGuest as any).$el.classList.add(
-                          'ion-touched'
+                          'ion-touched',
                         )
                       "
                       @ion-blur="
                         ($refs.inputGuest as any).$el.classList.remove(
-                          'ion-touched'
+                          'ion-touched',
                         );
                         v2$.emailGuest.$touch();
                       "
@@ -405,7 +407,7 @@ import RemindersComponent from "./reminders/RemindersComponent.vue";
 
 // controllers
 import { SystemController } from "@/controllers/systemController";
-import { ScheduleController } from "@/controllers/scheduleController";
+import { ScheduleController } from "@/js/scheduleController";
 import { TaskController } from "@/js/taskController";
 import { ReminderController } from "@/js/reminderController";
 const systemController = new SystemController();
@@ -539,7 +541,7 @@ function translateRepeat(params: { repeat: string }) {
 
 function filterZones(query: string) {
   filteredZones.value = timeZones.filter((zone: string) =>
-    zone.toLowerCase().includes(query.toLowerCase())
+    zone.toLowerCase().includes(query.toLowerCase()),
   );
 }
 
@@ -666,7 +668,7 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
           title: task.name.value,
           message: task.description.value,
         });
-      })
+      }),
     );
   }
 }

@@ -12,10 +12,10 @@ import { SystemService } from "@/services/system";
 import { cloneDeep } from "lodash";
 import { useEventsStore } from "@/store/eventsStore";
 import { TokenService } from "@/services/tokenService";
-import { ScheduleService } from "@/services/schedule";
 import { DB } from "../js/db";
 import { UserController } from "../js/userController";
 import { EventController } from "@/js/eventController";
+import { ScheduleController } from "@/js/scheduleController";
 
 export class SystemController {
   // store
@@ -26,7 +26,6 @@ export class SystemController {
   });
   systemService = new SystemService();
   tokenService = new TokenService();
-  scheduleService = new ScheduleService();
 
   async loadThemeSelected() {
     const theme =
@@ -201,10 +200,11 @@ export class SystemController {
     const { events, schedule, reminders, tokens, users } = params;
     const userController = new UserController();
     const eventController = new EventController();
+    const schedulecontroller = new ScheduleController();
 
     if (reminders) await eventController.deleteReminders();
     if (events) await eventController.deleteEvents();
-    if (schedule) await this.scheduleService.deleteSchedule();
+    if (schedule) await schedulecontroller.deleteSchedule();
     if (tokens) await this.tokenService.removeAllTokens();
     if (users) await userController.deleteUsers();
   }
