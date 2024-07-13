@@ -1,7 +1,7 @@
 import { DB } from "@/js/db";
 import { SQLite } from "@/js/sqlite";
 
-export class TokenService {
+export class TokenController {
   dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });

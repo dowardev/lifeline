@@ -9,7 +9,7 @@ import {
   UserRegister,
 } from "../utils/interfaces";
 import { errorBuilder } from "@/utils/errors";
-import { SessionService } from "@/services/session";
+import { SessionController } from "./sessionController";
 import {
   GraphQLFragmentNameUser,
   GraphQLQueryNameUser,
@@ -18,7 +18,6 @@ import {
 } from "@/utils/types";
 import { SQLite } from "@/js/sqlite";
 import { SystemController } from "./systemController";
-import { TokenService } from "@/services/tokenService";
 import { ApiController } from "../js/apiController";
 import { USER_LOGIN } from "@/utils/graphql";
 import { DB } from "./db";
@@ -33,9 +32,7 @@ export class UserController {
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
-  sessionService = new SessionService();
   systemController = new SystemController();
-  tokenService = new TokenService();
 
   refs = storeToRefs(this.userStore);
 
@@ -73,7 +70,8 @@ export class UserController {
 
   async logout(): Promise<void> {
     try {
-      await this.sessionService.logoutOnServer();
+      const sessionController = new SessionController();
+      await sessionController.logoutOnServer();
       await this.systemController.deleteUserdata({
         userId: "1",
       });
@@ -149,7 +147,8 @@ export class UserController {
     };
 
     try {
-      await this.sessionService.userRegister(data);
+      const sessionController = new SessionController();
+      await sessionController.userRegister(data);
     } catch (error: any) {
       throw new Error(error);
     }

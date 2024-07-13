@@ -10,7 +10,7 @@ import {
 import { SQLite } from "@/js/sqlite";
 import { cloneDeep } from "lodash";
 import { useEventsStore } from "@/store/eventsStore";
-import { TokenService } from "@/services/tokenService";
+import { TokenController } from "@/js/tokenController";
 import { DB } from "./db";
 import { UserController } from "./userController";
 import { EventController } from "@/js/eventController";
@@ -26,7 +26,6 @@ export class SystemController {
   dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
-  tokenService = new TokenService();
 
   async loadThemeSelected() {
     const theme =
@@ -208,11 +207,12 @@ export class SystemController {
     const userController = new UserController();
     const eventController = new EventController();
     const schedulecontroller = new ScheduleController();
+    const tokenController = new TokenController();
 
     if (reminders) await eventController.deleteReminders();
     if (events) await eventController.deleteEvents();
     if (schedule) await schedulecontroller.deleteSchedule();
-    if (tokens) await this.tokenService.removeAllTokens();
+    if (tokens) await tokenController.removeAllTokens();
     if (users) await userController.deleteUsers();
   }
 
@@ -220,9 +220,10 @@ export class SystemController {
     const { userId } = params;
     const userController = new UserController();
     const eventController = new EventController();
+    const tokenController = new TokenController();
 
     await eventController.deleteUserEvents({ userId });
-    await this.tokenService.removeUserToken({ name: "authToken", userId });
+    await tokenController.removeUserToken({ name: "authToken", userId });
     await userController.deleteUser({ userId });
   }
 

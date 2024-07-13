@@ -44,7 +44,7 @@ import { createPinia } from "pinia";
 const pinia = createPinia();
 // import { createApolloProvider } from "@vue/apollo-option";
 import { DB } from "./js/db";
-import { TempController } from "./controllers/TempController";
+import { TempController } from "./js/TempController";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {

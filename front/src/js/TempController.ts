@@ -1,5 +1,5 @@
 import { SQLite } from "@/js/sqlite";
-import { DB } from "../js/db";
+import { DB } from "./db";
 
 export class TempController {
   private dbc = new DB({

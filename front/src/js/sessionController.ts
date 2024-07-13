@@ -8,7 +8,7 @@ import { errorBuilder } from "@/utils/errors";
 import { USER_LOGIN, USER_LOGOUT, USER_REGISTER } from "@/utils/graphql";
 import { ApiController } from "@/js/apiController";
 
-export class SessionService {
+export class SessionController {
   grapQLController = new ApiController();
 
   async userRegister(params: UserRegister): Promise<void> {

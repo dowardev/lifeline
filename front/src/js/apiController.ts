@@ -5,7 +5,7 @@ import {
   gql,
 } from "@apollo/client/core";
 import { UserController } from "../js/userController";
-import { TokenService } from "@/services/tokenService";
+import { TokenController } from "@/js/tokenController";
 
 // queries
 import { USER_MENU } from "@/utils/graphql";
@@ -20,9 +20,6 @@ export class ApiController {
 
   // controllers
   // userController = new UserController();
-
-  // services
-  tokenService = new TokenService();
 
   constructor() {
     const mode = process.env.NODE_ENV;
@@ -42,7 +39,8 @@ export class ApiController {
     const cache = new InMemoryCache();
     const userController = new UserController();
     const user = await userController.getUserLogged2();
-    const token = await this.tokenService.getUserToken({
+    const tokenController = new TokenController();
+    const token = await tokenController.getUserToken({
       name: "auth_token",
       userId: user.id!,
     });
@@ -78,10 +76,11 @@ export class ApiController {
 
     try {
       const user = await userController.getUserLogged2();
+      const tokenController = new TokenController();
       let token = "";
 
       if (Object.keys(user).length > 0) {
-        token = await this.tokenService.getUserToken({
+        token = await tokenController.getUserToken({
           name: "auth_token",
           userId: user.id!,
         });
