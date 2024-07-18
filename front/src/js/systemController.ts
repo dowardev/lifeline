@@ -21,8 +21,8 @@ import axios from "axios";
 
 export class SystemController {
   // store
-  systemStore = useSystemStore();
-  eventsStore = useEventsStore();
+  // systemStore = useSystemStore();
+  // eventsStore = useEventsStore();
   dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });

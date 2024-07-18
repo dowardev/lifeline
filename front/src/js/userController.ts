@@ -1,4 +1,4 @@
-import { useUserStore } from "../store/userStore";
+// import { useUserStore } from "../store/userStore";
 import { storeToRefs } from "pinia";
 import {
   ResendEmailConfirmation,
@@ -27,14 +27,14 @@ import { storage } from "@/main";
 
 export class UserController {
   // store
-  userStore = useUserStore();
+  // userStore = useUserStore();
 
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
   systemController = new SystemController();
 
-  refs = storeToRefs(this.userStore);
+  // refs = storeToRefs(this.userStore);
 
   async loadUser(params: {
     queryName: GraphQLQueryNameUser;
@@ -281,6 +281,7 @@ export class UserController {
     }
   }
 
+  // TODO:update name
   async getUserLogged2(): Promise<User> {
     const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id inner join tokens on tokens.user_id = users.id`;
     try {
@@ -291,13 +292,9 @@ export class UserController {
     }
   }
 
-  async getUserLoggedFromServer(params: {
-    refetch: boolean;
-    queryName: GraphQLQueryNameUser;
-    fragmentName: GraphQLFragmentNameUser;
-  }): Promise<User> {
-    const { refetch, queryName, fragmentName } = params;
-    const graphql = { name: queryName, fragment: fragmentName };
+  async getUserLoggedFromServer(): Promise<User> {
+    const queryName = "USER_LOGIN";
+    const fragmentName = "UserLogin";
     const apiController = new ApiController();
     const queryDocument = apiController.getQuery({ name: queryName });
 
@@ -305,13 +302,13 @@ export class UserController {
       //TODO: move to controller
       const query = apiController.graphqlQueryBuilder({
         name: queryDocument,
-        fragment: graphql.fragment,
+        fragment: fragmentName,
         mutationName: "userAuth",
       });
 
       let response = await apiController.executeGrapQuery({
         query,
-        options: { refetch },
+        options: { refetch: true },
       });
 
       if (response) {
