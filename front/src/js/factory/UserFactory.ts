@@ -4,40 +4,43 @@ import { ApiController } from "../apiController";
 import { DB } from "../db";
 import { SQLite } from "../sqlite";
 
-export class UserLoggedFactory {
+export class UserFactory {
   // userController = new UserController();
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
+  private localUserId = "";
+  private tokenServer = "";
+
+  constructor(params: { localUserId: string; tokenServer: string }) {
+    const { localUserId, tokenServer } = params;
+    this.localUserId = localUserId;
+    this.tokenServer = tokenServer;
+  }
 
   public async create(): Promise<User> {
     let user: User = {};
+    const localId = this.localUserId;
+    const token = this.tokenServer;
 
     try {
-      user = await this.getUserLogged();
+      user = await this.getUserFromLocal({ id: localId });
     } catch (error) {
       throw error;
     }
 
     try {
-      user = await this.getUserLoggedFromServer();
+      user = await this.getUserFromServer({ token });
     } catch (error: any) {
       if (error.message != "Unauthorized" && error.message != "No token found")
         throw error;
     }
+
     return user;
   }
 
-  private async getUserLogged(): Promise<User> {
-    try {
-      const user = await this.getUserLoggedFromLocal();
-      return user;
-    } catch (error: any) {
-      throw error(error);
-    }
-  }
-
-  private async getUserLoggedFromServer(): Promise<User> {
+  private async getUserFromServer(params: { token: string }): Promise<User> {
+    const { token } = params;
     const queryName = "USER_MENU";
     const fragmentName = "UserMenu";
     const apiController = new ApiController();
@@ -54,6 +57,7 @@ export class UserLoggedFactory {
       let response = await apiController.executeGrapQuery({
         query,
         options: { refetch: true },
+        token,
       });
 
       if (response) {
@@ -73,8 +77,9 @@ export class UserLoggedFactory {
     }
   }
 
-  private async getUserLoggedFromLocal(): Promise<User> {
-    const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id inner join tokens on tokens.user_id = users.id`;
+  private async getUserFromLocal(params: { id: string }): Promise<User> {
+    const { id } = params;
+    const query = `SELECT * FROM  users where id=${id}`;
     try {
       const result = (await this.dbc.getData({ query }))[0] as any;
       return result ?? {};

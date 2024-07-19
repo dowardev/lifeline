@@ -448,4 +448,12 @@ export class UserController {
     const query = `DELETE FROM Users`;
     await this.dbc.deleteData({ query });
   }
+
+  async getUserLoggerId(): Promise<{ id: string }> {
+    // const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id inner join tokens on tokens.user_id = users.id`;
+    // const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id where users_logged.status = 1`;
+    const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id where users_logged.status = 1`;
+    const user = (await this.dbc.getData({ query }))![0] as any;
+    return { id: user.id };
+  }
 }

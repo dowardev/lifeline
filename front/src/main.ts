@@ -45,8 +45,10 @@ const pinia = createPinia();
 // import { createApolloProvider } from "@vue/apollo-option";
 import { DB } from "./js/db";
 import { TempController } from "./js/TempController";
-import { UserLoggedFactory } from "./js/factory/UserFactory";
+import { UserFactory } from "./js/factory/UserFactory";
 import { useUserStore } from "./store/userStore";
+import { UserController } from "./js/userController";
+import { TokenController } from "./js/tokenController";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -61,9 +63,20 @@ window.addEventListener("DOMContentLoaded", async () => {
     await tmpc.createTableEvents();
     await tmpc.createTableReminders();
 
-    const userFactory = new UserLoggedFactory();
+    const usercontroller = new UserController();
+    const userLogged = await usercontroller.getUserLoggerId();
+
+    const tokenController = new TokenController();
+    const token = await tokenController.getUserToken({
+      name: "auth_token",
+      userId: userLogged.id!,
+    });
+
+    const userFactory = new UserFactory({
+      localUserId: userLogged.id,
+      tokenServer: token,
+    });
     const user = await userFactory.create();
-    console.log(user);
 
     const app = createApp(App).use(IonicVue).use(i18n).use(pinia).use(router);
     router.isReady().then(() => {

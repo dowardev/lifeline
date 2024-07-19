@@ -34,17 +34,18 @@ export class ApiController {
   async executeGrapQuery(params: {
     query: any;
     options: { refetch: boolean };
+    token: string;
   }): Promise<any> {
-    const { query, options } = params;
+    const { query, options, token } = params;
     const cache = new InMemoryCache();
-    const userController = new UserController();
-    const user = await userController.getUserLogged2();
-    const tokenController = new TokenController();
-    const token = await tokenController.getUserToken({
-      name: "auth_token",
-      userId: user.id!,
-    });
-    if (!token) throw new Error("No token found");
+    // const userController = new UserController();
+    // const user = await userController.getUserLogged2();
+    // const tokenController = new TokenController();
+    // const token = await tokenController.getUserToken({
+    //   name: "auth_token",
+    //   userId: user.id!,
+    // });
+    // if (!token) throw new Error("No token found");
 
     try {
       const apolloClient = new ApolloClient({
