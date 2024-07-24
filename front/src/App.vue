@@ -35,11 +35,11 @@ const componentLoaded = ref(false);
 
 // mounted
 onMounted(async () => {
-  await systemController.loadThemeSelected();
-  const theme = systemController.getTheme();
+  // await systemController.loadThemeSelected();
+  // const theme = systemController.getTheme();
   // TODO: use composable instead of service
-  systemController.setTheme({ theme: theme, currentTheme: theme });
-  await systemController.updateThemeSelected({ theme });
+  // systemController.setTheme({ theme: theme, currentTheme: theme });
+  // await systemController.updateThemeSelected({ theme });
 
   let user = userController.getUserLogged();
   user = user == null ? {} : userController.getUserLogged();

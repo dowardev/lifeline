@@ -24,6 +24,7 @@ import { DB } from "./db";
 import gql from "graphql-tag";
 import { useMutation } from "@vue/apollo-composable";
 import { storage } from "@/main";
+import { useUserStore } from "@/store/userStore";
 
 export class UserController {
   // store
@@ -36,32 +37,32 @@ export class UserController {
 
   // refs = storeToRefs(this.userStore);
 
-  async loadUser(params: {
-    queryName: GraphQLQueryNameUser;
-    fragmentName: GraphQLFragmentNameUser;
-  }): Promise<void> {
-    const { queryName, fragmentName } = params;
-    let user = {} as User;
-
-    try {
-      user = await this.getUserLogged2();
-    } catch (error: any) {
-      throw error;
-    }
-
-    // try {
-    //   user = await this.userService.getUser({
-    //     refetch: true,
-    //     queryName,
-    //     fragmentName,
-    //   });
-    // } catch (error: any) {
-    //   if (error.message != "Unauthorized" && error.message != "No token found")
-    //     throw error;
-    // }
-
-    this.updateUserProps({ user });
-  }
+  // async loadUser(params: {
+  //   queryName: GraphQLQueryNameUser;
+  //   fragmentName: GraphQLFragmentNameUser;
+  // }): Promise<void> {
+  //   const { queryName, fragmentName } = params;
+  //   let user = {} as User;
+  //
+  //   try {
+  //     user = await this.getUserLogged2();
+  //   } catch (error: any) {
+  //     throw error;
+  //   }
+  //
+  //   // try {
+  //   //   user = await this.userService.getUser({
+  //   //     refetch: true,
+  //   //     queryName,
+  //   //     fragmentName,
+  //   //   });
+  //   // } catch (error: any) {
+  //   //   if (error.message != "Unauthorized" && error.message != "No token found")
+  //   //     throw error;
+  //   // }
+  //
+  //   this.updateUserProps({ user });
+  // }
 
   updateUserProps(params: { user: User }): void {
     const { user } = params;
@@ -164,7 +165,8 @@ export class UserController {
 
   // TODO:remove
   getUserLogged(): User {
-    const user = this.userStore.user == null ? {} : this.userStore.user;
+    const userStore = useUserStore();
+    const user = userStore.user == null ? {} : userStore.user;
     return user;
   }
 

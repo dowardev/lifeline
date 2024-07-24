@@ -1,4 +1,4 @@
-import { User } from "@/utils/interfaces";
+import { User, UserStore } from "@/utils/interfaces";
 import { UserController } from "../userController";
 import { ApiController } from "../apiController";
 import { DB } from "../db";
@@ -11,6 +11,14 @@ export class UserFactory {
   });
   private localUserId = "";
   private tokenServer = "";
+  private user: UserStore = {
+    name: "",
+    userName: "",
+    isAdmin: false,
+    rol: [],
+    imageProfile: "",
+    preferences: { theme: "light" },
+  };
 
   constructor(params: { localUserId: string; tokenServer: string }) {
     const { localUserId, tokenServer } = params;
@@ -18,28 +26,30 @@ export class UserFactory {
     this.tokenServer = tokenServer;
   }
 
-  public async create(): Promise<User> {
-    let user: User = {};
+  public async create(): Promise<UserStore> {
     const localId = this.localUserId;
     const token = this.tokenServer;
 
     try {
-      user = await this.getUserFromLocal({ id: localId });
+      this.user = await this.getUserFromLocal({ id: localId });
     } catch (error) {
       throw error;
     }
 
     try {
-      user = await this.getUserFromServer({ token });
+      const serverResponse = await this.getUserFromServer({ token });
+      if (Object.keys(serverResponse).length > 0) this.user = serverResponse;
     } catch (error: any) {
       if (error.message != "Unauthorized" && error.message != "No token found")
         throw error;
     }
 
-    return user;
+    return this.user;
   }
 
-  private async getUserFromServer(params: { token: string }): Promise<User> {
+  private async getUserFromServer(params: {
+    token: string;
+  }): Promise<UserStore> {
     const { token } = params;
     const queryName = "USER_MENU";
     const fragmentName = "UserMenu";
@@ -62,27 +72,36 @@ export class UserFactory {
 
       if (response) {
         response = {
-          id: response.value.userAuth.user.id,
           name: response.value.userAuth.user.name,
-          email: response.value.userAuth.user.email,
-          user: response.value.userAuth.user.user,
+          userName: response.value.userAuth.user.user,
           imageProfile: response.value.userAuth.user.image_profile,
           isAdmin: response.value.userAuth.user.is_admin,
-        };
-        return response;
+          preferences: { theme: "light" },
+        } as UserStore;
+        return response as UserStore;
       }
-      return {} as User;
+      return {} as UserStore;
     } catch (error: any) {
       throw error;
     }
   }
 
-  private async getUserFromLocal(params: { id: string }): Promise<User> {
+  private async getUserFromLocal(params: { id: string }): Promise<UserStore> {
     const { id } = params;
     const query = `SELECT * FROM  users where id=${id}`;
     try {
       const result = (await this.dbc.getData({ query }))[0] as any;
-      return result ?? {};
+
+      if (Object.keys(result).length === 0) throw new Error("no user found");
+
+      return {
+        name: result.name,
+        userName: result.user,
+        isAdmin: result.is_admin,
+        rol: [],
+        imageProfile: result.image_profile,
+        preferences: { theme: "light" },
+      } as UserStore;
     } catch (error: any) {
       throw error;
     }

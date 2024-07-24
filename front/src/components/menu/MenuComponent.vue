@@ -339,26 +339,10 @@ const imageKeyPath = computed(() => {
   return image;
 });
 
-// mounted
-onMounted(async () => {
-  await loadUser();
-});
-
 // functions
 function openRoute(route: string): void {
   menuController.close();
   router.push(route);
-}
-
-async function loadUser(): Promise<void> {
-  const queryName = "USER_MENU";
-  const fragmentName = "UserMenu";
-
-  try {
-    await userController.loadUser({ queryName, fragmentName });
-  } catch (error: any) {
-    console.error(error.message);
-  }
 }
 
 async function openModalDesktop(): Promise<void> {

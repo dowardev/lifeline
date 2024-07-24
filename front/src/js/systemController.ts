@@ -34,7 +34,8 @@ export class SystemController {
   }
 
   getTheme() {
-    return this.systemStore.getThemeSelected();
+    const systemStore = useSystemStore();
+    return systemStore.getThemeSelected();
   }
 
   applyTheme(params: { theme: Theme }) {

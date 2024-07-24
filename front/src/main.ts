@@ -49,6 +49,8 @@ import { UserFactory } from "./js/factory/UserFactory";
 import { useUserStore } from "./store/userStore";
 import { UserController } from "./js/userController";
 import { TokenController } from "./js/tokenController";
+import { useSystemStore } from "./store/system";
+import { SystemController } from "./js/systemController";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -72,6 +74,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       userId: userLogged.id!,
     });
 
+    // create user
     const userFactory = new UserFactory({
       localUserId: userLogged.id,
       tokenServer: token,
@@ -79,9 +82,24 @@ window.addEventListener("DOMContentLoaded", async () => {
     const user = await userFactory.create();
 
     const app = createApp(App).use(IonicVue).use(i18n).use(pinia).use(router);
+    // update user props
+    const userStore = useUserStore();
+    userStore.updateUserProps({ user });
+
+    // userTheme
+    const systemController = new SystemController();
+    const userTheme = user.preferences.theme;
+    systemController.setTheme({
+      theme: userTheme,
+      currentTheme: "light",
+    });
+    await systemController.updateThemeSelected({
+      theme: userTheme,
+    });
+    const systemStore = useSystemStore();
+    systemStore.setThemeSelected({ theme: user.preferences.theme });
+
     router.isReady().then(() => {
-      const userStore = useUserStore();
-      userStore.updateUserProps({ user });
       app.mount("#app");
     });
   } catch (err) {

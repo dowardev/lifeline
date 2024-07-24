@@ -23,6 +23,17 @@ export interface User {
   idSync?: string;
 }
 
+export interface UserStore {
+  name: string;
+  userName: string;
+  isAdmin?: boolean;
+  rol?: Array<any>;
+  imageProfile?: string;
+  preferences: {
+    theme: Theme;
+  };
+}
+
 export interface UserRegister {
   name: User["name"];
   user: User["user"];
