@@ -85,14 +85,17 @@
         </ion-card-header>
 
         <WakaTimeToday
-          v-if="systemController.getWakaTimeApiKey()"
+          v-if="wakaTimeController.getWakaTimeApiKey()"
           ref="todayComponentRef"
-          :api-key="systemController.getWakaTimeApiKey()"
+          :api-key="wakaTimeController.getWakaTimeApiKey()"
         />
 
         <div>
           <!-- input api key -->
-          <div v-if="!systemController.getWakaTimeApiKey()" class="ion-padding">
+          <div
+            v-if="!wakaTimeController.getWakaTimeApiKey()"
+            class="ion-padding"
+          >
             <WakaTimeApiKeyComponent />
           </div>
         </div>
@@ -128,10 +131,12 @@ import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 import { SystemController } from "@/js/systemController";
 import { CalendarController } from "@/js/calendarController";
 import { EventController } from "@/js/eventController";
+import { WakaTimeController } from "@/js/WakaTimeController";
 
 const systemController = new SystemController();
 const calendarController = new CalendarController();
 const eventsController = new EventController();
+const wakaTimeController = new WakaTimeController();
 
 const todayComponentRef = ref();
 
@@ -147,7 +152,7 @@ const totalEventsToday = computed(() => {
 });
 
 onMounted(() => {
-  systemController.loadWakaTimeApiKey();
+  wakaTimeController.loadWakaTimeApiKey();
 });
 
 function refreshTodayComponent(): void {

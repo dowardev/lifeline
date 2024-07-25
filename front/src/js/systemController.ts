@@ -109,63 +109,6 @@ export class SystemController {
     return viewMode;
   }
 
-  async storeWakaTimeApiKey(params: { apiKey: string }): Promise<void> {
-    const { apiKey } = params;
-    await storage.set("wakaTimeApiKey", apiKey);
-  }
-
-  getWakaTimeApiKey(): string {
-    const systemStore = useSystemStore();
-    return systemStore.getWakaTimeApiKey;
-  }
-
-  async testWakaTimeApiKey(params: {
-    apiKey: string;
-    date: string;
-  }): Promise<boolean> {
-    const { apiKey, date } = params;
-    try {
-      const response = await this.getWakaTimeDurations({ apiKey, date });
-      if (response) return true;
-      else return false;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async loadWakaTimeApiKey(): Promise<void> {
-    const apiKey = await this.getWakaTimeApiKey2();
-    const systemStore = useSystemStore();
-    systemStore.setWakaTimeApiKey({ apiKey });
-  }
-
-  async loadWakaTimeToday(params: { apiKey: string }) {
-    // const { apiKey } = params;
-    // const response = await getWakaTimeDurations({ apiKey });
-    // console.log(response);
-  }
-
-  async getWakaTimeDayTotal(params: {
-    apiKey: string;
-    date: string;
-  }): Promise<number> {
-    const { apiKey, date } = params;
-    const response = await this.getWakaTimeDurations({
-      apiKey,
-      date,
-    });
-    let sum = 0;
-    response.data.forEach((element) => {
-      sum += element.duration;
-    });
-    return sum;
-  }
-
-  async clearWakaTimeApiKey(): Promise<void> {
-    await this.deleteWakaTimeApiKey();
-    this.systemStore.removeWakaTimeApiKey();
-  }
-
   async openToast(params: SystemMessage): Promise<void> {
     const { color = "dark", message } = params;
     (await this.openToast2({ color, message })).present();
@@ -240,39 +183,6 @@ export class SystemController {
     const fields = ["user_id", "status"];
     await this.dbc.insertData({ tableName: "users_logged", values, fields });
     await this.dbc.getData({ query: "SELECT * FROM users_logged" });
-  }
-
-  async getWakaTimeApiKey2(): Promise<string> {
-    return await storage.get("wakaTimeApiKey");
-  }
-
-  async getWakaTimeDurations(params: {
-    apiKey: string;
-    date: string;
-  }): Promise<WakaTimeDuration> {
-    const { apiKey, date } = params;
-
-    const response = await axios.request({
-      url: "http://127.0.0.1:8000/api/wakatime-durations",
-      method: "get",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      params: {
-        apiKey: apiKey,
-        date,
-      },
-    });
-
-    try {
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async deleteWakaTimeApiKey(): Promise<void> {
-    await storage.remove("wakaTimeApiKey");
   }
 
   async openToast2(params: {
