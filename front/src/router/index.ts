@@ -149,20 +149,20 @@ router.beforeEach(async (to, from, next) => {
   const unauthorizedRoutes = ["/signup", "/login", "/landing"];
   const publicRoutes = ["/policies", "/about"];
 
-  // try {
-  //   const userStore = useUserStore();
-  //   if (Object.keys(userStore.user).length == 0)
-  //     throw new Error("No token found");
-  //   // await userController.loadUser({ queryName, fragmentName });
-  // } catch (error: any) {
-  //   if (
-  //     error.message !=
-  //       "Error: Query failed: SelectSQL: queryAll: no such table: Users" &&
-  //     error.message != "No token found"
-  //   ) {
-  //     console.error(error);
-  //   }
-  // }
+  try {
+    const userStore = useUserStore();
+    user = userStore.user;
+    if (Object.keys(user).length == 0) throw new Error("No token found");
+    // await userController.loadUser({ queryName, fragmentName });
+  } catch (error: any) {
+    if (
+      error.message !=
+        "Error: Query failed: SelectSQL: queryAll: no such table: Users" &&
+      error.message != "No token found"
+    ) {
+      console.error(error);
+    }
+  }
 
   if (publicRoutes.includes(path)) return next();
 

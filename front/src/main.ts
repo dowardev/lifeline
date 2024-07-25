@@ -51,6 +51,7 @@ import { UserController } from "./js/userController";
 import { TokenController } from "./js/tokenController";
 import { useSystemStore } from "./store/system";
 import { SystemController } from "./js/systemController";
+import { ThemeController } from "./js/themeController";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -87,17 +88,14 @@ window.addEventListener("DOMContentLoaded", async () => {
     userStore.updateUserProps({ user });
 
     // userTheme
-    const systemController = new SystemController();
+    const themeController = new ThemeController();
     const userTheme = user.preferences.theme;
-    systemController.setTheme({
-      theme: userTheme,
-      currentTheme: "light",
-    });
-    await systemController.updateThemeSelected({
+    themeController.applyTheme({
       theme: userTheme,
     });
-    const systemStore = useSystemStore();
-    systemStore.setThemeSelected({ theme: user.preferences.theme });
+    themeController.updateThemeSelected({
+      theme: userTheme,
+    });
 
     router.isReady().then(() => {
       app.mount("#app");

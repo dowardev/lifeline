@@ -18,7 +18,7 @@
             <ion-col size="12">
               <!-- logged -->
               <ion-item
-                v-if="userController.getUserLogged().user"
+                v-if="userController.getUserLogged().userName"
                 lines="none"
                 class="transparent"
               >
@@ -27,7 +27,7 @@
                 <!-- </ion-avatar> -->
 
                 <ion-label class="labelOptionMenu">{{
-                  userController.getUserLogged().user
+                  userController.getUserLogged().userName
                 }}</ion-label>
 
                 <ion-button
@@ -44,7 +44,7 @@
 
               <!-- no logged -->
               <ion-item
-                v-if="!userController.getUserLogged().user"
+                v-if="!userController.getUserLogged().userName"
                 class="transparent"
                 lines="none"
               >
@@ -327,12 +327,14 @@ const eventOpenPopoverUserOptions = ref(CustomEvent);
 // controllers
 import { SystemController } from "@/js/systemController";
 import { UserController } from "@/js/userController";
+import { ThemeController } from "@/js/themeController";
 const systemController = new SystemController();
 const userController = new UserController();
+const themeController = new ThemeController();
 
 // computed
 const imageKeyPath = computed(() => {
-  const theme = systemController.getTheme();
+  const theme = themeController.getTheme();
   let image = "";
   if (theme == "nord" || "light") image = userImage;
   if (theme == "gruvbox") image = userImageGruvbox;

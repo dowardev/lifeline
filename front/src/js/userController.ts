@@ -166,7 +166,7 @@ export class UserController {
   // TODO:remove
   getUserLogged(): User {
     const userStore = useUserStore();
-    const user = userStore.user == null ? {} : userStore.user;
+    const user = userStore.user;
     return user;
   }
 

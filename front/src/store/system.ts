@@ -16,7 +16,7 @@ export const useSystemStore = defineStore("system", {
 
   getters: {
     getThemeSelected(state) {
-      return () => {
+      return (): Theme => {
         return state.system.theme.selected;
       };
     },

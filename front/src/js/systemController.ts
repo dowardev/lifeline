@@ -27,29 +27,6 @@ export class SystemController {
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
 
-  async loadThemeSelected() {
-    const theme =
-      (await this.getTheme2()) != null ? await this.getTheme2() : "light";
-    this.systemStore.setThemeSelected({ theme });
-  }
-
-  getTheme() {
-    const systemStore = useSystemStore();
-    return systemStore.getThemeSelected();
-  }
-
-  applyTheme(params: { theme: Theme }) {
-    const theme = params.theme;
-    const currentTheme = this.getTheme();
-    this.setTheme({ theme, currentTheme });
-    this.setThemeSelected({ theme });
-  }
-
-  async updateThemeSelected(params: { theme: Theme }) {
-    const theme = params.theme;
-    await this.saveTheme({ theme });
-  }
-
   translateDay(params: { dayName: keyof Days }) {
     const dayName = params.dayName;
 
@@ -138,7 +115,8 @@ export class SystemController {
   }
 
   getWakaTimeApiKey(): string {
-    return this.systemStore.getWakaTimeApiKey;
+    const systemStore = useSystemStore();
+    return systemStore.getWakaTimeApiKey;
   }
 
   async testWakaTimeApiKey(params: {
@@ -157,7 +135,8 @@ export class SystemController {
 
   async loadWakaTimeApiKey(): Promise<void> {
     const apiKey = await this.getWakaTimeApiKey2();
-    this.systemStore.setWakaTimeApiKey({ apiKey });
+    const systemStore = useSystemStore();
+    systemStore.setWakaTimeApiKey({ apiKey });
   }
 
   async loadWakaTimeToday(params: { apiKey: string }) {
@@ -261,23 +240,6 @@ export class SystemController {
     const fields = ["user_id", "status"];
     await this.dbc.insertData({ tableName: "users_logged", values, fields });
     await this.dbc.getData({ query: "SELECT * FROM users_logged" });
-  }
-
-  async getTheme2(): Promise<Theme> {
-    return await storage.get("theme");
-  }
-
-  setTheme(params: { theme: Theme; currentTheme: Theme }): void {
-    const theme = params.theme;
-    const currentTheme = params.currentTheme;
-
-    document.getElementsByTagName("body")[0].classList.remove(currentTheme);
-    document.getElementsByTagName("body")[0].classList.add(theme);
-  }
-
-  async saveTheme(params: { theme: Theme }): Promise<void> {
-    const theme = params.theme;
-    await storage.set("theme", theme);
   }
 
   async getWakaTimeApiKey2(): Promise<string> {

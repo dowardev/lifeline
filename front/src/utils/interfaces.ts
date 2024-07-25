@@ -11,7 +11,7 @@ export interface Graphql {
 export interface User {
   id?: string;
   name?: string;
-  user?: string;
+  userName?: string;
   password?: string;
   email?: string;
   isAdmin?: boolean;

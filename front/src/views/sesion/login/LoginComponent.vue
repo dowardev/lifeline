@@ -197,8 +197,10 @@ import { useRouter } from "vue-router";
 // controllers
 import { SystemController } from "@/js/systemController";
 import { UserController } from "@/js/userController";
+import { ThemeController } from "@/js/themeController";
 const systemController = new SystemController();
 const userController = new UserController();
+const themeController = new ThemeController();
 
 // assets
 import keyImage from "@/assets/otros/key.svg";
@@ -247,7 +249,7 @@ const v$ = useVuelidate(rules, { form });
 
 // computed
 const imageKeyPath = computed(() => {
-  const theme = systemController.getTheme();
+  const theme = themeController.getTheme();
   let image = "";
   if (theme == "nord" || "light") image = keyImage;
   if (theme == "gruvbox") image = keyImageGruvbox;
@@ -255,7 +257,7 @@ const imageKeyPath = computed(() => {
   return image;
 });
 const loginImagePath = computed(() => {
-  const theme = systemController.getTheme();
+  const theme = themeController.getTheme();
   let image = "";
   if (theme == "nord" || "light")
     image =
