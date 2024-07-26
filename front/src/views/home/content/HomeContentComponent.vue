@@ -29,18 +29,29 @@
           <div
             style="display: flex; align-items: center"
             class="ion-padding-start"
+            :class="[
+              'div-animation-accordion-calendar',
+              isOpenCalendarAccordion ? 'open' : 'closed',
+            ]"
           >
-            <ion-icon
-              :icon="informationCircleOutline"
-              class="ion-padding-end"
-            ></ion-icon>
+            <div v-if="isOpenCalendarAccordion == false">
+              <ion-icon
+                :icon="informationCircleOutline"
+                class="ion-padding-end"
+              ></ion-icon>
 
-            <ion-label>
-              {{ totalEventsToday }}
-            </ion-label>
+              <!-- <transition name="fade"> -->
+              <!--   <ion-label v-if="isOpenCalendarAccordion == false"> -->
+              <!--     {{ totalEventsToday }} -->
+              <!--   </ion-label> -->
+              <!-- </transition> -->
+              <ion-label>
+                {{ totalEventsToday }}
+              </ion-label>
+            </div>
           </div>
 
-          <ion-accordion-group>
+          <ion-accordion-group @ion-change="handleAccordionChange">
             <ion-accordion value="first">
               <ion-item slot="header">
                 <ion-label>Mostrar mas</ion-label>
@@ -139,6 +150,7 @@ const eventsController = new EventController();
 const wakaTimeController = new WakaTimeController();
 
 const todayComponentRef = ref();
+const isOpenCalendarAccordion = ref(false);
 
 const totalEventsToday = computed(() => {
   const count = eventsController.countEvents({ date: new Date() });
@@ -162,6 +174,11 @@ function refreshTodayComponent(): void {
 function logoutWakaTime(): void {
   todayComponentRef.value.logout();
 }
+
+function handleAccordionChange(event: Event): void {
+  const isOpen = (event as any).detail.value === "first";
+  isOpenCalendarAccordion.value = isOpen;
+}
 </script>
 
 <style scoped>
@@ -176,5 +193,17 @@ function logoutWakaTime(): void {
 
 .element-selected {
   border: 1px solid var(--ion-color-primary);
+}
+
+.div-animation-accordion-calendar {
+  transition: height 0.5s ease;
+}
+
+.div-animation-accordion-calendar.closed {
+  height: calc(4dvh - 2px);
+}
+
+.div-animation-accordion-calendar.open {
+  height: 0px;
 }
 </style>

@@ -33,7 +33,7 @@
   </section>
 
   <!-- content -->
-  <section style="height: calc(100dvh - 336px)">
+  <section style="height: calc(100dvh - 301px)">
     <CalendarComponent
       ref="calendarComponent"
       :mode-view="'day'"
