@@ -1,0 +1,5 @@
+{
+  "syncStart": "Sincronización iniciada",
+  "syncEnd": "Sincronización terminada",
+  "syncError": "Problema al sincronizar"
+}

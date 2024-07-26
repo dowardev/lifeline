@@ -16,8 +16,8 @@ import { UserController } from "./userController";
 import { EventController } from "@/js/eventController";
 import { ScheduleController } from "@/js/scheduleController";
 import { storage } from "@/main";
-import { toastController } from "@ionic/core";
 import axios from "axios";
+import { toastController } from "@ionic/vue";
 
 export class SystemController {
   // store
@@ -111,7 +111,18 @@ export class SystemController {
 
   async openToast(params: SystemMessage): Promise<void> {
     const { color = "dark", message } = params;
-    (await this.openToast2({ color, message })).present();
+    try {
+      const toast = await toastController.create({
+        message,
+        duration: 2000,
+        color,
+        position: "bottom",
+      });
+
+      await toast.present();
+    } catch (error) {
+      throw error;
+    }
   }
 
   async openToastFixed(params: SystemMessage): Promise<HTMLIonToastElement> {

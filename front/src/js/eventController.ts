@@ -15,7 +15,7 @@ import { EventService } from "@/services/event";
 import { ReminderController } from "./reminderController";
 import { CalendarController } from "./calendarController";
 import { endOfMonth, format, startOfMonth } from "date-fns";
-import messages from "./messages.json";
+import messages from "../utils/messages.json";
 import { ApiController } from "./apiController";
 
 // services
@@ -378,7 +378,6 @@ export class EventController {
   }
 
   async syncEventsFromServer(): Promise<void> {
-    debugger;
     let serverEvents: Event[] = [];
 
     serverEvents = (await this.getEventsServer()) ?? [];
@@ -484,7 +483,7 @@ export class EventController {
     }
   }
 
-  async sync(): Promise<void> {
+  private async sync(): Promise<void> {
     try {
       await this.pushEventsUpdated();
       await this.syncEventsFromServer();
@@ -494,14 +493,8 @@ export class EventController {
     }
   }
 
-  async syncAction(params: { message: { show: boolean } }): Promise<void> {
-    const { message } = params;
+  async syncAction(): Promise<void> {
     const systemController = new SystemController();
-
-    if (message.show)
-      await systemController.openToast({
-        message: "Sincronización iniciada",
-      });
 
     const mode = await this.getViewCalendarStored();
     const dates = {
@@ -520,16 +513,8 @@ export class EventController {
       });
 
       this.calendarController.setCalendarDataStatus({ status: "success" });
-      if (message.show)
-        await systemController.openToast({
-          message: "Sincronización terminada",
-        });
     } catch (error: any) {
       this.calendarController.setCalendarDataStatus({ status: "error" });
-      if (message.show)
-        await systemController.openToast({
-          message: "Problema al sincronizar",
-        });
       throw error;
     }
   }
