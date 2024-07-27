@@ -52,9 +52,12 @@ import { TokenController } from "./js/tokenController";
 import { useSystemStore } from "./store/system";
 import { SystemController } from "./js/systemController";
 import { ThemeController } from "./js/themeController";
+import { UserStore } from "./utils/interfaces";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
+    const app = createApp(App).use(IonicVue).use(i18n).use(pinia).use(router);
+
     const dbc = new DB({
       dbSystem: new SQLite({ dbName: "db_vite" }),
     });
@@ -67,29 +70,32 @@ window.addEventListener("DOMContentLoaded", async () => {
     await tmpc.createTableReminders();
 
     const usercontroller = new UserController();
-    const userLogged = await usercontroller.getUserLoggerId();
+    const userLoggedId = await usercontroller.getUserLoggerId();
+    let user = {} as UserStore;
 
-    const tokenController = new TokenController();
-    const token = await tokenController.getUserToken({
-      name: "auth_token",
-      userId: userLogged.id!,
-    });
+    if (userLoggedId != "") {
+      const tokenController = new TokenController();
+      const token = await tokenController.getUserToken({
+        name: "auth_token",
+        userId: userLoggedId!,
+      });
 
-    // create user
-    const userFactory = new UserFactory({
-      localUserId: userLogged.id,
-      tokenServer: token,
-    });
-    const user = await userFactory.create();
+      // create user
+      const userFactory = new UserFactory({
+        localUserId: userLoggedId,
+        tokenServer: token,
+      });
+      user = await userFactory.create();
 
-    const app = createApp(App).use(IonicVue).use(i18n).use(pinia).use(router);
-    // update user props
-    const userStore = useUserStore();
-    userStore.updateUserProps({ user });
+      // update user props
+      const userStore = useUserStore();
+      userStore.updateUserProps({ user });
+    }
 
     // userTheme
     const themeController = new ThemeController();
-    const userTheme = user.preferences.theme;
+    const userTheme =
+      Object.keys(user).length == 0 ? "light" : user.preferences.theme;
     themeController.applyTheme({
       theme: userTheme,
     });
@@ -101,7 +107,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       app.mount("#app");
     });
   } catch (err) {
-    console.log(`Error: ${err}`);
-    throw new Error(`Error: ${err}`);
+    console.error(err);
   }
 });

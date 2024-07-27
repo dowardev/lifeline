@@ -313,6 +313,7 @@ import { SystemController } from "@/js/systemController";
 import { UserController } from "@/js/userController";
 const systemController = new SystemController();
 const userController = new UserController();
+const themeController = new ThemeController();
 
 // assets
 import userImage from "@/assets/otros/user.png";
@@ -320,11 +321,12 @@ import userImageGruvbox from "@/assets/otros/user-gruvbox.png";
 import userImageCherry from "@/assets/otros/user-cherry.png";
 import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
 import loginImageCherry from "@/assets/otros/login-cherry.png";
+import { ThemeController } from "@/js/themeController";
 
 const router = useRouter();
 
 const imageUserPath = computed(() => {
-  const theme = systemController.getTheme();
+  const theme = themeController.getTheme();
   let image = "";
   if (theme == "nord" || "light") image = userImage;
   if (theme == "gruvbox") image = userImageGruvbox;
@@ -333,7 +335,7 @@ const imageUserPath = computed(() => {
 });
 
 const loginImagePath = computed(() => {
-  const theme = systemController.getTheme();
+  const theme = themeController.getTheme();
   let image = "";
   if (theme == "nord" || "light")
     image =
