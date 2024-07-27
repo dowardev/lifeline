@@ -56,7 +56,7 @@ import { UserStore } from "./utils/interfaces";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
-    const app = createApp(App).use(IonicVue).use(i18n).use(pinia).use(router);
+    const app = createApp(App).use(IonicVue).use(i18n).use(pinia);
 
     const dbc = new DB({
       dbSystem: new SQLite({ dbName: "db_vite" }),
@@ -103,6 +103,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       theme: userTheme,
     });
 
+    app.use(router);
     router.isReady().then(() => {
       app.mount("#app");
     });
