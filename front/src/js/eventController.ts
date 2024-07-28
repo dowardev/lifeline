@@ -38,31 +38,6 @@ export class EventController {
    *
    * @returns {Promise<void>}
    */
-  async saveEvent(params: { event: Event }): Promise<void> {
-    const { event } = params;
-    let id = null;
-
-    try {
-      id = (await this.pushNewEvent({ event })).id;
-    } catch (error: any) {
-      throw new Error(error);
-    }
-
-    try {
-      event.reminders.start = new Date(event.reminders.start);
-      event.reminders.end = new Date(event.reminders.end);
-      event.idSync = id;
-      event.status = "active";
-      event.syncStatus = false;
-      await this.saveLocalEvent({
-        event,
-      });
-      this.eventStore.addEvent({ event });
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
   async loadEvents(params: {
     dates: { start: Date; end: Date };
   }): Promise<void> {
@@ -841,11 +816,76 @@ export class EventController {
 
   async saveLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
+    event.reminders.start = new Date(event.reminders.start);
+    event.reminders.end = new Date(event.reminders.end);
+    event.idSync = null;
+    event.status = "active";
+    event.syncStatus = false;
 
     try {
       event.syncStatus = true;
-      await this.eventService.saveLocalEvent({
-        event,
+      const valuesEvent = [
+        event.availability,
+        event.description,
+        JSON.stringify(event.guests),
+        event.idSync,
+        event.name,
+        event.syncStatus,
+        event.timezone,
+        event.status,
+      ];
+      const fieldsEvent = [
+        "availability",
+        "description",
+        "guests",
+        "idSync",
+        "name",
+        "syncStatus",
+        "timezone",
+        "status",
+      ];
+      const eventId = (
+        await this.dbc.insertData({
+          fields: fieldsEvent,
+          values: valuesEvent,
+          tableName: "Events",
+        })
+      ).id;
+
+      // reminders
+      const valuesReminders = [
+        eventId,
+        event.reminders.start
+          .toISOString()
+          .replace(/T/, " ")
+          .replace(/\..+/, "") + "Z",
+        event.reminders.end
+          .toISOString()
+          .replace(/T/, " ")
+          .replace(/\..+/, "") + "Z",
+        JSON.stringify(event.reminders.notifications),
+        false,
+        event.reminders.repeat?.frecuency,
+        event.reminders.repeat?.type,
+        JSON.stringify(event.reminders.repeat?.daysWeek ?? []),
+        JSON.stringify(event.reminders.idReminders ?? []),
+      ];
+      const fieldsReminders = [
+        "event_id",
+        "start",
+        "end",
+        "notifications",
+        "repeat",
+        "frecuency",
+        "type",
+        "daysWeek",
+        "id_reminders",
+      ];
+
+      await this.dbc.insertData({
+        fields: fieldsReminders,
+        values: valuesReminders,
+        tableName: "Reminders",
       });
     } catch (error: any) {
       throw new Error(error);
@@ -1184,5 +1224,16 @@ export class EventController {
     } catch (error: any) {
       throw error;
     }
+  }
+
+  /**
+   * Adds an event to the event store.
+   *
+   * @param {Object} params - The parameters for adding an event.
+   * @param {Event} params.event - The event to add to the store.
+   */
+  addEventToStore(params: { event: Event }): void {
+    const { event } = params;
+    this.eventStore.addEvent({ event });
   }
 }

@@ -371,10 +371,10 @@ async function saveEvent(params: { event: Event }): Promise<void> {
     ).remindersId;
     event.reminders.idReminders = remindersId;
 
-    await eventController.saveEvent({
+    await eventController.saveLocalEvent({
       event,
     });
-    await sync();
+    eventController.addEventToStore({ event });
   } catch (error) {
     console.error(error);
   }
