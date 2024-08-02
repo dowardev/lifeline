@@ -27,7 +27,7 @@ export const useEventsStore = defineStore("events", () => {
     const { events: eventsData } = params;
     eventsData.forEach((newEvent) => {
       const exists = events.value.find(
-        (localEvent) => localEvent.id == newEvent.id
+        (localEvent) => localEvent.id == newEvent.id,
       );
       if (!exists) events.value.push(newEvent);
     });
@@ -47,7 +47,7 @@ export const useEventsStore = defineStore("events", () => {
 
     eventsData.forEach((item) => {
       const index = combinedArray.findIndex(
-        (element) => element.id === item.id
+        (element) => element.id === item.id,
       );
       if (index === -1) {
         combinedArray.push(item);

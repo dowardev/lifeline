@@ -58,6 +58,7 @@ export class TempController {
     const query = `CREATE TABLE IF NOT EXISTS Events
     (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER REFERENCES users(id) NOT NULL,
       idSync INT,
       name TEXT,
       guests TEXT,

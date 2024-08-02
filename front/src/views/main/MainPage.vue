@@ -31,7 +31,7 @@
           v-if="$route.path == '/calendar' && calendarComponent.ready"
           @add="calendarComponentRef.openModalAdd({ event: $event })"
           @reschedule="calendarComponentRef.reschedule()"
-          @sync="calendarComponentRef.syncAction()"
+          @sync="calendarComponentRef.syncDataEvents()"
         />
 
         <!-- integrations -->

@@ -45,7 +45,7 @@ onMounted(async () => {
       message: messages.syncStart,
     });
 
-    await eventController.syncAction();
+    // await eventController.syncAction();
 
     await systemController.openToast({
       message: messages.syncEnd,

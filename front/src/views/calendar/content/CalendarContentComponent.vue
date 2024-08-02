@@ -18,6 +18,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { watch } from "vue";
+import messages from "@/utils/messages.json";
+
 // interfaces
 import { Event } from "@/utils/interfaces";
 
@@ -27,8 +29,10 @@ import CalendarComponent from "@/components/calendar/CalendarComponent.vue";
 // controllers
 import { EventController } from "@/js/eventController";
 import { CalendarController } from "@/js/calendarController";
+import { SystemController } from "@/js/systemController";
 const eventController = new EventController();
 const calendarController = new CalendarController();
+const systemcontroller = new SystemController();
 
 // vars
 const events = ref([] as Event[]);
@@ -48,7 +52,22 @@ onMounted(() => {
   events.value = eventController.getEvents();
 });
 
-defineExpose({ openModalAdd, reschedule });
+// functions
+async function syncDataEvents(): Promise<void> {
+  await systemcontroller.openToast({ message: messages.syncStart });
+
+  try {
+    await eventController.syncAction();
+  } catch (error) {
+    await systemcontroller.openToast({
+      message: messages.syncEnd,
+      color: "danger",
+    });
+    console.error(error);
+  }
+}
+
+defineExpose({ openModalAdd, reschedule, syncDataEvents });
 
 // functions
 /**

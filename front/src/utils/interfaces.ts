@@ -9,7 +9,8 @@ export interface Graphql {
 
 // user
 export interface User {
-  id?: string;
+  id: string;
+  idSync?: string;
   name?: string;
   userName?: string;
   password?: string;
@@ -20,10 +21,15 @@ export interface User {
   isDisabled?: boolean;
   imageProfile?: string;
   token?: string;
-  idSync?: string;
+  events?: Array<Event>;
+  preferences?: {
+    theme: Theme;
+  };
 }
 
 export interface UserStore {
+  id: string;
+  idSync: string;
   name: string;
   userName: string;
   isAdmin?: boolean;
@@ -79,6 +85,7 @@ export interface SystemMessage {
 // events
 export interface Event {
   id?: number;
+  userId: string;
   name?: string;
   // calendar?: string;
   guests?: Array<{ email: string }>;

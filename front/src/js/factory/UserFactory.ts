@@ -1,4 +1,4 @@
-import { User, UserStore } from "@/utils/interfaces";
+import { User, UserStore, Event } from "@/utils/interfaces";
 import { UserController } from "../userController";
 import { ApiController } from "../apiController";
 import { DB } from "../db";
@@ -11,7 +11,9 @@ export class UserFactory {
   });
   private localUserId = "";
   private tokenServer = "";
-  private user: UserStore = {
+  private user: User = {
+    id: "",
+    idSync: "",
     name: "",
     userName: "",
     isAdmin: false,
@@ -26,7 +28,7 @@ export class UserFactory {
     this.tokenServer = tokenServer;
   }
 
-  public async create(): Promise<UserStore> {
+  public async create(): Promise<User> {
     const localId = this.localUserId;
     const token = this.tokenServer;
 
@@ -36,13 +38,13 @@ export class UserFactory {
       throw error;
     }
 
-    try {
-      const serverResponse = await this.getUserFromServer({ token });
-      if (Object.keys(serverResponse).length > 0) this.user = serverResponse;
-    } catch (error: any) {
-      if (error.message != "Unauthorized" && error.message != "No token found")
-        throw error;
-    }
+    // try {
+    //   const serverResponse = await this.getUserFromServer({ token });
+    //   if (Object.keys(serverResponse).length > 0) this.user = serverResponse;
+    // } catch (error: any) {
+    //   if (error.message != "Unauthorized" && error.message != "No token found")
+    //     throw error;
+    // }
 
     return this.user;
   }
@@ -86,24 +88,73 @@ export class UserFactory {
     }
   }
 
-  private async getUserFromLocal(params: { id: string }): Promise<UserStore> {
+  private async getUserFromLocal(params: { id: string }): Promise<User> {
     const { id } = params;
-    const query = `SELECT * FROM  users where id=${id}`;
-    try {
-      const result = (await this.dbc.getData({ query }))[0] as any;
+    let user: User = {} as any;
 
+    try {
+      const queryUser = `SELECT * FROM  users where id=${id}`;
+      const result = (await this.dbc.getData({ query: queryUser }))[0] as any;
       if (Object.keys(result).length === 0) throw new Error("no user found");
 
-      return {
+      user = {
+        id,
         name: result.name,
-        userName: result.user,
+        userName: result.user_name,
         isAdmin: result.is_admin,
         rol: [],
         imageProfile: result.image_profile,
         preferences: { theme: "light" },
-      } as UserStore;
+        events: await this.getUserEventsFromLocal({ id }),
+      } as User;
     } catch (error: any) {
       throw error;
     }
+
+    return user;
+  }
+
+  private async getUserEventsFromLocal(params: {
+    id: string;
+  }): Promise<Array<Event>> {
+    const { id } = params;
+    let events: Array<Event> = [];
+
+    try {
+      // console.log(
+      //   "reminders",
+      //   await this.dbc.getData({ query: "SELECT * FROM reminders" }),
+      // );
+      const queryUser = `SELECT * FROM  events inner join reminders on events.id=reminders.event_id  where user_id=${id}`;
+      const result = (await this.dbc.getData({ query: queryUser })) as any;
+      // console.log("events", result);
+      if (result != undefined && Object.keys(result).length > 0)
+        events = result.map((event: any) => {
+          return {
+            id: event.id,
+            idSync: event.id_sync,
+            name: event.name,
+            guests: event.guests,
+            timezone: event.timezone,
+            description: event.description,
+            availability: event.availability,
+            syncStatus: event.sync_status,
+            status: event.status,
+            reminders: {
+              start: event.start,
+              end: event.end,
+              notifications: event.notifications,
+              repeat: {
+                frecuency: event.frecuency,
+                type: event.type,
+                daysWeek: event.days_week,
+              },
+            },
+          };
+        });
+    } catch (error: any) {
+      throw error;
+    }
+    return events;
   }
 }

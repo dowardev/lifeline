@@ -47,12 +47,13 @@ import { DB } from "./js/db";
 import { TempController } from "./js/TempController";
 import { UserFactory } from "./js/factory/UserFactory";
 import { useUserStore } from "./store/userStore";
+import { useEventsStore } from "./store/eventsStore";
 import { UserController } from "./js/userController";
 import { TokenController } from "./js/tokenController";
 import { useSystemStore } from "./store/system";
 import { SystemController } from "./js/systemController";
 import { ThemeController } from "./js/themeController";
-import { UserStore } from "./utils/interfaces";
+import { User, UserStore } from "./utils/interfaces";
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -71,7 +72,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const usercontroller = new UserController();
     const userLoggedId = await usercontroller.getUserLoggerId();
-    let user = {} as UserStore;
+    let user = {} as User;
 
     if (userLoggedId != "") {
       const tokenController = new TokenController();
@@ -89,7 +90,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       // update user props
       const userStore = useUserStore();
-      userStore.updateUserProps({ user });
+      userStore.updateUserProps({
+        user: {
+          id: user.id,
+          idSync: user.idSync!,
+          name: user.name!,
+          userName: user.userName!,
+          isAdmin: user.isAdmin,
+          rol: user.rol,
+          imageProfile: user.imageProfile,
+          preferences: { theme: user.preferences!.theme },
+        },
+      });
     }
 
     // userTheme
@@ -102,6 +114,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     themeController.updateThemeSelected({
       theme: userTheme,
     });
+
+    // events
+    const eventStore = useEventsStore();
+    eventStore.setEvents({ events: user.events ?? [] });
 
     app.use(router);
     router.isReady().then(() => {

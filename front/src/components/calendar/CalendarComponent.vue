@@ -160,9 +160,14 @@ function groupEvents(params: { events: Event[] }): {
     };
   };
 } {
-  const events = systemController.cloneObjet({
+  let events = systemController.cloneObjet({
     obj: params.events,
   }) as Event[];
+  events = events.map((event) => {
+    event.reminders.start = new Date(event.reminders.start);
+    event.reminders.end = new Date(event.reminders.end);
+    return event;
+  });
 
   return events.reduce(
     (
@@ -357,19 +362,19 @@ function eachPeriodOfInterval(params: {
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   try {
-    const remindersId = (
-      await eventController.setEventReminder({
-        daysWeek: event.reminders.repeat!.daysWeek!,
-        description: event.description,
-        frecuency: event.reminders.repeat!.frecuency!,
-        name: event.name!,
-        notifications: event.reminders.notifications!,
-        reminderEnd: event.reminders.end,
-        reminderStart: event.reminders.start,
-        repeatType: event.reminders.repeat!.type!,
-      })
-    ).remindersId;
-    event.reminders.idReminders = remindersId;
+    // const remindersId = (
+    //   await eventController.setEventReminder({
+    //     daysWeek: event.reminders.repeat!.daysWeek!,
+    //     description: event.description,
+    //     frecuency: event.reminders.repeat!.frecuency!,
+    //     name: event.name!,
+    //     notifications: event.reminders.notifications!,
+    //     reminderEnd: event.reminders.end,
+    //     reminderStart: event.reminders.start,
+    //     repeatType: event.reminders.repeat!.type!,
+    //   })
+    // ).remindersId;
+    // event.reminders.idReminders = remindersId;
 
     await eventController.saveLocalEvent({
       event,

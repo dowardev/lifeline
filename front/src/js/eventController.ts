@@ -20,15 +20,19 @@ import { ApiController } from "./apiController";
 
 // services
 import { DB } from "./db";
+import { useUserStore } from "@/store/userStore";
 
 export class EventController {
   dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
   // private eventService = new EventService();
-  private eventStore = useEventsStore();
   private calendarController = new CalendarController();
   apiController = new ApiController();
+
+  // stores
+  private eventStore = useEventsStore();
+  private userStore = useUserStore();
 
   /**
    * Perform all the necessary procedure to add a event both generally, locally and from the store
@@ -357,6 +361,7 @@ export class EventController {
 
     serverEvents = (await this.getEventsServer()) ?? [];
     const localEvents = await this.getStoredEvents({ filterType: "none" });
+    // console.log(localEvents);
     const problems = await this.getConflictingLocalEvents({
       events: serverEvents,
     });
@@ -469,8 +474,6 @@ export class EventController {
   }
 
   async syncAction(): Promise<void> {
-    const systemController = new SystemController();
-
     const mode = await this.getViewCalendarStored();
     const dates = {
       start: new Date(
@@ -816,6 +819,7 @@ export class EventController {
 
   async saveLocalEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
+    const userId = this.userStore.user.id;
     event.reminders.start = new Date(event.reminders.start);
     event.reminders.end = new Date(event.reminders.end);
     event.idSync = null;
@@ -825,6 +829,7 @@ export class EventController {
     try {
       event.syncStatus = true;
       const valuesEvent = [
+        userId,
         event.availability,
         event.description,
         JSON.stringify(event.guests),
@@ -834,7 +839,9 @@ export class EventController {
         event.timezone,
         event.status,
       ];
+
       const fieldsEvent = [
+        "user_id",
         "availability",
         "description",
         "guests",
@@ -887,8 +894,9 @@ export class EventController {
         values: valuesReminders,
         tableName: "Reminders",
       });
+      await this.dbc.getData({ query: "SELECT * FROM Reminders" });
     } catch (error: any) {
-      throw new Error(error);
+      throw error;
     } finally {
     }
   }

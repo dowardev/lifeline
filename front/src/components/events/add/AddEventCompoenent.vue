@@ -818,9 +818,14 @@ function groupEvents(params: { events: Event[] }): {
     };
   };
 } {
-  const events = systemController.cloneObjet({
+  let events = systemController.cloneObjet({
     obj: params.events,
   }) as Event[];
+  events = events.map((event) => {
+    event.reminders.start = new Date(event.reminders.start);
+    event.reminders.end = new Date(event.reminders.end);
+    return event;
+  });
 
   return events.reduce(
     (

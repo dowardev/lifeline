@@ -1,14 +1,13 @@
 import { defineStore } from "pinia";
-import { User, User2 } from "../utils/interfaces";
+import { UserStore } from "../utils/interfaces";
 import userAvatar from "@/assets/otros/user.png";
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { UserController } from "@/js/userController";
 
 export const useUserStore = defineStore("user", () => {
-  const user = ref({} as User);
+  const user = ref({} as UserStore);
   const token = "";
   const isLogged = ref(false);
-  const userController = new UserController();
 
   // watch(user, async (newVal: User2, oldVal: User2) => {
   //   if (newVal !== oldVal) {
@@ -25,7 +24,7 @@ export const useUserStore = defineStore("user", () => {
     return userAvatar;
   }
 
-  function updateUserProps(params: { user: User }): void {
+  function updateUserProps(params: { user: UserStore }): void {
     const { user: userData } = params;
     user.value = userData;
   }
