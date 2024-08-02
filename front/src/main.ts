@@ -70,6 +70,17 @@ window.addEventListener("DOMContentLoaded", async () => {
     await tmpc.createTableEvents();
     await tmpc.createTableReminders();
 
+    await loadUser();
+
+    app.use(router);
+    router.isReady().then(() => {
+      app.mount("#app");
+    });
+  } catch (err) {
+    console.error(err);
+  }
+
+  async function loadUser(): Promise<void> {
     const usercontroller = new UserController();
     const userLoggedId = await usercontroller.getUserLoggerId();
     let user = {} as User;
@@ -118,12 +129,5 @@ window.addEventListener("DOMContentLoaded", async () => {
     // events
     const eventStore = useEventsStore();
     eventStore.setEvents({ events: user.events ?? [] });
-
-    app.use(router);
-    router.isReady().then(() => {
-      app.mount("#app");
-    });
-  } catch (err) {
-    console.error(err);
   }
 });
