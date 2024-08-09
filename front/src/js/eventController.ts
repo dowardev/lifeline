@@ -21,6 +21,8 @@ import { ApiController } from "./apiController";
 // services
 import { DB } from "./db";
 import { useUserStore } from "@/store/userStore";
+import { TokenController } from "./tokenController";
+import { UserController } from "./userController";
 
 export class EventController {
   dbc = new DB({
@@ -106,44 +108,36 @@ export class EventController {
    *
    * @returns {Promise<Event[]>}
    */
-  async getStoredEvents(params: {
-    filterType: "none" | "date";
-    dates?: { start: Date; end: Date } | undefined;
-  }): Promise<Array<Event>> {
-    const { filterType, dates } = params;
+  // Temporarily disabled
+  // async getStoredEvents(params: {
+  //   filterType: "none" | "date";
+  //   dates?: { start: Date; end: Date } | undefined;
+  // }): Promise<Array<Event>> {
+  //   const { filterType, dates } = params;
+  //
+  //   try {
+  //     let events: Event[] = [];
+  //
+  //     if (filterType == "none") events = await this.getEventsLocal();
+  //
+  //     if (filterType == "date") {
+  //       if (dates == undefined) throw new Error("Required dates");
+  //       events = await this.getEventsLocalByDate({
+  //         dates: dates as any,
+  //       });
+  //     }
+  //     return events;
+  //   } catch (error: any) {
+  //     throw new Error(error);
+  //   }
+  // }
 
-    try {
-      let events: Event[] = [];
-
-      if (filterType == "none") events = await this.getEventsLocal();
-
-      if (filterType == "date") {
-        if (dates == undefined) throw new Error("Required dates");
-        events = await this.getEventsLocalByDate({
-          dates: dates as any,
-        });
-      }
-      return events;
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
-  async getEventsServer(): Promise<Array<Event>> {
-    try {
-      const events = await this.getEvents2({
-        graphql: { name: USER_EVENTS, fragment: "Events", refetch: true },
-      });
-      return events ?? ([] as Event[]);
-    } catch (error: any) {
-      throw error;
-    }
-  }
-
-  async storeEventsServer(): Promise<void> {
+  async storeEventServer(params: { userId: number }): Promise<void> {
+    const { userId } = params;
     const eventsStored =
-      (await this.getStoredEvents({ filterType: "none" })) ?? [];
-    const eventsServer = (await this.getEventsServer()) ?? [];
+      (await this.getUserLoggedStoredEvents({ filterType: "none", userId })) ??
+      [];
+    const eventsServer = (await this.getUserLoggedEventsServer()) ?? [];
 
     for (const event of eventsServer) {
       const result = eventsStored?.filter(
@@ -159,10 +153,12 @@ export class EventController {
 
   async getConflictingLocalEvents(params: {
     events: Event[];
+    userId: string;
   }): Promise<Event[]> {
-    const { events: serverEvents } = params;
+    const { events: serverEvents, userId } = params;
     const localEvents = (
-      (await this.getStoredEvents({ filterType: "none" })) ?? []
+      (await this.getUserLoggedStoredEvents({ filterType: "none", userId })) ??
+      []
     ).filter((event) => event.idSync! >= 0);
 
     const sharedIds = lodash.filter(serverEvents, (event) =>
@@ -258,7 +254,7 @@ export class EventController {
     eventsDeleted: Event[];
   }> {
     const eventsStored = (await this.getStoredEvents()) ?? [];
-    const eventsServer = (await this.getEventsServer()) ?? [];
+    const eventsServer = (await this.getUserLoggedEventsServer()) ?? [];
 
     const deleted = [] as Event[];
 
@@ -321,12 +317,16 @@ export class EventController {
     }
   }
 
-  async pushEventsUpdated(): Promise<void> {
+  async pushUserLoggedEventsUpdated(params: { userId: number }): Promise<void> {
+    const { userId } = params;
     try {
     } catch (error) {
       console.error(error);
     }
-    const events = await this.getEventsLocal();
+    const events = await this.getUserLoggedStoredEvents({
+      filterType: "none",
+      userId,
+    });
 
     const result = events.filter(
       (event) => event.idSync != null && event.syncStatus == false,
@@ -335,7 +335,7 @@ export class EventController {
     try {
       await Promise.all(
         result.map(async (event) => {
-          await this.updateEventServer({ event });
+          await this.updateUserLoggedEventServer({ event });
         }),
       );
     } catch (error: any) {
@@ -346,7 +346,7 @@ export class EventController {
   async pusUpdateEvent(params: { event: Event }): Promise<void> {
     const { event } = params;
     try {
-      await this.updateEventServer({ event });
+      await this.updateUserLoggedEventServer({ event });
     } catch (error) {
       console.error(error);
     }
@@ -356,146 +356,33 @@ export class EventController {
     await storage.remove("events");
   }
 
-  async syncEventsFromServer(): Promise<void> {
-    let serverEvents: Event[] = [];
+  // async sync(): Promise<void> {
+  //   try {
+  //     await this.pushEventsUpdated();
+  //     await this.syncEventsFromServer();
+  //     await this.deleteInativeEventOnServer();
+  //   } catch (error: any) {
+  //     throw error;
+  //   }
+  // }
 
-    serverEvents = (await this.getEventsServer()) ?? [];
-    const localEvents = await this.getStoredEvents({ filterType: "none" });
-    // console.log(localEvents);
-    const problems = await this.getConflictingLocalEvents({
-      events: serverEvents,
-    });
-    const eventsServerDeleted = localEvents.filter((event) => {
-      if (event.idSync == null) return;
-      const found = serverEvents.find(
-        (element) => element.idSync == event.idSync,
-      );
-      if (!found) {
-        return event;
-      }
-    });
-
-    const toUpdate: Event[] = [];
-
-    problems.forEach((event) => {
-      const found = serverEvents.find(
-        (element) => element.idSync == event.idSync,
-      );
-      if (found) {
-        found.id = event.id;
-        toUpdate.push(found);
-      }
-    });
-
-    const newServerEvents = lodash.filter(serverEvents, (event) => {
-      return !lodash.some(
-        localEvents,
-        (otherEvent) => event.idSync === otherEvent.idSync,
-      );
-    });
-
-    const newLocalEvents = localEvents.filter((event) => event.idSync == null);
-
-    // debugger;
-    try {
-      if (newLocalEvents.length > 0)
-        for (let index = 0; index < newLocalEvents.length; index++) {
-          const event = newLocalEvents[index];
-          const { id } = await this.pushNewEvent({ event });
-          event.idSync = id as number;
-          event.syncStatus = true;
-          await this.updateLocalEvent({ event });
-        }
-    } catch (error: any) {
-      if (
-        error.message !=
-        "Error: Query failed: SelectSQL: queryAll: UNIQUE constraint failed: EVENTS.idSync"
-      ) {
-        throw new Error(error);
-      }
-    }
-
-    try {
-      if (newServerEvents.length > 0)
-        for (let index = 0; index < newServerEvents.length; index++) {
-          const event = newServerEvents[index];
-          await this.saveLocalEvent({
-            event,
-          });
-        }
-    } catch (error: any) {
-      if (
-        error.message !=
-        "Error: Query failed: SelectSQL: queryAll: UNIQUE constraint failed: EVENTS.idSync"
-      ) {
-        throw new Error(error);
-      }
-    }
-
-    try {
-      if (problems.length > 0)
-        for (let index = 0; index < problems.length; index++) {
-          const event = problems[index];
-          await this.saveEvent({ event });
-        }
-    } catch (error: any) {
-      throw new Error(error);
-    }
-
-    try {
-      if (toUpdate.length > 0)
-        for (let index = 0; index < toUpdate.length; index++) {
-          const event = toUpdate[index];
-          await this.updateLocalEvent({ event: event as any });
-        }
-    } catch (error: any) {
-      throw new Error(error);
-    }
-
-    try {
-      if (eventsServerDeleted.length > 0)
-        for (let index = 0; index < eventsServerDeleted.length; index++) {
-          const event = eventsServerDeleted[index];
-          await this.deleteLocalEvent({ id: event.id as number });
-        }
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
-  private async sync(): Promise<void> {
-    try {
-      await this.pushEventsUpdated();
-      await this.syncEventsFromServer();
-      await this.deleteInativeEventOnServer();
-    } catch (error: any) {
-      throw error;
-    }
-  }
-
-  async syncAction(): Promise<void> {
-    const mode = await this.getViewCalendarStored();
-    const dates = {
-      start: new Date(
-        startOfMonth(this.calendarController.getCurrentDate({ mode })),
-      ),
-      end: new Date(
-        endOfMonth(this.calendarController.getCurrentDate({ mode })),
-      ),
-    };
-
-    try {
-      await this.sync();
-      await this.loadEvents({
-        dates,
-      });
-
-      this.calendarController.setCalendarDataStatus({ status: "success" });
-    } catch (error: any) {
-      this.calendarController.setCalendarDataStatus({ status: "error" });
-      throw error;
-    }
-  }
+  // async syncAction(): Promise<void> {
+  //   const mode = await this.getViewCalendarStored();
+  //   const dates = {
+  //     start: new Date(
+  //       startOfMonth(this.calendarController.getCurrentDate({ mode })),
+  //     ),
+  //     end: new Date(
+  //       endOfMonth(this.calendarController.getCurrentDate({ mode })),
+  //     ),
+  //   };
+  //
+  //   try {
+  //     await this.sync();
+  //   } catch (error: any) {
+  //     throw error;
+  //   }
+  // }
 
   async deleteEvents(): Promise<void> {
     const query = `Delete FROM Events`;
@@ -512,79 +399,6 @@ export class EventController {
     const query = `Delete FROM Reminders`;
     try {
       await this.dbc.deleteData({ query });
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
-  async storeLocalEvent(params: { event: Event }): Promise<void> {
-    const { event } = params;
-
-    try {
-      const valuesEvent = [
-        event.availability,
-        event.description,
-        JSON.stringify(event.guests),
-        event.idSync,
-        event.name,
-        event.syncStatus,
-        event.timezone,
-        event.status,
-      ];
-      const fieldsEvent = [
-        "availability",
-        "description",
-        "guests",
-        "idSync",
-        "name",
-        "syncStatus",
-        "timezone",
-        "status",
-      ];
-
-      const eventId = (
-        await this.dbc.insertData({
-          values: valuesEvent,
-          fields: fieldsEvent,
-          tableName: "Events",
-        })
-      ).id;
-
-      const valuesReminders = [
-        eventId,
-        event.reminders.start
-          .toISOString()
-          .replace(/T/, " ")
-          .replace(/\..+/, "") + "Z",
-        event.reminders.end
-          .toISOString()
-          .replace(/T/, " ")
-          .replace(/\..+/, "") + "Z",
-        JSON.stringify(event.reminders.notifications),
-        false,
-        event.reminders.repeat?.frecuency,
-        event.reminders.repeat?.type,
-        JSON.stringify(event.reminders.repeat?.daysWeek ?? []),
-        JSON.stringify(event.reminders.idReminders ?? []),
-      ];
-      const fieldsReminders = [
-        "event_id",
-        "start",
-        "end",
-        "notifications",
-        "repeat",
-        "frecuency",
-        "type",
-        "daysWeek",
-        "id_reminders",
-      ];
-
-      await this.dbc.insertData({
-        values: valuesReminders,
-        fields: fieldsReminders,
-        tableName: "Reminders",
-      });
-      // console.log(await this.getEventsLocal());
     } catch (error: any) {
       throw new Error(error);
     }
@@ -719,9 +533,27 @@ export class EventController {
     await this.eventService.deleteEvent({ eventId: id });
   }
 
-  async removeEventServer(params: { id: string }): Promise<void> {
+  async removeEventServer(params: { id: number }): Promise<void> {
     const { id } = params;
-    await this.eventService.deleteEventServer({ id });
+    const apiController = new ApiController();
+
+    try {
+      const qr = apiController.getQuery({ name: "DELETE_EVENT" });
+
+      const query = apiController.graphqlMutationBuilder({
+        name: qr,
+        fragment: "DeleteEvent",
+        mutationName: "deleteEvent",
+        inputName: "DeleteEventInput",
+      });
+
+      await apiController.executeGrapMutatation({
+        query,
+        input: { id },
+      });
+    } catch (error: any) {
+      throw error;
+    }
   }
 
   /**
@@ -910,15 +742,26 @@ export class EventController {
    */
   async deleteLocalEvent(params: { id: number }): Promise<void> {
     const { id } = params;
-    await this.eventService.deleteEvent({ id });
+    const queryReminders = `Delete FROM Reminders where event_id=${id}`;
+    const queryEvents = `Delete FROM Events where id=${id}`;
+
+    try {
+      await this.dbc.deleteData({ query: queryReminders });
+      await this.dbc.deleteData({ query: queryEvents });
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 
-  async deleteInativeEventOnServer(): Promise<void> {
-    const localEvents = await this.getStoredEvents({ filterType: "none" });
+  async deleteUserLoggedInativeEventOnServer(): Promise<void> {
+    const localEvents = await this.getUserLoggedStoredEvents({
+      filterType: "none",
+      userId: this.userStore.user.id,
+    });
     const events = localEvents.filter((event) => event.status == "inactive");
     await Promise.all(
       events.map(async (event) => {
-        await this.eventService.deleteEventServer({
+        await this.removeEventServer({
           id: event.idSync as number,
         });
       }),
@@ -1075,6 +918,7 @@ export class EventController {
       result.forEach((event: any) => {
         events.push({
           id: event.id,
+          userId: event.user_id,
           name: event.name,
           guests: JSON.parse(event.guests as any),
           reminders: {
@@ -1118,6 +962,7 @@ export class EventController {
       result.forEach((event: any) => {
         events.push({
           id: event.id,
+          userId: event.user_id,
           name: event.name,
           guests: JSON.parse(event.guests as any),
           reminders: {
@@ -1145,24 +990,34 @@ export class EventController {
     }
   }
 
-  async getEvents2(params: { graphql: Graphql }): Promise<Event[] | null> {
-    const { refetch = false, name, fragment } = params.graphql;
+  async getUserLoggedEventsServer(): Promise<Event[] | undefined> {
     const apiController = new ApiController();
+    const usercontroller = new UserController();
+    const tokenController = new TokenController();
 
     try {
+      const userLoggedId = await usercontroller.getUserLoggerId();
+      const userToken = await tokenController.getUserToken({
+        name: "auth_token",
+        userId: userLoggedId!,
+      });
+      const qr = apiController.getQuery({ name: "USER_EVENTS" });
       const query = apiController.graphqlQueryBuilder({
-        name,
-        fragment,
+        name: qr,
+        fragment: "Events",
         mutationName: "events",
       });
 
-      let response = await apiController.executeGrapQuery({
+      const response = await apiController.executeGrapQuery({
         query,
-        options: { refetch },
+        options: { refetch: true },
+        token: userToken,
       });
       if (!response.value.events.events) return [] as Event[];
-      response = (response.value.events.events as any[]).map((event: any) => {
+      return (response.value.events.events as any[]).map((event: any) => {
         return {
+          userId: userLoggedId,
+          idsync: event.id,
           description: event.description,
           guests: JSON.parse(event.guests),
           idSync: parseInt(event.id),
@@ -1177,19 +1032,19 @@ export class EventController {
               daysWeek: JSON.parse(event.repeat).daysWeek ?? [],
             },
             notifications: JSON.parse(event.notifications) ?? [],
+            idReminders: [],
           },
           availability: event.availability,
           syncStatus: true,
           status: "active",
         };
-      });
-      return response;
+      }) as Event[];
     } catch (error: any) {
       if (error.message != "Unauthorized") throw error;
     }
   }
 
-  async updateEventServer(params: { event: Event }): Promise<void> {
+  async updateUserLoggedEventServer(params: { event: Event }): Promise<void> {
     const { event } = params;
     const data = {
       id: event.idSync,
@@ -1243,5 +1098,29 @@ export class EventController {
   addEventToStore(params: { event: Event }): void {
     const { event } = params;
     this.eventStore.addEvent({ event });
+  }
+
+  async getUserLoggedStoredEvents(params: {
+    filterType: "none" | "date";
+    dates?: { start: Date; end: Date } | undefined;
+    userId: number;
+  }): Promise<Array<Event>> {
+    const { filterType, dates, userId } = params;
+
+    try {
+      let events: Event[] = [];
+
+      if (filterType == "none") events = await this.getEventsLocal();
+
+      if (filterType == "date") {
+        if (dates == undefined) throw new Error("Required dates");
+        events = await this.getEventsLocalByDate({
+          dates: dates as any,
+        });
+      }
+      return events;
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 }

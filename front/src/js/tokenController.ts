@@ -7,7 +7,7 @@ export class TokenController {
   });
   private tableName = "Tokens";
 
-  async getUserToken(params: { name: string; userId: string }): Promise<any> {
+  async getUserToken(params: { name: string; userId: number }): Promise<any> {
     const { name, userId } = params;
     const query = `SELECT token FROM ${this.tableName} WHERE user_id=${userId} AND name='${name}'`;
     const result = await this.dbc.getData({

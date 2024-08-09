@@ -9,7 +9,7 @@ export class UserFactory {
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
-  private localUserId = "";
+  private localUserId;
   private tokenServer = "";
   private user: User = {
     id: "",
@@ -22,7 +22,7 @@ export class UserFactory {
     preferences: { theme: "light" },
   };
 
-  constructor(params: { localUserId: string; tokenServer: string }) {
+  constructor(params: { localUserId: number; tokenServer: string }) {
     const { localUserId, tokenServer } = params;
     this.localUserId = localUserId;
     this.tokenServer = tokenServer;
@@ -88,7 +88,7 @@ export class UserFactory {
     }
   }
 
-  private async getUserFromLocal(params: { id: string }): Promise<User> {
+  private async getUserFromLocal(params: { id: number }): Promise<User> {
     const { id } = params;
     let user: User = {} as any;
 
@@ -115,7 +115,7 @@ export class UserFactory {
   }
 
   private async getUserEventsFromLocal(params: {
-    id: string;
+    id: number;
   }): Promise<Array<Event>> {
     const { id } = params;
     let events: Array<Event> = [];

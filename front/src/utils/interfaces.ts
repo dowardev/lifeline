@@ -9,8 +9,8 @@ export interface Graphql {
 
 // user
 export interface User {
-  id: string;
-  idSync?: string;
+  id: number;
+  idSync?: number;
   name?: string;
   userName?: string;
   password?: string;
@@ -85,7 +85,7 @@ export interface SystemMessage {
 // events
 export interface Event {
   id?: number;
-  userId: string;
+  userId: number;
   name?: string;
   // calendar?: string;
   guests?: Array<{ email: string }>;

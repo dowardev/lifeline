@@ -85,7 +85,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const userLoggedId = await usercontroller.getUserLoggerId();
     let user = {} as User;
 
-    if (userLoggedId != "") {
+    if (userLoggedId != undefined) {
       const tokenController = new TokenController();
       const token = await tokenController.getUserToken({
         name: "auth_token",

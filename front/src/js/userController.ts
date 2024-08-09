@@ -7,6 +7,7 @@ import {
   UserLogin,
   UserLoginResponse,
   UserRegister,
+  Event,
 } from "../utils/interfaces";
 import { errorBuilder } from "@/utils/errors";
 import { SessionController } from "./sessionController";
@@ -25,6 +26,8 @@ import gql from "graphql-tag";
 import { useMutation } from "@vue/apollo-composable";
 import { storage } from "@/main";
 import { useUserStore } from "@/store/userStore";
+import { EventController } from "./eventController";
+import lodash from "lodash";
 
 export class UserController {
   // store
@@ -451,12 +454,146 @@ export class UserController {
     await this.dbc.deleteData({ query });
   }
 
-  async getUserLoggerId(): Promise<string> {
-    // const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id inner join tokens on tokens.user_id = users.id`;
-    // const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id where users_logged.status = 1`;
+  // TODO: Optimize to make it private
+  async getUserLoggerId(): Promise<number | undefined> {
     const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id where users_logged.status = 1`;
     const user = (await this.dbc.getData({ query }))![0] as any;
-    const id = user == undefined ? "" : user.id;
+    const id = user == undefined ? undefined : user.id;
     return id;
+  }
+
+  async userSyncData(): Promise<void> {
+    // events
+    this.syncEvents();
+  }
+
+  async syncEvents(): Promise<void> {
+    try {
+      const userId = await this.getUserLoggerId();
+
+      if (userId == undefined) throw new Error("Incorrect user id");
+
+      const eventController = new EventController();
+      await eventController.pushUserLoggedEventsUpdated({ userId });
+      await this.syncUserLoggedEventsFromServer({ userId });
+      await eventController.deleteUserLoggedInativeEventOnServer();
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
+  private async syncUserLoggedEventsFromServer(params: {
+    userId: number;
+  }): Promise<void> {
+    let serverEvents: Event[] = [];
+    const { userId } = params;
+    const eventController = new EventController();
+
+    serverEvents = (await eventController.getUserLoggedEventsServer()) ?? [];
+    const localEvents = await eventController.getUserLoggedStoredEvents({
+      filterType: "none",
+      userId,
+    });
+    const problems = await eventController.getConflictingLocalEvents({
+      events: serverEvents,
+      userId,
+    });
+    const eventsServerDeleted = localEvents.filter((event) => {
+      if (event.idSync == null) return;
+      const found = serverEvents.find(
+        (element) => element.idSync == event.idSync,
+      );
+      if (!found) {
+        return event;
+      }
+    });
+
+    const toUpdate: Event[] = [];
+
+    problems.forEach((event) => {
+      const found = serverEvents.find(
+        (element) => element.idSync == event.idSync,
+      );
+      if (found) {
+        found.id = event.id;
+        toUpdate.push(found);
+      }
+    });
+
+    const newServerEvents = lodash.filter(serverEvents, (event) => {
+      return !lodash.some(
+        localEvents,
+        (otherEvent) => event.idSync === otherEvent.idSync,
+      );
+    });
+
+    const newLocalEvents = localEvents.filter((event) => event.idSync == null);
+
+    // debugger;
+    try {
+      if (newLocalEvents.length > 0)
+        for (let index = 0; index < newLocalEvents.length; index++) {
+          const event = newLocalEvents[index];
+          const { id } = await eventController.pushNewEvent({ event });
+          event.idSync = id as number;
+          event.syncStatus = true;
+          await eventController.updateLocalEvent({ event });
+        }
+    } catch (error: any) {
+      if (
+        error.message !=
+        "Error: Query failed: SelectSQL: queryAll: UNIQUE constraint failed: EVENTS.idSync"
+      ) {
+        throw new Error(error);
+      }
+    }
+
+    try {
+      if (newServerEvents.length > 0)
+        for (let index = 0; index < newServerEvents.length; index++) {
+          const event = newServerEvents[index];
+          await eventController.saveLocalEvent({
+            event,
+          });
+        }
+    } catch (error: any) {
+      if (
+        error.message !=
+        "Error: Query failed: SelectSQL: queryAll: UNIQUE constraint failed: EVENTS.idSync"
+      ) {
+        throw new Error(error);
+      }
+    }
+
+    try {
+      if (problems.length > 0)
+        for (let index = 0; index < problems.length; index++) {
+          const event = problems[index];
+          await eventController.saveLocalEvent({ event });
+          await eventController.storeEventsServer({ event });
+        }
+    } catch (error: any) {
+      throw new Error(error);
+    }
+
+    try {
+      if (toUpdate.length > 0)
+        for (let index = 0; index < toUpdate.length; index++) {
+          const event = toUpdate[index];
+          await eventController.updateLocalEvent({ event: event as any });
+        }
+    } catch (error: any) {
+      throw new Error(error);
+    }
+
+    try {
+      if (eventsServerDeleted.length > 0)
+        for (let index = 0; index < eventsServerDeleted.length; index++) {
+          const event = eventsServerDeleted[index];
+          await eventController.deleteLocalEvent({ id: event.id as number });
+        }
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 }
