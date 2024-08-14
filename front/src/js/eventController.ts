@@ -988,15 +988,17 @@ export class EventController {
     }
   }
 
-  async getUserLoggedEventsServer(): Promise<Event[] | undefined> {
+  async getUserLoggedEventsServer(params: {
+    userId: number;
+  }): Promise<Event[] | undefined> {
+    const { userId } = params;
     const apiController = new ApiController();
     const tokenController = new TokenController();
 
     try {
-      const userLoggedId = this.userLoggedId;
       const userToken = await tokenController.getUserToken({
         name: "auth_token",
-        userId: userLoggedId!,
+        userId,
       });
       const qr = apiController.getQuery({ name: "USER_EVENTS" });
       const query = apiController.graphqlQueryBuilder({
@@ -1013,7 +1015,7 @@ export class EventController {
       if (!response.value.events.events) return [] as Event[];
       return (response.value.events.events as any[]).map((event: any) => {
         return {
-          userId: userLoggedId,
+          userId,
           idsync: event.id,
           description: event.description,
           guests: JSON.parse(event.guests),

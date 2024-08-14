@@ -18,7 +18,7 @@
             <ion-col size="12">
               <!-- logged -->
               <ion-item
-                v-if="userController.getUserLogged().userName"
+                v-if="userController.getUserFromStore().userName"
                 lines="none"
                 class="transparent"
               >
@@ -27,7 +27,7 @@
                 <!-- </ion-avatar> -->
 
                 <ion-label class="labelOptionMenu">{{
-                  userController.getUserLogged().userName
+                  userController.getUserFromStore().userName
                 }}</ion-label>
 
                 <ion-button
@@ -44,7 +44,7 @@
 
               <!-- no logged -->
               <ion-item
-                v-if="!userController.getUserLogged().userName"
+                v-if="!userController.getUserFromStore().userName"
                 class="transparent"
                 lines="none"
               >

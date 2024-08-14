@@ -29,10 +29,12 @@ import { useUserStore } from "@/store/userStore";
 import { EventController } from "./eventController";
 import lodash from "lodash";
 import { UserFactory } from "./factory/UserFactory";
+import { useEventsStore } from "@/store/eventsStore";
 
 export class UserController {
   // store
   userStore = useUserStore();
+  eventStore = useEventsStore();
 
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
@@ -270,7 +272,7 @@ export class UserController {
       const userToken = await this.getAuthUserToken();
       if (userToken == null) throw new Error("Token not found");
       await this.loadUser({ queryName, fragmentName });
-      const userLogged = this.getUserLogged();
+      const userLogged = this.getUserLoggedStored();
       const user = await this.getLocalUser();
       userLogged.token = userToken;
       if (!user) await this.insertLocalUser({ user: userLogged });
@@ -465,8 +467,9 @@ export class UserController {
     const { userId } = params;
     const eventController = new EventController();
 
-    serverEvents = (await eventController.getUserLoggedEventsServer()) ?? [];
-    const localEvents = await eventController.getUserLoggedStoredEvents({
+    serverEvents =
+      (await eventController.getUserLoggedEventsServer({ userId })) ?? [];
+    const localEvents = await eventController.getUserStoredEvents({
       filterType: "none",
       userId,
     });
@@ -581,15 +584,36 @@ export class UserController {
     return id;
   }
 
-  async getUserLogged(): Promise<User> {
+  /**
+   * This method retrieves the logged-in user's information from local storage and server.
+   *
+   * @returns {Promise<User>} A promise that resolves to the User object of the logged-in user.
+   *
+   * @throws {Error} If the user ID is not defined, an error is thrown.
+   */
+  async getUserLoggedStored(): Promise<User> {
     const userId = await this.getUserLoggerId();
 
     if (userId == undefined) throw new Error("User id required");
 
-    const userFactory = new UserFactory({ userId });
+    const userFactory = new UserFactory({ userId, source: "both" });
 
     const user = await userFactory.create();
 
     return user;
+  }
+
+  getUserFromStore(): User {
+    const userStore = this.userStore.user;
+    const eventsStore = this.eventStore.events;
+
+    return {
+      id: userStore.id,
+      events: eventsStore,
+      imageProfile: userStore.imageProfile,
+      name: userStore.name,
+      preferences: userStore.preferences,
+      userName: userStore.userName,
+    } as User;
   }
 }

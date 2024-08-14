@@ -83,7 +83,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   async function loadUser(): Promise<void> {
     const userController = new UserController();
 
-    const user = await userController.getUserLogged();
+    const user = await userController.getUserLoggedStored();
 
     // update user props
     const userStore = useUserStore();
