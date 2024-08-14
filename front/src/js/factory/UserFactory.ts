@@ -3,41 +3,44 @@ import { UserController } from "../userController";
 import { ApiController } from "../apiController";
 import { DB } from "../db";
 import { SQLite } from "../sqlite";
+import { EventController } from "../eventController";
+
+type Operation = "noLogged" | "logged";
+type Source = "local" | "server" | "both";
 
 export class UserFactory {
-  // userController = new UserController();
+  private eventController = new EventController();
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
-  private localUserId;
-  private tokenServer = "";
+  private source: Source = "local";
   private user: User = {
-    id: "",
-    idSync: "",
+    id: 0,
+    idSync: 0,
     name: "",
     userName: "",
     isAdmin: false,
     rol: [],
     imageProfile: "",
     preferences: { theme: "light" },
+    events: [],
   };
 
-  constructor(params: { localUserId: number; tokenServer: string }) {
-    const { localUserId, tokenServer } = params;
-    this.localUserId = localUserId;
-    this.tokenServer = tokenServer;
+  constructor(params: { userId: number; source?: Source }) {
+    const { userId, source = "local" } = params;
+    this.user.id = userId;
+    this.source = source;
   }
 
   public async create(): Promise<User> {
-    const localId = this.localUserId;
-    const token = this.tokenServer;
+    if (this.source === "local" || this.source === "both")
+      try {
+        this.user = await this.getUserFromLocal();
+      } catch (error) {
+        throw error;
+      }
 
-    try {
-      this.user = await this.getUserFromLocal({ id: localId });
-    } catch (error) {
-      throw error;
-    }
-
+    // if (this.source === "server"||this.source === "both")
     // try {
     //   const serverResponse = await this.getUserFromServer({ token });
     //   if (Object.keys(serverResponse).length > 0) this.user = serverResponse;
@@ -88,24 +91,23 @@ export class UserFactory {
     }
   }
 
-  private async getUserFromLocal(params: { id: number }): Promise<User> {
-    const { id } = params;
+  private async getUserFromLocal(): Promise<User> {
     let user: User = {} as any;
 
     try {
-      const queryUser = `SELECT * FROM  users where id=${id}`;
+      const queryUser = `SELECT * FROM  users where id=${this.user.id}`;
       const result = (await this.dbc.getData({ query: queryUser }))[0] as any;
       if (Object.keys(result).length === 0) throw new Error("no user found");
 
       user = {
-        id,
+        id: this.user.id,
         name: result.name,
         userName: result.user_name,
         isAdmin: result.is_admin,
         rol: [],
         imageProfile: result.image_profile,
         preferences: { theme: "light" },
-        events: await this.getUserEventsFromLocal({ id }),
+        events: await this.getEventsFromLocal(),
       } as User;
     } catch (error: any) {
       throw error;
@@ -114,44 +116,14 @@ export class UserFactory {
     return user;
   }
 
-  private async getUserEventsFromLocal(params: {
-    id: number;
-  }): Promise<Array<Event>> {
-    const { id } = params;
+  private async getEventsFromLocal(): Promise<Event[]> {
     let events: Array<Event> = [];
 
     try {
-      // console.log(
-      //   "reminders",
-      //   await this.dbc.getData({ query: "SELECT * FROM reminders" }),
-      // );
-      const queryUser = `SELECT * FROM  events inner join reminders on events.id=reminders.event_id  where user_id=${id}`;
-      const result = (await this.dbc.getData({ query: queryUser })) as any;
-      // console.log("events", result);
-      if (result != undefined && Object.keys(result).length > 0)
-        events = result.map((event: any) => {
-          return {
-            id: event.id,
-            idSync: event.id_sync,
-            name: event.name,
-            guests: event.guests,
-            timezone: event.timezone,
-            description: event.description,
-            availability: event.availability,
-            syncStatus: event.sync_status,
-            status: event.status,
-            reminders: {
-              start: event.start,
-              end: event.end,
-              notifications: event.notifications,
-              repeat: {
-                frecuency: event.frecuency,
-                type: event.type,
-                daysWeek: event.days_week,
-              },
-            },
-          };
-        });
+      events = await this.eventController.getUserStoredEvents({
+        userId: this.user.id,
+      });
+      this.user.events = events;
     } catch (error: any) {
       throw error;
     }

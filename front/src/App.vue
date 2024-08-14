@@ -46,7 +46,7 @@ onMounted(async () => {
     });
 
     const userController = new UserController();
-    await userController.userSyncData();
+    // await userController.userLoggedSyncData();
 
     await systemController.openToast({
       message: messages.syncEnd,

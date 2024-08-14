@@ -81,39 +81,24 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function loadUser(): Promise<void> {
-    const usercontroller = new UserController();
-    const userLoggedId = await usercontroller.getUserLoggerId();
-    let user = {} as User;
+    const userController = new UserController();
 
-    if (userLoggedId != undefined) {
-      const tokenController = new TokenController();
-      const token = await tokenController.getUserToken({
-        name: "auth_token",
-        userId: userLoggedId!,
-      });
+    const user = await userController.getUserLogged();
 
-      // create user
-      const userFactory = new UserFactory({
-        localUserId: userLoggedId,
-        tokenServer: token,
-      });
-      user = await userFactory.create();
-
-      // update user props
-      const userStore = useUserStore();
-      userStore.updateUserProps({
-        user: {
-          id: user.id,
-          idSync: user.idSync!,
-          name: user.name!,
-          userName: user.userName!,
-          isAdmin: user.isAdmin,
-          rol: user.rol,
-          imageProfile: user.imageProfile,
-          preferences: { theme: user.preferences!.theme },
-        },
-      });
-    }
+    // update user props
+    const userStore = useUserStore();
+    userStore.updateUserProps({
+      user: {
+        id: user.id,
+        idSync: user.idSync!,
+        name: user.name!,
+        userName: user.userName!,
+        isAdmin: user.isAdmin,
+        rol: user.rol,
+        imageProfile: user.imageProfile,
+        preferences: { theme: user.preferences!.theme },
+      },
+    });
 
     // userTheme
     const themeController = new ThemeController();

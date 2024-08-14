@@ -28,10 +28,11 @@ import { storage } from "@/main";
 import { useUserStore } from "@/store/userStore";
 import { EventController } from "./eventController";
 import lodash from "lodash";
+import { UserFactory } from "./factory/UserFactory";
 
 export class UserController {
   // store
-  // userStore = useUserStore();
+  userStore = useUserStore();
 
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
@@ -165,13 +166,6 @@ export class UserController {
   //     throw new Error(error);
   //   }
   // }
-
-  // TODO:remove
-  getUserLogged(): User {
-    const userStore = useUserStore();
-    const user = userStore.user;
-    return user;
-  }
 
   // async createTableUsers(): Promise<void> {
   //   const query = `CREATE TABLE IF NOT EXISTS users
@@ -432,17 +426,6 @@ export class UserController {
     }
   }
 
-  // TODO: remove
-  async getLocalUser(): Promise<UserDBType> {
-    const query = `SELECT * FROM Users inner join Tokens on user_id=1`;
-    try {
-      const result = (await this.dbc.getData({ query }))![0] as any;
-      return result ?? null;
-    } catch (error: any) {
-      throw Error(error);
-    }
-  }
-
   async deleteUser(paramas: { userId: string }): Promise<void> {
     const { userId } = paramas;
     const query = `DELETE FROM Users WHERE id=${userId}`;
@@ -454,23 +437,16 @@ export class UserController {
     await this.dbc.deleteData({ query });
   }
 
-  // TODO: Optimize to make it private
-  async getUserLoggerId(): Promise<number | undefined> {
-    const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id where users_logged.status = 1`;
-    const user = (await this.dbc.getData({ query }))![0] as any;
-    const id = user == undefined ? undefined : user.id;
-    return id;
-  }
-
-  async userSyncData(): Promise<void> {
+  async userLoggedSyncData(): Promise<void> {
+    const userId = this.userStore.user.id;
     // events
-    this.syncEvents();
+    this.syncEvents({ userId });
   }
 
-  async syncEvents(): Promise<void> {
-    try {
-      const userId = await this.getUserLoggerId();
+  async syncEvents(params: { userId: number }): Promise<void> {
+    const { userId } = params;
 
+    try {
       if (userId == undefined) throw new Error("Incorrect user id");
 
       const eventController = new EventController();
@@ -595,5 +571,25 @@ export class UserController {
     } catch (error: any) {
       throw new Error(error);
     }
+  }
+
+  // getters
+  private async getUserLoggerId(): Promise<number | undefined> {
+    const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id where users_logged.status = 1`;
+    const user = (await this.dbc.getData({ query }))![0] as any;
+    const id = user == undefined ? undefined : user.id;
+    return id;
+  }
+
+  async getUserLogged(): Promise<User> {
+    const userId = await this.getUserLoggerId();
+
+    if (userId == undefined) throw new Error("User id required");
+
+    const userFactory = new UserFactory({ userId });
+
+    const user = await userFactory.create();
+
+    return user;
   }
 }

@@ -20,7 +20,6 @@ import { ApiController } from "./apiController";
 
 // services
 import { DB } from "./db";
-import { useUserStore } from "@/store/userStore";
 import { TokenController } from "./tokenController";
 import { UserController } from "./userController";
 
@@ -34,7 +33,6 @@ export class EventController {
 
   // stores
   private eventStore = useEventsStore();
-  private userStore = useUserStore();
 
   /**
    * Perform all the necessary procedure to add a event both generally, locally and from the store
@@ -323,7 +321,7 @@ export class EventController {
     } catch (error) {
       console.error(error);
     }
-    const events = await this.getUserLoggedStoredEvents({
+    const events = await this.getUserStoredEvents({
       filterType: "none",
       userId,
     });
@@ -908,7 +906,7 @@ export class EventController {
     return count;
   }
 
-  async getEventsLocal(): Promise<Array<Event>> {
+  private async getEventsLocal(): Promise<Array<Event>> {
     const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id`;
 
     try {
@@ -946,7 +944,7 @@ export class EventController {
     }
   }
 
-  async getEventsLocalByDate(params: {
+  private async getEventsLocalByDate(params: {
     dates: { start: Date; end: Date };
   }): Promise<Array<Event>> {
     const { dates } = params;
@@ -992,11 +990,10 @@ export class EventController {
 
   async getUserLoggedEventsServer(): Promise<Event[] | undefined> {
     const apiController = new ApiController();
-    const usercontroller = new UserController();
     const tokenController = new TokenController();
 
     try {
-      const userLoggedId = await usercontroller.getUserLoggerId();
+      const userLoggedId = this.userLoggedId;
       const userToken = await tokenController.getUserToken({
         name: "auth_token",
         userId: userLoggedId!,
@@ -1100,12 +1097,12 @@ export class EventController {
     this.eventStore.addEvent({ event });
   }
 
-  async getUserLoggedStoredEvents(params: {
-    filterType: "none" | "date";
+  async getUserStoredEvents(params: {
+    filterType?: "none" | "date";
     dates?: { start: Date; end: Date } | undefined;
     userId: number;
   }): Promise<Array<Event>> {
-    const { filterType, dates, userId } = params;
+    const { filterType = "none", dates, userId } = params;
 
     try {
       let events: Event[] = [];
@@ -1118,6 +1115,8 @@ export class EventController {
           dates: dates as any,
         });
       }
+
+      events = events.filter((event) => event.userId == userId);
       return events;
     } catch (error: any) {
       throw new Error(error);

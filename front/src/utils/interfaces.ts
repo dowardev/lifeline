@@ -13,14 +13,14 @@ export interface User {
   idSync?: number;
   name?: string;
   userName?: string;
-  password?: string;
+  // password?: string;
   email?: string;
   isAdmin?: boolean;
   rol?: Array<any>;
-  isEmailVerified?: boolean;
-  isDisabled?: boolean;
+  // isEmailVerified?: boolean;
+  // isDisabled?: boolean;
   imageProfile?: string;
-  token?: string;
+  // token?: string;
   events?: Array<Event>;
   preferences?: {
     theme: Theme;
@@ -28,7 +28,7 @@ export interface User {
 }
 
 export interface UserStore {
-  id: string;
+  id: number;
   idSync: string;
   name: string;
   userName: string;
