@@ -47,15 +47,12 @@ type User {
   id: ID!
   name: String!
   email: String!
-  user: String!
+  user_name: String!
   image_profile: String
-  calendars: [Calendar]
-  events: [Event]
 }
 type UserAuth {
   access_token: String!
   token_type: String!
-  user: User
 }
 type Calendar {
   id: String!
@@ -136,7 +133,7 @@ input DeleteEventInput {
 # payloads
 type LoginPayload {
   auth: UserAuth!
-    user:User
+  user: User!
 }
 type UserAuthPayload {
   user: User!

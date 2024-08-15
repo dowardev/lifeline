@@ -20,15 +20,15 @@ class GetUserAuthResolver
     ResolveInfo $resolveInfo
   ) {
     try {
-      $response = Auth::guard('api')->user();
+      $response = Auth::guard("api")->user();
       if ($response == null) {
-        return Error::createLocatedError('Unauthorized');
+        return Error::createLocatedError("Unauthorized");
       }
 
-      $image_source = '';
+      $image_source = "";
       if ($response->image_id) {
         $image_source = base64_encode(
-          Storage::disk('user_images_profile')->get(
+          Storage::disk("user_images_profile")->get(
             Images::find($response->image_id)->name
           )
         );
@@ -40,17 +40,17 @@ class GetUserAuthResolver
       $events = User::find($user_id)->events;
 
       $user = [
-        'id' => $response->id,
-        'name' => $response->name,
-        'user' => $response->user,
-        'email' => $response->email,
-        'image_profile' => $image_source,
-        'calendars' => $calendars,
-        'events' => $events,
+        "id" => $response->id,
+        "name" => $response->name,
+        "user_name" => $response->user,
+        "email" => $response->email,
+        "image_profile" => $image_source,
+        "calendars" => $calendars,
+        "events" => $events,
       ];
 
       return [
-        'user' => $user,
+        "user" => $user,
       ];
     } catch (Exception $e) {
       throw new Exception($e->getMessage());

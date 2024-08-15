@@ -62,6 +62,9 @@ class LoginResolver
         "access_token" => $token,
         "token_type" => "Bearer",
       ],
+      "user" => [
+        "id" => $userData[0]->id,
+      ],
     ];
   }
 }
