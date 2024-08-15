@@ -77,7 +77,7 @@ export class UserFactory {
     result.imageProfile = userServer!.imageProfile ?? localUser!.imageProfile;
     result.preferences = userServer!.preferences ?? localUser!.preferences;
     result.preferences = userServer!.preferences ?? localUser!.preferences;
-    result.events = localUser!.events;
+    result.events = userServer!.events ?? localUser!.events;
     return result;
   }
 
@@ -111,7 +111,7 @@ export class UserFactory {
           isAdmin: response.value.userAuth.user.is_admin,
           imageProfile: response.value.userAuth.user.image_profile,
           preferences: { theme: "light" },
-          events: [],
+          events: await this.getEventsFromServer({ token }),
         } as UserServer;
         return response as UserServer;
       }
@@ -158,5 +158,36 @@ export class UserFactory {
       throw error;
     }
     return events;
+  }
+
+  private async getEventsFromServer(params: {
+    token: string;
+  }): Promise<UserServer> {
+    const { token } = params;
+    const queryName = "USER_EVENTS";
+    const fragmentName = "Events";
+    const apiController = new ApiController();
+    const queryDocument = apiController.getQuery({ name: queryName });
+
+    try {
+      const query = apiController.graphqlQueryBuilder({
+        name: queryDocument,
+        fragment: fragmentName,
+        mutationName: "events",
+      });
+
+      const response = await apiController.executeGrapQuery({
+        query,
+        options: { refetch: true },
+        token,
+      });
+
+      if (response) {
+        return response.value.events.events;
+      }
+      return {} as UserServer;
+    } catch (error: any) {
+      throw error;
+    }
   }
 }
