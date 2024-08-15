@@ -5,7 +5,6 @@ import { DB } from "../db";
 import { SQLite } from "../sqlite";
 import { EventController } from "../eventController";
 
-type Operation = "noLogged" | "logged";
 type Source = "local" | "server" | "both";
 
 export class UserFactory {
@@ -14,8 +13,7 @@ export class UserFactory {
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
   private source: Source = "local";
-  private userId: number = 0;
-  private userToken: string = "";
+  private userToken = "";
   private user: User = {
     id: 0,
     idSync: 0,
@@ -85,8 +83,8 @@ export class UserFactory {
     token: string;
   }): Promise<UserServer> {
     const { token } = params;
-    const queryName = "USER_MENU";
-    const fragmentName = "UserMenu";
+    const queryName = "USER_BASIC";
+    const fragmentName = "UserBasic";
     const apiController = new ApiController();
     const queryDocument = apiController.getQuery({ name: queryName });
 
@@ -107,7 +105,7 @@ export class UserFactory {
       if (response) {
         response = {
           name: response.value.userAuth.user.name,
-          userName: response.value.userAuth.user.user,
+          userName: response.value.userAuth.user.user_name,
           isAdmin: response.value.userAuth.user.is_admin,
           imageProfile: response.value.userAuth.user.image_profile,
           preferences: { theme: "light" },

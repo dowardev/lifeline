@@ -8,7 +8,7 @@ import { UserController } from "../js/userController";
 import { TokenController } from "@/js/tokenController";
 
 // queries
-import { USER_MENU, DELETE_EVENT, USER_EVENTS } from "@/utils/graphql";
+import { USER_BASIC, DELETE_EVENT, USER_EVENTS } from "@/utils/graphql";
 import {
   provideApolloClient,
   useMutation,
@@ -122,7 +122,7 @@ export class ApiController {
   getQuery(params: { name: QueyNames }): DocumentNode {
     const { name } = params;
 
-    if (name == "USER_MENU") return USER_MENU;
+    if (name == "USER_BASIC") return USER_BASIC;
     if (name == "DELETE_EVENT") return DELETE_EVENT;
     if (name == "USER_EVENTS") return USER_EVENTS;
     throw new Error("Query not found");

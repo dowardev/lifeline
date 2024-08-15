@@ -9,8 +9,8 @@ import { useUserStore } from "@/store/userStore";
 
 async function loadUser(): Promise<void> {
   const userController = new UserController();
-  const queryName = "USER_MENU";
-  const fragmentName = "UserMenu";
+  const queryName = "USER_BASIC";
+  const fragmentName = "UserBasic";
 
   try {
     await userController.loadUser({ queryName, fragmentName });
@@ -134,8 +134,8 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const userController = new UserController();
-  const queryName = "USER_MENU";
-  const fragmentName = "UserMenu";
+  const queryName = "USER_BASIC";
+  const fragmentName = "UserBasic";
   let user = {} as User;
   const path = to.path;
   const authorizedRoutes = [

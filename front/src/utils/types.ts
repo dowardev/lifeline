@@ -37,7 +37,7 @@ export type CalendarDataStatus = "loading" | "success" | "error";
 
 export type GraphQLQueryNameUser =
   | "USER_PERMISSIONS"
-  | "USER_MENU"
+  | "USER_BASIC"
   | "USER_NAME"
   | "USER_CALENDARS"
   | "USER_EVENTS";

@@ -266,8 +266,8 @@ export class UserController {
     let fragmentName = "" as GraphQLFragmentNameUser;
 
     if (dataType == "menu") {
-      queryName = "USER_MENU";
-      fragmentName = "UserMenu";
+      queryName = "USER_BASIC";
+      fragmentName = "UserBasic";
     }
 
     try {

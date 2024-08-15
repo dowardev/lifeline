@@ -9,10 +9,13 @@ export const USER_PERMISSIONS = gql`
 `;
 
 // user
-export const USER_MENU = gql`
-  fragment UserMenu on UserAuthPayload {
+export const USER_BASIC = gql`
+  fragment UserBasic on UserAuthPayload {
     user {
-      user
+      id
+      name
+      email
+      user_name
       image_profile
     }
   }
