@@ -1,4 +1,4 @@
-import { User, UserStore, Event } from "@/utils/interfaces";
+import { User, UserStore, Event, UserServer } from "@/utils/interfaces";
 import { UserController } from "../userController";
 import { ApiController } from "../apiController";
 import { DB } from "../db";
@@ -14,6 +14,8 @@ export class UserFactory {
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
   private source: Source = "local";
+  private userId: number = 0;
+  private userToken: string = "";
   private user: User = {
     id: 0,
     idSync: 0,
@@ -26,35 +28,62 @@ export class UserFactory {
     events: [],
   };
 
-  constructor(params: { userId: number; source?: Source }) {
-    const { userId, source = "local" } = params;
+  constructor(params: { userId: number; source?: Source; userToken?: string }) {
+    const { userId, source = "local", userToken } = params;
     this.user.id = userId;
     this.source = source;
+    this.userToken = userToken != undefined ? userToken : "";
   }
 
   public async create(): Promise<User> {
+    let localUser: User | undefined = undefined;
+    let userServer: UserServer | undefined = undefined;
+
+    // local
     if (this.source === "local" || this.source === "both")
       try {
-        this.user = await this.getUserFromLocal();
+        localUser = await this.getUserFromLocal();
       } catch (error) {
         throw error;
       }
 
-    // if (this.source === "server"||this.source === "both")
-    // try {
-    //   const serverResponse = await this.getUserFromServer({ token });
-    //   if (Object.keys(serverResponse).length > 0) this.user = serverResponse;
-    // } catch (error: any) {
-    //   if (error.message != "Unauthorized" && error.message != "No token found")
-    //     throw error;
-    // }
+    // server
+    if (this.source === "server" || this.source === "both") {
+      const userToken = this.userToken;
+      if (userToken === "") throw new Error("No token found");
 
-    return this.user;
+      try {
+        const serverResponse = await this.getUserFromServer({
+          token: userToken,
+        });
+
+        if (Object.keys(serverResponse).length > 0) {
+          userServer = serverResponse;
+        }
+      } catch (error: any) {
+        if (
+          error.message != "Unauthorized" &&
+          error.message != "No token found"
+        )
+          throw error;
+      }
+    }
+
+    const result: User = {} as any;
+    result.name = userServer!.name ?? localUser!.name;
+    result.userName = userServer!.userName ?? localUser!.userName;
+    result.isAdmin = userServer!.isAdmin ?? localUser!.isAdmin;
+    result.rol = userServer!.rol ?? localUser!.rol;
+    result.imageProfile = userServer!.imageProfile ?? localUser!.imageProfile;
+    result.preferences = userServer!.preferences ?? localUser!.preferences;
+    result.preferences = userServer!.preferences ?? localUser!.preferences;
+    result.events = localUser!.events;
+    return result;
   }
 
   private async getUserFromServer(params: {
     token: string;
-  }): Promise<UserStore> {
+  }): Promise<UserServer> {
     const { token } = params;
     const queryName = "USER_MENU";
     const fragmentName = "UserMenu";
@@ -79,13 +108,14 @@ export class UserFactory {
         response = {
           name: response.value.userAuth.user.name,
           userName: response.value.userAuth.user.user,
-          imageProfile: response.value.userAuth.user.image_profile,
           isAdmin: response.value.userAuth.user.is_admin,
+          imageProfile: response.value.userAuth.user.image_profile,
           preferences: { theme: "light" },
-        } as UserStore;
-        return response as UserStore;
+          events: [],
+        } as UserServer;
+        return response as UserServer;
       }
-      return {} as UserStore;
+      return {} as UserServer;
     } catch (error: any) {
       throw error;
     }

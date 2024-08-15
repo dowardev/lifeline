@@ -30,16 +30,18 @@ import { EventController } from "./eventController";
 import lodash from "lodash";
 import { UserFactory } from "./factory/UserFactory";
 import { useEventsStore } from "@/store/eventsStore";
+import { TokenController } from "./tokenController";
 
 export class UserController {
   // store
-  userStore = useUserStore();
-  eventStore = useEventsStore();
+  private userStore = useUserStore();
+  private eventStore = useEventsStore();
 
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
-  systemController = new SystemController();
+  private systemController = new SystemController();
+  private tokenController = new TokenController();
 
   // refs = storeToRefs(this.userStore);
 
@@ -596,7 +598,14 @@ export class UserController {
 
     if (userId == undefined) throw new Error("User id required");
 
-    const userFactory = new UserFactory({ userId, source: "both" });
+    const userToken = await this.tokenController.getUserToken({
+      name: "auth_token",
+      userId: userId,
+    });
+
+    if (userId == undefined) throw new Error("User id required");
+
+    const userFactory = new UserFactory({ userId, source: "both", userToken });
 
     const user = await userFactory.create();
 

@@ -40,6 +40,18 @@ export interface UserStore {
   };
 }
 
+export interface UserServer {
+  name?: string;
+  userName?: string;
+  isAdmin?: boolean;
+  rol?: Array<any>;
+  imageProfile?: string;
+  preferences?: {
+    theme: Theme;
+  };
+  events?: Array<Event>;
+}
+
 export interface UserRegister {
   name: User["name"];
   user: User["user"];
