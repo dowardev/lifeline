@@ -9,6 +9,7 @@ type Source = "local" | "server" | "both";
 
 export class UserFactory {
   private eventController = new EventController();
+  private userController = new UserController();
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
@@ -74,8 +75,7 @@ export class UserFactory {
     result.rol = userServer!.rol ?? localUser!.rol;
     result.imageProfile = userServer!.imageProfile ?? localUser!.imageProfile;
     result.preferences = userServer!.preferences ?? localUser!.preferences;
-    result.preferences = userServer!.preferences ?? localUser!.preferences;
-    result.events = userServer!.events ?? localUser!.events;
+    result.events = userServer?.events ?? localUser!.events;
     return result;
   }
 
@@ -83,37 +83,13 @@ export class UserFactory {
     token: string;
   }): Promise<UserServer> {
     const { token } = params;
-    const queryName = "USER_BASIC";
-    const fragmentName = "UserBasic";
-    const apiController = new ApiController();
-    const queryDocument = apiController.getQuery({ name: queryName });
 
     try {
-      //TODO: move to controller
-      const query = apiController.graphqlQueryBuilder({
-        name: queryDocument,
-        fragment: fragmentName,
-        mutationName: "userAuth",
+      const response = await this.userController.getUserFromServer({
+        token: token,
       });
-
-      let response = await apiController.executeGrapQuery({
-        query,
-        options: { refetch: true },
-        token,
-      });
-
-      if (response) {
-        response = {
-          name: response.value.userAuth.user.name,
-          userName: response.value.userAuth.user.user_name,
-          isAdmin: response.value.userAuth.user.is_admin,
-          imageProfile: response.value.userAuth.user.image_profile,
-          preferences: { theme: "light" },
-          events: await this.getEventsFromServer({ token }),
-        } as UserServer;
-        return response as UserServer;
-      }
-      return {} as UserServer;
+      response.events = await this.getEventsFromServer({ token });
+      return Object.keys(response).length > 0 ? response : ({} as UserServer);
     } catch (error: any) {
       throw error;
     }
@@ -160,7 +136,7 @@ export class UserFactory {
 
   private async getEventsFromServer(params: {
     token: string;
-  }): Promise<UserServer> {
+  }): Promise<Event[]> {
     const { token } = params;
     const queryName = "USER_EVENTS";
     const fragmentName = "Events";
@@ -183,7 +159,7 @@ export class UserFactory {
       if (response) {
         return response.value.events.events;
       }
-      return {} as UserServer;
+      return [];
     } catch (error: any) {
       throw error;
     }

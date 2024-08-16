@@ -906,7 +906,7 @@ export class EventController {
     return count;
   }
 
-  private async getEventsLocal(): Promise<Array<Event>> {
+  private async getEventsFromDB(): Promise<Array<Event>> {
     const query = `SELECT * FROM Events inner join Reminders on events.id = reminders.event_id`;
 
     try {
@@ -1099,6 +1099,18 @@ export class EventController {
     this.eventStore.addEvent({ event });
   }
 
+  /**
+   * This function retrieves user events stored locally. The events can be filtered by date or not filtered at all.
+   *
+   * @param params - An object containing the following properties:
+   * @param params.filterType - The type of filter to apply. It can be "none" for no filtering or "date" to filter by date. Default is "none".
+   * @param params.dates - An object containing the start and end dates for the filter. This is required if filterType is "date".
+   * @param params.userId - The ID of the user whose events are to be retrieved.
+   *
+   * @returns A promise that resolves to an array of Event objects.
+   *
+   * @throws Will throw an error if filterType is "date" but dates is undefined.
+   */
   async getUserStoredEvents(params: {
     filterType?: "none" | "date";
     dates?: { start: Date; end: Date } | undefined;
@@ -1109,7 +1121,7 @@ export class EventController {
     try {
       let events: Event[] = [];
 
-      if (filterType == "none") events = await this.getEventsLocal();
+      if (filterType == "none") events = await this.getEventsFromDB();
 
       if (filterType == "date") {
         if (dates == undefined) throw new Error("Required dates");

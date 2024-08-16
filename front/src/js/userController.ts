@@ -8,6 +8,7 @@ import {
   UserLoginResponse,
   UserRegister,
   Event,
+  UserServer,
 } from "../utils/interfaces";
 import { errorBuilder } from "@/utils/errors";
 import { SessionController } from "./sessionController";
@@ -258,32 +259,6 @@ export class UserController {
     }
   }
 
-  async updateUserInDB(params: {
-    dataType: userGrapQLTypeData;
-  }): Promise<void> {
-    const { dataType } = params;
-    let queryName = "" as GraphQLQueryNameUser;
-    let fragmentName = "" as GraphQLFragmentNameUser;
-
-    if (dataType == "menu") {
-      queryName = "USER_BASIC";
-      fragmentName = "UserBasic";
-    }
-
-    try {
-      const userToken = await this.getAuthUserToken();
-      if (userToken == null) throw new Error("Token not found");
-      await this.loadUser({ queryName, fragmentName });
-      const userLogged = this.getUserLoggedStored();
-      const user = await this.getLocalUser();
-      userLogged.token = userToken;
-      if (!user) await this.insertLocalUser({ user: userLogged });
-      else await this.upateUserOnDatabase({ user: userLogged });
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   // TODO:update name
   async getUserLogged2(): Promise<User> {
     const query = `SELECT * FROM  users_logged inner join users on users.id = users_logged.user_id inner join tokens on tokens.user_id = users.id`;
@@ -295,9 +270,10 @@ export class UserController {
     }
   }
 
-  async getUserLoggedFromServer(): Promise<User> {
-    const queryName = "USER_LOGIN";
-    const fragmentName = "UserLogin";
+  async getUserFromServer(params: { token: string }): Promise<UserServer> {
+    const { token } = params;
+    const queryName = "USER_BASIC";
+    const fragmentName = "UserBasic";
     const apiController = new ApiController();
     const queryDocument = apiController.getQuery({ name: queryName });
 
@@ -312,20 +288,20 @@ export class UserController {
       let response = await apiController.executeGrapQuery({
         query,
         options: { refetch: true },
+        token,
       });
 
       if (response) {
         response = {
-          id: response.value.userAuth.user.id,
           name: response.value.userAuth.user.name,
-          email: response.value.userAuth.user.email,
-          user: response.value.userAuth.user.user,
-          imageProfile: response.value.userAuth.user.image_profile,
+          userName: response.value.userAuth.user.user_name,
           isAdmin: response.value.userAuth.user.is_admin,
-        };
-        return response;
+          imageProfile: response.value.userAuth.user.image_profile,
+          preferences: { theme: "light" },
+        } as UserServer;
+        return response as UserServer;
       }
-      return {} as User;
+      return {} as UserServer;
     } catch (error: any) {
       throw error;
     }
@@ -444,7 +420,7 @@ export class UserController {
   async userLoggedSyncData(): Promise<void> {
     const userId = this.userStore.user.id;
     // events
-    this.syncEvents({ userId });
+    // this.syncEvents({ userId });
   }
 
   async syncEvents(params: { userId: number }): Promise<void> {
