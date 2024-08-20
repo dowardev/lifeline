@@ -10,7 +10,6 @@ export interface Graphql {
 // user
 export interface User {
   id: number;
-  idSync?: number;
   name?: string;
   userName?: string;
   // password?: string;
@@ -25,6 +24,8 @@ export interface User {
   preferences?: {
     theme: Theme;
   };
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface UserStore {
@@ -50,6 +51,8 @@ export interface UserServer {
     theme: Theme;
   };
   events?: Array<Event>;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface UserRegister {

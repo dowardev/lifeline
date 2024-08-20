@@ -82,37 +82,44 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   async function loadUser(): Promise<void> {
     const userController = new UserController();
+    const user: User | undefined = undefined;
 
-    const user = await userController.getUserLoggedStored();
+    try {
+      const user = await userController.getUserLoggedStored({
+        sourceData: "both",
+      });
 
-    // update user props
-    const userStore = useUserStore();
-    userStore.updateUserProps({
-      user: {
-        id: user.id,
-        idSync: user.idSync!,
-        name: user.name!,
-        userName: user.userName!,
-        isAdmin: user.isAdmin,
-        rol: user.rol,
-        imageProfile: user.imageProfile,
-        preferences: { theme: user.preferences!.theme },
-      },
-    });
+      // update user props
+      const userStore = useUserStore();
+      userStore.updateUserProps({
+        user: {
+          id: user.id,
+          idSync: user.idSync!,
+          name: user.name!,
+          userName: user.userName!,
+          isAdmin: user.isAdmin,
+          rol: user.rol,
+          imageProfile: user.imageProfile,
+          preferences: { theme: user.preferences!.theme },
+        },
+      });
+
+      // events
+      const eventStore = useEventsStore();
+      eventStore.setEvents({ events: user.events ?? [] });
+    } catch (error) {
+      console.log("user no logged in");
+    }
 
     // userTheme
     const themeController = new ThemeController();
     const userTheme =
-      Object.keys(user).length == 0 ? "light" : user.preferences.theme;
+      Object.keys(user ?? {}).length == 0 ? "light" : user!.preferences!.theme;
     themeController.applyTheme({
       theme: userTheme,
     });
     themeController.updateThemeSelected({
       theme: userTheme,
     });
-
-    // events
-    const eventStore = useEventsStore();
-    eventStore.setEvents({ events: user.events ?? [] });
   }
 });

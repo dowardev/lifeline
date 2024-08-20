@@ -17,6 +17,8 @@ export const USER_BASIC = gql`
       email
       user_name
       image_profile
+      created_at
+      updated_at
     }
   }
 `;

@@ -17,6 +17,8 @@ export class TempController {
       rol TEXT
       image_profile TEXT,
       id_sync TEXT
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );`;
     await this.dbc.createTable({ query });
   }

@@ -50,3 +50,5 @@ export type UserDBType = Pick<
   User,
   "name" | "user" | "email" | "token" | "idSync"
 >;
+
+export type UserSource = "local" | "server" | "both";

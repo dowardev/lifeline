@@ -16,6 +16,7 @@ import {
   GraphQLFragmentNameUser,
   GraphQLQueryNameUser,
   UserDBType,
+  UserSource,
   userGrapQLTypeData,
 } from "@/utils/types";
 import { SQLite } from "@/js/sqlite";
@@ -199,10 +200,6 @@ export class UserController {
   //   }
   // }
 
-  async upateUserOnDatabase(params: { user: User }): Promise<void> {
-    await this.userService.updateLocalUser({ user: params.user });
-  }
-
   async insertLocalUser(params: { user: User }): Promise<{ rowID: string }> {
     const { name, user: userName, email, token, idSync } = params.user;
 
@@ -298,6 +295,8 @@ export class UserController {
           isAdmin: response.value.userAuth.user.is_admin,
           imageProfile: response.value.userAuth.user.image_profile,
           preferences: { theme: "light" },
+          createdAt: new Date(response.value.userAuth.user.created_at),
+          updatedAt: new Date(response.value.userAuth.user.updated_at),
         } as UserServer;
         return response as UserServer;
       }
@@ -352,8 +351,9 @@ export class UserController {
   }
 
   // TODO: create new interface for user database
+  // TODO: Add more props
   async updateLocalUser(params: { user: User }): Promise<void> {
-    const { name, user: userName, email, idSync } = params.user;
+    const { id, name, userName, email } = params.user;
 
     try {
       const values = [];
@@ -379,11 +379,6 @@ export class UserController {
       //   fields.push("image_profile");
       // }
 
-      if (idSync != undefined) {
-        values.push(idSync);
-        fields.push("id_sync");
-      }
-
       let query = `UPDATE Users SET  `;
 
       fields.forEach((field, index) => {
@@ -393,7 +388,7 @@ export class UserController {
         }
       });
 
-      query += ` WHERE id="0"`;
+      query += ` WHERE id="${id}"`;
 
       await this.dbc.updateData({
         query: query,
@@ -417,10 +412,13 @@ export class UserController {
     await this.dbc.deleteData({ query });
   }
 
-  async userLoggedSyncData(): Promise<void> {
+  async syncUserLogged(): Promise<void> {
     const userId = this.userStore.user.id;
     // events
     // this.syncEvents({ userId });
+
+    // data
+    await this.syncUserData();
   }
 
   async syncEvents(params: { userId: number }): Promise<void> {
@@ -569,7 +567,8 @@ export class UserController {
    *
    * @throws {Error} If the user ID is not defined, an error is thrown.
    */
-  async getUserLoggedStored(): Promise<User> {
+  async getUserLoggedStored(params: { sourceData: UserSource }): Promise<User> {
+    const { sourceData } = params;
     const userId = await this.getUserLoggerId();
 
     if (userId == undefined) throw new Error("User id required");
@@ -581,7 +580,11 @@ export class UserController {
 
     if (userId == undefined) throw new Error("User id required");
 
-    const userFactory = new UserFactory({ userId, source: "both", userToken });
+    const userFactory = new UserFactory({
+      userId,
+      source: sourceData,
+      userToken,
+    });
 
     const user = await userFactory.create();
 
@@ -600,5 +603,26 @@ export class UserController {
       preferences: userStore.preferences,
       userName: userStore.userName,
     } as User;
+  }
+
+  async syncUserData(): Promise<void> {
+    const localUser = await this.getUserLoggedStored({ sourceData: "local" });
+    const serverUser = await this.getUserLoggedStored({ sourceData: "server" });
+    const userId = await this.getUserLoggerId();
+
+    if (localUser.updatedAt! > serverUser.updatedAt!) {
+      //TODO: add method update on server
+    }
+
+    if (localUser.updatedAt! < serverUser.updatedAt!) {
+      const user = Object.assign(serverUser);
+      user.id = userId;
+      await this.updateLocalUser({ user: serverUser! });
+    }
+
+    if (localUser.updatedAt! == serverUser.updatedAt!) {
+      await this.updateLocalUser({ user: serverUser! });
+      //TODO: add method update on server
+    }
   }
 }

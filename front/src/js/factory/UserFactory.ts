@@ -4,8 +4,7 @@ import { ApiController } from "../apiController";
 import { DB } from "../db";
 import { SQLite } from "../sqlite";
 import { EventController } from "../eventController";
-
-type Source = "local" | "server" | "both";
+import { UserSource } from "../../utils/types";
 
 export class UserFactory {
   private eventController = new EventController();
@@ -13,7 +12,7 @@ export class UserFactory {
   private dbc = new DB({
     dbSystem: new SQLite({ dbName: "db_vite" }),
   });
-  private source: Source = "local";
+  private source: UserSource = "local";
   private userToken = "";
   private user: User = {
     id: 0,
@@ -27,7 +26,11 @@ export class UserFactory {
     events: [],
   };
 
-  constructor(params: { userId: number; source?: Source; userToken?: string }) {
+  constructor(params: {
+    userId: number;
+    source?: UserSource;
+    userToken?: string;
+  }) {
     const { userId, source = "local", userToken } = params;
     this.user.id = userId;
     this.source = source;
@@ -69,13 +72,36 @@ export class UserFactory {
     }
 
     const result: User = {} as any;
-    result.name = userServer!.name ?? localUser!.name;
-    result.userName = userServer!.userName ?? localUser!.userName;
-    result.isAdmin = userServer!.isAdmin ?? localUser!.isAdmin;
-    result.rol = userServer!.rol ?? localUser!.rol;
-    result.imageProfile = userServer!.imageProfile ?? localUser!.imageProfile;
-    result.preferences = userServer!.preferences ?? localUser!.preferences;
-    result.events = userServer?.events ?? localUser!.events;
+    if (this.source == "local") {
+      result.name = localUser!.name;
+      result.userName = localUser!.userName;
+      result.isAdmin = localUser!.isAdmin;
+      result.rol = localUser!.rol;
+      result.imageProfile = localUser!.imageProfile;
+      result.preferences = localUser!.preferences;
+      result.events = localUser!.events;
+      result.updatedAt = localUser!.updatedAt;
+    }
+    if (this.source == "server") {
+      result.name = userServer!.name;
+      result.userName = userServer!.userName;
+      result.isAdmin = userServer!.isAdmin;
+      result.rol = userServer!.rol;
+      result.imageProfile = userServer!.imageProfile;
+      result.preferences = userServer!.preferences;
+      result.events = userServer?.events;
+      result.updatedAt = userServer!.updatedAt;
+    }
+    if (this.source == "both") {
+      result.name = userServer!.name ?? localUser!.name;
+      result.userName = userServer!.userName ?? localUser!.userName;
+      result.isAdmin = userServer!.isAdmin ?? localUser!.isAdmin;
+      result.rol = userServer!.rol ?? localUser!.rol;
+      result.imageProfile = userServer!.imageProfile ?? localUser!.imageProfile;
+      result.preferences = userServer!.preferences ?? localUser!.preferences;
+      result.events = userServer?.events ?? localUser!.events;
+      result.updatedAt = localUser!.updatedAt;
+    }
     return result;
   }
 
@@ -99,19 +125,23 @@ export class UserFactory {
     let user: User = {} as any;
 
     try {
+      //TODO: move to controller
       const queryUser = `SELECT * FROM  users where id=${this.user.id}`;
       const result = (await this.dbc.getData({ query: queryUser }))[0] as any;
       if (Object.keys(result).length === 0) throw new Error("no user found");
 
       user = {
         id: this.user.id,
-        name: result.name,
-        userName: result.user_name,
-        isAdmin: result.is_admin,
+        name: result.name ?? undefined,
+        userName: result.user_name ?? undefined,
+        isAdmin: result.is_admin ?? undefined,
         rol: [],
-        imageProfile: result.image_profile,
+        imageProfile: result.image_profile ?? undefined,
         preferences: { theme: "light" },
         events: await this.getEventsFromLocal(),
+        syncStatus: result.syncstatus ?? true,
+        createdAt: new Date(result.created_at) ?? undefined,
+        updatedAt: new Date(result.updated_at) ?? undefined,
       } as User;
     } catch (error: any) {
       throw error;
