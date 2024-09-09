@@ -47,6 +47,8 @@ class GetUserAuthResolver
         "image_profile" => $image_source,
         "calendars" => $calendars,
         "events" => $events,
+        "created_at" => $response->created_at,
+        "updated_at" => $response->updated_at,
       ];
 
       return [

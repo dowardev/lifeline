@@ -49,6 +49,8 @@ type User {
   email: String!
   user_name: String!
   image_profile: String
+  created_at: String
+  updated_at: String
 }
 type UserAuth {
   access_token: String!
