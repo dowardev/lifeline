@@ -27,6 +27,6 @@ class CreateUsersVerify extends Migration
    */
   public function down()
   {
-    //
+    Schema::dropIfExists('users_verify');
   }
 }

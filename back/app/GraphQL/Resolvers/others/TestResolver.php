@@ -4,7 +4,7 @@ namespace App\GraphQL\Resolvers\others;
 
 use Nuwave\Lighthouse\Support\Contracts\GraphQLContext;
 use GraphQL\Type\Definition\ResolveInfo;
-use App\Http\Traits\UserTrait;
+use App\Http\Traits\user\UserTrait;
 
 class TestResolver
 {

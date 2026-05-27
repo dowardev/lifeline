@@ -419,7 +419,7 @@ const presentAlertRestorePassword = async (): Promise<{
 
   await alert.present();
   const response = await alert.onDidDismiss();
-  // eslint-disable-next-line
+   
   return { email: response.data.values.email, role: response.role! };
 };
 

@@ -13,15 +13,14 @@ class Event extends Model
     'user_id',
     'title',
     'calendar_id',
-    'time_start',
-    'time_end',
-    'reminders',
-    'repeats',
-    'notes',
-    'tags',
-    'guests',
-    'notes',
+    'date_start',
+    'date_end',
+    'notifications',
+    'repeat',
     'time_zone',
+    'guests',
+    'description',
+    'availability',
   ];
 
   public function tags()

@@ -99,7 +99,7 @@ export class ApiController {
       });
 
       const {
-        mutate: mutate,
+        mutate,
         onDone,
         onError,
       } = provideApolloClient(apolloClient)(() => useMutation(query));

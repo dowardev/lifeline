@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed, ref } from "vue";
+import { computed, ref } from "vue";
 import { ViewCalendar } from "@/types";
 import { add, compareAsc, getDay } from "date-fns";
 import { closeOutline } from "ionicons/icons";

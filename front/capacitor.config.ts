@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: "com.dowardev.lifeline",
   appName: "LifeLine",
   webDir: "dist",
-  bundledWebRuntime: false,
   server: {
     url: "http://192.168.1.74:8100",
     cleartext: true,

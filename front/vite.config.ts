@@ -5,7 +5,7 @@ import path from "path";
 
 export default defineConfig({
   build: {
-    target: "esnext", //browsers can handle the latest ES features
+    target: "esnext",
   },
   plugins: [
     vue(),
@@ -38,6 +38,7 @@ export default defineConfig({
       strategies: "generateSW",
       includeAssets: ["*", "**/*"],
       workbox: {
+        maximumFileSizeToCacheInBytes: 5000000,
         runtimeCaching: [
           {
             urlPattern: /.*/,
@@ -50,6 +51,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "ionicons/icons": path.resolve(__dirname, "node_modules/ionicons/icons"),
     },
   },
   test: {
