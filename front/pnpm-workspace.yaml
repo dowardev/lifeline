@@ -1,0 +1,18 @@
+onlyBuiltDependencies:
+  - cypress@13.15.0
+  - esbuild@0.21.5
+  - vue-demi@0.13.11
+  - vue-demi@0.14.10
+minimumReleaseAgeExclude:
+  - '@vue/compiler-core@3.5.35'
+  - '@vue/compiler-dom@3.5.35'
+  - '@vue/compiler-sfc@3.5.35'
+  - '@vue/compiler-ssr@3.5.35'
+  - '@vue/reactivity@3.5.35'
+  - '@vue/runtime-core@3.5.35'
+  - '@vue/runtime-dom@3.5.35'
+  - '@vue/server-renderer@3.5.35'
+  - '@vue/shared@3.5.35'
+  - vue@3.5.35
+patchedDependencies:
+  ionicons@8.0.13: patches/ionicons@8.0.13.patch

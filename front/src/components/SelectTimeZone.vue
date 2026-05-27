@@ -12,7 +12,7 @@
       <ion-toolbar>
         <ion-searchbar
           :debounce="500"
-          @ionChange="search($event.detail.value!)"
+          @ion-change="search($event.detail.value!)"
         >
         </ion-searchbar>
       </ion-toolbar>
@@ -44,7 +44,7 @@
 </template>
 
 <script lang="ts">
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import {
   IonContent,
   IonHeader,

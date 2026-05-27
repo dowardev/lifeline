@@ -6,8 +6,8 @@
         class="list-group"
         :list="list1"
         group="people"
+        item-key="name"
         @change="log"
-        itemKey="name"
       >
         <template #item="{ element, index }">
           <div class="list-group-item">
@@ -23,8 +23,8 @@
         class="list-group"
         :list="list2"
         group="people"
+        item-key="name"
         @change="log"
-        itemKey="name"
       >
         <template #item="{ element, index }">
           <div class="list-group-item">{{ element.name }} {{ index }}</div>

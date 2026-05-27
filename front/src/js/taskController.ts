@@ -7,7 +7,7 @@ export class TaskController {
 
   async saveTask(params: { task: NewTask }): Promise<{ id: string }> {
     const taskData = params.task;
-    let task = {} as Task;
+    const task = {} as Task;
 
     try {
       let task = {} as Task;

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { NewNote, Note } from "../utils/interfaces";
 // import { saveNote as saveNoteService } from "../services/note";
 import { useNoteStore } from "../store/noteStore";
