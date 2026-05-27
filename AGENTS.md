@@ -4,7 +4,7 @@
 
 Monorepo con dos directorios:
 - `back/` — Laravel 8 backend (PHP ^7.3|^8.0)
-- `front/front/` — Ionic Vue 8 frontend (Node.js, pnpm)
+- `front/` — Ionic Vue 8 frontend (Node.js, pnpm)
 
 ## Developer Commands
 
@@ -13,22 +13,22 @@ Monorepo con dos directorios:
 cd back && php artisan serve
 
 # Run frontend
-cd front/front && pnpm run dev
+cd front && pnpm run dev
 
 # Build frontend
-cd front/front && pnpm run build    # vue-tsc + vite build
+cd front && pnpm run build    # vue-tsc + vite build
 
 # Frontend lint
-cd front/front && pnpm run lint     # oxlint + eslint
+cd front && pnpm run lint     # oxlint + eslint
 
 # Frontend unit tests
-cd front/front && pnpm run test:unit
+cd front && pnpm run test:unit
 
 # Frontend e2e tests
-cd front/front && pnpm run test:e2e
+cd front && pnpm run test:e2e
 
 # Format code
-cd front/front && pnpm run format
+cd front && pnpm run format
 ```
 
 ## Backend Setup
@@ -58,7 +58,7 @@ php artisan serve
 - `app/GraphQL/Resolvers/` — Resolvers GraphQL (register, getUserAuth)
 - `routes/api.php` — REST API endpoints (login, signup, CRUD eventos/calendarios)
 
-### Frontend (`front/front/`)
+### Frontend (`front/`)
 - **Ionic 8** + **Vue 3** con Composition API
 - **Capacitor 6** para soporte Android (app ID: com.dowardev.lifeline)
 - **Apollo Client** + **GraphQL** para comunicación API
@@ -69,7 +69,7 @@ php artisan serve
 - **Controladores** en `src/js/` — userController, sessionController, eventController, etc.
 - **Stores** en `src/store/` — Pinia stores
 - **Vistas** en `src/views/` — home, calendar, documents, tasks, integrations, session, etc.
-- **Nota:** La app frontend está dentro de `front/front/` (anidamiento)
+- **Nota:** El repo es monorepo unificado con historial completo de front y back. `.git` en raíz.
 
 ## Code Conventions
 
