@@ -1,17 +1,14 @@
 import { User, UserStore, Event, UserServer } from "@/utils/interfaces";
 import { UserController } from "../userController";
 import { ApiController } from "../apiController";
-import { DB } from "../db";
-import { SQLite } from "../sqlite";
+import { getDB } from "../dbInstance";
 import { EventController } from "../eventController";
 import { UserSource } from "../../utils/types";
 
 export class UserFactory {
   private eventController = new EventController();
   private userController = new UserController();
-  private dbc = new DB({
-    dbSystem: new SQLite({ dbName: "db_vite" }),
-  });
+  private dbc = getDB();
   private source: UserSource = "local";
   private userToken = "";
   private user: User = {

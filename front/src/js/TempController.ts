@@ -1,10 +1,7 @@
-import { SQLite } from "@/js/sqlite";
-import { DB } from "./db";
+import { getDB } from "./dbInstance";
 
 export class TempController {
-  private dbc = new DB({
-    dbSystem: new SQLite({ dbName: "db_vite" }),
-  });
+  private dbc = getDB();
 
   async createTableUsers(): Promise<void> {
     const query = `CREATE TABLE IF NOT EXISTS users
@@ -14,9 +11,9 @@ export class TempController {
       user_name TEXT,
       email TEXT,
       is_admin BOOLEAN,
-      rol TEXT
+      rol TEXT,
       image_profile TEXT,
-      id_sync TEXT
+      id_sync TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );`;

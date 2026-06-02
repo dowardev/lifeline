@@ -1,10 +1,7 @@
-import { DB } from "@/js/db";
-import { SQLite } from "@/js/sqlite";
+import { getDB } from "./dbInstance";
 
 export class TokenController {
-  dbc = new DB({
-    dbSystem: new SQLite({ dbName: "db_vite" }),
-  });
+  dbc = getDB();
   private tableName = "Tokens";
 
   async getUserToken(params: { name: string; userId: number }): Promise<any> {
