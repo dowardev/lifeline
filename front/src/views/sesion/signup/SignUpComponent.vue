@@ -258,6 +258,13 @@
               ></ion-spinner>
             </ion-button>
           </div>
+
+          <!-- fill form button (dev only) -->
+          <div v-if="isDev" class="center">
+            <ion-button fill="clear" size="small" @click="fillForm">
+              Rellenar
+            </ion-button>
+          </div>
         </section>
       </ion-card-content>
     </ion-card>
@@ -307,6 +314,7 @@ import {
 import useVuelidate from "@vuelidate/core";
 import { required, email, helpers, sameAs } from "@vuelidate/validators";
 import { useRouter } from "vue-router";
+import type { Faker } from "@faker-js/faker";
 
 // controllers
 import { SystemController } from "@/js/systemController";
@@ -344,6 +352,8 @@ const loginImagePath = computed(() => {
   if (theme == "cherry") image = loginImageCherry;
   return image;
 });
+
+const isDev = import.meta.env.DEV;
 
 const form = reactive({
   user: "",
@@ -466,6 +476,16 @@ const alertConfirmaciónEmail = async () => {
   });
 
   await alert.present();
+};
+
+const fillForm = async () => {
+  const { faker } = await import("@faker-js/faker");
+  const password = faker.internet.password({ length: 12, memorable: true }) + "A1";
+  form.name = faker.person.fullName();
+  form.user = faker.internet.username();
+  form.email = faker.internet.email();
+  form.password = password;
+  form.password2 = password;
 };
 
 const login = async () => {
