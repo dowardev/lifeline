@@ -1,4 +1,3 @@
-import { SQLite } from "@/js/sqlite";
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 customElements.define("jeep-sqlite", JeepSqlite);
 
@@ -43,7 +42,7 @@ export { storage };
 import { createPinia } from "pinia";
 const pinia = createPinia();
 // import { createApolloProvider } from "@vue/apollo-option";
-import { DB } from "./js/db";
+import { initDB } from "./js/dbInstance";
 import { TempController } from "./js/TempController";
 import { UserFactory } from "./js/factory/UserFactory";
 import { useUserStore } from "./store/userStore";
@@ -59,10 +58,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const app = createApp(App).use(IonicVue).use(i18n).use(pinia);
 
-    const dbc = new DB({
-      dbSystem: new SQLite({ dbName: "db_vite" }),
-    });
-    await dbc.initDB();
+    await initDB();
     const tmpc = new TempController();
     await tmpc.createTableUsers();
     await tmpc.createTableUsersLogged();

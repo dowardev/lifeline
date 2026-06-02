@@ -19,11 +19,11 @@ import {
   UserSource,
   userGrapQLTypeData,
 } from "@/utils/types";
-import { SQLite } from "@/js/sqlite";
 import { SystemController } from "./systemController";
+import { TokenController } from "./tokenController";
 import { ApiController } from "../js/apiController";
 import { USER_LOGIN } from "@/utils/graphql";
-import { DB } from "./db";
+import { getDB } from "./dbInstance";
 import gql from "graphql-tag";
 import { useMutation } from "@vue/apollo-composable";
 import { storage } from "@/main";
@@ -32,16 +32,12 @@ import { EventController } from "./eventController";
 import lodash from "lodash";
 import { UserFactory } from "./factory/UserFactory";
 import { useEventsStore } from "@/store/eventsStore";
-import { TokenController } from "./tokenController";
-
 export class UserController {
   // store
   private userStore = useUserStore();
   private eventStore = useEventsStore();
 
-  private dbc = new DB({
-    dbSystem: new SQLite({ dbName: "db_vite" }),
-  });
+  private dbc = getDB();
   private systemController = new SystemController();
   private tokenController = new TokenController();
 

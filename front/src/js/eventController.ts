@@ -7,7 +7,6 @@ import {
   UPDATE_EVENTS,
   USER_EVENTS,
 } from "@/utils/graphql";
-import { SQLite } from "@/js/sqlite";
 import lodash from "lodash";
 import { storage } from "@/main";
 import { ViewCalendar, ViewMode } from "@/utils/types";
@@ -19,14 +18,12 @@ import messages from "../utils/messages.json";
 import { ApiController } from "./apiController";
 
 // services
-import { DB } from "./db";
+import { getDB } from "./dbInstance";
 import { TokenController } from "./tokenController";
 import { UserController } from "./userController";
 
 export class EventController {
-  dbc = new DB({
-    dbSystem: new SQLite({ dbName: "db_vite" }),
-  });
+  dbc = getDB();
   // private eventService = new EventService();
   private calendarController = new CalendarController();
   apiController = new ApiController();

@@ -7,11 +7,10 @@ import {
   Months,
   SystemMessage,
 } from "@/utils/interfaces";
-import { SQLite } from "@/js/sqlite";
 import { cloneDeep } from "lodash";
 import { useEventsStore } from "@/store/eventsStore";
 import { TokenController } from "@/js/tokenController";
-import { DB } from "./db";
+import { getDB } from "./dbInstance";
 import { UserController } from "./userController";
 import { EventController } from "@/js/eventController";
 import { ScheduleController } from "@/js/scheduleController";
@@ -23,9 +22,7 @@ export class SystemController {
   // store
   // systemStore = useSystemStore();
   // eventsStore = useEventsStore();
-  dbc = new DB({
-    dbSystem: new SQLite({ dbName: "db_vite" }),
-  });
+  dbc = getDB();
 
   translateDay(params: { dayName: keyof Days }) {
     const dayName = params.dayName;

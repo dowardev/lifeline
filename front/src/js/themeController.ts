@@ -1,12 +1,9 @@
 import { useSystemStore } from "@/store/system";
 import { Theme } from "@/utils/types";
-import { DB } from "./db";
-import { SQLite } from "./sqlite";
+import { getDB } from "./dbInstance";
 
 export class ThemeController {
-  dbc = new DB({
-    dbSystem: new SQLite({ dbName: "db_vite" }),
-  });
+  dbc = getDB();
 
   /**
    * This function retrieves the currently selected theme from the system store.
