@@ -80,8 +80,8 @@ export class UserController {
     }
   }
 
-  updateUserTokenProp(token: string): void {
-    this.userStore.updateTokenProp(token);
+  updateUserTokenProp(params: { token: string }): void {
+    this.userStore.updateTokenProp({ token: params.token });
   }
 
   async userLogin(params: UserLogin): Promise<UserLoginResponse> {

@@ -52,4 +52,8 @@ export class DB {
     const { query } = params;
     return await this.dbSystem.deleteData({ query });
   }
+
+  async saveToStore(): Promise<void> {
+    await this.dbSystem.saveToStore();
+  }
 }

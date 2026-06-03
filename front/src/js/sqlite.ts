@@ -92,6 +92,12 @@ export class SQLite {
     }
   }
 
+  async saveToStore(): Promise<void> {
+    if (Capacitor.getPlatform() !== "web") return;
+    const sqlite = this.getConnection();
+    await sqlite.saveToStore(this.dbName);
+  }
+
   async getData(params: { query: string }): Promise<any> {
     const { query } = params;
 

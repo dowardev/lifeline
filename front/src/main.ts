@@ -74,14 +74,23 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   async function loadUser(): Promise<void> {
     const userController = new UserController();
-    const user: User | undefined = undefined;
+    let user: User | undefined;
 
     try {
-      const user = await userController.getUserLoggedStored({
+      user = await userController.getUserLoggedStored({
         sourceData: "both",
       });
+    } catch {
+      try {
+        user = await userController.getUserLoggedStored({
+          sourceData: "local",
+        });
+      } catch {
+        console.log("user no logged in");
+      }
+    }
 
-      // update user props
+    if (user) {
       const userStore = useUserStore();
       userStore.updateUserProps({
         user: {
@@ -96,17 +105,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         },
       });
 
-      // events
       const eventStore = useEventsStore();
       eventStore.setEvents({ events: user.events ?? [] });
-    } catch (error) {
-      console.log("user no logged in");
     }
 
-    // userTheme
     const themeController = new ThemeController();
-    const userTheme =
-      Object.keys(user ?? {}).length == 0 ? "light" : user!.preferences!.theme;
+    const userTheme = user?.preferences?.theme ?? "light";
     themeController.applyTheme({
       theme: userTheme,
     });

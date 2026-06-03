@@ -197,6 +197,7 @@ import { useRouter } from "vue-router";
 import { SystemController } from "@/js/systemController";
 import { UserController } from "@/js/userController";
 import { ThemeController } from "@/js/themeController";
+import { getDB } from "@/js/dbInstance";
 const systemController = new SystemController();
 const userController = new UserController();
 const themeController = new ThemeController();
@@ -300,6 +301,8 @@ async function login(): Promise<void> {
     await systemController.insertUserLogged({
       userId: insertLocalUserResponse.rowID,
     });
+
+    await getDB().saveToStore();
 
     spinners.buttonLogin = false;
     clearInputs();

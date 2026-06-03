@@ -239,6 +239,7 @@ import { useRouter } from "vue-router";
 // controllers
 import { SystemController } from "@/js/systemController";
 import { UserController } from "@/js/userController";
+import { getDB } from "@/js/dbInstance";
 const systemController = new SystemController();
 const userController = new UserController();
 
@@ -330,7 +331,17 @@ async function login(): Promise<void> {
     });
 
     const token = "Bearer " + response.auth.access_token;
-    userController.storeUserToken({ token });
+    const insertLocalUserResponse = await userController.insertLocalUser({
+      user: { idSync: response.user!.id },
+    });
+    await userController.storeUserToken({
+      token,
+      userId: insertLocalUserResponse.rowID,
+    });
+    await systemController.insertUserLogged({
+      userId: insertLocalUserResponse.rowID,
+    });
+    await getDB().saveToStore();
 
     spinners.buttonLogin = false;
     clearInputs();
