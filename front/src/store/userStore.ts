@@ -2,11 +2,10 @@ import { defineStore } from "pinia";
 import { UserStore } from "../utils/interfaces";
 import userAvatar from "@/assets/otros/user.png";
 import { ref } from "vue";
-import { UserController } from "@/js/userController";
 
 export const useUserStore = defineStore("user", () => {
   const user = ref({} as UserStore);
-  const token = "";
+  const token = ref("");
   const isLogged = ref(false);
 
   // watch(user, async (newVal: User2, oldVal: User2) => {
@@ -34,8 +33,8 @@ export const useUserStore = defineStore("user", () => {
     isLogged.value = isUserLogged;
   }
 
-  function updateTokenProp(token: string) {
-    token = token;
+  function updateTokenProp(params: { token: string }) {
+    token.value = params.token;
   }
 
   function logout() {

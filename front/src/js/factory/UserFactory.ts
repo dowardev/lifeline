@@ -90,13 +90,14 @@ export class UserFactory {
       result.updatedAt = userServer!.updatedAt;
     }
     if (this.source == "both") {
-      result.name = userServer!.name ?? localUser!.name;
-      result.userName = userServer!.userName ?? localUser!.userName;
-      result.isAdmin = userServer!.isAdmin ?? localUser!.isAdmin;
-      result.rol = userServer!.rol ?? localUser!.rol;
-      result.imageProfile = userServer!.imageProfile ?? localUser!.imageProfile;
-      result.preferences = userServer!.preferences ?? localUser!.preferences;
-      result.events = userServer?.events ?? localUser!.events;
+      const hasServerData = userServer && Object.keys(userServer).length > 0;
+      result.name = hasServerData ? userServer!.name! : localUser!.name;
+      result.userName = hasServerData ? userServer!.userName! : localUser!.userName;
+      result.isAdmin = hasServerData ? userServer!.isAdmin : localUser!.isAdmin;
+      result.rol = hasServerData ? userServer!.rol : localUser!.rol;
+      result.imageProfile = hasServerData ? userServer!.imageProfile : localUser!.imageProfile;
+      result.preferences = hasServerData ? userServer!.preferences : localUser!.preferences;
+      result.events = hasServerData ? userServer?.events : localUser!.events;
       result.updatedAt = localUser!.updatedAt;
     }
     return result;
