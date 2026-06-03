@@ -7,14 +7,12 @@ export class TaskController {
 
   async saveTask(params: { task: NewTask }): Promise<{ id: string }> {
     const taskData = params.task;
-    const task = {} as Task;
 
     try {
-      let task = {} as Task;
       const id = Date.now().toString();
 
       (taskData as Task).id = "";
-      task = taskData as Task;
+      const task = taskData as Task;
       task.id = id;
 
       const tasks =

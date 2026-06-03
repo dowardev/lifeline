@@ -35,17 +35,6 @@ export type RepeatType = "daily" | "weekly" | "monthly" | "annually";
 
 export type CalendarDataStatus = "loading" | "success" | "error";
 
-export type GraphQLQueryNameUser =
-  | "USER_PERMISSIONS"
-  | "USER_BASIC"
-  | "USER_NAME"
-  | "USER_CALENDARS"
-  | "USER_EVENTS";
-
-export type GraphQLFragmentNameUser = "UserMenu";
-
-export type userGrapQLTypeData = "menu";
-
 export type UserDBType = Pick<
   User,
   "name" | "user" | "email" | "token" | "idSync"

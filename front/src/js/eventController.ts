@@ -1,12 +1,6 @@
 import { SystemController } from "./systemController";
-import { CalendarViewDates, Event, Graphql } from "@/utils/interfaces";
+import { CalendarViewDates, Event } from "@/utils/interfaces";
 import { useEventsStore } from "../store/eventsStore";
-import {
-  CREATE_EVENTS,
-  SYNC_EVENTS,
-  UPDATE_EVENTS,
-  USER_EVENTS,
-} from "@/utils/graphql";
 import lodash from "lodash";
 import { storage } from "@/main";
 import { ViewCalendar, ViewMode } from "@/utils/types";
@@ -81,17 +75,9 @@ export class EventController {
     };
 
     try {
-      const apiController = new ApiController();
-      const query = apiController.graphqlMutationBuilder({
-        name: SYNC_EVENTS,
-        fragment: "SyncEvents",
-        mutationName: "syncEvents",
-        inputName: "SyncEventsInput",
-      });
-
-      await apiController.executeGrapMutatation({
-        query,
-        input: data,
+      await this.apiController.executeMutation({
+        url: "/auth/update-event",
+        data,
       });
     } catch (error) {
       console.error(error);
@@ -293,20 +279,11 @@ export class EventController {
     };
 
     try {
-      const query = this.apiController.graphqlMutationBuilder({
-        name: CREATE_EVENTS,
-        fragment: "CreateEvent",
-        mutationName: "createEvent",
-        inputName: "CreateEventInput",
+      const response = await this.apiController.executeMutation({
+        url: "/auth/create-event",
+        data,
       });
-
-      const id = (
-        await this.apiController.executeGrapMutatation({
-          query,
-          input: data,
-        })
-      ).createEvent.id as number;
-      return { id };
+      return { id: response.id };
     } catch (error) {
       console.error(error);
     }
@@ -530,21 +507,10 @@ export class EventController {
 
   async removeEventServer(params: { id: number }): Promise<void> {
     const { id } = params;
-    const apiController = new ApiController();
-
     try {
-      const qr = apiController.getQuery({ name: "DELETE_EVENT" });
-
-      const query = apiController.graphqlMutationBuilder({
-        name: qr,
-        fragment: "DeleteEvent",
-        mutationName: "deleteEvent",
-        inputName: "DeleteEventInput",
-      });
-
-      await apiController.executeGrapMutatation({
-        query,
-        input: { id },
+      await this.apiController.executeMutation({
+        url: "/auth/remove-event",
+        data: { id },
       });
     } catch (error: any) {
       throw error;
@@ -990,27 +956,14 @@ export class EventController {
   }): Promise<Event[] | undefined> {
     const { userId } = params;
     const apiController = new ApiController();
-    const tokenController = new TokenController();
 
     try {
-      const userToken = await tokenController.getUserToken({
-        name: "auth_token",
-        userId,
-      });
-      const qr = apiController.getQuery({ name: "USER_EVENTS" });
-      const query = apiController.graphqlQueryBuilder({
-        name: qr,
-        fragment: "Events",
-        mutationName: "events",
+      const response = await apiController.executeQuery({
+        url: "/auth/get-events",
       });
 
-      const response = await apiController.executeGrapQuery({
-        query,
-        options: { refetch: true },
-        token: userToken,
-      });
-      if (!response.value.events.events) return [] as Event[];
-      return (response.value.events.events as any[]).map((event: any) => {
+      if (!response.events) return [] as Event[];
+      return (response.events as any[]).map((event: any) => {
         return {
           userId,
           idsync: event.id,
@@ -1057,16 +1010,9 @@ export class EventController {
     };
 
     try {
-      const query = this.apiController.graphqlMutationBuilder({
-        name: UPDATE_EVENTS,
-        fragment: "UpdateEvent",
-        mutationName: "updateEvent",
-        inputName: "UpdateEventInput",
-      });
-
-      await this.apiController.executeGrapMutatation({
-        query,
-        input: data,
+      await this.apiController.executeMutation({
+        url: "/auth/update-event",
+        data,
       });
     } catch (error: any) {
       if (error.message != "Unauthorized") throw error;

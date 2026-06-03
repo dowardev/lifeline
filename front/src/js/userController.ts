@@ -1,7 +1,6 @@
 // import { useUserStore } from "../store/userStore";
 import { storeToRefs } from "pinia";
 import {
-  ResendEmailConfirmation,
   SetUserToken,
   User,
   UserLogin,
@@ -13,19 +12,13 @@ import {
 import { errorBuilder } from "@/utils/errors";
 import { SessionController } from "./sessionController";
 import {
-  GraphQLFragmentNameUser,
-  GraphQLQueryNameUser,
   UserDBType,
   UserSource,
-  userGrapQLTypeData,
 } from "@/utils/types";
 import { SystemController } from "./systemController";
 import { TokenController } from "./tokenController";
 import { ApiController } from "../js/apiController";
-import { USER_LOGIN } from "@/utils/graphql";
 import { getDB } from "./dbInstance";
-import gql from "graphql-tag";
-import { useMutation } from "@vue/apollo-composable";
 import { storage } from "@/main";
 import { useUserStore } from "@/store/userStore";
 import { EventController } from "./eventController";
@@ -96,29 +89,22 @@ export class UserController {
     const apiController = new ApiController();
 
     try {
-      const query = apiController.graphqlMutationBuilder({
-        name: USER_LOGIN,
-        fragment: "UserLogin",
-        mutationName: "login",
-        inputName: "LoginInput",
+      const response = await apiController.executeMutation({
+        url: "/auth/login",
+        data: { user, password },
       });
 
-      let response = await apiController.executeGrapMutatation({
-        query,
-        input: { user, password },
-      });
-
-      if (!response.login.auth) return {} as UserLoginResponse;
-      response = {
-        user: response.login.user,
+      if (!response.auth) return {} as UserLoginResponse;
+      return {
+        user: response.user,
         auth: {
-          access_token: response.login.auth.access_token,
-          token_type: response.login.auth.token_type,
+          access_token: response.auth.access_token,
+          token_type: response.auth.token_type,
         },
-      };
-      return response;
+      } as UserLoginResponse;
     } catch (error: any) {
       if (error.message != "Unauthorized") throw error;
+      return {} as UserLoginResponse;
     }
   }
 
@@ -265,36 +251,23 @@ export class UserController {
 
   async getUserFromServer(params: { token: string }): Promise<UserServer> {
     const { token } = params;
-    const queryName = "USER_BASIC";
-    const fragmentName = "UserBasic";
     const apiController = new ApiController();
-    const queryDocument = apiController.getQuery({ name: queryName });
 
     try {
-      //TODO: move to controller
-      const query = apiController.graphqlQueryBuilder({
-        name: queryDocument,
-        fragment: fragmentName,
-        mutationName: "userAuth",
+      const response = await apiController.executeQuery({
+        url: "/auth/user",
       });
 
-      let response = await apiController.executeGrapQuery({
-        query,
-        options: { refetch: true },
-        token,
-      });
-
-      if (response) {
-        response = {
-          name: response.value.userAuth.user.name,
-          userName: response.value.userAuth.user.user_name,
-          isAdmin: response.value.userAuth.user.is_admin,
-          imageProfile: response.value.userAuth.user.image_profile,
+      if (response && response.user) {
+        return {
+          name: response.user.name,
+          userName: response.user.user_name,
+          isAdmin: response.user.is_admin,
+          imageProfile: response.user.image_profile,
           preferences: { theme: "light" },
-          createdAt: new Date(response.value.userAuth.user.created_at),
-          updatedAt: new Date(response.value.userAuth.user.updated_at),
+          createdAt: new Date(response.user.created_at),
+          updatedAt: new Date(response.user.updated_at),
         } as UserServer;
-        return response as UserServer;
       }
       return {} as UserServer;
     } catch (error: any) {
@@ -317,33 +290,6 @@ export class UserController {
 
   getUserLang(): Promise<any> {
     return storage.get("lang");
-  }
-
-  async resendEmailConfirmation(
-    params: ResendEmailConfirmation,
-  ): Promise<void> {
-    const { onError, onDone } = useMutation(
-      gql`
-        mutation resendEmailConfirmation($email: String!) {
-          resendEmailConfirmation(input: { email: $email })
-        }
-      `,
-      {
-        variables: {
-          email: params.email,
-        },
-      },
-    );
-
-    onError((error) => {
-      throw new Error(error.message);
-    });
-
-    return new Promise((resolve) => {
-      onDone((response) => {
-        resolve(response.data);
-      });
-    });
   }
 
   // TODO: create new interface for user database
@@ -390,8 +336,6 @@ export class UserController {
         query: query,
         values: values,
       });
-      const queryss = `SELECT * FROM Users `;
-      (await this.dbc.getData({ query: queryss }))[0] as any;
     } catch (error: any) {
       throw new Error(error);
     }
