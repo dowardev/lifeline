@@ -191,7 +191,6 @@ import {
 } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
 import { required, helpers, email } from "@vuelidate/validators";
-import { USER_LOGIN, USER_BASIC } from "../../../utils/graphql";
 import { useRouter } from "vue-router";
 
 // controllers
@@ -345,9 +344,7 @@ const alertConfirmationEmail = async () => {
     buttons: [
       {
         text: "Continuar",
-        handler: () => {
-          resendEmailConfirmation({ email: form.email });
-        },
+        handler: () => {},
       },
     ],
   });
@@ -426,9 +423,7 @@ const presentAlertRestorePassword = async (): Promise<{
 //TODO: move to controller
 const loadUser = async (): Promise<void> => {
   try {
-    userController.loadUser({
-      graphql: { name: USER_BASIC, fragment: "UserBasic" },
-    });
+    userController.loadUser({});
   } catch (error) {
     console.error(error);
   }

@@ -165,26 +165,15 @@ export class UserFactory {
     token: string;
   }): Promise<Event[]> {
     const { token } = params;
-    const queryName = "USER_EVENTS";
-    const fragmentName = "Events";
     const apiController = new ApiController();
-    const queryDocument = apiController.getQuery({ name: queryName });
 
     try {
-      const query = apiController.graphqlQueryBuilder({
-        name: queryDocument,
-        fragment: fragmentName,
-        mutationName: "events",
-      });
-
-      const response = await apiController.executeGrapQuery({
-        query,
-        options: { refetch: true },
-        token,
+      const response = await apiController.executeQuery({
+        url: "/auth/get-events",
       });
 
       if (response) {
-        return response.value.events.events;
+        return response.events;
       }
       return [];
     } catch (error: any) {

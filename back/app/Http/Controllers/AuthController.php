@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\user\UserTrait;
+use App\Models\Images;
 use App\Models\User;
 use App\Models\UserVerify;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    use UserTrait;
     public function signup(Request $request)
     {
         $request->validate([
@@ -20,68 +23,113 @@ class AuthController extends Controller
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string',
         ]);
-        $user = new User([
-            'name' => $request->name, 'user' => $request->user,
+
+        if (User::where('user', '=', $request->user)->exists()) {
+            return response()->json(['message' => 'The user has already been selected'], 422);
+        }
+        if (User::where('email', '=', $request->email)->exists()) {
+            return response()->json(['message' => 'The email has already been selected'], 422);
+        }
+
+        $newUser = new User([
+            'name' => $request->name,
+            'user' => $request->user,
             'email' => $request->email,
             'password' => bcrypt($request->password),
         ]);
-        $user->save();
+        $newUser->save();
 
-        $token = Str::random(64);
-        UserVerify::create([
-            'user_id' => $user->id,
-            'token' => $token,
-        ]);
+        $this->sendVerificationEmail(user_id: $newUser->id, email: $request->email);
 
-        Mail::send('emails.emailVerificationEmail', ['token' => $token], function ($message) use ($request) {
-            $message->to($request->email);
-            $message->subject('Email Verification Mail');
-        });
-
-        return response()->json([
-            'message' => 'Successfully created user!',
-        ], 201);
+        return response()->json(['state' => true], 201);
     }
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|string|email',
+            'user' => 'required|string',
             'password' => 'required|string',
-            'remember_me' => 'boolean',
         ]);
-        $credentials = request(['email', 'password']);
+
+        $user = $request->user;
+        $password = $request->password;
+
+        $userData = User::where('user', '=', $user)
+            ->orWhere('email', '=', $user)
+            ->first();
+
+        if (!$userData) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        if ($userData->is_user_disabled) {
+            return response()->json(['message' => 'Disabled user'], 403);
+        }
+
+        $credentials = [
+            'email' => $userData->email,
+            'password' => $password,
+        ];
+
         if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 401);
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
-        $user = $request->user();
-        $tokenResult = $user->createToken('Personal Access Token');
-        $token = $tokenResult->token;
-        if ($request->remember_me) {
-            $token->expires_at = Carbon::now()->addWeeks(1);
+
+        if (!$userData->is_email_verified) {
+            return response()->json(['message' => 'Unverified email'], 403);
         }
-        $token->save();
+
+        $token = $userData->createToken('Personal Access Token')->accessToken;
+
         return response()->json([
-            'access_token' => $tokenResult->accessToken,
-            'token_type' => 'Bearer',
-            'expires_at' => Carbon::parse(
-                $tokenResult->token->expires_at
-            )
-                ->toDateTimeString(),
+            'auth' => [
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ],
+            'user' => [
+                'id' => $userData->id,
+            ],
         ]);
     }
 
     public function logout(Request $request)
     {
-        $request->user()->token()->revoke();
-        return response()->json(['message' =>
-            'Successfully logged out']);
+        $state = false;
+        if (Auth::guard('api')->check()) {
+            Auth::guard('api')->user()->token()->revoke();
+            $state = true;
+        }
+        return response()->json(['state' => $state]);
     }
 
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        $response = $request->user();
+
+        $image_source = '';
+        if ($response->image_id) {
+            $image_source = base64_encode(
+                Storage::disk('user_images_profile')->get(
+                    Images::find($response->image_id)->name
+                )
+            );
+        }
+
+        $calendars = $response->calendars;
+        $events = $response->events;
+
+        $user = [
+            'id' => $response->id,
+            'name' => $response->name,
+            'user_name' => $response->user,
+            'email' => $response->email,
+            'image_profile' => $image_source,
+            'calendars' => $calendars,
+            'events' => $events,
+            'created_at' => $response->created_at,
+            'updated_at' => $response->updated_at,
+        ];
+
+        return response()->json(['user' => $user]);
     }
     public function verifyAccount($token)
     {

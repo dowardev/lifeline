@@ -51,17 +51,16 @@ php artisan serve
 ### Backend (`back/`)
 - **Laravel 8** con PHP ^7.3|^8.0
 - **Autenticación:** Laravel Passport (OAuth2) + Sanctum
-- **GraphQL:** nuwave/lighthouse (schema en `graphql/schema.graphql`)
+- **REST API:** axios en frontend, Laravel routes en backend
 - **Build tool:** Laravel Mix (webpack) — NO Vite
 - `app/Http/Controllers/` — AuthController, CalendarController, EventController
 - `app/Models/` — User, Event, Calendar, Tag, AdminTag, UserVerify
-- `app/GraphQL/Resolvers/` — Resolvers GraphQL (register, getUserAuth)
-- `routes/api.php` — REST API endpoints (login, signup, CRUD eventos/calendarios)
+- `routes/api.php` — REST API endpoints (login, signup, CRUD eventos/calendarios, sync-event)
 
 ### Frontend (`front/`)
 - **Ionic 8** + **Vue 3** con Composition API
 - **Capacitor 6** para soporte Android (app ID: com.dowardev.lifeline)
-- **Apollo Client** + **GraphQL** para comunicación API
+- **Axios** + **REST API** para comunicación API
 - **Pinia** para manejo de estado
 - **SQLite offline** con @capacitor-community/sqlite
 - **i18n** con vue-i18n

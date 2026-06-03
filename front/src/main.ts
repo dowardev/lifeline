@@ -26,9 +26,6 @@ import "@ionic/vue/css/display.css";
 /* Theme variables */
 import "./theme/variables.css";
 
-// apollo
-// import apolloClient from "./Apollo";
-
 // i18n
 import i18n from "./plugins/i18n/i18n";
 
@@ -41,7 +38,6 @@ export { storage };
 // pinia
 import { createPinia } from "pinia";
 const pinia = createPinia();
-// import { createApolloProvider } from "@vue/apollo-option";
 import { initDB } from "./js/dbInstance";
 import { TempController } from "./js/TempController";
 import { UserFactory } from "./js/factory/UserFactory";

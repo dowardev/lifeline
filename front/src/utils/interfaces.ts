@@ -1,11 +1,4 @@
-import { DocumentNode } from "graphql";
 import { DocumentElements, Theme, RepeatType } from "./types";
-
-export interface Graphql {
-  name: DocumentNode;
-  fragment: string;
-  refetch?: boolean;
-}
 
 // user
 export interface User {
@@ -65,15 +58,9 @@ export interface SetUserToken {
   token: string;
   userId: string;
 }
-export interface ResendEmailConfirmation {
-  email: string;
-}
 export interface UserLogin {
   user: User["user"];
   password: User["password"];
-}
-export interface GetUserAuth {
-  graphql: Graphql;
 }
 export interface GetUserAuthResponse {
   id: string;
@@ -142,9 +129,6 @@ export interface NewEvent {
   description: string;
   availability: string;
 }
-export interface GetCalendars {
-  graphql: Graphql;
-}
 export interface GetCalendarsResponse {
   id: string;
   name: string;
@@ -153,7 +137,6 @@ export interface GetCalendarsResponse {
 
 export interface GetEvents {
   date: string;
-  graphql: Graphql;
 }
 
 export interface CalendarViewDates {
