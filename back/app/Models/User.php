@@ -20,8 +20,6 @@ class User extends Authenticatable
     "name",
     "user",
     "email",
-    "password",
-    "is_email_verified",
   ];
 
   /**
@@ -38,6 +36,9 @@ class User extends Authenticatable
    */
   protected $casts = [
     "email_verified_at" => "datetime",
+    "is_email_verified" => "boolean",
+    "is_admin" => "boolean",
+    "is_user_disabled" => "boolean",
   ];
 
   public function calendars()
@@ -48,5 +49,20 @@ class User extends Authenticatable
   public function events()
   {
     return $this->hasMany(Event::class);
+  }
+
+  public function tasks()
+  {
+    return $this->hasMany(Task::class);
+  }
+
+  public function documents()
+  {
+    return $this->hasMany(Document::class);
+  }
+
+  public function notes()
+  {
+    return $this->hasMany(Note::class);
   }
 }

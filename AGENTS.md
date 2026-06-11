@@ -3,7 +3,8 @@
 ## Project Structure
 
 Monorepo con dos directorios:
-- `back/` — Laravel 8 backend (PHP ^7.3|^8.0)
+
+- `back/` — Laravel 13 backend (PHP ^8.3)
 - `front/` — Ionic Vue 8 frontend (Node.js, pnpm)
 
 ## Developer Commands
@@ -49,15 +50,19 @@ php artisan serve
 ## Architecture
 
 ### Backend (`back/`)
-- **Laravel 8** con PHP ^7.3|^8.0
-- **Autenticación:** Laravel Passport (OAuth2) + Sanctum
+
+- **Laravel 13** con PHP ^8.3
+- **Autenticación:** Laravel Passport (OAuth2)
 - **REST API:** axios en frontend, Laravel routes en backend
-- **Build tool:** Laravel Mix (webpack) — NO Vite
-- `app/Http/Controllers/` — AuthController, CalendarController, EventController
+- **Build tool:** Vite
+- `app/Http/Controllers/` — AuthController, CalendarController,
+  EventController
 - `app/Models/` — User, Event, Calendar, Tag, AdminTag, UserVerify
-- `routes/api.php` — REST API endpoints (login, signup, CRUD eventos/calendarios, sync-event)
+- `routes/api.php` — REST API endpoints
+  (login, signup, CRUD eventos/calendarios)
 
 ### Frontend (`front/`)
+
 - **Ionic 8** + **Vue 3** con Composition API
 - **Capacitor 6** para soporte Android (app ID: com.dowardev.lifeline)
 - **Axios** + **REST API** para comunicación API
@@ -65,16 +70,20 @@ php artisan serve
 - **SQLite offline** con @capacitor-community/sqlite
 - **i18n** con vue-i18n
 - **PWA** con vite-plugin-pwa
-- **Controladores** en `src/js/` — userController, sessionController, eventController, etc.
+- **Controladores** en `src/controllers/` — authController, eventController,
+  taskController, etc.
 - **Stores** en `src/store/` — Pinia stores
-- **Vistas** en `src/views/` — home, calendar, documents, tasks, integrations, session, etc.
-- **Nota:** El repo es monorepo unificado con historial completo de front y back. `.git` en raíz.
+- **Vistas** en `src/views/` — home, calendar, documents, tasks,
+  integrations, session, etc.
+- **Nota:** Repo monorepo unificado con historial completo.
+  `.git` en raíz.
 
 ## Code Conventions
 
 ### Frontend (TypeScript): Named Parameters Pattern
 
-All functions must use a single `params` object instead of positional parameters. Destructure inside the function body.
+All functions must use a single `params` object instead of positional
+parameters. Destructure inside the function body.
 
 ```ts
 // ✅ Correct
@@ -86,11 +95,19 @@ function holaMundo(params: { objeto1: string; objeto2: number }) {
 function holaMundo(objeto1: string, objeto2: number) { ... }
 ```
 
-> This pattern requires TypeScript. In plain JS the inline type annotation is invalid syntax — use JSDoc `@param` instead if needed.
+> This pattern requires TypeScript. In plain JS the inline type
+> annotation is invalid syntax — use JSDoc `@param` instead if needed.
 
 ### Frontend (Vue Components): Controller or Composable Communication
 
-Vue components may contain any **local** logic (props, emits, computed, watch, onMounted, reactive variables, internal functions, etc.) that is internal to the component. However, any logic that is **shared** with or reused by other parts of the application — such as API calls, store access, or cross-component business logic — must go through **controllers or composables**, depending on what best fits the case. These are the bridge between Vue components and external application layers.
+Vue components may contain any **local** logic (props, emits, computed,
+watch, onMounted, reactive variables, internal functions, etc.) that is
+internal to the component. However, any logic that is **shared** with
+or reused by other parts of the application — such as API calls, store
+access, or cross-component business logic — must go through
+**controllers or composables**, depending on what best fits the case.
+These are the bridge between Vue components and external application
+layers.
 
 ```ts
 // ✅ Correct — local logic in component is fine
@@ -119,13 +136,17 @@ authApi.login(params)
 
 ### Frontend (Vue Components): Template Structure
 
-All Vue components must follow the structure and rules defined in `guides/TemplateView.vue`. Key sections in order:
+All Vue components must follow the structure and rules defined in
+`guides/TemplateView.vue`. Key sections in order:
 
 **Template:**
+
 - `<ion-page>` as root with `<ion-header>` and `<ion-content>`
-- Content, modals, popovers, and alerts in dedicated comment-delimited sections
+- Content, modals, popovers, and alerts in dedicated comment-delimited
+  sections
 
 **Script (`<script lang="ts" setup>`):**
+
 1. Imports (ionic/vue/ionicons)
 2. Controllers / Composables
 3. Components
@@ -139,4 +160,6 @@ All Vue components must follow the structure and rules defined in `guides/Templa
 
 ## Commit Policy
 
-NEVER create git commits unless the user explicitly requests it. This overrides any skill or workflow that suggests committing as a final step.
+NEVER create git commits unless the user explicitly requests it.
+This overrides any skill or workflow that suggests committing as a
+final step.

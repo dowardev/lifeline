@@ -1,5 +1,66 @@
 # Changelog
 
+## [0.11.1] - 2026-06-11
+
+### Fixed
+
+- **back:** Prevent null pointer crash on login and eliminate user enumeration via uniform 401 response
+- **back:** Remove `$guarded` from User model (Eloquent ignores it when `$fillable` is set)
+- **back:** Remove `user_id` from `$fillable` on all 5 models; set explicitly in controllers for defense-in-depth
+- **back:** Change `unsignedInteger` to `unsignedBigInteger` for `user_id` foreign keys to match `id()` PK type
+- **back:** Validate dates as `date` type and JSON fields as `array` to prevent 500 on bad input and double-encoding
+- **front:** Assign string page titles instead of boolean comparisons in MainPage
+- **front:** Await `storage.create()` before bootstrap and remove unnecessary `DOMContentLoaded` wrapper
+- **front:** Fix `apiClient` 401 redirect from `window.location.href` to `router.push` with concurrent 401 storm guard
+- **front:** Convert store `setLoading`/`setError` to named parameters pattern per project convention
+- **front:** Replace template method calls with computed property in DocumentsPage; fix `useDocument` direct store mutations and `any` types
+- **front:** Apply named parameters pattern to `presentToast` in LoginPage
+
+### Changed
+
+- **back:** Move resource routes out of `/v1/auth/` prefix to `/v1/` for proper REST semantics
+- **back:** Rename CalendarController methods to standard resource names (store, update, destroy)
+- **front:** Convert `calendarController.ts` to lazy store getter with typed `getViewDates` return
+
+### Added
+
+- **root:** Add `.eslintcache` to `.gitignore`
+
+## [0.11.0] - 2026-06-09
+
+### Added
+
+- **front:** Migrate from SQLite (Capacitor SQLite) to Dexie.js (IndexedDB) for offline persistence with schema versioning and automatic recovery
+- **front:** Add Pinia stores for auth, events, tasks, documents, tags, theme, and WakaTime
+- **front:** Add remaining controllers (calendar, event, note, reminder, schedule, system, tag, theme, wakaTime)
+- **front:** Add diagnostic logging for userId mismatch in event loading
+- **back:** Add CRUD endpoints for tasks, documents, and notes
+
+### Changed
+
+- **front:** Refactor from legacy js/ controllers to services/controllers/stores layered architecture
+- **front:** Load events from IndexedDB first (instant), sync with server in background
+- **front:** Replace OAuth token flow with new AuthController pattern
+- **front:** Migrate Dexie config primary key from auto-increment id to name (schema v2)
+- **front:** Add defensive guards for null/invalid dates, empty month names, and null user in router
+- **front:** Initialize viewDates with current date in calendar store
+
+### Removed
+
+- **front:** Remove @capacitor-community/sqlite dependency and all SQLite-related code
+- **front:** Remove old js/ controller files and legacy stores
+- **front:** Remove dead getViewDates/setCurrentDates call from MainPage
+
+### Fixed
+
+- **front:** Resolve 38 codebase quality issues across all phases — critical sync loop, data loss, token management, notification collisions, backend validation, store logic, rate limiting, and code cleanup
+- **front:** Resolve 13 TypeScript and runtime issues across CalendarComponent, HomePage, LoginPage, controllers, stores, and components
+- **front:** Resolve 10 functional issues in Dexie migration — schema upgrade, event validation, userId resolution, database corruption recovery
+- **front:** Fix resolveUserId fallback and data migration for events with missing user_id
+- **front:** Fix AddTaskComponent — send title field instead of name, add null guard on taskData.id
+- **front:** Fix unit tests — correct HomePage import path, stub WakaTimeController, use forks pool
+- **front:** Validate events before saving to IndexedDB, preserve local events on server sync
+
 ## [0.10.0] - 2026-05-27
 
 ### ⚠ BREAKING CHANGES

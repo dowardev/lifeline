@@ -11,14 +11,14 @@ export function errorBuilder(params: {
 }
 
 class AuthError extends Error {
-  constructor(message: any) {
+  constructor(message: string) {
     super(message);
     this.name = "AuthError";
   }
 }
 
 class DefaultError extends Error {
-  constructor(message: any) {
+  constructor(message: string) {
     super(message);
     this.name = "Unknown Error";
   }

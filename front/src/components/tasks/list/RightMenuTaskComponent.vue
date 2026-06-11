@@ -61,7 +61,7 @@ function deleteOption() {
   intervalDeleteId.value = setInterval(() => {
     progress.value += 0.01;
     if (progress.value > 1) {
-      clearInterval(intervalDeleteId);
+      clearInterval(intervalDeleteId.value);
       setTimeout(async () => {
         progress.value = 0;
         await closeModal({
@@ -74,7 +74,7 @@ function deleteOption() {
 }
 
 async function cancelDelete() {
-  clearInterval(intervalDeleteId);
+  clearInterval(intervalDeleteId.value);
   await closeModal({ data: { option: "delete" }, role: "cancel" });
 }
 

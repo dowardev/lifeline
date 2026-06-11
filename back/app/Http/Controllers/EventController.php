@@ -2,137 +2,118 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\EventResource;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\Calendar;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class EventController extends Controller
 {
-    public function createEvent(Request $request)
+    public function store(Request $request)
     {
-        $user = Auth::guard('api')->user();
-        if ($user == null) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
         $request->validate([
-            'name' => 'required|string',
-            'dateStart' => 'required|string',
-            'dateEnd' => 'required|string',
-            'timeZone' => 'required|string',
-            'availability' => 'required|string',
-            'calendar_id' => 'required|integer',
+            'name' => 'required|string|max:255',
+            'dateStart' => 'required|date',
+            'dateEnd' => 'required|date',
+            'timeZone' => 'required|string|max:100',
+            'availability' => 'required|string|max:65535',
+            'calendar_id' => 'integer|nullable',
+            'notifications' => 'nullable|array',
+            'repeat' => 'nullable|array',
+            'guests' => 'nullable|array',
+            'description' => 'nullable|string|max:65535',
         ]);
 
-        $user_id = $user->id;
-
-        $event = new Event();
-        $event->user_id = $user_id;
-        $event->title = $request->name;
-        $event->guests = $request->guests;
-        $event->time_zone = $request->timeZone;
-        $event->description = $request->description;
-        $event->availability = $request->availability;
-        $event->date_start = Carbon::createFromFormat('Y-m-d\TH:i:s.u\Z', $request->dateStart);
-        $event->date_end = Carbon::createFromFormat('Y-m-d\TH:i:s.u\Z', $request->dateEnd);
-        $event->notifications = $request->notifications;
-        $event->repeat = $request->repeat;
-
-        $calendar = Calendar::where('id', $request->calendar_id)
-            ->where('user_id', $user->id)
-            ->first();
-        if (!$calendar) {
-            return response()->json(['message' => 'Calendar not found'], 404);
-        }
-        $event->calendar_id = $calendar->id;
-
-        $event->save();
-
-        return response()->json(['id' => $event->id], 201);
-    }
-
-    public function getEvents(Request $request)
-    {
-        $user = Auth::guard('api')->user();
-        if ($user == null) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $user_id = $user->id;
-        $eventsData = Event::where('user_id', $user_id)->get();
-
-        foreach ($eventsData as $event) {
-            if ($event->date_start) {
-                $event->date_start = Carbon::createFromFormat(
-                    'Y-m-d H:i:s', $event->date_start
-                )->format('Y-m-d\TH:i:s.u\Z');
-            }
-            if ($event->date_end) {
-                $event->date_end = Carbon::createFromFormat(
-                    'Y-m-d H:i:s', $event->date_end
-                )->format('Y-m-d\TH:i:s.u\Z');
+        if ($request->calendar_id) {
+            $calendar = Calendar::where('id', $request->calendar_id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+            if (!$calendar) {
+                return response()->json(['message' => 'Calendar not found'], 404);
             }
         }
 
-        return response()->json(['events' => $eventsData]);
-    }
-
-    public function updateEvent(Request $request)
-    {
-        $user = Auth::guard('api')->user();
-        if ($user == null) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $request->validate([
-            'id' => 'required',
-            'name' => 'required|string',
-            'dateStart' => 'required|string',
-            'dateEnd' => 'required|string',
+        $event = new Event([
+            'title' => $request->name,
+            'calendar_id' => $request->calendar_id,
+            'date_start' => Carbon::parse($request->dateStart),
+            'date_end' => Carbon::parse($request->dateEnd),
+            'time_zone' => $request->timeZone,
+            'availability' => $request->availability,
+            'notifications' => $request->notifications,
+            'repeat' => $request->repeat,
+            'guests' => $request->guests,
+            'description' => $request->description,
         ]);
-
-        $event = Event::find($request->id);
-        if (!$event) {
-            return response()->json(['message' => 'Event not found'], 404);
-        }
-
-        if ($event->user_id !== $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
-        $event->title = $request->name;
-        $event->guests = $request->guests;
-        $event->time_zone = $request->timeZone;
-        $event->description = $request->description;
-        $event->availability = $request->availability;
-        $event->date_start = Carbon::createFromFormat('Y-m-d\TH:i:s.u\Z', $request->dateStart);
-        $event->date_end = Carbon::createFromFormat('Y-m-d\TH:i:s.u\Z', $request->dateEnd);
-        $event->notifications = $request->notifications;
-        $event->repeat = $request->repeat;
+        $event->user_id = $request->user()->id;
         $event->save();
 
-        return response()->json(['state' => true]);
+        return response()->json(['event' => new EventResource($event)], 201);
     }
 
-    public function removeEvent(Request $request)
+    public function index(Request $request)
     {
-        $user = Auth::guard('api')->user();
-        if ($user == null) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        $request->validate([
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'page' => 'nullable|integer|min:1',
+        ]);
+
+        $perPage = $request->input('per_page', 15);
+
+        $events = Event::where('user_id', $request->user()->id)
+            ->orderBy('date_start', 'desc')
+            ->paginate($perPage);
+
+        return EventResource::collection($events);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'dateStart' => 'sometimes|required|date',
+            'dateEnd' => 'sometimes|required|date',
+            'timeZone' => 'sometimes|string|max:100',
+            'availability' => 'sometimes|string|max:65535',
+            'calendar_id' => 'sometimes|integer|nullable',
+            'notifications' => 'sometimes|nullable|array',
+            'repeat' => 'sometimes|nullable|array',
+            'guests' => 'sometimes|nullable|array',
+            'description' => 'sometimes|nullable|string|max:65535',
+        ]);
+
+        $event = Event::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
+
+        if ($request->has('calendar_id') && $request->calendar_id) {
+            $calendar = Calendar::where('id', $request->calendar_id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+            if (!$calendar) {
+                return response()->json(['message' => 'Calendar not found'], 404);
+            }
         }
 
-        $request->validate(['id' => 'required']);
+        $updates = [];
+        if ($request->has('name')) $updates['title'] = $request->name;
+        if ($request->has('guests')) $updates['guests'] = $request->guests;
+        if ($request->has('timeZone')) $updates['time_zone'] = $request->timeZone;
+        if ($request->has('description')) $updates['description'] = $request->description;
+        if ($request->has('availability')) $updates['availability'] = $request->availability;
+        if ($request->has('dateStart')) $updates['date_start'] = Carbon::parse($request->dateStart);
+        if ($request->has('dateEnd')) $updates['date_end'] = Carbon::parse($request->dateEnd);
+        if ($request->has('notifications')) $updates['notifications'] = $request->notifications;
+        if ($request->has('repeat')) $updates['repeat'] = $request->repeat;
+        if ($request->has('calendar_id')) $updates['calendar_id'] = $request->calendar_id;
 
-        $event = Event::find($request->id);
-        if (!$event) {
-            return response()->json(['message' => 'Event not found'], 404);
-        }
+        $event->update($updates);
 
-        if ($event->user_id !== $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
+        return response()->json(['event' => new EventResource($event)]);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $event = Event::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
 
         $event->delete();
 

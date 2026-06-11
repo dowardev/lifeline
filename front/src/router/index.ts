@@ -1,60 +1,9 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
 // import HomePage from '../views/HomePage.vue'
-import MainPage from "@/views/main/MainPage.vue";
+const MainPage = () => import("@/views/main/MainPage.vue");
 
-import { UserController } from "@/js/userController";
-import { User } from "@/utils/interfaces";
-import { useUserStore } from "@/store/userStore";
-
-async function loadUser(): Promise<void> {
-  const userController = new UserController();
-  const queryName = "USER_BASIC";
-  const fragmentName = "UserBasic";
-
-  try {
-    await userController.loadUser({ queryName, fragmentName });
-  } catch (error: any) {
-    throw new Error(error.message);
-  }
-}
-
-async function adminGuard(): Promise<true | "/"> {
-  const userController = new UserController();
-  await loadUser();
-  const isAdmin = userController.refs.user.value.isAdmin;
-  if (isAdmin == true) return true;
-  return "/";
-}
-
-async function userLoggedGuard(): Promise<true | "/landing"> {
-  const userController = new UserController();
-  let value = "landing" as true | "/landing";
-  try {
-    await loadUser();
-    const user = userController.refs.user.value.user;
-    if (user) value = true;
-  } catch (error) {
-    console.error(error);
-    value = "/landing";
-  } finally {
-    return value;
-  }
-}
-
-async function userSignOutGuard(): Promise<true | "/" | undefined> {
-  const userController = new UserController();
-  let value = true as true | "/";
-  try {
-    await loadUser();
-    const user = userController.refs.user.value.user;
-    if (user) value = "/";
-  } catch (error) {
-    value = true;
-  } finally {
-    return value;
-  }
-}
+import { useAuthStore } from "@/store/authStore";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -62,68 +11,74 @@ const routes: Array<RouteRecordRaw> = [
     redirect: "/home",
   },
   {
-    path: "/(.*)",
-    redirect: "/home",
-  },
-  {
     path: "/home",
     name: "home",
     component: MainPage,
+    meta: { requiresAuth: true },
   },
   {
     path: "/calendar",
     name: "CalendarPage",
     component: MainPage,
+    meta: { requiresAuth: true },
   },
   {
     path: "/signup",
     name: "SignUp",
     component: MainPage,
+    meta: { requiresAuth: false },
   },
   {
     path: "/login",
     name: "Login",
     component: MainPage,
+    meta: { requiresAuth: false },
   },
-  {
-    path: "/prueba",
-    name: "PruebaPage",
-    component: MainPage,
-  },
-  {
+{
     path: "/document/:url",
     name: "DocumentPage",
     component: MainPage,
+    meta: { requiresAuth: true },
   },
   {
     path: "/policies",
     name: "PoliciesPage",
     component: MainPage,
+    meta: { public: true },
   },
   {
     path: "/documents",
     name: "DocumentsPage",
     component: MainPage,
+    meta: { requiresAuth: true },
   },
   {
     path: "/tasks",
     name: "TasksPage",
     component: MainPage,
+    meta: { requiresAuth: true },
   },
   {
     path: "/integrations",
     name: "IntegrationsPage",
     component: MainPage,
+    meta: { requiresAuth: true },
   },
   {
     path: "/about",
     name: "AboutPage",
     component: MainPage,
+    meta: { public: true },
   },
   {
     path: "/landing",
     name: "LandingPage",
     component: MainPage,
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/home",
   },
 ];
 
@@ -133,48 +88,24 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  const userController = new UserController();
-  const queryName = "USER_BASIC";
-  const fragmentName = "UserBasic";
-  let user = {} as User;
-  const path = to.path;
-  const authorizedRoutes = [
-    "/home",
-    "/calendar",
-    "/document/:url",
-    "/documents",
-    "/tasks",
-    "/integrations",
-  ];
-  const unauthorizedRoutes = ["/signup", "/login", "/landing"];
-  const publicRoutes = ["/policies", "/about"];
+  const authStore = useAuthStore();
+  const isAuthenticated = authStore.isLogged;
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+  const isPublic = to.matched.some((record) => record.meta.public);
 
-  try {
-    const userStore = useUserStore();
-    user = userStore.user;
-    if (Object.keys(user).length == 0) throw new Error("No token found");
-    // await userController.loadUser({ queryName, fragmentName });
-  } catch (error: any) {
-    if (
-      error.message !=
-        "Error: Query failed: SelectSQL: queryAll: no such table: Users" &&
-      error.message != "No token found"
-    ) {
-      console.error(error);
-    }
+  if (isPublic) {
+    return next();
   }
 
-  if (publicRoutes.includes(path)) return next();
-
-  if (Object.keys(user).length > 0) {
-    if (authorizedRoutes.includes(path)) return next();
-    if (unauthorizedRoutes.includes(path)) return next("/home");
+  if (requiresAuth && !isAuthenticated) {
+    return next({ name: "Login" });
   }
 
-  if (Object.keys(user).length <= 0) {
-    if (unauthorizedRoutes.includes(path)) return next();
-    return next("/landing");
+  if (isAuthenticated && (to.name === "Login" || to.name === "SignUp")) {
+    return next({ name: "home" });
   }
+
+  return next();
 });
 
 export default router;

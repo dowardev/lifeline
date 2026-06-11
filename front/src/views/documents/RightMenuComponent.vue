@@ -35,7 +35,7 @@ type Role = "confirm" | "cancel";
 // refs
 const progress = ref(0);
 const showDeleteOption = ref(true);
-const intervalDeleteId = ref(0);
+const intervalDeleteId = ref<ReturnType<typeof setInterval>>(0 as any);
 
 const selectOption = (params: { option: Option }) => {
   const option = params.option;

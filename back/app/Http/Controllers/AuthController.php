@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CalendarResource;
+use App\Http\Resources\EventResource;
+use App\Http\Resources\UserResource;
 use App\Http\Traits\user\UserTrait;
-use App\Models\Images;
 use App\Models\User;
 use App\Models\UserVerify;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -19,29 +19,24 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required|string',
-            'user' => 'required|string',
+            'user' => 'required|string|unique:users,user',
             'email' => 'required|string|email|unique:users',
-            'password' => 'required|string',
+            'password' => 'required|string|min:8',
         ]);
 
-        if (User::where('user', '=', $request->user)->exists()) {
-            return response()->json(['message' => 'The user has already been selected'], 422);
-        }
-        if (User::where('email', '=', $request->email)->exists()) {
-            return response()->json(['message' => 'The email has already been selected'], 422);
-        }
+        return DB::transaction(function () use ($request) {
+            $newUser = new User([
+                'name' => $request->name,
+                'user' => $request->user,
+                'email' => $request->email,
+            ]);
+            $newUser->password = bcrypt($request->password);
+            $newUser->save();
 
-        $newUser = new User([
-            'name' => $request->name,
-            'user' => $request->user,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-        ]);
-        $newUser->save();
+            $this->sendVerificationEmail(user_id: $newUser->id, email: $request->email);
 
-        $this->sendVerificationEmail(user_id: $newUser->id, email: $request->email);
-
-        return response()->json(['state' => true], 201);
+            return response()->json(['state' => true], 201);
+        });
     }
     public function login(Request $request)
     {
@@ -57,25 +52,12 @@ class AuthController extends Controller
             ->orWhere('email', '=', $user)
             ->first();
 
-        if (!$userData) {
-            return response()->json(['message' => 'Not found'], 404);
-        }
-
-        if ($userData->is_user_disabled) {
-            return response()->json(['message' => 'Disabled user'], 403);
-        }
-
-        $credentials = [
-            'email' => $userData->email,
-            'password' => $password,
-        ];
-
-        if (!Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        if (!$userData || $userData->is_user_disabled || !Auth::attempt(['email' => $userData?->email, 'password' => $password])) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
         if (!$userData->is_email_verified) {
-            return response()->json(['message' => 'Unverified email'], 403);
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
         $token = $userData->createToken('Personal Access Token')->accessToken;
@@ -103,52 +85,35 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        $response = $request->user();
+        $response = $request->user()->load(['calendars', 'events']);
 
-        $image_source = '';
-        if ($response->image_id) {
-            $image_source = base64_encode(
-                Storage::disk('user_images_profile')->get(
-                    Images::find($response->image_id)->name
-                )
-            );
-        }
-
-        $calendars = $response->calendars;
-        $events = $response->events;
-
-        $user = [
-            'id' => $response->id,
-            'name' => $response->name,
-            'user_name' => $response->user,
-            'email' => $response->email,
-            'image_profile' => $image_source,
-            'calendars' => $calendars,
-            'events' => $events,
-            'created_at' => $response->created_at,
-            'updated_at' => $response->updated_at,
-        ];
-
-        return response()->json(['user' => $user]);
+        return response()->json([
+            'user' => new UserResource($response),
+            'calendars' => CalendarResource::collection($response->calendars),
+            'events' => EventResource::collection($response->events),
+        ]);
     }
     public function verifyAccount($token)
     {
-        $verifyUser = UserVerify::where('token', $token)->first();
+        return DB::transaction(function () use ($token) {
+            $verifyUser = UserVerify::where('token', $token)->first();
 
-        $message = 'Tu correo electronico no puede ser identificado.';
+            $message = 'Tu correo electronico no puede ser identificado.';
 
-        if (!is_null($verifyUser)) {
-            $user = $verifyUser->user;
+            if (!is_null($verifyUser)) {
+                $user = $verifyUser->user;
 
-            if (!$user->is_email_verified) {
-                $verifyUser->user->is_email_verified = 1;
-                $verifyUser->user->save();
-                $message = "Tu correo electronico esta verificado. Ya puedes iniciar sesion.";
-            } else {
-                $message = "Tu correo electronico ya se encontraba verificado.";
+                if (!$user->is_email_verified) {
+                    $user->is_email_verified = 1;
+                    $user->save();
+                    $verifyUser->delete();
+                    $message = "Tu correo electronico esta verificado. Ya puedes iniciar sesion.";
+                } else {
+                    $message = "Tu correo electronico ya se encontraba verificado.";
+                }
             }
-        }
 
-        return $message;
+            return response()->json(['message' => $message]);
+        });
     }
 }

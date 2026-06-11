@@ -1,104 +1,60 @@
-import { defineStore } from "pinia";
-import { Document } from "../utils/interfaces";
-import { DocumentElements } from "../utils/types";
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
-interface DocumentState {
-  documents: Array<Document>;
+export interface DocumentItem {
+  id: number
+  user_id: number
+  title: string
+  type: 'note' | 'list' | 'richtext' | 'todo'
+  content?: unknown
+  order?: number
+  url?: string
+  elements?: unknown[]
 }
 
-export const useDocumentStore = defineStore("document", {
-  state: (): DocumentState => ({
-    documents: Array<Document>(),
-  }),
+export const useDocumentStore = defineStore('document', () => {
+  const documents = ref<DocumentItem[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-  getters: {
-    getDocuments(state) {
-      return () => {
-        return state.documents;
-      };
-    },
+  function setDocuments(params: { documents: DocumentItem[] }) {
+    documents.value = params.documents
+  }
 
-    getDocument(state) {
-      return (params: { elementSearch: string }) => {
-        const elementSearch = params.elementSearch;
-        const document = state.documents.filter((element) => {
-          if (element.id == elementSearch) return element;
-          if (element.url == elementSearch) return element;
-        });
-        return document[0];
-      };
-    },
-  },
+  function addDocument(params: { document: DocumentItem }) {
+    documents.value.push(params.document)
+  }
 
-  actions: {
-    addDocument(params: { document: Document }) {
-      const document = params.document;
+  function updateDocument(params: { id: number; updates: Partial<DocumentItem> }) {
+    const { id, updates } = params
+    const index = documents.value.findIndex((d) => d.id === id)
+    if (index !== -1) documents.value[index] = { ...documents.value[index], ...updates }
+  }
 
-      if (this.documents.length == 0) this.documents = [document];
-      else {
-        let exists = false as boolean;
-        this.documents.forEach((element) => {
-          if (element.id == document.id) exists = true;
-        });
+  function removeDocument(params: { id: number }) {
+    documents.value = documents.value.filter((d) => d.id !== params.id)
+  }
 
-        if (exists == false) this.documents.push(document);
-      }
-    },
+  function getDocuments(): DocumentItem[] | undefined {
+    return documents.value.length > 0 ? [...documents.value] : undefined
+  }
 
-    updateDocument(params: { document: Document }) {
-      const document = params.document;
-      this.documents = this.documents.map((element) => {
-        if (element.id == document.id) element = { ...element, ...document };
-        return element;
-      });
-    },
+  function getDocument(params: { elementSearch: string }): DocumentItem | undefined {
+    const { elementSearch } = params
+    return documents.value.find((d) => String(d.id) === elementSearch || d.url === elementSearch)
+  }
 
-    removeDocument(params: { documentId: string }) {
-      const id = params.documentId;
-      const index = this.documents.findIndex((element) => element.id == id);
-      if (index != undefined) this.documents?.splice(index, 1);
-    },
+  function setLoading(params: { loading: boolean }) {
+    loading.value = params.loading
+  }
 
-    removeElement(params: { index: number; documentId: string }) {
-      const indexElement = params.index;
-      const documentId = params.documentId;
+  function setError(params: { error: string | null }) {
+    error.value = params.error
+  }
 
-      const indexDocument = this.documents.findIndex(
-        (element) => element.id == documentId
-      );
+  function clearError() {
+    error.value = null
+  }
 
-      if (indexDocument != undefined)
-        this.documents[indexDocument].elements?.splice(indexElement, 1);
-    },
-
-    insertElement(params: { documentId: string; element: DocumentElements }) {
-      const documentId = params.documentId;
-      const element = params.element;
-
-      const indexDocument = this.documents.findIndex(
-        (element) => element.id == documentId
-      );
-      if (!this.documents[indexDocument].elements)
-        this.documents[indexDocument].elements = [] as any;
-
-      this.documents[indexDocument].elements?.push(element);
-    },
-
-    updateElements(params: {
-      documentId: string;
-      elements: Array<DocumentElements>;
-    }) {
-      const documentId = params.documentId;
-      const elements = params.elements;
-
-      const indexDocument = this.documents.findIndex(
-        (element) => element.id == documentId
-      );
-      // if (!this.documents[indexDocument].elements)
-      //   this.documents[indexDocument].elements = [] as any;
-
-      console.log(elements);
-      // this.documents[indexDocument].elements = elements as any;
-    },
-  },
-});
+  return { documents, loading, error, setDocuments, addDocument, updateDocument, removeDocument, getDocuments, getDocument, setLoading, setError, clearError }
+})

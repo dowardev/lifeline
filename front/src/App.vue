@@ -26,13 +26,13 @@ import { endOfMonth, startOfMonth } from "date-fns";
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { EventController } from "@/js/eventController";
-import { UserController } from "@/js/userController";
-import { CalendarController } from "./js/calendarController";
+import { SystemController } from "@/controllers/systemController";
+import { EventController } from "@/controllers/eventController";
+import { AuthController } from "@/controllers/authController";
+import { CalendarController } from "@/controllers/calendarController";
 const systemController = new SystemController();
 const eventController = new EventController();
-const userController = new UserController();
+const userController = new AuthController();
 const calendarController = new CalendarController();
 
 // const componentLoaded = ref(false);
@@ -45,8 +45,8 @@ onMounted(async () => {
       message: messages.syncStart,
     });
 
-    const userController = new UserController();
-    await userController.syncUserLogged();
+    const userController = new AuthController();
+    await userController.loadUser();
 
     await systemController.openToast({
       message: messages.syncEnd,
@@ -66,14 +66,4 @@ onMounted(async () => {
 });
 
 // functions
-async function deleteData(): Promise<void> {
-  await systemController.deleteAllDataSystem({
-    events: true,
-    schedule: true,
-    reminders: true,
-    tokens: true,
-    users: true,
-  });
-  // location.reload();
-}
 </script>

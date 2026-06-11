@@ -18,7 +18,7 @@
             class="transparent element-selected"
             style="margin-bottom: 12px"
             lines="full"
-            @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
+            @mouseenter="showButtonsOptionsTask = task.id"
             @mouseleave="showButtonsOptionsTask = -1"
             @contextmenu.prevent="
               openPopoverRightTaskMenu({
@@ -42,13 +42,13 @@
             >
 
             <ion-button
-              v-if="showButtonsOptionsTask === parseInt(task.id)"
+              v-if="showButtonsOptionsTask === task.id"
               @click="updateTask({ idTask: task.id })"
               ><ion-icon :icon="createOutline"></ion-icon
             ></ion-button>
 
             <ion-button
-              v-if="showButtonsOptionsTask === parseInt(task.id)"
+              v-if="showButtonsOptionsTask === task.id"
               fill="clear"
               color="danger"
               @click="removeTask({ id: task.id })"
@@ -72,7 +72,7 @@
             class="transparent element-selected"
             style="margin-bottom: 12px"
             lines="full"
-            @mouseenter="showButtonsOptionsTask = parseInt(task.id)"
+            @mouseenter="showButtonsOptionsTask = task.id"
             @mouseleave="showButtonsOptionsTask = -1"
             @contextmenu.prevent="
               openPopoverRightTaskMenu({
@@ -96,13 +96,13 @@
             >
 
             <ion-button
-              v-if="showButtonsOptionsTask === parseInt(task.id)"
+              v-if="showButtonsOptionsTask === task.id"
               @click="updateTask({ idTask: task.id })"
               ><ion-icon :icon="createOutline"></ion-icon
             ></ion-button>
 
             <ion-button
-              v-if="showButtonsOptionsTask === parseInt(task.id)"
+              v-if="showButtonsOptionsTask === task.id"
               fill="clear"
               color="danger"
               @click="removeTask({ id: task.id })"
@@ -127,21 +127,21 @@ import { createOutline, trashOutline } from "ionicons/icons";
 import { onMounted, ref, watch } from "vue";
 
 // interface
-import { Task } from "@/utils/interfaces";
+import { TaskItem } from "@/store/taskStore";
 
 // components
 import RightMenuTaskComponent from "./RightMenuTaskComponent.vue";
 
 const emits = defineEmits(["update", "remove", "toggleCheck"]);
 const props = defineProps({
-  taskData: { type: Array<Task>, default: () => [] },
+  taskData: { type: Array<TaskItem>, default: () => [] },
 });
 
 const showButtonsOptionsTask = ref(-1);
 const screenWidth = ref(window.innerWidth);
 const listTasks = ref({
-  complete: [] as Task[],
-  incomplete: [] as Task[],
+  complete: [] as TaskItem[],
+  incomplete: [] as TaskItem[],
 });
 
 // watch
@@ -171,14 +171,14 @@ onMounted(() => {
 });
 
 // functions
-function toggleCheckTask(params: { id: string }) {
+function toggleCheckTask(params: { id: number }) {
   const { id } = params;
   emits("toggleCheck", { idTask: id });
 }
 
 async function openPopoverRightTaskMenu(params: {
   ev: CustomEvent;
-  taskId: string;
+  taskId: number;
 }) {
   const taskId = params.taskId;
   const ev = params.ev;
@@ -197,12 +197,12 @@ async function openPopoverRightTaskMenu(params: {
     updateTask({ idTask: taskId });
 }
 
-function updateTask(params: { idTask: string }) {
+function updateTask(params: { idTask: number }) {
   const { idTask } = params;
   emits("update", { idTask });
 }
 
-function removeTask(params: { id: string }) {
+function removeTask(params: { id: number }) {
   const { id } = params;
   emits("remove", { id });
 }

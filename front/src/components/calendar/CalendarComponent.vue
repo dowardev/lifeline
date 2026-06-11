@@ -102,8 +102,9 @@ import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue"
 import RescheduleComponent from "@/components/events/schedule-elements/RescheduleElements.vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { EventController } from "@/js/eventController";
+import { SystemController } from "@/controllers/systemController";
+import { EventController } from "@/controllers/eventController";
+import { useReminder } from "@/composables/useReminder";
 const systemController = new SystemController();
 const eventController = new EventController();
 
@@ -127,7 +128,7 @@ const props = defineProps({
 
 // computed
 const generateCalendar = computed(() => {
-  if (props.events.length == 0) return;
+  if (props.events.length == 0) return [];
   const response = groupEvents({ events: props.events });
   return flattenEvents({ events: response });
 });
@@ -160,9 +161,7 @@ function groupEvents(params: { events: Event[] }): {
     };
   };
 } {
-  let events = systemController.cloneObjet({
-    obj: params.events,
-  }) as Event[];
+  let events = structuredClone(params.events) as Event[];
   events = events.map((event) => {
     event.reminders.start = new Date(event.reminders.start);
     event.reminders.end = new Date(event.reminders.end);
@@ -376,10 +375,10 @@ async function saveEvent(params: { event: Event }): Promise<void> {
     // ).remindersId;
     // event.reminders.idReminders = remindersId;
 
-    await eventController.saveLocalEvent({
+    await eventController.updateLocalEvent({
       event,
     });
-    eventController.addEventToStore({ event });
+    eventController.updateLocalEvent({ event });
   } catch (error) {
     console.error(error);
   }
@@ -388,30 +387,30 @@ async function saveEvent(params: { event: Event }): Promise<void> {
 async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   try {
-    if (event.reminders.idReminders && event.reminders.idReminders.length > 0) {
-      await eventController.discardEventReminders({
-        idReminders: event.reminders.idReminders,
-      });
-    }
-
     if (event.reminders.idReminders.length == 0) {
-      const remindersId = (
-        await eventController.setEventReminder({
-          daysWeek: event.reminders.repeat!.daysWeek!,
-          description: event.description,
-          frecuency: event.reminders.repeat!.frecuency!,
-          name: event.name!,
-          notifications: event.reminders.notifications!,
-          reminderEnd: event.reminders.end,
-          reminderStart: event.reminders.start,
-          repeatType: event.reminders.repeat!.type!,
+      const { generatorReminder, setReminder } = useReminder()
+      const reminders = generatorReminder({
+        frecuency: event.reminders.repeat!.frecuency!,
+        reminderStart: event.reminders.start,
+        reminderEnd: event.reminders.end,
+        repeat: event.reminders.repeat!.type!,
+        daysWeek: event.reminders.repeat!.daysWeek!,
+        notifications: event.reminders.notifications!,
+      })
+      const reminderIds: number[] = []
+      for (const reminderDate of reminders) {
+        const { reminderId } = await setReminder({
+          title: event.name!,
+          message: event.description,
+          extraInfo: String(event.id),
+          reminder: reminderDate,
         })
-      ).remindersId;
+        reminderIds.push(reminderId)
+      }
       event.reminders.idReminders = [
         ...event.reminders.idReminders,
-        ...remindersId,
+        ...reminderIds,
       ];
-      // console.log({ seted: event.reminders.idReminders });
     }
 
     // event.syncStatus = false;
@@ -441,9 +440,9 @@ async function updateEvent(params: { event: Event }): Promise<void> {
 async function deleteEvent(params: { eventId: number }): Promise<void> {
   const { eventId } = params;
   try {
-    await eventController.deleteEvent({ id: eventId });
+    await eventController.removeEvent({ id: eventId });
     await systemController.openToast({ message: "Evento eliminado" });
-    await syncData();
+    await eventController.loadEvents();
   } catch (error) {
     console.error(error);
     await systemController.openToast({

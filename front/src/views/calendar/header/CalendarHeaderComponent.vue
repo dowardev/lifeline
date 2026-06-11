@@ -316,10 +316,10 @@ import { reactive } from "vue";
 import { watch } from "vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { EventController } from "@/js/eventController";
-import { CalendarController } from "@/js/calendarController";
-import { ViewCalendar } from "@/utils/types";
+import { SystemController } from "@/controllers/systemController";
+import { EventController } from "@/controllers/eventController";
+import { CalendarController } from "@/controllers/calendarController";
+import type { ViewCalendar } from "@/store/calendarStore";
 const systemController = new SystemController();
 const eventController = new EventController();
 const calendarController = new CalendarController();
@@ -367,7 +367,7 @@ onMounted(async () => {
   //     mode: systemController.getCalendarModeView(),
   //   })
   // );
-  currentDate.value = await eventController.getCurrentDateStored({
+  currentDate.value = calendarController.getCurrentDate({
     mode: modeViewCalendar.value,
   });
   calendarController.setCurrentDate({
@@ -473,11 +473,13 @@ function today(): void {
 }
 
 function translateMonth(params: { monthName: string }): string {
+  if (!params.monthName) return '';
   const monthName = params.monthName as keyof Months;
 
   let result = systemController.translateMonth({
     monthName,
   });
+  if (!result) return '';
   result = result.charAt(0).toUpperCase() + result.slice(1);
   return result;
 }

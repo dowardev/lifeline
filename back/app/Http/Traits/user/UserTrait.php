@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Traits\user;
 
 use App\Models\UserVerify;
@@ -16,12 +17,14 @@ trait UserTrait
       'token' => $token,
     ]);
 
-    Mail::send('emails.emailVerificationEmail', ['token' => $token], function (
-      $message
-    ) use ($email) {
-      $message->to($email);
-      $message->from('norepply@dowar.xyz', 'Gonzalo Ponce(Dowar)');
-      $message->subject('Email Verification Mail');
-    });
+    try {
+      Mail::send('emails.emailVerificationEmail', ['token' => $token], function ($message) use ($email) {
+        $message->to($email);
+        $message->from(config('mail.from.address', 'noreply@dowar.xyz'), config('mail.from.name', 'LifeLine'));
+        $message->subject('Email Verification Mail');
+      });
+    } catch (\Exception $e) {
+      report($e);
+    }
   }
 }

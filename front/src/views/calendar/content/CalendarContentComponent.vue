@@ -27,9 +27,9 @@ import { Event } from "@/utils/interfaces";
 import CalendarComponent from "@/components/calendar/CalendarComponent.vue";
 
 // controllers
-import { EventController } from "@/js/eventController";
-import { CalendarController } from "@/js/calendarController";
-import { SystemController } from "@/js/systemController";
+import { EventController } from "@/controllers/eventController";
+import { CalendarController } from "@/controllers/calendarController";
+import { SystemController } from "@/controllers/systemController";
 const eventController = new EventController();
 const calendarController = new CalendarController();
 const systemcontroller = new SystemController();
@@ -57,7 +57,7 @@ async function syncDataEvents(): Promise<void> {
   await systemcontroller.openToast({ message: messages.syncStart });
 
   try {
-    await eventController.syncAction();
+    await eventController.loadEvents();
   } catch (error) {
     await systemcontroller.openToast({
       message: messages.syncEnd,

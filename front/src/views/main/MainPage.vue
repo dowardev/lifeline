@@ -122,11 +122,7 @@ import { ref } from "vue";
 import { useRoute } from "vue-router";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { EventController } from "@/js/eventController";
-import { CalendarController } from "@/js/calendarController";
-const systemController = new SystemController();
-const eventController = new EventController();
+import { CalendarController } from "@/controllers/calendarController";
 const calendarController = new CalendarController();
 
 // components
@@ -145,7 +141,6 @@ import TasksContentComponent from "@/views/tasks/content/TasksContentComponent.v
 import PoliciesHeaderComponent from "@/views/policies/header/PoliciesHeaderComponent.vue";
 import PoliciesContentComponent from "@/views/policies/content/PoliciesContentComponent.vue";
 import { onMounted } from "vue";
-import { ViewCalendar } from "@/utils/types";
 
 // vars
 const route = useRoute();
@@ -159,23 +154,23 @@ const sessionComponent = reactive({
   pageTitle: route.path == "/login" ? "Iniciar sesión" : "Registrarse",
 });
 const landingComponent = reactive({
-  pageTitle: route.path == "",
+  pageTitle: "",
 });
 const homeComponent = reactive({
-  pageTitle: route.path == "Inicio",
+  pageTitle: "Inicio",
 });
 const calendarComponent = reactive({
   ready: false,
 });
 const integrationsComponent = reactive({
-  pageTitle: route.path == "Integraciones",
+  pageTitle: "Integraciones",
   mainOption: "installed",
 });
 const tasksComponent = reactive({
-  pageTitle: route.path == "Tareas",
+  pageTitle: "Tareas",
 });
 const policiesComponent = reactive({
-  pageTitle: route.path == "Politicas",
+  pageTitle: "Políticas",
   mainOption: "privacy",
 });
 
@@ -186,13 +181,7 @@ onMounted(async () => {
 
 // functions
 async function loadPropsCalendarComponent(): Promise<void> {
-  // load calendar view mode
   const mode = await calendarController.getStoredCalendarModeView();
-  const currentDates = await eventController.getCurrentDatesStored();
-
-  calendarController.setCurrentDates({
-    dates: currentDates,
-  });
   calendarController.setCalendarModeView({ mode });
 }
 </script>

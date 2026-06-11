@@ -119,10 +119,10 @@ import { onMounted, ref, watch } from "vue";
 import draggable from "vuedraggable/src/vuedraggable";
 
 // interface
-import { Task } from "@/utils/interfaces";
+import { TaskItem } from "@/store/taskStore";
 
 interface Item {
-  id: string;
+  id: number;
   name: string;
   position: number;
 }
@@ -132,7 +132,7 @@ import RightMenuTaskComponent from "./RightMenuTaskComponent.vue";
 
 const emits = defineEmits(["update", "delete", "toggleCheck", "kanbanUpdate"]);
 const props = defineProps({
-  taskData: { type: Array<Task>, default: () => [] },
+  taskData: { type: Array<TaskItem>, default: () => [] },
 });
 
 const screenWidth = ref(window.innerWidth);
@@ -191,7 +191,7 @@ onMounted(() => {
 // functions
 async function openPopoverRightTaskMenu(params: {
   ev: CustomEvent;
-  taskId: string;
+  taskId: number;
   columnName: string;
 }) {
   const { taskId, ev, columnName } = params;
@@ -218,18 +218,18 @@ async function openPopoverRightTaskMenu(params: {
     const data2 = { columnName: data.newcolumn, position, id: taskId } as {
       position: number;
       columnName: string;
-      id: string;
+      id: number;
     };
     emits("kanbanUpdate", data2);
   }
 }
 
-function updateTask(params: { idTask: string }) {
+function updateTask(params: { idTask: number }) {
   const { idTask } = params;
   emits("update", { idTask });
 }
 
-function removeTask(params: { id: string }) {
+function removeTask(params: { id: number }) {
   const { id } = params;
   emits("delete", { id });
 }
@@ -240,7 +240,7 @@ function eventKanban(params: { evt: any; columnName: string }) {
   const data = { columnName } as {
     position: number;
     columnName: string;
-    id: string;
+    id: number;
   };
 
   if (evt.added) {

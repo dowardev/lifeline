@@ -1,49 +1,63 @@
-import { defineStore } from "pinia";
-import { CalendarViewDates } from "@/utils/interfaces";
-import { Ref, ref } from "vue";
-import { ViewCalendar, CalendarDataStatus } from "@/utils/types";
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
-export const useCalendar = defineStore("calendar", () => {
-  const viewDates: Ref<CalendarViewDates> = ref({
-    diary: new Date(),
-    day: new Date(),
-    week: new Date(),
-    month: new Date(),
-    year: new Date(),
-  });
-  const calendarModeView: Ref<ViewCalendar> = ref(undefined);
-  const dataStatus: Ref<CalendarDataStatus> = ref("loading");
+export type ViewCalendar = 'day' | 'week' | 'month' | 'year' | 'diary'
 
-  function updateCalendarViewDate(params: {
-    date: Date;
-    mode: ViewCalendar;
-  }): void {
-    const { date, mode } = params;
-    viewDates.value[mode!] = date;
+export interface CalendarViewDates {
+  date: string
+  day: number
+  month: number
+  year: number
+}
+
+export interface CalendarDataStatus {
+  upload: boolean
+  download: boolean
+}
+
+export interface CalendarItem {
+  id: number
+  user_id: number
+  name: string
+  default: number
+}
+
+export const useCalendarStore = defineStore('calendar', () => {
+  const calendars = ref<CalendarItem[]>([])
+  const now = new Date()
+  const viewDates = ref<CalendarViewDates>({ date: now.toISOString(), day: now.getDate(), month: now.getMonth() + 1, year: now.getFullYear() })
+  const calendarModeView = ref<ViewCalendar>('month')
+  const dataStatus = ref<CalendarDataStatus>({ upload: false, download: false })
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+
+  function setCalendars(params: { calendars: CalendarItem[] }) {
+    calendars.value = params.calendars
   }
 
-  function updateCalendarViewDates(params: { dates: CalendarViewDates }): void {
-    const { dates } = params;
-    viewDates.value = dates;
+  function setViewDates(params: { viewDates: CalendarViewDates }) {
+    viewDates.value = params.viewDates
   }
 
-  function updateCalendarModeView(params: { mode: ViewCalendar }): void {
-    const { mode } = params;
-    calendarModeView.value = mode;
+  function setCalendarModeView(params: { mode: ViewCalendar }) {
+    calendarModeView.value = params.mode
   }
 
-  function setDataStatus(params: { status: CalendarDataStatus }): void {
-    const { status } = params;
-    dataStatus.value = status;
+  function setDataStatus(params: { dataStatus: CalendarDataStatus }) {
+    dataStatus.value = params.dataStatus
   }
 
-  return {
-    calendarModeView,
-    dataStatus,
-    setDataStatus,
-    updateCalendarModeView,
-    updateCalendarViewDate,
-    updateCalendarViewDates,
-    viewDates,
-  };
-});
+  function setLoading(params: { loading: boolean }) {
+    loading.value = params.loading
+  }
+
+  function setError(params: { error: string | null }) {
+    error.value = params.error
+  }
+
+  function clearError() {
+    error.value = null
+  }
+
+  return { calendars, viewDates, calendarModeView, dataStatus, loading, error, setCalendars, setViewDates, setCalendarModeView, setDataStatus, setLoading, setError, clearError }
+})

@@ -3,16 +3,14 @@ import { DocumentElements, Theme, RepeatType } from "./types";
 // user
 export interface User {
   id: number;
+  idSync?: number | string;
   name?: string;
   userName?: string;
-  // password?: string;
   email?: string;
   isAdmin?: boolean;
   rol?: Array<any>;
-  // isEmailVerified?: boolean;
-  // isDisabled?: boolean;
   imageProfile?: string;
-  // token?: string;
+  theme?: string;
   events?: Array<Event>;
   preferences?: {
     theme: Theme;
@@ -49,18 +47,18 @@ export interface UserServer {
 }
 
 export interface UserRegister {
-  name: User["name"];
-  user: User["user"];
-  email: User["email"];
-  password: User["password"];
+  name: string;
+  user: string;
+  email: string;
+  password: string;
 }
 export interface SetUserToken {
   token: string;
   userId: string;
 }
 export interface UserLogin {
-  user: User["user"];
-  password: User["password"];
+  user: string;
+  password: string;
 }
 export interface GetUserAuthResponse {
   id: string;
@@ -235,6 +233,7 @@ export interface ScheduleElement {
   date: string;
   type: string;
   reminder: boolean;
+  idElement?: string;
 }
 
 export interface Schedule {

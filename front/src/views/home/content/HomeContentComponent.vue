@@ -3,7 +3,6 @@
     <!-- calendar -->
     <ion-col size-xs="12" size-md="6" size-lg="3">
       <ion-card
-        v-if="calendarController.getCalendarDataStatus() == 'success'"
         style="margin: 0"
         class="element-selected"
       >
@@ -96,15 +95,15 @@
         </ion-card-header>
 
         <WakaTimeToday
-          v-if="wakaTimeController.getWakaTimeApiKey()"
+          v-if="wakaTimeController.getApiKey()"
           ref="todayComponentRef"
-          :api-key="wakaTimeController.getWakaTimeApiKey()"
+          :api-key="wakaTimeController.getApiKey()"
         />
 
         <div>
           <!-- input api key -->
           <div
-            v-if="!wakaTimeController.getWakaTimeApiKey()"
+            v-if="!wakaTimeController.getApiKey()"
             class="ion-padding"
           >
             <WakaTimeApiKeyComponent />
@@ -139,10 +138,10 @@ import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
 import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { CalendarController } from "@/js/calendarController";
-import { EventController } from "@/js/eventController";
-import { WakaTimeController } from "@/js/WakaTimeController";
+import { SystemController } from "@/controllers/systemController";
+import { CalendarController } from "@/controllers/calendarController";
+import { EventController } from "@/controllers/eventController";
+import { WakaTimeController } from "@/controllers/wakaTimeController";
 
 const systemController = new SystemController();
 const calendarController = new CalendarController();
@@ -164,7 +163,7 @@ const totalEventsToday = computed(() => {
 });
 
 onMounted(() => {
-  wakaTimeController.loadWakaTimeApiKey();
+  wakaTimeController.loadApiKey();
 });
 
 function refreshTodayComponent(): void {

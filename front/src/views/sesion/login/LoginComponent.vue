@@ -194,12 +194,11 @@ import { required, helpers, email } from "@vuelidate/validators";
 import { useRouter } from "vue-router";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { UserController } from "@/js/userController";
-import { ThemeController } from "@/js/themeController";
-import { getDB } from "@/js/dbInstance";
+import { SystemController } from "@/controllers/systemController";
+import { AuthController } from "@/controllers/authController";
+import { ThemeController } from "@/controllers/themeController";
 const systemController = new SystemController();
-const userController = new UserController();
+const userController = new AuthController();
 const themeController = new ThemeController();
 
 // assets
@@ -251,7 +250,7 @@ const v$ = useVuelidate(rules, { form });
 const imageKeyPath = computed(() => {
   const theme = themeController.getTheme();
   let image = "";
-  if (theme == "nord" || "light") image = keyImage;
+  if (theme == "nord" || theme == "light") image = keyImage;
   if (theme == "gruvbox") image = keyImageGruvbox;
   if (theme == "cherry") image = keyImageCherry;
   return image;
@@ -259,7 +258,7 @@ const imageKeyPath = computed(() => {
 const loginImagePath = computed(() => {
   const theme = themeController.getTheme();
   let image = "";
-  if (theme == "nord" || "light")
+  if (theme == "nord" || theme == "light")
     image =
       "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
   if (theme == "gruvbox") image = loginImageGruvbox;
@@ -285,24 +284,10 @@ async function login(): Promise<void> {
   const password = form.password;
 
   try {
-    const responseLogin = await userController.userLogin({
+    const responseLogin = await userController.login({
       user,
       password,
     });
-
-    const token = "Bearer " + responseLogin.auth.access_token;
-    const insertLocalUserResponse = await userController.insertLocalUser({
-      user: { idSync: responseLogin.user!.id },
-    });
-    await userController.storeUserToken({
-      token,
-      userId: insertLocalUserResponse.rowID,
-    });
-    await systemController.insertUserLogged({
-      userId: insertLocalUserResponse.rowID,
-    });
-
-    await getDB().saveToStore();
 
     spinners.buttonLogin = false;
     clearInputs();

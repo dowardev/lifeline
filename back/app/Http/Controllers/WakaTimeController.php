@@ -2,32 +2,47 @@
 
 namespace App\Http\Controllers;
 
-use DateTime;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 
 class WakaTimeController extends Controller
 {
-  public function durations(Request $request)
-  {
-    $api_key = $request->apiKey;
-    /* $today = (new DateTime())->format('Y-m-d'); */
-    $date = $request->date;
+    public function durations(Request $request)
+    {
+        $request->validate([
+            'apiKey' => 'required|string|min:36|max:64',
+            'date' => 'required|date_format:Y-m-d',
+        ]);
 
-    $client = new Client();
-    $response = $client->request(
-      'GET',
-      'https://wakatime.com/api/v1/users/current/durations',
-      [
-        'query' => [
-          'api_key' => $api_key,
-          'date' => $date,
-        ],
-      ]
-    );
+        $client = new Client(['timeout' => 10]);
 
-    $statusCode = $response->getStatusCode();
-    $content = $response->getBody()->getContents();
-    return response()->json(json_decode($content, true), $statusCode);
-  }
+        try {
+            $response = $client->request(
+                'GET',
+                'https://wakatime.com/api/v1/users/current/durations',
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $request->apiKey,
+                    ],
+                    'query' => [
+                        'date' => $request->date,
+                    ],
+                ]
+            );
+
+            return response()->json(
+                json_decode($response->getBody()->getContents(), true),
+                $response->getStatusCode()
+            );
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            $statusCode = $e->getResponse()?->getStatusCode() ?? 502;
+            return response()->json([
+                'message' => 'WakaTime API request failed',
+            ], $statusCode);
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            return response()->json([
+                'message' => 'Unable to connect to WakaTime API',
+            ], 503);
+        }
+    }
 }

@@ -88,7 +88,7 @@ import {
 import { ref, watch, reactive } from "vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
+import { SystemController } from "@/controllers/systemController";
 const systemController = new SystemController();
 
 const props = defineProps({

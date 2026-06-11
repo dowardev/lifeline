@@ -61,13 +61,11 @@ const isOpenPopOverMainOptions = ref(false);
 const eventPopOverMainOptions = ref(null as CustomEvent | null);
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { WakaTimeController } from "@/js/WakaTimeController";
-const systemController = new SystemController();
+import { WakaTimeController } from "@/controllers/wakaTimeController";
 const wakaTimeController = new WakaTimeController();
 
 onMounted(() => {
-  wakaTimeController.loadWakaTimeApiKey();
+  wakaTimeController.loadApiKey();
 });
 </script>
 

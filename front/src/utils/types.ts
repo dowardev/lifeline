@@ -37,7 +37,7 @@ export type CalendarDataStatus = "loading" | "success" | "error";
 
 export type UserDBType = Pick<
   User,
-  "name" | "user" | "email" | "token" | "idSync"
+  "name" | "userName" | "email" | "idSync"
 >;
 
 export type UserSource = "local" | "server" | "both";

@@ -18,7 +18,7 @@
             <ion-col size="12">
               <!-- logged -->
               <ion-item
-                v-if="userController.getUserFromStore().userName"
+                v-if="userController.getCurrentUser().userName"
                 lines="none"
                 class="transparent"
               >
@@ -27,7 +27,7 @@
                 <!-- </ion-avatar> -->
 
                 <ion-label class="labelOptionMenu">{{
-                  userController.getUserFromStore().userName
+                  userController.getCurrentUser().userName
                 }}</ion-label>
 
                 <ion-button
@@ -44,7 +44,7 @@
 
               <!-- no logged -->
               <ion-item
-                v-if="!userController.getUserFromStore().userName"
+                v-if="!userController.getCurrentUser().userName"
                 class="transparent"
                 lines="none"
               >
@@ -312,6 +312,8 @@ import {
 import { computed, onMounted, reactive, ref } from "vue";
 import { homeOutline, checkboxOutline, helpOutline } from "ionicons/icons/";
 import { Storage } from "@ionic/storage";
+import { useI18n } from "vue-i18n";
+const { locale } = useI18n();
 const store = new Storage();
 store.create();
 import ThemeSelectorComponent from "./theme/ThemeMenuComponent.vue";
@@ -325,18 +327,18 @@ const isOpenPopoverUserOptions = ref(false);
 const eventOpenPopoverUserOptions = ref(CustomEvent);
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { UserController } from "@/js/userController";
-import { ThemeController } from "@/js/themeController";
+import { SystemController } from "@/controllers/systemController";
+import { AuthController } from "@/controllers/authController";
+import { ThemeController } from "@/controllers/themeController";
 const systemController = new SystemController();
-const userController = new UserController();
+const userController = new AuthController();
 const themeController = new ThemeController();
 
 // computed
 const imageKeyPath = computed(() => {
   const theme = themeController.getTheme();
   let image = "";
-  if (theme == "nord" || "light") image = userImage;
+  if (theme == "nord" || theme == "light") image = userImage;
   if (theme == "gruvbox") image = userImageGruvbox;
   return image;
 });
@@ -368,8 +370,7 @@ async function openModalMobile(): Promise<void> {
 }
 
 function changeLanguage(language: string): void {
-  // $i18n.locale = language;
-  setLanguage(language);
+  locale.value = language;
 }
 
 async function logout(): Promise<void> {
@@ -384,7 +385,7 @@ async function logout(): Promise<void> {
 }
 
 function verifyUserLogged(): boolean {
-  return userController.verifyUserLogged();
+  return userController.isLoggedIn();
 }
 </script>
 

@@ -30,8 +30,8 @@ import { reactive, ref } from "vue";
 import { saveOutline } from "ionicons/icons";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-const systemController = new SystemController();
+import { WakaTimeController } from "@/controllers/wakaTimeController";
+const wakaTimeController = new WakaTimeController();
 
 const inputApiKeyValue = ref("");
 const spinners = reactive({ testApiKey: false });
@@ -43,13 +43,13 @@ async function testWakaTimeApiKey(params: { apiKey: string }): Promise<void> {
 
   try {
     const date = getTodayDate();
-    const response = await systemController.testWakaTimeApiKey({
+    const response = await wakaTimeController.testWakaTimeApiKey({
       apiKey,
       date,
     });
     if (response) {
       await storeWakaTimeApiKey({ apiKey });
-      systemController.loadWakaTimeApiKey();
+      wakaTimeController.loadApiKey();
     }
   } catch (error) {
     console.error(error);
@@ -60,7 +60,7 @@ async function testWakaTimeApiKey(params: { apiKey: string }): Promise<void> {
 
 async function storeWakaTimeApiKey(params: { apiKey: string }): Promise<void> {
   const { apiKey } = params;
-  await systemController.storeWakaTimeApiKey({ apiKey });
+  await wakaTimeController.saveApiKey({ key: apiKey });
 }
 
 function getTodayDate(): string {

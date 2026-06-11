@@ -42,7 +42,7 @@
     <ion-content
       v-if="
         documentUrl != undefined &&
-        useDocument().getUserDocument({ documentId: documentUrl }) != undefined
+        documentComposable.getUserDocument({ documentId: documentUrl }) != undefined
       "
       :fullscreen="true"
     >
@@ -54,7 +54,7 @@
               label-placement="floating"
               placeholder="Nuevo documento"
               :value="
-                useDocument().getUserDocument({ documentId: documentUrl })
+                documentComposable.getUserDocument({ documentId: documentUrl })
                   ?.title
               "
               @ion-blur="updateTitle({ tltle: $event.target.value as string })"
@@ -66,18 +66,12 @@
       <!-- elements -->
       <section>
         <ion-reorder-group
-          v-if="
-            useDocument().getUserDocument({
-              documentId: documentUrl,
-            })?.elements ?? [].length > 0
-          "
+          v-if="docElements.length > 0"
           :disabled="isReorderDisabled"
           @ion-item-reorder="reorderElements($event)"
         >
           <ion-list
-            v-for="(element, indexElement) in useDocument().getUserDocument({
-              documentId: documentUrl,
-            })?.elements"
+            v-for="(element, indexElement) in docElements"
             :key="indexElement"
           >
             <ion-list-header v-if="isReorderDisabled == false">
@@ -107,9 +101,9 @@
                     @remove-note="
                       removeElement({
                         index: indexElement,
-                        documentId: useDocument().getUserDocument({
+                        documentId: String(documentComposable.getUserDocument({
                           documentId: documentUrl!,
-                        })?.id!,
+                        })?.id ?? 0),
                       })
                     "
                     @update-reminder="
@@ -227,7 +221,7 @@ import {
   ellipsisHorizontalOutline,
   moveOutline,
 } from "ionicons/icons";
-import { defineComponent, ref } from "vue";
+import { computed, defineComponent, ref } from "vue";
 import PopOverAddElements from "./PopOverAddElements.vue";
 // elements
 import NoteComponent from "../note/NoteComponent.vue";
@@ -239,12 +233,12 @@ import RichTextEditor from "../rich_text/RichTextComponent.vue";
 
 import { useDocument } from "../../../composables/useDocument";
 import { format } from "date-fns";
-import { useNote } from "../../../composables/useNote";
 import {
   ElementData,
   OptionsMainMenuDocument,
   TypeDocumentElement,
 } from "../../../utils/types";
+const documentComposable = useDocument();
 import MenuOptComponent from "./menu-document/MenuOptComponent.vue";
 import { isPlatform } from "@ionic/vue";
 import { Note } from "@/utils/interfaces";
@@ -262,17 +256,22 @@ const isReorderDisabled = isDisabled;
 let documentUrl = route.params.url as string;
 let documentId = "";
 
+const docElements = computed(() => {
+  const doc = documentComposable.getUserDocument({ documentId: documentUrl })
+  return (doc?.elements || []) as unknown as Array<Record<string, unknown>>
+})
+
 // functions
 const start = async () => {
-  await useDocument().loadDocument({ elementId: documentUrl });
-  documentId = useDocument().getUserDocument({ documentUrl })?.id ?? "";
+  await documentComposable.loadDocuments();
+  documentId = String(documentComposable.getUserDocument({ documentId: documentUrl })?.id ?? "");
 };
 
-const removeElement = (params: { index: number; documentId: string }) => {
-  const index = params.index;
+const removeElement = (params: { index: number | string; documentId: string }) => {
+  const index = Number(params.index);
   const documentId = params.documentId;
 
-  useDocument().deleteElement({ index, documentId });
+  documentComposable.deleteElement({ index, documentId });
 };
 
 const openPopoverAddElement = async (params: { ev: Event }) => {
@@ -303,12 +302,12 @@ const insertElement = (params: { id: number; type: TypeDocumentElement }) => {
     data: undefined,
   };
 
-  useDocument().insertElement({ documentId, element });
+  documentComposable.insertElement({ documentId, element });
 
   // TODO: improve code
-  const document = useDocument().getUserDocument({ documentId });
+  const document = documentComposable.getUserDocument({ documentId });
   if (!document?.elements) return;
-  useDocument().updateDocument({
+  documentComposable.updateDocument({
     document,
   });
 };
@@ -317,25 +316,25 @@ const updateElement = (params: { data: ElementData; index: number }) => {
   const data = params.data;
   const index = params.index;
   const documentId = documentUrl;
-  const document = useDocument().getUserDocument({ documentId });
+  const document = documentComposable.getUserDocument({ documentId });
 
   if (!document?.elements) return;
-  document.elements[index].data = data;
+  (document.elements as Array<Record<string, unknown>>)[index].data = data;
 
-  useDocument().updateDocument({
+  documentComposable.updateDocument({
     document,
   });
 };
 
 const updateNoteValue = (params: {
   data: { value: string };
-  index: number;
+  index: number | string;
   documentId: string;
 }) => {
   const data = params.data;
-  const index = params.index;
+  const index = Number(params.index);
   const documentId = params.documentId;
-  useDocument().updateNoteValue({ data, index, documentId });
+  documentComposable.updateNoteValue({ data, index, documentId });
 };
 
 const closePage = () => {
@@ -344,7 +343,7 @@ const closePage = () => {
 
 const reorderElements = (event: CustomEvent) => {
   const documentId = documentUrl;
-  let document = useDocument().getUserDocument({ documentId });
+  let document = documentComposable.getUserDocument({ documentId });
   const oldPosition = event.detail.from;
   const newPosition = event.detail.to;
   if (!document) return;
@@ -370,14 +369,14 @@ const reorderElements = (event: CustomEvent) => {
 
 const updateTitle = async (params: { tltle: string }) => {
   const title = params.tltle;
-  const document = useDocument().getUserDocument({ documentId });
+  const document = documentComposable.getUserDocument({ documentId });
   const url = `${title.replace(" ", "-")}-${documentId}`;
 
   if (!document) return;
   document.title = title;
   document.url = url;
 
-  await useDocument().updateDocument({
+  await documentComposable.updateDocument({
     document,
   });
 
@@ -397,19 +396,17 @@ const setOptionMainMenu = (params: {
 
 const setNoteReminders = async (params: {
   data: { dateStart: string; dateEnd: string };
-  index: number;
+  index: number | string;
   documentId: string;
 }) => {
   const data = params.data;
-  const index = params.index;
+  const index = Number(params.index);
   const documentId = params.documentId;
-  await useDocument().updateNoteReminder({ data, index, documentId });
-  // useReminders().loadReminders();
+  await documentComposable.updateNoteReminder({ data, index, documentId });
 };
 
 // mountded
 if (documentUrl) {
-  documentUrl = documentUrl;
   start();
 }
 </script>

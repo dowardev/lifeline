@@ -406,12 +406,12 @@ import useVuelidate from "@vuelidate/core";
 import RemindersComponent from "./reminders/RemindersComponent.vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { ScheduleController } from "@/js/scheduleController";
-import { TaskController } from "@/js/taskController";
-import { ReminderController } from "@/js/reminderController";
+import { SystemController } from "@/controllers/systemController";
+import { TaskController } from "@/controllers/taskController";
+import { ReminderController } from "@/controllers/reminderController";
+import { useReminder } from "@/composables/useReminder";
+import { generateScheduleElement, removeElementSchedule, generateEventSchedule } from "@/utils/schedule";
 const systemController = new SystemController();
-const scheduleController = new ScheduleController();
 const taskController = new TaskController();
 const reminderController = new ReminderController();
 
@@ -496,7 +496,7 @@ function formatTextRepeat() {
   let text = translateRepeat({
     repeat: type,
   });
-  const len = task.reminders.value.repeat.daysWeek?.length! - 1;
+  const len = (task.reminders.value.repeat.daysWeek?.length ?? 0) - 1;
   let index = 0;
   let days = "";
 
@@ -589,7 +589,7 @@ function setTask(params: { task: Task }) {
 async function save() {
   const taskId = props.taskData?.id;
   const schedule: Schedule =
-    scheduleController.getSchedule() ?? ({} as Schedule);
+    ({} as Schedule);
 
   try {
     await updateTask();
@@ -603,9 +603,11 @@ async function save() {
 }
 
 async function updateTask() {
+  if (!props.taskData?.id) return
+
   const taskFormated = {
     id: props.taskData.id,
-    name: task.name.value,
+    title: task.name.value,
     guests: task.guests.value,
     reminders: {
       start: task.reminders.value.start,
@@ -629,7 +631,7 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
   let { schedule } = params;
   const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
 
-  const scheduleElement = scheduleController.generateScheduleElement({
+  const scheduleElement = generateScheduleElement({
     id: scheduleId,
     idElement: taskId,
     title: task.name.value,
@@ -642,17 +644,16 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
   });
 
   if (taskId)
-    schedule = scheduleController.removeElementSchedule({
+    schedule = removeElementSchedule({
       id: taskId,
       schedule,
     });
 
-  schedule = scheduleController.generateEventSchedule({
+  schedule = generateEventSchedule({
     scheduleElement,
     schedule,
   });
-  await scheduleController.saveSchedule({ schedule });
-  await scheduleController.loadSchedule();
+
 
   const notifications = useReminder().getEventReminders({
     dateStart: task.reminders.value.start!,
@@ -662,12 +663,8 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
   if (notifications) {
     await Promise.all(
       notifications.map(async (notification) => {
-        await scheduleController.setReminders({
-          id: parseInt(scheduleId),
-          reminder: notification,
-          title: task.name.value,
-          message: task.description.value,
-        });
+        const { setReminder } = useReminder()
+        await setReminder({ title: task.name.value, message: task.description.value, extraInfo: String(taskId), reminder: notification })
       }),
     );
   }

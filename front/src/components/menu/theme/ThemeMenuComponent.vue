@@ -53,11 +53,11 @@ const pageTitle = "Selector de tema";
 const currentTheme = ref("" as Theme);
 
 // controllers
-import { SystemController } from "@/js/systemController";
-const systemController = new SystemController();
+import { ThemeController } from "@/controllers/themeController";
+const themeController = new ThemeController();
 
 onMounted(() => {
-  currentTheme.value = systemController.getTheme();
+  currentTheme.value = themeController.getTheme() as Theme;
 });
 
 // funtions
@@ -67,8 +67,8 @@ const closeModal = () => {
 
 async function applyTheme(params: { name: Theme }) {
   const theme = params.name;
-  systemController.applyTheme({ theme });
-  await systemController.updateThemeSelected({ theme });
+  themeController.applyTheme({ theme });
+  themeController.setTheme({ theme });
   currentTheme.value = theme;
 }
 </script>

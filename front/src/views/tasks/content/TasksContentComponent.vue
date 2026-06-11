@@ -91,7 +91,7 @@
       :is-open="isOpenModalUpdateTask"
       @did-dismiss="isOpenModalUpdateTask = false"
     >
-      <AddTaskComponent :task-data="taskController.getTask({ idTask })" />
+      <AddTaskComponent :task-data="taskController.getTask({ id: idTask }) ?? undefined" />
     </ion-modal>
   </div>
 </template>
@@ -115,13 +115,10 @@ import { addOutline, albumsOutline, appsOutline } from "ionicons/icons";
 import { onMounted, ref } from "vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { TaskController } from "@/js/taskController";
+import { SystemController } from "@/controllers/systemController";
+import { TaskController } from "@/controllers/taskController";
 const systemController = new SystemController();
 const taskController = new TaskController();
-
-// interface
-import { NewTask } from "@/utils/interfaces";
 
 // components
 import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
@@ -152,30 +149,13 @@ onMounted(() => {
 // functions
 async function addTask(params: { name: string }) {
   const { name } = params;
-  const task = {
-    name,
-    checked: false,
-    guests: [],
-    reminders: {
-      start: null,
-      end: null,
-      notifications: [],
-      repeat: { frecuency: 1, type: "daily", daysWeek: [] },
-    },
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    subtasks: [],
-    kanban: {
-      columnName: "pending",
-      position: taskController.getTasks()!.length,
-    },
-  } as NewTask;
-  await taskController.saveTask({ task });
+  await taskController.createTask({ title: name });
   inputTaskValue.value = "";
 }
 
 async function removeTask(params: { id: string }) {
   const { id } = params;
-  await taskController.deleteTask({ taskId: id });
+  await taskController.deleteTask({ id: Number(id) });
 }
 
 function updateTask(params: { idTask: string }) {
@@ -186,14 +166,12 @@ function updateTask(params: { idTask: string }) {
 
 function toggleCheckTask(params: { id: string }) {
   const { id } = params;
-  const task = taskController.getTask({ idTask: id });
+  const task = taskController.getTask({ id });
   if (!task) return;
 
-  task.checked = !task.checked;
-
-  taskController.updateTask({
-    task: { id: task.id, name: task.name, checked: task.checked },
-  });
+  const newChecked = !task.checked;
+  const newStatus = newChecked ? 'completed' : 'pending';
+  taskController.updateTaskStatus({ id: task.id, status: newStatus });
 }
 
 function setTasksViewMode(params: { viewMode: ViewMode }) {
@@ -211,10 +189,16 @@ async function kanbanUpdate(params: {
   columnName: "pending" | "progress" | "finalized";
 }) {
   const { id, columnName, position } = params;
-  const task = taskController.getTask({ idTask: id })!;
-  task.kanban.columnName = columnName;
-  task.kanban.position = position;
-  taskController.updateTask({ task });
+  const columnToStatus: Record<string, string> = {
+    pending: 'pending',
+    progress: 'in_progress',
+    finalized: 'completed',
+  };
+  taskController.updateTask({
+    id: Number(id),
+    status: columnToStatus[columnName] ?? 'pending',
+    order: position,
+  });
 }
 </script>
 

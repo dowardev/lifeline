@@ -16,6 +16,9 @@ export default defineConfig({
         short_name: "LifeLine",
         start_url: "/",
         id: "/",
+        display: "standalone",
+        theme_color: "#3880ff",
+        background_color: "#ffffff",
         icons: [
           {
             src: "pwa-192x192.png",
@@ -41,8 +44,26 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 5000000,
         runtimeCaching: [
           {
-            urlPattern: /.*/,
-            handler: "NetworkFirst",
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "images",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+            },
+          },
+          {
+            urlPattern: /\.(?:js|css|woff2?|ttf|eot)$/,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "static-assets",
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+            },
           },
         ],
       },

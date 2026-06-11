@@ -317,10 +317,10 @@ import { useRouter } from "vue-router";
 import type { Faker } from "@faker-js/faker";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { UserController } from "@/js/userController";
+import { SystemController } from "@/controllers/systemController";
+import { AuthController } from "@/controllers/authController";
 const systemController = new SystemController();
-const userController = new UserController();
+const userController = new AuthController();
 const themeController = new ThemeController();
 
 // assets
@@ -329,14 +329,14 @@ import userImageGruvbox from "@/assets/otros/user-gruvbox.png";
 import userImageCherry from "@/assets/otros/user-cherry.png";
 import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
 import loginImageCherry from "@/assets/otros/login-cherry.png";
-import { ThemeController } from "@/js/themeController";
+import { ThemeController } from "@/controllers/themeController";
 
 const router = useRouter();
 
 const imageUserPath = computed(() => {
   const theme = themeController.getTheme();
   let image = "";
-  if (theme == "nord" || "light") image = userImage;
+  if (theme == "nord" || theme == "light") image = userImage;
   if (theme == "gruvbox") image = userImageGruvbox;
   if (theme == "cherry") image = userImageCherry;
   return image;
@@ -345,7 +345,7 @@ const imageUserPath = computed(() => {
 const loginImagePath = computed(() => {
   const theme = themeController.getTheme();
   let image = "";
-  if (theme == "nord" || "light")
+  if (theme == "nord" || theme == "light")
     image =
       "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
   if (theme == "gruvbox") image = loginImageGruvbox;
@@ -418,7 +418,7 @@ const addUser = async (): Promise<void> => {
   const email = form.email.replace(/\s+/g, "");
   const password = form.password;
   try {
-    await userController.register({
+    await userController.signup({
       name,
       user,
       email,

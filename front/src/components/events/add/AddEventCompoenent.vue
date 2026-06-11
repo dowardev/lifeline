@@ -516,13 +516,13 @@ import RemindersComponent from "../reminders/RemindersComponent.vue";
 import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent.vue";
 
 // controllers
-import { EventController } from "@/js/eventController";
-import { ScheduleController } from "@/js/scheduleController";
-import { SystemController } from "@/js/systemController";
-import { ReminderController } from "@/js/reminderController";
-import { CalendarController } from "@/js/calendarController";
+import { EventController } from "@/controllers/eventController";
+import { SystemController } from "@/controllers/systemController";
+import { ReminderController } from "@/controllers/reminderController";
+import { CalendarController } from "@/controllers/calendarController";
+import { useReminder } from "@/composables/useReminder";
+import { generateScheduleElement, removeElementSchedule, generateEventSchedule } from "@/utils/schedule";
 const eventController = new EventController();
-const scheduleController = new ScheduleController();
 const systemController = new SystemController();
 const reminderController = new ReminderController();
 const calendarController = new CalendarController();
@@ -611,7 +611,7 @@ onMounted(async () => {
 
 // computed
 const generateCalendar = computed(() => {
-  if (events.value.length == 0) return;
+  if (events.value.length == 0) return [];
   const response = groupEvents({ events: events.value });
   return flattenEvents({ events: response });
 });
@@ -686,7 +686,7 @@ function formatTextRepeat() {
   let text = translateRepeat({
     repeat: type,
   });
-  const len = event.reminders.value.repeat.daysWeek?.length! - 1;
+  const len = (event.reminders.value.repeat.daysWeek?.length ?? 0) - 1;
   let index = 0;
   let days = "";
 
@@ -741,7 +741,7 @@ function setEvent(params: { event: Event }) {
   event.reminders.value.end = eventData.reminders!.end;
   event.reminders.value.notifications =
     eventData.reminders!.notifications ?? [];
-  event.reminders.value.repeat = eventData.reminders!.repeat;
+  event.reminders.value.repeat = eventData.reminders!.repeat!;
   event.timezone.value = eventData.timezone!;
   event.guests.value = eventData.guests!;
   event.availability.value = eventData.availability!;
@@ -761,7 +761,7 @@ async function postCreateEvent(params: {
   let { schedule } = params;
   const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
 
-  const scheduleElement = scheduleController.generateScheduleElement({
+  const scheduleElement = generateScheduleElement({
     id: scheduleId,
     idElement: eventId,
     title: event.name.value,
@@ -774,17 +774,16 @@ async function postCreateEvent(params: {
   });
 
   if (eventId)
-    schedule = scheduleController.removeElementSchedule({
+    schedule = removeElementSchedule({
       id: eventId,
       schedule,
     });
 
-  schedule = scheduleController.generateEventSchedule({
+  schedule = generateEventSchedule({
     scheduleElement,
     schedule,
   });
-  await scheduleController.saveSchedule({ schedule });
-  await scheduleController.loadSchedule();
+
 
   const notifications = reminderController.getEventReminders({
     dateStart: event.reminders.value.start,
@@ -794,12 +793,8 @@ async function postCreateEvent(params: {
   if (notifications) {
     await Promise.all(
       notifications.map(async (notification) => {
-        await scheduleController.setReminders({
-          id: parseInt(scheduleId),
-          reminder: notification,
-          title: event.name.value,
-          message: event.description.value,
-        });
+        const { setReminder } = useReminder()
+        await setReminder({ title: event.name.value, message: event.description.value, extraInfo: scheduleId, reminder: notification })
       })
     );
   }
@@ -818,9 +813,7 @@ function groupEvents(params: { events: Event[] }): {
     };
   };
 } {
-  let events = systemController.cloneObjet({
-    obj: params.events,
-  }) as Event[];
+  let events = structuredClone(params.events) as Event[];
   events = events.map((event) => {
     event.reminders.start = new Date(event.reminders.start);
     event.reminders.end = new Date(event.reminders.end);

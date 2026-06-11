@@ -163,6 +163,6 @@ const generateQR = computed(() => {
 // functions
 const copyToClipboard = async (params: { phrase: string }) => {
   const phrase = params.phrase;
-  await copyToClipboardService({ phrase });
+  await copyToClipboardService({ text: phrase });
 };
 </script>

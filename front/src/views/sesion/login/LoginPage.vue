@@ -237,11 +237,10 @@ import { required, helpers, email } from "@vuelidate/validators";
 import { useRouter } from "vue-router";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { UserController } from "@/js/userController";
-import { getDB } from "@/js/dbInstance";
-const systemController = new SystemController();
-const userController = new UserController();
+import { ThemeController } from "@/controllers/themeController";
+import { AuthController } from "@/controllers/authController";
+const themeController = new ThemeController();
+const userController = new AuthController();
 
 // assets
 import keyImage from "@/assets/otros/key.svg";
@@ -289,17 +288,17 @@ const v$ = useVuelidate(rules, { form });
 
 // computed
 const imageKeyPath = computed(() => {
-  const theme = systemController.getTheme();
+  const theme = themeController.getTheme();
   let image = "";
-  if (theme == "nord" || "light") image = keyImage;
+  if (theme == "nord" || theme == "light") image = keyImage;
   if (theme == "gruvbox") image = keyImageGruvbox;
   if (theme == "cherry") image = keyImageCherry;
   return image;
 });
 const loginImagePath = computed(() => {
-  const theme = systemController.getTheme();
+  const theme = themeController.getTheme();
   let image = "";
-  if (theme == "nord" || "light")
+  if (theme == "nord" || theme == "light")
     image =
       "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
   if (theme == "gruvbox") image = loginImageGruvbox;
@@ -308,7 +307,8 @@ const loginImagePath = computed(() => {
 });
 
 // funcions
-const presentToast = async (message: string, color: string): Promise<void> => {
+const presentToast = async (params: { message: string; color: string }): Promise<void> => {
+  const { message, color } = params
   const toast = await toastController.create({
     message,
     duration: 3000,
@@ -325,76 +325,26 @@ async function login(): Promise<void> {
   const password = form.password;
 
   try {
-    const response = await userController.userLogin({
+    await userController.login({
       user,
       password,
     });
 
-    const token = "Bearer " + response.auth.access_token;
-    const insertLocalUserResponse = await userController.insertLocalUser({
-      user: { idSync: response.user!.id },
-    });
-    await userController.storeUserToken({
-      token,
-      userId: insertLocalUserResponse.rowID,
-    });
-    await systemController.insertUserLogged({
-      userId: insertLocalUserResponse.rowID,
-    });
-    await getDB().saveToStore();
-
     spinners.buttonLogin = false;
     clearInputs();
-    location.reload();
-  } catch (e: any) {
+    await router.push('/home');
+  } catch {
     spinners.buttonLogin = false;
-    if (e.message == "Unauthorized" || e.message == "Not found") {
-      presentToast("Usuario y/o contraseña incorrectos", "danger");
-      return;
-    }
-    if (e.message == "Unverified email") {
-      alertConfirmationEmail();
-      return;
-    }
-    if (e.message == "Disabled user") {
-      presentToast(
-        "Cuenta de usuario deshabilitada, para mas información contacte a soporte.",
-        "danger",
-      );
-      return;
-    }
-    // systemController.openToastError(e);
-    console.error(e.message);
+    presentToast({ message: "Usuario y/o contraseña incorrectos", color: "danger" });
   }
 }
 
-const clearInputs = () => {
+const clearInputs = (): void => {
   form.password = "";
   form.email = "";
 };
 
-const alertConfirmationEmail = async () => {
-  const alert = await alertController.create({
-    cssClass: "my-custom-class",
-    header: "Alerta",
-
-    subHeader: "Confirmación",
-    message:
-      "Hemos enviado un correo electrónico a " +
-      form.email +
-      " con un enlace para verificar tu identidad.",
-    buttons: [
-      {
-        text: "Continuar",
-        handler: () => {},
-      },
-    ],
-  });
-
-  await alert.present();
-};
-
-const forgotPassword = async () => {
+const forgotPassword = async (): Promise<void> => {
   spinners.buttonForgotPassword = true;
 
   const alertResponse = await presentAlertRestorePassword();
@@ -415,7 +365,7 @@ const forgotPassword = async () => {
   spinners.buttonForgotPassword = false;
 };
 
-const createAccount = async () => {
+const createAccount = async (): Promise<void> => {
   spinners.buttonCreateAccount = true;
   await router.push("/signup");
   spinners.buttonCreateAccount = false;

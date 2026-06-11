@@ -12,8 +12,8 @@
 import { onMounted, ref } from "vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-const systemController = new SystemController();
+import { WakaTimeController } from "@/controllers/wakaTimeController";
+const wakaTimeController = new WakaTimeController();
 
 const props = defineProps({
   apiKey: { default: "", type: String, required: true },
@@ -29,7 +29,7 @@ onMounted(() => {
 async function getWakaTimeToday(params: { apiKey: string }): Promise<void> {
   const { apiKey } = params;
   const date = getTodayDate();
-  const response = await systemController.getWakaTimeDayTotal({ apiKey, date });
+  const response = await wakaTimeController.fetchDurations({ date, apiKey });
   todayTime.value = response;
 }
 
@@ -56,7 +56,7 @@ function refresh(): void {
 }
 
 async function logout(): Promise<void> {
-  await systemController.clearWakaTimeApiKey();
+  await wakaTimeController.clearApiKey();
 }
 
 defineExpose({

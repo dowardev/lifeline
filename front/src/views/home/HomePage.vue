@@ -81,15 +81,15 @@
                       <div>
                         <!-- input api key -->
                         <div
-                          v-if="!systemController.getWakaTimeApiKey()"
+                          v-if="!wakaTimeController.getApiKey()"
                           class="ion-padding"
                         >
                           <WakaTimeApiKeyComponent />
                         </div>
-                        <div v-if="systemController.getWakaTimeApiKey()">
+                        <div v-if="wakaTimeController.getApiKey()">
                           <WakaTimeToday
                             ref="todayComponentRef"
-                            :api-key="systemController.getWakaTimeApiKey()"
+                            :api-key="wakaTimeController.getApiKey()"
                           />
                         </div>
                       </div>
@@ -158,8 +158,8 @@ import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
 import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-const systemController = new SystemController();
+import { WakaTimeController } from "@/controllers/wakaTimeController";
+const wakaTimeController = new WakaTimeController();
 
 const pageTitle = "Inicio";
 const todayComponentRef = ref();
@@ -167,7 +167,7 @@ const isOpenPopOverMainOptions = ref(false);
 const eventPopOverMainOptions = ref(null as CustomEvent | null);
 
 onMounted(() => {
-  systemController.loadWakaTimeApiKey();
+  wakaTimeController.loadApiKey();
 });
 
 function refreshTodayComponent(): void {
