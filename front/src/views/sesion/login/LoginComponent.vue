@@ -1,186 +1,184 @@
 <template>
-  <section class="center">
-    <ion-card class="element-post-selected">
-      <ion-card-content>
-        <div class="center">
-          <img :src="imageKeyPath" alt="" class="imagen-usuario" />
-        </div>
-
-        <!-- user -->
-        <ion-row>
-          <ion-col size-xs="11" size="10">
-            <div style="display: flex">
-              <div>
-                <div style="display: flex; align-items: center; height: 50px">
-                  <ion-button fill="clear" :disabled="true"
-                    ><ion-icon :icon="personOutline"></ion-icon
-                  ></ion-button>
-                </div>
-              </div>
-
-              <div style="width: 100%">
-                <ion-input
-                  ref="inputMail"
-                  fill="outline"
-                  label="Usuario o correo electrónico"
-                  label-placement="floating"
-                  autocomplete="email"
-                  type="email"
-                  :error-text="v$.form.email.$errors[0]?.$message as string"
-                  :class="[
-                    v$.form.email.$errors.length == 0
-                      ? 'ion-valid'
-                      : 'ion-invalid',
-                  ]"
-                  :value="form.email"
-                  @ion-input="form.email = $event.target.value as string"
-                  @ion-focus="
-                    ($refs.inputMail as any).$el.classList.add('ion-touched');
-                    v$.form.email.$touch();
-                  "
-                ></ion-input>
-              </div>
-            </div>
-          </ion-col>
-        </ion-row>
-
-        <!-- password -->
-        <ion-row>
-          <ion-col size-xs="11" size="10">
-            <div style="display: flex">
-              <div>
-                <div style="display: flex; align-items: center; height: 50px">
-                  <ion-button fill="clear" :disabled="true"
-                    ><ion-icon :icon="fingerPrintOutline"></ion-icon
-                  ></ion-button>
-                </div>
-              </div>
-
-              <div style="width: 100%">
-                <ion-input
-                  ref="inputPassword"
-                  fill="outline"
-                  label="Contraseña"
-                  label-placement="floating"
-                  autocomplete="current-password"
-                  :type="isPasswordVisible ? 'text' : 'password'"
-                  :error-text="v$.form.password.$errors[0]?.$message as string"
-                  :class="[
-                    v$.form.password.$errors.length == 0
-                      ? 'ion-valid'
-                      : 'ion-invalid',
-                  ]"
-                  :value="form.password"
-                  @ion-input="form.password = $event.target.value as string"
-                  @ion-focus="
-                    ($refs.inputPassword as any).$el.classList.add(
-                      'ion-touched',
-                    );
-                    v$.form.password.$touch();
-                  "
-                ></ion-input>
-              </div>
-
-              <div>
-                <div style="display: flex; align-items: center; height: 50px">
-                  <ion-button
-                    slot="end"
-                    fill="clear"
-                    style="margin-top: 20px"
-                    @click="isPasswordVisible = !isPasswordVisible"
-                  >
-                    <ion-icon
-                      :icon="isPasswordVisible ? eyeOffOutline : eyeOutline"
-                    ></ion-icon>
-                  </ion-button>
-                </div>
-              </div>
-            </div>
-          </ion-col>
-        </ion-row>
-
-        <!-- button login -->
+  <ion-grid>
+    <ion-row class="ion-justify-content-center">
+      <ion-col size="12">
         <section class="center">
-          <ion-button
-            :disabled="v$.$invalid || spinners.buttonLogin"
-            @click="login()"
-          >
-            <ion-label v-if="spinners.buttonLogin == false">
-              Iniciar sesión</ion-label
-            >
-            <ion-spinner
-              v-if="spinners.buttonLogin"
-              name="crescent"
-            ></ion-spinner>
-          </ion-button>
+          <ion-card class="element-post-selected">
+            <ion-card-content>
+              <div class="center">
+                <img :src="imageKeyPath" alt="" class="imagen-usuario" />
+              </div>
+
+              <!-- user -->
+              <ion-row>
+                <ion-col size-xs="11" size="10">
+                  <div style="display: flex">
+                    <div>
+                      <div style="display: flex; align-items: center; height: 50px">
+                        <ion-button fill="clear" :disabled="true"
+                          ><ion-icon :icon="personOutline"></ion-icon
+                        ></ion-button>
+                      </div>
+                    </div>
+
+                    <div style="width: 100%">
+                      <ion-input
+                        ref="inputMail"
+                        fill="outline"
+                        label="Usuario o correo electrónico"
+                        label-placement="floating"
+                        autocomplete="email"
+                        type="email"
+                        :error-text="v$.form.email.$errors[0]?.$message as string"
+                        :class="[
+                          v$.form.email.$errors.length == 0
+                            ? 'ion-valid'
+                            : 'ion-invalid',
+                        ]"
+                        :value="form.email"
+                        @ion-input="form.email = $event.target.value as string"
+                        @ion-focus="
+                          ($refs.inputMail as any).$el.classList.add('ion-touched');
+                          v$.form.email.$touch();
+                        "
+                      ></ion-input>
+                    </div>
+                  </div>
+                </ion-col>
+              </ion-row>
+
+              <!-- password -->
+              <ion-row>
+                <ion-col size-xs="11" size="10">
+                  <div style="display: flex">
+                    <div>
+                      <div style="display: flex; align-items: center; height: 50px">
+                        <ion-button fill="clear" :disabled="true"
+                          ><ion-icon :icon="fingerPrintOutline"></ion-icon
+                        ></ion-button>
+                      </div>
+                    </div>
+
+                    <div style="width: 100%">
+                      <ion-input
+                        ref="inputPassword"
+                        fill="outline"
+                        label="Contraseña"
+                        label-placement="floating"
+                        autocomplete="current-password"
+                        :type="isPasswordVisible ? 'text' : 'password'"
+                        :error-text="v$.form.password.$errors[0]?.$message as string"
+                        :class="[
+                          v$.form.password.$errors.length == 0
+                            ? 'ion-valid'
+                            : 'ion-invalid',
+                        ]"
+                        :value="form.password"
+                        @ion-input="form.password = $event.target.value as string"
+                        @ion-focus="
+                          ($refs.inputPassword as any).$el.classList.add(
+                            'ion-touched',
+                          );
+                          v$.form.password.$touch();
+                        "
+                      ></ion-input>
+                    </div>
+
+                    <div>
+                      <div style="display: flex; align-items: center; height: 50px">
+                        <ion-button
+                          slot="end"
+                          fill="clear"
+                          style="margin-top: 20px"
+                          @click="isPasswordVisible = !isPasswordVisible"
+                        >
+                          <ion-icon
+                            :icon="isPasswordVisible ? eyeOffOutline : eyeOutline"
+                          ></ion-icon>
+                        </ion-button>
+                      </div>
+                    </div>
+                  </div>
+                </ion-col>
+              </ion-row>
+
+              <!-- button login -->
+              <section class="center">
+                <ion-button
+                  :disabled="v$.$invalid || spinners.buttonLogin"
+                  @click="login()"
+                >
+                  <ion-label v-if="spinners.buttonLogin == false">
+                    Iniciar sesión</ion-label
+                  >
+                  <ion-spinner
+                    v-if="spinners.buttonLogin"
+                    name="crescent"
+                  ></ion-spinner>
+                </ion-button>
+              </section>
+            </ion-card-content>
+          </ion-card>
         </section>
-      </ion-card-content>
-    </ion-card>
-  </section>
 
-  <section>
-    <div class="center">
-      <ion-item lines="none" class="transparent">
-        <ion-button
-          class="options"
-          fill="clear"
-          :disabled="spinners.buttonForgotPassword"
-          @click="forgotPassword()"
-        >
-          <ion-label v-if="spinners.buttonForgotPassword == false">
-            Recuperar contraseña
-          </ion-label>
-          <ion-spinner
-            v-if="spinners.buttonForgotPassword"
-            name="crescent"
-          ></ion-spinner>
-        </ion-button>
-      </ion-item>
-    </div>
+        <section>
+          <div class="center">
+            <ion-item lines="none" class="transparent">
+              <ion-button
+                class="options"
+                fill="clear"
+                :disabled="spinners.buttonForgotPassword"
+                @click="forgotPassword()"
+              >
+                <ion-label v-if="spinners.buttonForgotPassword == false">
+                  Recuperar contraseña
+                </ion-label>
+                <ion-spinner
+                  v-if="spinners.buttonForgotPassword"
+                  name="crescent"
+                ></ion-spinner>
+              </ion-button>
+            </ion-item>
+          </div>
 
-    <div class="center">
-      <ion-item lines="none" class="transparent">
-        <ion-button
-          class="options"
-          fill="clear"
-          :disabled="spinners.buttonCreateAccount"
-          expand="full"
-          @click="createAccount()"
-        >
-          <ion-label v-if="spinners.buttonCreateAccount == false">
-            Crear cuenta
-          </ion-label>
-          <ion-spinner
-            v-if="spinners.buttonCreateAccount"
-            name="crescent"
-            color="primary"
-          ></ion-spinner>
-        </ion-button>
-      </ion-item>
-    </div>
-  </section>
+          <div class="center">
+            <ion-item lines="none" class="transparent">
+              <ion-button
+                class="options"
+                fill="clear"
+                :disabled="spinners.buttonCreateAccount"
+                expand="full"
+                @click="createAccount()"
+              >
+                <ion-label v-if="spinners.buttonCreateAccount == false">
+                  Crear cuenta
+                </ion-label>
+                <ion-spinner
+                  v-if="spinners.buttonCreateAccount"
+                  name="crescent"
+                  color="primary"
+                ></ion-spinner>
+              </ion-button>
+            </ion-item>
+          </div>
+        </section>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </template>
 
 <script setup lang="ts">
 import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
   toastController,
   alertController,
   IonInput,
   IonCard,
   IonRow,
   IonCol,
-  IonButtons,
-  IonMenuButton,
   IonItem,
   IonIcon,
   IonLabel,
   IonButton,
-  isPlatform,
 } from "@ionic/vue";
 import { computed, reactive, ref } from "vue";
 import {
@@ -190,14 +188,12 @@ import {
   personOutline,
 } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
-import { required, helpers, email } from "@vuelidate/validators";
+import { required, helpers } from "@vuelidate/validators";
 import { useRouter } from "vue-router";
 
 // controllers
-import { SystemController } from "@/controllers/systemController";
 import { AuthController } from "@/controllers/authController";
 import { ThemeController } from "@/controllers/themeController";
-const systemController = new SystemController();
 const userController = new AuthController();
 const themeController = new ThemeController();
 
@@ -205,14 +201,12 @@ const themeController = new ThemeController();
 import keyImage from "@/assets/otros/key.svg";
 import keyImageGruvbox from "@/assets/otros/key-gruvbox.png";
 import keyImageCherry from "@/assets/otros/key-cherry.png";
-import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
-import loginImageCherry from "@/assets/otros/login-cherry.png";
-import { User } from "@/utils/interfaces";
+
 
 const router = useRouter();
 
 // refs
-const form = reactive({ email: "admin@admin.com", password: "d2f%PF" });
+const form = reactive({ email: "admin@admin.com", password: "changeme123" });
 // spinners
 const spinners = reactive({
   buttonLogin: false,
@@ -228,7 +222,6 @@ const inputPassword = ref(null);
 const isPasswordVisible = ref(false);
 
 // vars
-const modeDesingElements = isPlatform("ios") ? "ios" : "md";
 const messageError = {
   email: "Correo electronico no valido",
   required: "Campo requerido",
@@ -237,7 +230,6 @@ const rules = {
   form: {
     email: {
       required: helpers.withMessage(messageError.required, required),
-      email: helpers.withMessage(messageError.email, email),
     },
     password: {
       required: helpers.withMessage(messageError.required, required),
@@ -253,16 +245,6 @@ const imageKeyPath = computed(() => {
   if (theme == "nord" || theme == "light") image = keyImage;
   if (theme == "gruvbox") image = keyImageGruvbox;
   if (theme == "cherry") image = keyImageCherry;
-  return image;
-});
-const loginImagePath = computed(() => {
-  const theme = themeController.getTheme();
-  let image = "";
-  if (theme == "nord" || theme == "light")
-    image =
-      "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
-  if (theme == "gruvbox") image = loginImageGruvbox;
-  if (theme == "cherry") image = loginImageCherry;
   return image;
 });
 
@@ -284,14 +266,14 @@ async function login(): Promise<void> {
   const password = form.password;
 
   try {
-    const responseLogin = await userController.login({
+    await userController.login({
       user,
       password,
     });
 
     spinners.buttonLogin = false;
     clearInputs();
-    location.reload();
+    await router.push('/home');
   } catch (e: any) {
     spinners.buttonLogin = false;
     if (e.message == "Unauthorized" || e.message == "Not found") {
@@ -314,12 +296,12 @@ async function login(): Promise<void> {
   }
 }
 
-const clearInputs = () => {
+const clearInputs = (): void => {
   form.password = "";
   form.email = "";
 };
 
-const alertConfirmationEmail = async () => {
+const alertConfirmationEmail = async (): Promise<void> => {
   const alert = await alertController.create({
     cssClass: "my-custom-class",
     header: "Alerta",
@@ -332,7 +314,7 @@ const alertConfirmationEmail = async () => {
     buttons: [
       {
         text: "Continuar",
-        handler: () => {},
+        handler: (): void => {},
       },
     ],
   });
@@ -340,7 +322,7 @@ const alertConfirmationEmail = async () => {
   await alert.present();
 };
 
-const forgotPassword = async () => {
+const forgotPassword = async (): Promise<void> => {
   spinners.buttonForgotPassword = true;
 
   const alertResponse = await presentAlertRestorePassword();
@@ -361,7 +343,7 @@ const forgotPassword = async () => {
   spinners.buttonForgotPassword = false;
 };
 
-const createAccount = async () => {
+const createAccount = async (): Promise<void> => {
   spinners.buttonCreateAccount = true;
   await router.push("/signup");
   spinners.buttonCreateAccount = false;
@@ -389,13 +371,13 @@ const presentAlertRestorePassword = async (): Promise<{
         text: "Cancelar",
         role: "cancel",
         cssClass: "secondary",
-        handler: () => {
+        handler: (): void => {
           // console.log("Confirm Cancel");
         },
       },
       {
         text: "Confirmar",
-        handler: () => {
+        handler: (): void => {
           // console.log(e);
         },
       },
@@ -408,14 +390,7 @@ const presentAlertRestorePassword = async (): Promise<{
   return { email: response.data.values.email, role: response.role! };
 };
 
-//TODO: move to controller
-const loadUser = async (): Promise<void> => {
-  try {
-    userController.loadUser({});
-  } catch (error) {
-    console.error(error);
-  }
-};
+
 </script>
 
 <style scoped>

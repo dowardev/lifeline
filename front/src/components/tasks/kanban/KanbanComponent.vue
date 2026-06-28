@@ -114,36 +114,39 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import { popoverController, IonRow, IonCol } from "@ionic/vue";
 import { onMounted, ref, watch } from "vue";
 import draggable from "vuedraggable/src/vuedraggable";
 
-// interface
-import { TaskItem } from "@/store/taskStore";
+// 2. Controllers / Composables
+// (none)
 
+// 3. Components
+import RightMenuTaskComponent from "./RightMenuTaskComponent.vue";
+
+// 4. Interface and types imports
+import type { TaskItem } from "@/store/taskStore";
+
+// 5. Main (props, emits)
 interface Item {
   id: number;
   name: string;
   position: number;
 }
 
-// components
-import RightMenuTaskComponent from "./RightMenuTaskComponent.vue";
-
 const emits = defineEmits(["update", "delete", "toggleCheck", "kanbanUpdate"]);
 const props = defineProps({
   taskData: { type: Array<TaskItem>, default: () => [] },
 });
 
+// 6. Vars and const
 const screenWidth = ref(window.innerWidth);
 const pending = ref([] as Item[]);
 const progress = ref([] as Item[]);
 const finalized = ref([] as Item[]);
 
-// watch
-const handleResize = () => {
-  screenWidth.value = window.innerWidth;
-};
+// 7. Watch
 watch(
   () => props.taskData,
   (tasks) => {
@@ -183,17 +186,24 @@ watch(
   }
 );
 
-// mounted
+// 8. Computed
+// (none)
+
+// 9. OnMounted
 onMounted(() => {
   window.addEventListener("resize", handleResize);
 });
 
-// functions
+// 10. Functions (named parameters pattern)
+const handleResize = (): void => {
+  screenWidth.value = window.innerWidth;
+};
+
 async function openPopoverRightTaskMenu(params: {
   ev: CustomEvent;
   taskId: number;
   columnName: string;
-}) {
+}): Promise<void> {
   const { taskId, ev, columnName } = params;
 
   const popover = await popoverController.create({
@@ -224,17 +234,17 @@ async function openPopoverRightTaskMenu(params: {
   }
 }
 
-function updateTask(params: { idTask: number }) {
+function updateTask(params: { idTask: number }): void {
   const { idTask } = params;
   emits("update", { idTask });
 }
 
-function removeTask(params: { id: number }) {
+function removeTask(params: { id: number }): void {
   const { id } = params;
   emits("delete", { id });
 }
 
-function eventKanban(params: { evt: any; columnName: string }) {
+function eventKanban(params: { evt: any; columnName: string }): void {
   const { evt, columnName } = params;
 
   const data = { columnName } as {

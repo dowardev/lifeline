@@ -107,14 +107,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-
-// controllers
-import { SystemController } from "@/controllers/systemController";
+// 1. Imports (ionic/vue/ionicons)
+import { onMounted, ref, watch } from "vue";
 import { format } from "date-fns";
-import { watch } from "vue";
+
+// 2. Controllers / Composables
+import { SystemController } from "@/controllers/systemController";
 const systemController = new SystemController();
 
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 interface EventsData {
   year: string;
   month: string;
@@ -137,28 +144,7 @@ const props = defineProps({
 });
 const emits = defineEmits(["updateEvent", "openPopoverRightEventMenu"]);
 
-// watch date
-watch(
-  () => props.date,
-  async (date) => {
-    try {
-      days.value = getDaysForCurrentWeek({
-        date,
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  }
-);
-
-// mounted
-onMounted(async () => {
-  days.value = getDaysForCurrentWeek({
-    date: props.date,
-  });
-});
-
-// vars
+// 6. Vars and const
 const days = ref(Array<any>());
 const daysOfWeek = [
   "sunday",
@@ -196,7 +182,31 @@ const hoursOfDay = [
   "23:00",
 ];
 
-// functions
+// 7. Watch
+watch(
+  () => props.date,
+  async (date) => {
+    try {
+      days.value = getDaysForCurrentWeek({
+        date,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+);
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+onMounted(async () => {
+  days.value = getDaysForCurrentWeek({
+    date: props.date,
+  });
+});
+
+// 10. Functions (named parameters pattern)
 function getDaysForCurrentWeek(params: { date: Date }): { date: Date }[] {
   const date = params.date;
   const daysList = [];

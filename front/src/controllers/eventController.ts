@@ -54,6 +54,14 @@ export class EventController {
     }
   }
 
+  setEvents(params: { events: EventItem[] }): void {
+    this.store.setEvents({ events: params.events })
+  }
+
+  addEvent(params: { event: EventItem }): void {
+    this.store.addEvent({ event: params.event })
+  }
+
   async createEvent(params: {
     name: string
     dateStart: string
@@ -123,12 +131,18 @@ export class EventController {
   }
 
   async removeEvent(params: { id: number }) {
+    const { id } = params
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
-      await eventService.removeEvent({ id: params.id })
-      this.store.removeEvent({ id: params.id })
-      await db.events.delete(params.id)
+      if (id < 0) {
+        this.store.removeEvent({ id })
+        await db.events.delete(id)
+      } else {
+        await eventService.removeEvent({ id })
+        this.store.removeEvent({ id })
+        await db.events.delete(id)
+      }
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error

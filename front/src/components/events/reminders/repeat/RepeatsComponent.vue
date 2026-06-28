@@ -245,6 +245,7 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
   IonSelect,
   IonSelectOption,
@@ -257,6 +258,16 @@ import useVuelidate from "@vuelidate/core";
 import { helpers, numeric, required } from "@vuelidate/validators";
 import { onMounted, ref } from "vue";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 const props = defineProps({
   data: {
     type: Object,
@@ -272,7 +283,7 @@ const props = defineProps({
 
 const emits = defineEmits(["updateData"]);
 
-// inputs
+// 6. Vars and const
 const inputDailyFrecuency = ref(null);
 const inputWeeklyFrecuency = ref(null);
 const inputMontlyFrecuency = ref(null);
@@ -366,7 +377,13 @@ const vWeekly$ = useVuelidate(rulesWeekly, { formWeekly });
 const vMontly$ = useVuelidate(rulesMontly, { formMontly });
 const vAnnualy$ = useVuelidate(rulesAnnualy, { formAnnualy });
 
-// mounted
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
 onMounted(() => {
   setCurrentDateWeek();
   optionRepearSelected.value = props.data.type;
@@ -391,8 +408,8 @@ onMounted(() => {
     formAnnualy.frecuency.value = props.data.frecuency;
 });
 
-// functions
-function save() {
+// 10. Functions (named parameters pattern)
+function save(): void {
   const option = optionRepearSelected.value;
 
   let data = { type: option } as {
@@ -422,7 +439,7 @@ function save() {
   emits("updateData", data);
 }
 
-function getDailyData() {
+function getDailyData(): { frecuency: number } {
   const frecuency = formDaily.frecuency.value;
   return { frecuency };
 }
@@ -435,17 +452,17 @@ function getWeeklyData(): { frecuency: number; days: string[] } {
   return { frecuency, days: daysSelected };
 }
 
-function getMontlyData() {
+function getMontlyData(): { frecuency: number } {
   const frecuency = formMontly.frecuency.value;
   return { frecuency };
 }
 
-function getAnnuallyData() {
+function getAnnuallyData(): { frecuency: number } {
   const frecuency = formAnnualy.frecuency.value;
   return { frecuency };
 }
 
-function setCurrentDateWeek() {
+function setCurrentDateWeek(): void {
   const today = new Date();
   const dayNumber = today.getDay();
   const dayNames = [

@@ -336,7 +336,7 @@
             <ion-searchbar
               :debounce="500"
               show-cancel-button="focus"
-              @ion-input="filterZones($event.target.value as string)"
+              @ion-input="filterZones({ query: $event.target.value as string })"
               @ion-cancel="filteredZones.length = 0"
               @ion-clear="filteredZones.length = 0"
             ></ion-searchbar>
@@ -372,12 +372,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Schedule,
-  Task,
-  TaskReminderNotification,
-  TaskReminderRepeat,
-} from "@/utils/interfaces";
+// 1. Imports (ionic/vue/ionicons)
 import {
   IonContent,
   IonHeader,
@@ -402,24 +397,31 @@ import { onMounted, ref } from "vue";
 import { email, helpers, required } from "@vuelidate/validators";
 import useVuelidate from "@vuelidate/core";
 
-// components
-import RemindersComponent from "./reminders/RemindersComponent.vue";
-
-// controllers
+// 2. Controllers / Composables
 import { SystemController } from "@/controllers/systemController";
 import { TaskController } from "@/controllers/taskController";
-import { ReminderController } from "@/controllers/reminderController";
 import { useReminder } from "@/composables/useReminder";
-import { generateScheduleElement, removeElementSchedule, generateEventSchedule } from "@/utils/schedule";
+import { removeElementSchedule } from "@/utils/schedule";
 const systemController = new SystemController();
 const taskController = new TaskController();
-const reminderController = new ReminderController();
 
+// 3. Components
+import RemindersComponent from "./reminders/RemindersComponent.vue";
+
+// 4. Interface and types imports
+import type {
+  Schedule,
+  Task,
+  TaskReminderNotification,
+  TaskReminderRepeat,
+} from "@/utils/interfaces";
+
+// 5. Main (props, emits)
 const props = defineProps({
   taskData: { type: Object as () => Task, default: () => null },
 });
 
-// vars
+// 6. Vars and const
 const pageTitle = ref("Agregar tarea");
 const popoverRemindersSegment = ref("date-start");
 const isOpenPopoverReminders = ref(false);
@@ -454,22 +456,21 @@ const messageError = {
   email: "Correo electrónico no valido",
   required: "Campo requerido",
 };
-const rules = {
-  event: {
-    name: {
-      required: helpers.withMessage(messageError.required, required),
-    },
-  },
-};
 const rulesGuest = {
   emailGuest: {
     required: helpers.withMessage(messageError.required, required),
     email: helpers.withMessage(messageError.email, email),
   },
 };
-const v$ = useVuelidate(rules, { event: task });
 const v2$ = useVuelidate(rulesGuest, { emailGuest });
 
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
 onMounted(async () => {
   if (props.taskData) {
     pageTitle.value = "Actualizar tarea";
@@ -477,8 +478,8 @@ onMounted(async () => {
   }
 });
 
-// functions
-function formatTextNotifications() {
+// 10. Functions (named parameters pattern)
+function formatTextNotifications(): string {
   let text = "";
   const len = task.reminders.value.notifications.length - 1;
   let index = 0;
@@ -491,7 +492,7 @@ function formatTextNotifications() {
   return text;
 }
 
-function formatTextRepeat() {
+function formatTextRepeat(): string {
   const type = task.reminders.value.repeat.type;
   let text = translateRepeat({
     repeat: type,
@@ -510,7 +511,7 @@ function formatTextRepeat() {
   return text;
 }
 
-function translateNotifications(params: { notification: string }) {
+function translateNotifications(params: { notification: string }): string {
   const notification = params.notification as keyof TaskReminderNotification;
 
   const result = systemController.translateEventReminderNotification({
@@ -519,7 +520,7 @@ function translateNotifications(params: { notification: string }) {
   return result;
 }
 
-function translateDaysWeekRepear(params: { day: string }) {
+function translateDaysWeekRepear(params: { day: string }): string {
   const day = params.day as any;
 
   let result = systemController.translateDay({
@@ -529,7 +530,7 @@ function translateDaysWeekRepear(params: { day: string }) {
   return result;
 }
 
-function translateRepeat(params: { repeat: string }) {
+function translateRepeat(params: { repeat: string }): string {
   const repeat = params.repeat as keyof TaskReminderRepeat;
 
   let result = systemController.translateEventReminderRepeat({
@@ -539,41 +540,42 @@ function translateRepeat(params: { repeat: string }) {
   return result;
 }
 
-function filterZones(query: string) {
+function filterZones(params: { query: string }): void {
+  const { query } = params;
   filteredZones.value = timeZones.filter((zone: string) =>
     zone.toLowerCase().includes(query.toLowerCase()),
   );
 }
 
-function selectZone(params: { zone: string }) {
+function selectZone(params: { zone: string }): void {
   const zone = params.zone;
   task.timezone.value = zone;
   isOpenPopoverTimezones.value = false;
 }
 
-function removeGuest(params: { index: number }) {
+function removeGuest(params: { index: number }): void {
   const index = params.index;
   task.guests.value.splice(index, 1);
 }
 
-function addGuest() {
+function addGuest(): void {
   const email = emailGuest.value;
   task.guests.value.push({ email });
   emailGuest.value = "";
 }
 
-function addSubtask() {
+function addSubtask(): void {
   const taskElement = subTask.value;
   task.subtasks.value.push({ name: taskElement, checked: false });
   subTask.value = "";
 }
 
-function removeSubTask(params: { index: number }) {
+function removeSubTask(params: { index: number }): void {
   const index = params.index;
   task.subtasks.value.splice(index, 1);
 }
 
-function setTask(params: { task: Task }) {
+function setTask(params: { task: Task }): void {
   const { task: taskData } = params;
   task.name.value = taskData.name!;
   task.description.value = taskData.description ?? "";
@@ -586,7 +588,7 @@ function setTask(params: { task: Task }) {
   task.subtasks.value = taskData.subtasks ?? Array<any>();
 }
 
-async function save() {
+async function save(): Promise<void> {
   const taskId = props.taskData?.id;
   const schedule: Schedule =
     ({} as Schedule);
@@ -602,7 +604,7 @@ async function save() {
   }
 }
 
-async function updateTask() {
+async function updateTask(): Promise<void> {
   if (!props.taskData?.id) return
 
   const taskFormated = {
@@ -626,34 +628,15 @@ async function updateTask() {
   });
 }
 
-async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
+async function postCreateTask(params: { taskId: string; schedule: Schedule }): Promise<void> {
   const { taskId } = params;
   let { schedule } = params;
-  const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
-
-  const scheduleElement = generateScheduleElement({
-    id: scheduleId,
-    idElement: taskId,
-    title: task.name.value,
-    message: task.description.value,
-    startDate: new Date(task.reminders.value.start!),
-    endDate: new Date(task.reminders.value.end!),
-    type: "task",
-    reminder: task.reminders.value.notifications.length > 0 ? true : false,
-    repeat: task.reminders.value.repeat,
-  });
 
   if (taskId)
-    schedule = removeElementSchedule({
+    removeElementSchedule({
       id: taskId,
       schedule,
     });
-
-  schedule = generateEventSchedule({
-    scheduleElement,
-    schedule,
-  });
-
 
   const notifications = useReminder().getEventReminders({
     dateStart: task.reminders.value.start!,
@@ -670,8 +653,7 @@ async function postCreateTask(params: { taskId: string; schedule: Schedule }) {
   }
 }
 
-async function closePage() {
+async function closePage(): Promise<void> {
   await modalController.dismiss();
 }
 </script>
-@/controllers/remindersController

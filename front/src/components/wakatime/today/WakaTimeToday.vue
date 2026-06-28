@@ -9,23 +9,40 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
+import { IonItem, IonLabel } from "@ionic/vue";
 import { onMounted, ref } from "vue";
 
-// controllers
+// 2. Controllers / Composables
 import { WakaTimeController } from "@/controllers/wakaTimeController";
 const wakaTimeController = new WakaTimeController();
 
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 const props = defineProps({
   apiKey: { default: "", type: String, required: true },
 });
 
+// 6. Vars and const
 const todayTime = ref(0);
 
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
 onMounted(() => {
   getWakaTimeToday({ apiKey: props.apiKey });
 });
 
-//  functions
+// 10. Functions (named parameters pattern)
 async function getWakaTimeToday(params: { apiKey: string }): Promise<void> {
   const { apiKey } = params;
   const date = getTodayDate();

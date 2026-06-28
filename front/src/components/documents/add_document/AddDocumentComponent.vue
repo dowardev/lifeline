@@ -159,7 +159,7 @@
         trigger="popover-document-desktop-menu-opt"
         trigger-action="click"
         style="--width: 22rem"
-        mode="md"
+        mode="ios"
         @ion-popover-will-dismiss="
           setOptionMainMenu({
             option: $event.detail.data ? $event.detail.data.option : undefined,
@@ -195,61 +195,68 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
+  IonButton,
+  IonButtons,
+  IonCard,
+  IonCol,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonInput,
   IonItem,
   IonLabel,
   IonList,
+  IonListHeader,
+  IonModal,
+  IonPage,
+  IonPopover,
   IonReorder,
   IonReorderGroup,
-  popoverController,
-  IonPage,
-  IonHeader,
+  IonRow,
+  IonTitle,
   IonToolbar,
-  IonContent,
-  modalController,
-  IonInput,
-  IonPopover,
-  IonModal,
+  isPlatform,
+  popoverController,
 } from "@ionic/vue";
 import {
-  pricetagsOutline,
-  timeOutline,
-  trashOutline,
   addOutline,
   closeOutline,
-  saveOutline,
   ellipsisHorizontalOutline,
-  moveOutline,
+
 } from "ionicons/icons";
-import { computed, defineComponent, ref } from "vue";
+import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+// 2. Controllers / Composables
+import { useDocument } from "../../../composables/useDocument";
+const documentComposable = useDocument();
+const route = useRoute();
+const router = useRouter();
+
+// 3. Components
 import PopOverAddElements from "./PopOverAddElements.vue";
-// elements
 import NoteComponent from "../note/NoteComponent.vue";
 // import TableComponent from "../table/TableComponent.vue";
 import ListComponent from "../list/ListComponent.vue";
 import TodoComponent from "../todo/TodoComponent.vue";
-// markdown
 import RichTextEditor from "../rich_text/RichTextComponent.vue";
+import MenuOptComponent from "./menu-document/MenuOptComponent.vue";
 
-import { useDocument } from "../../../composables/useDocument";
-import { format } from "date-fns";
-import {
-  ElementData,
+// 4. Interface and types imports
+import type {
   OptionsMainMenuDocument,
   TypeDocumentElement,
 } from "../../../utils/types";
-const documentComposable = useDocument();
-import MenuOptComponent from "./menu-document/MenuOptComponent.vue";
-import { isPlatform } from "@ionic/vue";
-import { Note } from "@/utils/interfaces";
-// import { useReminders } from "@/composables/useReminders";
-import { useRoute, useRouter } from "vue-router";
+import type { Note } from "@/utils/interfaces";
 
-const route = useRoute();
-const router = useRouter();
+// 5. Main (props, emits)
+// (none)
+
+// 6. Vars and const
 const pageTitle = "Agregar documento";
 const isDisabled = ref(true);
-const toggleReorder = () => {
+const toggleReorder = (): void => {
   isDisabled.value = !isDisabled.value;
 };
 const isReorderDisabled = isDisabled;
@@ -261,20 +268,32 @@ const docElements = computed(() => {
   return (doc?.elements || []) as unknown as Array<Record<string, unknown>>
 })
 
-// functions
-const start = async () => {
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+const start = async (): Promise<void> => {
   await documentComposable.loadDocuments();
   documentId = String(documentComposable.getUserDocument({ documentId: documentUrl })?.id ?? "");
 };
 
-const removeElement = (params: { index: number | string; documentId: string }) => {
+// 9. OnMounted
+if (documentUrl) {
+  start();
+}
+
+// 10. Functions (named parameters pattern)
+
+const removeElement = (params: { index: number | string; documentId: string }): void => {
   const index = Number(params.index);
   const documentId = params.documentId;
 
   documentComposable.deleteElement({ index, documentId });
 };
 
-const openPopoverAddElement = async (params: { ev: Event }) => {
+const openPopoverAddElement = async (params: { ev: Event }): Promise<void> => {
   const ev = params.ev;
 
   const popover = await popoverController.create({
@@ -292,7 +311,7 @@ const openPopoverAddElement = async (params: { ev: Event }) => {
   });
 };
 
-const insertElement = (params: { id: number; type: TypeDocumentElement }) => {
+const insertElement = (params: { id: number; type: TypeDocumentElement }): void => {
   const type = params.type;
   if (!documentId) return;
 
@@ -304,23 +323,8 @@ const insertElement = (params: { id: number; type: TypeDocumentElement }) => {
 
   documentComposable.insertElement({ documentId, element });
 
-  // TODO: improve code
   const document = documentComposable.getUserDocument({ documentId });
   if (!document?.elements) return;
-  documentComposable.updateDocument({
-    document,
-  });
-};
-
-const updateElement = (params: { data: ElementData; index: number }) => {
-  const data = params.data;
-  const index = params.index;
-  const documentId = documentUrl;
-  const document = documentComposable.getUserDocument({ documentId });
-
-  if (!document?.elements) return;
-  (document.elements as Array<Record<string, unknown>>)[index].data = data;
-
   documentComposable.updateDocument({
     document,
   });
@@ -330,18 +334,18 @@ const updateNoteValue = (params: {
   data: { value: string };
   index: number | string;
   documentId: string;
-}) => {
+}): void => {
   const data = params.data;
   const index = Number(params.index);
   const documentId = params.documentId;
   documentComposable.updateNoteValue({ data, index, documentId });
 };
 
-const closePage = () => {
+const closePage = (): void => {
   router.go(-1);
 };
 
-const reorderElements = (event: CustomEvent) => {
+const reorderElements = (event: CustomEvent): void => {
   const documentId = documentUrl;
   let document = documentComposable.getUserDocument({ documentId });
   const oldPosition = event.detail.from;
@@ -367,7 +371,7 @@ const reorderElements = (event: CustomEvent) => {
   event.detail.complete();
 };
 
-const updateTitle = async (params: { tltle: string }) => {
+const updateTitle = async (params: { tltle: string }): Promise<void> => {
   const title = params.tltle;
   const document = documentComposable.getUserDocument({ documentId });
   const url = `${title.replace(" ", "-")}-${documentId}`;
@@ -386,10 +390,9 @@ const updateTitle = async (params: { tltle: string }) => {
 const setOptionMainMenu = (params: {
   option: OptionsMainMenuDocument | undefined;
   data?: any;
-}) => {
+}): void => {
   const option = params.option;
   if (option == undefined) return;
-  // const data = params.data;
 
   if (option == "order") toggleReorder();
 };
@@ -398,17 +401,12 @@ const setNoteReminders = async (params: {
   data: { dateStart: string; dateEnd: string };
   index: number | string;
   documentId: string;
-}) => {
+}): Promise<void> => {
   const data = params.data;
   const index = Number(params.index);
   const documentId = params.documentId;
   await documentComposable.updateNoteReminder({ data, index, documentId });
 };
-
-// mountded
-if (documentUrl) {
-  start();
-}
 </script>
 
 <style scoped>

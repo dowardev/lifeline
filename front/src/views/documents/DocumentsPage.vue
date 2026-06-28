@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border" :translucent="true">
+    <ion-header class="ion-no-border" mode="ios">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button menu="firstMenu" mode="md"></ion-menu-button>
@@ -36,32 +36,35 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content
-      v-if="documentsList != undefined"
-      :fullscreen="true"
-    >
-      <ion-row>
-        <ion-col
-          v-for="(document, index) in documentsList"
-          :key="index"
-          size-xs="12"
-          class="center"
-        >
-          <ion-card
-            @click="openDocument({ documentUrl: document.url ?? '' })"
-            @contextmenu.prevent="
-              openPopoverRightMenu({ ev: $event, documentId: String(document.id) })
-            "
-            @press="
-              openPopoverRightMenu({ ev: $event, documentId: String(document.id) })
-            "
-          >
-            <ion-card-header>
-              <ion-card-title>{{ document.title }}</ion-card-title>
-            </ion-card-header>
-          </ion-card>
-        </ion-col>
-      </ion-row>
+    <ion-content v-if="documentsList != undefined">
+      <ion-grid>
+        <ion-row class="ion-justify-content-center">
+          <ion-col size="12" size-md="10" size-lg="8" size-xl="6">
+            <ion-row>
+              <ion-col
+                v-for="(document, index) in documentsList"
+                :key="index"
+                size-xs="12"
+                class="center"
+              >
+                <ion-card
+                  @click="openDocument({ documentUrl: document.url ?? '' })"
+                  @contextmenu.prevent="
+                    openPopoverRightMenu({ ev: $event, documentId: String(document.id) })
+                  "
+                  @press="
+                    openPopoverRightMenu({ ev: $event, documentId: String(document.id) })
+                  "
+                >
+                  <ion-card-header>
+                    <ion-card-title>{{ document.title }}</ion-card-title>
+                  </ion-card-header>
+                </ion-card>
+              </ion-col>
+            </ion-row>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
     </ion-content>
   </ion-page>
 </template>
@@ -107,17 +110,17 @@ const pageTitle = ref("Inicio");
 const mainCalendar = ref(null);
 
 // functions
-const resetCalendar = async () => {
+const resetCalendar = async (): Promise<void> => {
   (mainCalendar.value as any).$el.reset();
 };
 
-const selectDay = (e: any) => {
+const selectDay = (e: any): void => {
   const selectedDate = e.detail.value;
   eventController.setDate({ date: selectedDate });
   date.value = selectedDate;
 };
 
-const addDocument = async () => {
+const addDocument = async (): Promise<void> => {
   const documentUrl = (await createDocument())?.documentUrl;
 
   await router.push({
@@ -126,16 +129,16 @@ const addDocument = async () => {
   });
 };
 
-const loadDocuments = async () => {
+const loadDocuments = async (): Promise<void> => {
   await documentController.loadDocuments();
 };
 
-const openDocument = async (params: { documentUrl: string }) => {
+const openDocument = async (params: { documentUrl: string }): Promise<void> => {
   const url = params.documentUrl;
   router.push(`/document/${url}`);
 };
 
-const deleteDocument = async (params: { documentId: string }) => {
+const deleteDocument = async (params: { documentId: string }): Promise<void> => {
   const documentId = params.documentId;
   await documentController.deleteDocument({ id: Number(documentId) });
 };
@@ -143,7 +146,7 @@ const deleteDocument = async (params: { documentId: string }) => {
 const openPopoverRightMenu = async (params: {
   ev: Event;
   documentId: string;
-}) => {
+}): Promise<void> => {
   const documentId = params.documentId;
   const ev = params.ev;
 

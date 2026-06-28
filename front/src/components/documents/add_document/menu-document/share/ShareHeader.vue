@@ -13,15 +13,36 @@
 </template>
 
 <script setup lang="ts">
-import { IonHeader, IonTitle, IonToolbar, IonButton } from "@ionic/vue";
+// 1. Imports (ionic/vue/ionicons)
+import { IonButton, IonButtons, IonHeader, IonIcon, IonTitle, IonToolbar } from "@ionic/vue";
 import { closeOutline } from "ionicons/icons";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 const emitEvent = defineEmits(["closeShare"]);
 
+// 6. Vars and const
 const pageTitle = "Compartir";
 
-// functions
-const closeShare = () => {
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+const closeShare = (): void => {
   emitEvent("closeShare");
 };
 </script>

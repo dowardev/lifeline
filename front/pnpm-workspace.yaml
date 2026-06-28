@@ -16,3 +16,6 @@ minimumReleaseAgeExclude:
   - vue@3.5.35
 patchedDependencies:
   ionicons@8.0.13: patches/ionicons@8.0.13.patch
+allowBuilds:
+  cypress: set this to true or false
+  vue-demi: set this to true or false

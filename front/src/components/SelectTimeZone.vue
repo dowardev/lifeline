@@ -12,7 +12,7 @@
       <ion-toolbar>
         <ion-searchbar
           :debounce="500"
-          @ion-change="search($event.detail.value!)"
+          @ion-change="search({ word: $event.detail.value! })"
         >
         </ion-searchbar>
       </ion-toolbar>
@@ -43,66 +43,68 @@
   </ion-page>
 </template>
 
-<script lang="ts">
- 
+<script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
+  IonButton,
+  IonButtons,
   IonContent,
   IonHeader,
+  IonIcon,
+  IonItem,
+  IonLabel,
   IonPage,
+  IonSearchbar,
   IonTitle,
   IonToolbar,
-  IonSearchbar,
   modalController,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
-import { getAllTimeZonesNames as getAllTimeZonesNamesService } from "../services/system";
 import { closeOutline } from "ionicons/icons";
+import { ref } from "vue";
 
-export default defineComponent({
-  components: {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonSearchbar,
-  },
+// 2. Controllers / Composables
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
 
-  setup() {
-    return { closeOutline };
-  },
+// 3. Components
+// (none)
 
-  data() {
-    return {
-      timeZones: getAllTimeZonesNamesService(),
-      searchResult: [] as Array<string>,
-      timeZone: "",
-    };
-  },
+// 4. Interface and types imports
+// (none)
 
-  methods: {
-    search(word: string) {
-      this.searchResult.length = 0;
-      [this.timeZones][0].names.forEach((element) => {
-        if (element.toLowerCase().indexOf(word.toLowerCase()) >= 0) {
-          this.searchResult.push(element);
-        }
-      });
-    },
+// 5. Main (props, emits)
+// (none)
 
-    save(params?: { timeZone: string }) {
-      let timeZone = "";
-      try {
-        timeZone = params!.timeZone;
-      } catch (e) {
-        //
-      }
-      this.closeModal({ timeZone });
-    },
+// 6. Vars and const
+const timeZones = systemController.getAllTimeZonesNames();
+const searchResult = ref([] as Array<string>);
 
-    closeModal(params: { timeZone: string }) {
-      modalController.dismiss({ timeZone: params.timeZone });
-    },
-  },
-});
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+function search(params: { word: string }): void {
+  const { word } = params;
+  searchResult.value = [];
+  [timeZones][0].names.forEach((element: string) => {
+    if (element.toLowerCase().indexOf(word.toLowerCase()) >= 0) {
+      searchResult.value.push(element);
+    }
+  });
+}
+
+function save(params?: { timeZone: string }): void {
+  const timeZone = params?.timeZone ?? "";
+  closeModal({ timeZone });
+}
+
+function closeModal(params: { timeZone: string }): void {
+  modalController.dismiss({ timeZone: params.timeZone });
+}
 </script>

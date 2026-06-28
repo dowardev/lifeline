@@ -1,6 +1,11 @@
 import { ReminderController } from '@/controllers/reminderController'
 
-export function useReminder() {
+export function useReminder(): {
+  getEventReminders: ReminderController['getEventReminders']
+  generatorReminder: ReminderController['generatorReminder']
+  setReminder: ReminderController['setReminder']
+  cancelReminder: ReminderController['cancelReminder']
+} {
   const controller = new ReminderController()
   return {
     getEventReminders: controller.getEventReminders.bind(controller),

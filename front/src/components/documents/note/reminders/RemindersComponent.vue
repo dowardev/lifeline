@@ -79,23 +79,36 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
+  IonButton,
+  IonButtons,
   IonContent,
+  IonDatetime,
   IonHeader,
+  IonIcon,
+  IonSegment,
+  IonSegmentButton,
   IonTitle,
   IonToolbar,
   isPlatform,
   modalController,
-  IonSegment,
-  IonSegmentButton,
-  IonButton,
-  IonDatetime,
   popoverController,
 } from "@ionic/vue";
 import { add, format } from "date-fns";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { ref } from "vue";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 const props = defineProps({
   dataReminders: {
     type: Object,
@@ -110,11 +123,12 @@ const props = defineProps({
 
 const emitEvent = defineEmits(["reminders"]);
 
+// 6. Vars and const
 const datetimeStart = ref();
-const resetStart = () => datetimeStart.value.$el.reset();
+const resetStart = (): void => datetimeStart.value.$el.reset();
 
 const datetimeEnd = ref();
-const resetEnd = () => datetimeEnd.value.$el.reset();
+const resetEnd = (): void => datetimeEnd.value.$el.reset();
 
 const reminderSegment = ref("date-start");
 const pageTitle = "Recordatorios";
@@ -136,12 +150,21 @@ const dateReminderEnd =
         "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
       );
 
-// functions
-const closPage = () => {
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+const closPage = (): void => {
   modalController.dismiss();
 };
 
-const saveReminder = async () => {
+const saveReminder = async (): Promise<void> => {
   const dateStart = dateReminderStart;
   const dateEnd = dateReminderEnd;
   emitEvent("reminders", { data: { dateStart, dateEnd } });

@@ -33,32 +33,54 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
   IonButton,
+  IonButtons,
+  IonHeader,
+  IonIcon,
   IonSegment,
   IonSegmentButton,
+  IonTitle,
+  IonToolbar,
   isPlatform,
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 const props = defineProps({
   reminderSegment: { type: String, default: "date-start" },
 });
 
 const emitEvent = defineEmits(["closeReminders", "segmentRerminderChange"]);
 
+// 6. Vars and const
 const pageTitle = "Recordatorios";
 
-// functions
-const closeReminders = () => {
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+const closeReminders = (): void => {
   emitEvent("closeReminders");
 };
 
-const changeSegmentReminderValue = (params: { value: string }) => {
+const changeSegmentReminderValue = (params: { value: string }): void => {
   const value = params.value;
   emitEvent("segmentRerminderChange", value);
 };

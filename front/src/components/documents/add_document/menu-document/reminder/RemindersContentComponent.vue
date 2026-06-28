@@ -59,26 +59,25 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonItem, IonDatetime, IonCheckbox } from "@ionic/vue";
+// 1. Imports (ionic/vue/ionicons)
+import { IonButton, IonButtons, IonCheckbox, IonDatetime, IonItem } from "@ionic/vue";
 import { ref } from "vue";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
+// (none)
+
+// 6. Vars and const
 const datetimeStart = ref();
 const datetimeEnd = ref();
-const resetEnd = () => datetimeEnd.value.$el.reset();
-const cancelEnd = () => {
-  datetimeEnd.value.$el.cancel();
-  reminderSegment.value = "date-start";
-};
-const confirmEnd = () => {
-  datetimeEnd.value.$el.confirm();
-  reminderSegment.value = "reminders";
-};
-const resetStart = () => datetimeStart.value.$el.reset();
-const cancelStart = () => datetimeStart.value.$el.cancel();
-const confirmStart = () => {
-  datetimeStart.value.$el.confirm();
-  reminderSegment.value = "date-end";
-};
 const reminderSegment = ref("date-start");
 
 const dateReminderStart = ref(new Date().toISOString());
@@ -91,4 +90,30 @@ const reminderRepeat = ref([
   { value: "1hb", text: "1 hora antes", isChecked: false },
   { value: "1db", text: "1 dia antes", isChecked: false },
 ]);
+
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+const resetEnd = (): void => datetimeEnd.value.$el.reset();
+const cancelEnd = (): void => {
+  datetimeEnd.value.$el.cancel();
+  reminderSegment.value = "date-start";
+};
+const confirmEnd = (): void => {
+  datetimeEnd.value.$el.confirm();
+  reminderSegment.value = "reminders";
+};
+const resetStart = (): void => datetimeStart.value.$el.reset();
+const cancelStart = (): void => datetimeStart.value.$el.cancel();
+const confirmStart = (): void => {
+  datetimeStart.value.$el.confirm();
+  reminderSegment.value = "date-end";
+};
 </script>
