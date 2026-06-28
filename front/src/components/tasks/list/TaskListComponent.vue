@@ -117,6 +117,7 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
   IonCheckbox,
   IonLabel,
@@ -126,17 +127,22 @@ import {
 import { createOutline, trashOutline } from "ionicons/icons";
 import { onMounted, ref, watch } from "vue";
 
-// interface
-import { TaskItem } from "@/store/taskStore";
+// 2. Controllers / Composables
+// (none)
 
-// components
+// 3. Components
 import RightMenuTaskComponent from "./RightMenuTaskComponent.vue";
 
+// 4. Interface and types imports
+import type { TaskItem } from "@/store/taskStore";
+
+// 5. Main (props, emits)
 const emits = defineEmits(["update", "remove", "toggleCheck"]);
 const props = defineProps({
   taskData: { type: Array<TaskItem>, default: () => [] },
 });
 
+// 6. Vars and const
 const showButtonsOptionsTask = ref(-1);
 const screenWidth = ref(window.innerWidth);
 const listTasks = ref({
@@ -144,10 +150,7 @@ const listTasks = ref({
   incomplete: [] as TaskItem[],
 });
 
-// watch
-const handleResize = () => {
-  screenWidth.value = window.innerWidth;
-};
+// 7. Watch
 watch(
   () => props.taskData,
   (tasks) => {
@@ -165,13 +168,20 @@ watch(
   }
 );
 
-// mounted
+// 8. Computed
+// (none)
+
+// 9. OnMounted
 onMounted(() => {
   window.addEventListener("resize", handleResize);
 });
 
-// functions
-function toggleCheckTask(params: { id: number }) {
+// 10. Functions (named parameters pattern)
+const handleResize = (): void => {
+  screenWidth.value = window.innerWidth;
+};
+
+function toggleCheckTask(params: { id: number }): void {
   const { id } = params;
   emits("toggleCheck", { idTask: id });
 }
@@ -179,7 +189,7 @@ function toggleCheckTask(params: { id: number }) {
 async function openPopoverRightTaskMenu(params: {
   ev: CustomEvent;
   taskId: number;
-}) {
+}): Promise<void> {
   const taskId = params.taskId;
   const ev = params.ev;
 
@@ -197,12 +207,12 @@ async function openPopoverRightTaskMenu(params: {
     updateTask({ idTask: taskId });
 }
 
-function updateTask(params: { idTask: number }) {
+function updateTask(params: { idTask: number }): void {
   const { idTask } = params;
   emits("update", { idTask });
 }
 
-function removeTask(params: { id: number }) {
+function removeTask(params: { id: number }): void {
   const { id } = params;
   emits("remove", { id });
 }

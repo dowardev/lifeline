@@ -3,11 +3,11 @@ import { useAuthStore } from '@/store/authStore'
 import { db } from '@/db'
 
 export class AuthController {
-  private get store() {
+  private get store(): ReturnType<typeof useAuthStore> {
     return useAuthStore()
   }
 
-  async login(params: { user: string; password: string }) {
+  async login(params: { user: string; password: string }): Promise<any> {
     const { user, password } = params
     const response = await authService.login({ user, password })
     this.store.setAuth({
@@ -23,12 +23,12 @@ export class AuthController {
     return response
   }
 
-  async signup(params: { name: string; user: string; email: string; password: string }) {
+  async signup(params: { name: string; user: string; email: string; password: string }): Promise<any> {
     const response = await authService.signup(params)
     return response
   }
 
-  async logout() {
+  async logout(): Promise<void> {
     try {
       await authService.logout()
     } finally {
@@ -36,7 +36,7 @@ export class AuthController {
     }
   }
 
-  async loadUser(_params?: any) {
+  async loadUser(_params?: any): Promise<any> {
     const response = await authService.getUser()
     this.store.setUser({ userData: response.user })
     return response
@@ -46,7 +46,7 @@ export class AuthController {
     return this.store.isLogged
   }
 
-  getCurrentUser() {
+  getCurrentUser(): { userName: string; name: string; imageProfile: string } {
     const u = this.store.user
     if (!u) return { userName: '', name: '', imageProfile: '' }
     return {

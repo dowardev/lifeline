@@ -97,16 +97,21 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import { format } from "date-fns";
-import { watch } from "vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 
-// controllers
-import { EventController } from "@/controllers/eventController";
+// 2. Controllers / Composables
 import { SystemController } from "@/controllers/systemController";
 const systemController = new SystemController();
-const eventController = new EventController();
 
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 interface EventsData {
   year: string;
   month: string;
@@ -134,23 +139,7 @@ const props = defineProps({
 });
 const emits = defineEmits(["updateEvent", "openPopoverRightEventMenu"]);
 
-watch(
-  () => props.date,
-  async (date) => {
-    try {
-      day.value = date;
-    } catch (error) {
-      console.error(error);
-    }
-  },
-);
-
-// mounted
-onMounted(async () => {
-  day.value = props.date;
-});
-
-// vars
+// 6. Vars and const
 const day = ref(new Date());
 const daysOfWeek = [
   "sunday",
@@ -188,24 +177,27 @@ const hoursOfDay = [
   "23:00",
 ];
 
-// functions
-function getDaysForCurrentWeek(params: { date: Date }): { date: Date }[] {
-  const date = params.date;
-  const daysList = [];
-  const dayOfWeek = date.getDay();
-  const firstDayOfWeek = new Date(date);
-  const diff = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
-  firstDayOfWeek.setDate(date.getDate() + diff);
+// 7. Watch
+watch(
+  () => props.date,
+  async (date) => {
+    try {
+      day.value = date;
+    } catch (error) {
+      console.error(error);
+    }
+  },
+);
 
-  for (let i = 0; i < 7; i++) {
-    const day = new Date(firstDayOfWeek);
-    day.setDate(firstDayOfWeek.getDate() + i);
-    daysList.push({ date: day });
-  }
+// 8. Computed
+// (none)
 
-  return daysList;
-}
+// 9. OnMounted
+onMounted(async () => {
+  day.value = props.date;
+});
 
+// 10. Functions (named parameters pattern)
 function translateDayHeaderTable(params: { dayName: string }): string {
   const dayName = params.dayName as any;
   let result = systemController.translateDay({

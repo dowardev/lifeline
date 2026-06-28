@@ -73,25 +73,32 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import { IonDatetime, IonPopover } from "@ionic/vue";
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import { add, format, subDays } from "date-fns";
 import { chevronBackOutline, chevronForwardOutline } from "ionicons/icons";
-import { Event, ScheduleElement } from "@/utils/interfaces";
-import { useSchedule } from "@/composables/useSchedule";
 
-const props = defineProps({
-  events: { type: Array as () => Event[], default: () => [] },
-});
+// 2. Controllers / Composables
+// (none)
 
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
+// (none)
+
+// 6. Vars and const
 const currentDate = ref(new Date());
-const hours = Array.from(
-  { length: 24 },
-  (_, i) => `${i.toString().padStart(2, "0")}:00`
-);
 const miniCalendar = ref(null);
 
-// computed
+// 7. Watch
+// (none)
+
+// 8. Computed
 // const generateSchedule = computed(() => {
 //   const schedule = useSchedule().getSchedule();
 //   if (!schedule) return [];
@@ -105,15 +112,18 @@ const miniCalendar = ref(null);
 //   return events;
 // });
 
-// functions
-const nextDay = () => {
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+const nextDay = (): void => {
   const date = currentDate;
   currentDate.value = add(new Date(date.value), {
     days: 1,
   });
 };
 
-const previousDay = () => {
+const previousDay = (): void => {
   const date = currentDate;
   currentDate.value = subDays(new Date(date.value), 1);
 };

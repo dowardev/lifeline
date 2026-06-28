@@ -1,6 +1,12 @@
 import { useThemeStore } from '@/store/themeStore'
 import { db } from '@/db'
 
+const THEME_MIGRATIONS: Record<string, string> = {
+  gruvbox: 'catppuccin-macchiato-maroon',
+  nord: 'catppuccin-latte-maroon',
+  cherry: 'catppuccin-macchiato-maroon',
+}
+
 export class ThemeController {
   private get store() {
     return useThemeStore()
@@ -9,8 +15,12 @@ export class ThemeController {
   async loadTheme() {
     const config = await db.config.get('theme')
     if (config) {
-      this.store.setTheme({ theme: { selected: config.value } })
-      this.applyTheme({ theme: config.value })
+      const migrated = THEME_MIGRATIONS[config.value] || config.value
+      if (migrated !== config.value) {
+        await db.config.put({ name: 'theme', value: migrated })
+      }
+      this.store.setTheme({ theme: { selected: migrated } })
+      this.applyTheme({ theme: migrated })
     }
   }
 
@@ -25,7 +35,26 @@ export class ThemeController {
   }
 
   applyTheme(params: { theme: string }) {
-    document.documentElement.classList.remove('dark', 'light')
-    document.documentElement.classList.add(params.theme)
+    const { theme } = params
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+
+    document.body.classList.remove('dark', 'catppuccin-latte-maroon', 'catppuccin-macchiato-maroon')
+
+    if (theme === 'catppuccin-latte-maroon' || theme === 'catppuccin-macchiato-maroon') {
+      document.body.classList.add(theme)
+    } else {
+      const isDark = theme === 'dark' || (theme === 'auto' && prefersDark)
+      document.body.classList.toggle('dark', isDark)
+    }
+  }
+
+  setupThemeListener() {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async () => {
+      const theme = this.getTheme()
+      if (theme === 'auto') {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        document.body.classList.toggle('dark', isDark)
+      }
+    })
   }
 }

@@ -34,7 +34,11 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
+  IonButton,
+  IonCheckbox,
+  IonIcon,
   IonItem,
   IonList,
   IonInput,
@@ -43,10 +47,32 @@ import {
 } from "@ionic/vue";
 import { addOutline, closeOutline } from "ionicons/icons";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
+// (none)
+
+// 6. Vars and const
 const todoElements = [{ value: "", isChecked: false }];
 
-// functions
-const handleReorder = (event: CustomEvent) => {
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+const handleReorder = (event: CustomEvent): void => {
   console.log("Dragged from index", event.detail.from, "to", event.detail.to);
   event.detail.complete();
 };

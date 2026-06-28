@@ -65,20 +65,32 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
+  IonContent,
+  IonInput,
   IonItem,
+  IonModal,
   IonPopover,
+  IonText,
   IonTextarea,
   popoverController,
   isPlatform,
-  IonModal,
 } from "@ionic/vue";
 import { watch } from "vue";
-import { Note } from "../../../utils/interfaces";
+
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
 import NoteRightMenuComponent from "./rightMenu/noteRightMenuComponent.vue";
-import { OptionsNoteRightMenu } from "../../../utils/types";
 import RemindersComponent from "./reminders/RemindersComponent.vue";
 
+// 4. Interface and types imports
+import type { Note } from "../../../utils/interfaces";
+import type { OptionsNoteRightMenu } from "../../../utils/types";
+
+// 5. Main (props, emits)
 const props = defineProps({
   data: { type: Object as () => Note, default: {} as Note },
 });
@@ -90,25 +102,38 @@ const emitEvent = defineEmits([
   "updateReminder",
 ]);
 
+// 6. Vars and const
 const idElements = new Date().getTime();
 let inputValue = "";
 let isOpenModalReminders = false;
 let isOpenPopoverReminders = false;
 
-watch(props.data, (newValue, oldValue) => {
+// 7. Watch
+watch(() => props.data, (newValue) => {
   const data = newValue;
   const content = data.content;
   if (!content) return;
   inputValue = content;
 });
 
-// functions
-const updateValue = (params: { value: string }) => {
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+const setData = (): void => {
+  const content = props.data.content;
+  inputValue = content as string;
+};
+
+setData();
+
+// 10. Functions (named parameters pattern)
+const updateValue = (params: { value: string }): void => {
   const value = params.value;
   emitEvent("updateValue", value);
 };
 
-const openPopoverRightMenu = async (params: { ev: Event }) => {
+const openPopoverRightMenu = async (params: { ev: Event }): Promise<void> => {
   const ev = params.ev;
 
   const popover = await popoverController.create({
@@ -122,13 +147,7 @@ const openPopoverRightMenu = async (params: { ev: Event }) => {
   if (role == "confirm") optionMenu({ option: data.option });
 };
 
-const setData = () => {
-  const content = props.data.content;
-
-  inputValue = content as string;
-};
-
-const optionMenu = (params: { option: OptionsNoteRightMenu }) => {
+const optionMenu = (params: { option: OptionsNoteRightMenu }): void => {
   const option = params.option;
 
   if (option == "add") emitEvent("addElement", option);
@@ -138,7 +157,4 @@ const optionMenu = (params: { option: OptionsNoteRightMenu }) => {
     else isOpenModalReminders = true;
   }
 };
-
-// mounted
-setData();
 </script>

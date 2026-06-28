@@ -3,112 +3,83 @@
     <ion-header mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
+          <ion-menu-button menu="main-menu" mode="md"></ion-menu-button>
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
-      <!-- main options -->
-      <section>
-        <ion-row>
-          <ion-col size="12">
-            <!-- button popover  main options -->
-            <div style="float: right">
-              <ion-item lines="none">
-                <ion-button
-                  fill="clear"
-                  @click="
-                    eventPopOverMainOptions = $event;
-                    isOpenPopOverMainOptions = true;
-                  "
-                >
+    <ion-content>
+      <ion-grid>
+        <ion-row >
+          <ion-col size="12" >
+            <ion-list>
+              <ion-list-header>
+                <ion-label>Widgets</ion-label>
+
+                <ion-button id="main-options-trigger" fill="clear">
                   <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
                 </ion-button>
-              </ion-item>
-            </div>
-          </ion-col>
-        </ion-row>
-      </section>
+              </ion-list-header>
 
-      <!-- calendar -->
-      <section>
-        <ion-row class="center">
-          <ion-col sieze-xs="12" size-lg="8">
-            <ion-card class="card-main-content">
-              <div class="ion-padding-start ion-padding-end">
-                <ion-row class="scroll-horizontal">
-                  <ion-col size-xs="12" size-md="6" size-lg="6">
-                    <ion-card class="scroll-card-calendar">
-                      <div
-                        class="card-calendar-content ion-padding-start ion-padding-end"
-                      >
-                        <CalendarComponent />
-                      </div>
-                    </ion-card>
-                  </ion-col>
+              <ion-row class="ion-justify-content-center">
+                <ion-col size=12 size-lg="6">
+                  <ion-row class="ion-justify-content-center">
+                    <ion-col size-xs="12" size-md="6" size-lg="5">
+                      <ion-card class="scroll-card-calendar">
+                          <CalendarComponent />
+                      </ion-card>
+                    </ion-col>
 
-                  <ion-col size-xs="12" size-md="6" size-lg="6">
-                    <ion-card>
-                      <ion-card-header>
-                        <div
-                          style="display: flex; justify-content: space-between"
-                        >
-                          <div class="center-vertical">
-                            <ion-card-title>Wakatime</ion-card-title>
+                    <ion-col size-xs="12" size-md="6" size-lg="5">
+                      <ion-card>
+                        <ion-card-header>
+                          <div style="display: flex; justify-content: space-between">
+                            <div class="center-vertical">
+                              <ion-card-title>Wakatime</ion-card-title>
+                            </div>
+
+                            <div>
+                              <ion-button
+                                fill="clear"
+                                size="small"
+                                @click="refreshTodayComponent()"
+                                ><ion-icon :icon="refreshOutline"></ion-icon
+                              ></ion-button>
+
+                              <ion-button fill="clear" size="small" @click="logoutWakaTime()"
+                                ><ion-icon :icon="logOutOutline"></ion-icon
+                              ></ion-button>
+                            </div>
                           </div>
+                        </ion-card-header>
 
-                          <div>
-                            <ion-button
-                              fill="clear"
-                              size="small"
-                              @click="refreshTodayComponent()"
-                              ><ion-icon :icon="refreshOutline"></ion-icon
-                            ></ion-button>
-
-                            <ion-button
-                              fill="clear"
-                              size="small"
-                              @click="logoutWakaTime()"
-                              ><ion-icon :icon="logOutOutline"></ion-icon
-                            ></ion-button>
+                        <div>
+                          <!-- input api key -->
+                          <div v-if="!wakaTimeController.getApiKey()" class="ion-padding">
+                            <WakaTimeApiKeyComponent />
+                          </div>
+                          <div v-if="wakaTimeController.getApiKey()">
+                            <WakaTimeToday
+                              ref="todayComponentRef"
+                              :api-key="wakaTimeController.getApiKey()"
+                            />
                           </div>
                         </div>
-                      </ion-card-header>
-
-                      <div>
-                        <!-- input api key -->
-                        <div
-                          v-if="!wakaTimeController.getApiKey()"
-                          class="ion-padding"
-                        >
-                          <WakaTimeApiKeyComponent />
-                        </div>
-                        <div v-if="wakaTimeController.getApiKey()">
-                          <WakaTimeToday
-                            ref="todayComponentRef"
-                            :api-key="wakaTimeController.getApiKey()"
-                          />
-                        </div>
-                      </div>
-                    </ion-card>
-                  </ion-col>
-                </ion-row>
-              </div>
-            </ion-card>
+                      </ion-card>
+                    </ion-col>
+                  </ion-row>
+                </ion-col>
+              </ion-row>
+            </ion-list>
           </ion-col>
         </ion-row>
-      </section>
+      </ion-grid>
 
       <!-- popovers -->
       <!-- popover main options -->
-      <ion-popover
-        :is-open="isOpenPopOverMainOptions"
-        :event="eventPopOverMainOptions"
-        @did-dismiss="isOpenPopOverMainOptions = false"
-      >
+      <ion-popover trigger="main-options-trigger" trigger-action="click">
         <ion-content>
           <ion-list>
             <ion-list-header>
@@ -142,29 +113,27 @@ import {
   IonButton,
   IonCard,
   IonCardTitle,
-} from "@ionic/vue";
-import { onMounted, ref } from "vue";
+} from '@ionic/vue';
+import { onMounted, ref } from 'vue';
 
 import {
   brushOutline,
   ellipsisVerticalOutline,
   logOutOutline,
   refreshOutline,
-} from "ionicons/icons";
+} from 'ionicons/icons';
 
 // components
-import CalendarComponent from "./calendar/CalendarComponent.vue";
-import WakaTimeApiKeyComponent from "@/components/wakatime/ApiKeyComponent.vue";
-import WakaTimeToday from "@/components/wakatime/today/WakaTimeToday.vue";
+import CalendarComponent from './calendar/CalendarComponent.vue';
+import WakaTimeApiKeyComponent from '@/components/wakatime/ApiKeyComponent.vue';
+import WakaTimeToday from '@/components/wakatime/today/WakaTimeToday.vue';
 
 // controllers
-import { WakaTimeController } from "@/controllers/wakaTimeController";
+import { WakaTimeController } from '@/controllers/wakaTimeController';
 const wakaTimeController = new WakaTimeController();
 
-const pageTitle = "Inicio";
+const pageTitle = 'Inicio';
 const todayComponentRef = ref();
-const isOpenPopOverMainOptions = ref(false);
-const eventPopOverMainOptions = ref(null as CustomEvent | null);
 
 onMounted(() => {
   wakaTimeController.loadApiKey();
@@ -180,20 +149,7 @@ function logoutWakaTime(): void {
 </script>
 
 <style scoped>
-.scroll-horizontal {
-  flex-wrap: nowrap;
-  overflow-x: scroll !important;
-  overflow-y: hidden;
-  overflow-x: hidden;
-  width: 100%;
-}
-
 .card-calendar-content {
   height: 76vh;
-}
-
-.card-main-content {
-  max-height: 82vh;
-  overflow-y: auto;
 }
 </style>

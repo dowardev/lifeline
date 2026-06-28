@@ -1,7 +1,7 @@
 {
   "name": "lifeline-app",
   "private": true,
-  "version": "0.11.1",
+  "version": "0.12.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,6 +23,12 @@
     "@capacitor/keyboard": "^8.0.3",
     "@capacitor/local-notifications": "^8.2.0",
     "@capacitor/status-bar": "^8.0.2",
+    "@fullcalendar/core": "^6.1.20",
+    "@fullcalendar/daygrid": "^6.1.20",
+    "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/list": "^6.1.20",
+    "@fullcalendar/timegrid": "^6.1.20",
+    "@fullcalendar/vue3": "^6.1.20",
     "@ionic/core": "^8.8.8",
     "@ionic/storage": "^4.0.0",
     "@ionic/vue": "^8.8.8",

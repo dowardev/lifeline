@@ -58,8 +58,6 @@ export class CalendarController {
           diary: new Date(),
           day: new Date(),
           week: new Date(),
-          month: new Date(),
-          year: new Date(),
         });
 
       currentDates[mode!] = date;
@@ -92,7 +90,7 @@ export class CalendarController {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
-      return (await storage.get("calendarModeView")) ?? "week";
+      return (await storage.get("calendarModeView")) ?? "day";
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error

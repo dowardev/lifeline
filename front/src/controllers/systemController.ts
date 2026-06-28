@@ -38,4 +38,29 @@ export class SystemController {
     const mode = await storage.get('tasksViewMode')
     return (mode as ViewMode) || 'list'
   }
+
+  getAllTimeZonesNames(): { names: string[] } {
+    try {
+      return { names: (Intl as any).supportedValuesOf('timeZone') || [] }
+    } catch {
+      return { names: [] }
+    }
+  }
+
+  async copyToClipboard(params: { text: string }): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(params.text)
+      return true
+    } catch {
+      const textarea = document.createElement('textarea')
+      textarea.value = params.text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      return true
+    }
+  }
 }

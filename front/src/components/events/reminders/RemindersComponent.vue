@@ -125,13 +125,13 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
   IonContent,
   IonHeader,
   IonTitle,
   IonToolbar,
   isPlatform,
-  modalController,
   IonSegment,
   IonSegmentButton,
   IonButton,
@@ -143,9 +143,16 @@ import { closeOutline, saveOutline } from "ionicons/icons";
 import { computed, onMounted, ref, watch } from "vue";
 import { add, formatISO } from "date-fns";
 
-// components
+// 2. Controllers / Composables
+// (none for this component)
+
+// 3. Components
 import RepeatsComponent from "./repeat/RepeatsComponent.vue";
 
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 const props = defineProps({
   segmentOption: { default: "date-start", type: String },
   dates: {
@@ -176,11 +183,12 @@ const props = defineProps({
 
 const emitEvent = defineEmits(["updateDataReminders"]);
 
+// 6. Vars and const
 const datetimeStart = ref();
-const resetStart = () => datetimeStart.value.$el.reset();
+const resetStart = (): void => datetimeStart.value.$el.reset();
 
 const datetimeEnd = ref();
-const resetEnd = () => datetimeEnd.value.$el.reset();
+const resetEnd = (): void => datetimeEnd.value.$el.reset();
 
 const reminderSegment = ref("date-start");
 const pageTitle = "Recordatorios";
@@ -256,7 +264,19 @@ const dataRepeat = ref({ type: "daily", frecuency: 1 } as {
 });
 const currentLocale = navigator.language;
 
-// computed
+// 7. Watch
+watch(startDate, (newValue) => {
+  const dateStart = new Date(newValue);
+  const dateEnd = new Date(dates.value.end);
+  if (dateStart > dateEnd) dates.value.end = dateStart;
+});
+watch(endDate, (newValue) => {
+  const dateStart = new Date(dates.value.start);
+  const dateEnd = new Date(newValue);
+  if (dateEnd < dateStart) dates.value.start = dateEnd;
+});
+
+// 8. Computed
 const endDate = computed(() => {
   return dates.value.end;
 });
@@ -264,19 +284,7 @@ const startDate = computed(() => {
   return dates.value.start;
 });
 
-// watch
-watch(startDate, (newValue, oldValue) => {
-  const dateStart = new Date(newValue);
-  const dateEnd = new Date(dates.value.end);
-  if (dateStart > dateEnd) dates.value.end = dateStart;
-});
-watch(endDate, (newValue, oldValue) => {
-  const dateStart = new Date(dates.value.start);
-  const dateEnd = new Date(newValue);
-  if (dateEnd < dateStart) dates.value.start = dateEnd;
-});
-
-// mouted
+// 9. OnMounted
 onMounted(() => {
   reminderSegment.value = props.segmentOption as string;
   notificationsData.value.forEach((notification) => {
@@ -287,12 +295,12 @@ onMounted(() => {
   dataRepeat.value = props.repeat as any;
 });
 
-// functions
-const closPage = async () => {
+// 10. Functions (named parameters pattern)
+const closPage = async (): Promise<void> => {
   await popoverController.dismiss();
 };
 
-const saveReminder = async () => {
+const saveReminder = async (): Promise<void> => {
   const dateStart = dates.value.start;
   const dateEnd = dates.value.end;
   const remindersChecked = getCheckedReminders();
@@ -310,7 +318,7 @@ const saveReminder = async () => {
   closPage();
 };
 
-function getCheckedReminders() {
+function getCheckedReminders(): string[] {
   return notificationsData.value
     .filter((reminder) => reminder.checked)
     .map((day) => day.name);

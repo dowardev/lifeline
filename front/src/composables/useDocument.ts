@@ -8,7 +8,22 @@ export interface DocumentElement {
   [key: string]: unknown
 }
 
-export function useDocument() {
+type UseDocumentReturn = {
+  loadDocuments: DocumentController['loadDocuments']
+  getUserDocuments: DocumentController['getUserDocuments']
+  getUserDocument: DocumentController['getUserDocument']
+  createDocument: DocumentController['createDocument']
+  updateDocument: DocumentController['updateDocument']
+  deleteDocument: DocumentController['deleteDocument']
+  getDocuments: ReturnType<typeof useDocumentStore>['getDocuments']
+  getDocument: ReturnType<typeof useDocumentStore>['getDocument']
+  removeElement: (params: { index: number | string; documentId: string }) => void
+  insertElement: (params: { documentId: string; element: DocumentElement }) => void
+  updateNoteValue: (params: { data: { value: string }; index: number | string; documentId: string }) => void
+  updateNoteReminder: (params: { data: { dateStart: string; dateEnd: string }; index: number | string; documentId: string }) => void
+}
+
+export function useDocument(): UseDocumentReturn {
   const controller = new DocumentController()
   const store = useDocumentStore()
 
@@ -21,7 +36,7 @@ export function useDocument() {
     deleteDocument: controller.deleteDocument.bind(controller),
     getDocuments: store.getDocuments.bind(store),
     getDocument: store.getDocument.bind(store),
-    removeElement(params: { index: number | string; documentId: string }) {
+    removeElement(params: { index: number | string; documentId: string }): void {
       const idx = Number(params.index)
       const doc = store.documents.find((d) => String(d.id) === params.documentId)
       if (doc && doc.elements) {
@@ -30,7 +45,7 @@ export function useDocument() {
         store.updateDocument({ id: doc.id, updates: { elements } })
       }
     },
-    insertElement(params: { documentId: string; element: DocumentElement }) {
+    insertElement(params: { documentId: string; element: DocumentElement }): void {
       const doc = store.documents.find((d) => String(d.id) === params.documentId)
       if (doc) {
         const elements = doc.elements ? [...doc.elements] : []
@@ -38,7 +53,7 @@ export function useDocument() {
         store.updateDocument({ id: doc.id, updates: { elements } })
       }
     },
-    updateNoteValue(params: { data: { value: string }; index: number | string; documentId: string }) {
+    updateNoteValue(params: { data: { value: string }; index: number | string; documentId: string }): void {
       const idx = Number(params.index)
       const doc = store.getDocument({ elementSearch: params.documentId })
       if (doc && doc.elements && doc.elements[idx]) {
@@ -48,7 +63,7 @@ export function useDocument() {
         controller.updateDocument({ id: doc.id, document: { ...doc, elements } })
       }
     },
-    updateNoteReminder(params: { data: { dateStart: string; dateEnd: string }; index: number | string; documentId: string }) {
+    updateNoteReminder(params: { data: { dateStart: string; dateEnd: string }; index: number | string; documentId: string }): void {
       const idx = Number(params.index)
       const doc = store.getDocument({ elementSearch: params.documentId })
       if (doc && doc.elements && doc.elements[idx]) {

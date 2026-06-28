@@ -1,321 +1,319 @@
 <template>
-  <section class="center">
-    <ion-card class="element-post-selected">
-      <ion-card-content>
-        <div class="center">
-          <img :src="imageUserPath" alt="" class="imagen-usuario" />
-        </div>
+  <ion-grid>
+    <ion-row class="ion-justify-content-center">
+      <ion-col size="12" size-md="10" size-lg="8" size-xl="6">
+        <section class="center">
+          <ion-card class="element-post-selected">
+            <ion-card-content>
+              <div class="center">
+                <img :src="imageUserPath" alt="" class="imagen-usuario" />
+              </div>
+
+              <section>
+                <!-- name -->
+                <ion-row>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div>
+                        <div style="display: flex; align-items: center; height: 50px">
+                          <ion-button fill="clear" :disabled="true"
+                            ><ion-icon :icon="personOutline"></ion-icon
+                          ></ion-button>
+                        </div>
+                      </div>
+
+                      <div style="width: 100%">
+                        <ion-input
+                          ref="inputName"
+                          fill="outline"
+                          label="Nombre"
+                          label-placement="floating"
+                          autocomplete="given-name"
+                          type="text"
+                          :error-text="v$.form.name.$errors[0]?.$message as string"
+                          :class="[
+                            v$.form.name.$errors.length == 0
+                              ? 'ion-valid'
+                              : 'ion-invalid',
+                          ]"
+                          :value="form.name"
+                          @ion-input="form.name = $event.target.value as string"
+                          @ion-focus="
+                            ($refs.inputName as any).$el.classList.add('ion-touched');
+                            v$.form.name.$touch();
+                          "
+                        ></ion-input>
+                      </div>
+                    </div>
+                  </ion-col>
+                </ion-row>
+
+                <!-- user -->
+                <ion-row>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div>
+                        <div style="display: flex; align-items: center; height: 50px">
+                          <ion-button fill="clear" :disabled="true"
+                            ><ion-icon :icon="personOutline"></ion-icon
+                          ></ion-button>
+                        </div>
+                      </div>
+
+                      <div style="width: 100%">
+                        <ion-input
+                          ref="inputUser"
+                          fill="outline"
+                          label="Usuario"
+                          label-placement="floating"
+                          autocomplete="username"
+                          type="text"
+                          :error-text="v$.form.user.$errors[0]?.$message as string"
+                          :class="[
+                            v$.form.user.$errors.length == 0
+                              ? 'ion-valid'
+                              : 'ion-invalid',
+                          ]"
+                          :value="form.user"
+                          @ion-input="form.user = $event.target.value as string"
+                          @ion-focus="
+                            ($refs.inputUser as any).$el.classList.add('ion-touched');
+                            v$.form.user.$touch();
+                          "
+                        ></ion-input>
+                      </div>
+                    </div>
+                  </ion-col>
+                </ion-row>
+
+                <!-- email -->
+                <ion-row>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div>
+                        <div style="display: flex; align-items: center; height: 50px">
+                          <ion-button fill="clear" :disabled="true"
+                            ><ion-icon :icon="mailOutline"></ion-icon
+                          ></ion-button>
+                        </div>
+                      </div>
+
+                      <div style="width: 100%">
+                        <ion-input
+                          ref="inputMail"
+                          fill="outline"
+                          label="Correo electronico"
+                          label-placement="floating"
+                          autocomplete="email"
+                          type="email"
+                          :error-text="v$.form.email.$errors[0]?.$message as string"
+                          :class="[
+                            v$.form.email.$errors.length == 0
+                              ? 'ion-valid'
+                              : 'ion-invalid',
+                          ]"
+                          :value="form.email"
+                          @ion-input="form.email = $event.target.value as string"
+                          @ion-focus="
+                            ($refs.inputMail as any).$el.classList.add('ion-touched');
+                            v$.form.email.$touch();
+                          "
+                        ></ion-input>
+                      </div>
+                    </div>
+                  </ion-col>
+                </ion-row>
+
+                <!-- password 1 -->
+                <ion-row>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div>
+                        <div style="display: flex; align-items: center; height: 50px">
+                          <ion-button fill="clear" :disabled="true"
+                            ><ion-icon :icon="fingerPrintOutline"></ion-icon
+                          ></ion-button>
+                        </div>
+                      </div>
+
+                      <div style="width: 100%">
+                        <ion-input
+                          ref="inputPassword"
+                          fill="outline"
+                          label="Contraseña"
+                          label-placement="floating"
+                          autocomplete="new-password"
+                          :type="isPasswordVisible1 ? 'text' : 'password'"
+                          :error-text="
+                            v$.form.password.$errors[0]?.$message as string
+                          "
+                          :class="[
+                            v$.form.password.$errors.length == 0
+                              ? 'ion-valid'
+                              : 'ion-invalid',
+                          ]"
+                          :value="form.password"
+                          @ion-input="form.password = $event.target.value as string"
+                          @ion-focus="
+                            ($refs.inputPassword as any).$el.classList.add(
+                              'ion-touched',
+                            );
+                            v$.form.password.$touch();
+                          "
+                        ></ion-input>
+                      </div>
+
+                      <div>
+                        <div style="display: flex; align-items: center; height: 50px">
+                          <ion-button
+                            slot="end"
+                            fill="clear"
+                            style="margin-top: 20px"
+                            @click="
+                              isPasswordVisible1 = !isPasswordVisible1.valueOf()
+                            "
+                          >
+                            <ion-icon
+                              :icon="
+                                isPasswordVisible1.valueOf()
+                                  ? eyeOffOutline
+                                  : eyeOutline
+                              "
+                            ></ion-icon>
+                          </ion-button>
+                        </div>
+                      </div>
+                    </div>
+                  </ion-col>
+                </ion-row>
+
+                <!-- password 2 -->
+                <ion-row>
+                  <ion-col size-xs="11" size="10">
+                    <div style="display: flex">
+                      <div>
+                        <div style="display: flex; align-items: center; height: 50px">
+                          <ion-button fill="clear" :disabled="true"
+                            ><ion-icon :icon="fingerPrintOutline"></ion-icon
+                          ></ion-button>
+                        </div>
+                      </div>
+
+                      <div style="width: 100%">
+                        <ion-input
+                          ref="inputPassword2"
+                          fill="outline"
+                          label="Repetir contraseña"
+                          label-placement="floating"
+                          :type="isPasswordVisible2 ? 'text' : 'password'"
+                          :error-text="
+                            form.password2 != form.password
+                              ? 'Las contraseñas no coinciden'
+                              : ''
+                          "
+                          :class="[
+                            form.password2 == form.password
+                              ? 'ion-valid'
+                              : 'ion-invalid',
+                          ]"
+                          :value="form.password2"
+                          @ion-input="form.password2 = $event.target.value as string"
+                        ></ion-input>
+                      </div>
+
+                      <div>
+                        <div style="display: flex; align-items: center; height: 50px">
+                          <ion-button
+                            slot="end"
+                            fill="clear"
+                            style="margin-top: 20px"
+                            @click="
+                              isPasswordVisible2 = !isPasswordVisible2.valueOf()
+                            "
+                          >
+                            <ion-icon
+                              :icon="
+                                isPasswordVisible2.valueOf()
+                                  ? eyeOffOutline
+                                  : eyeOutline
+                              "
+                            ></ion-icon>
+                          </ion-button>
+                        </div>
+                      </div>
+                    </div>
+                  </ion-col>
+                </ion-row>
+
+                <!-- button signup -->
+                <div class="center ion-padding-bottom">
+                  <ion-button
+                    expand="block"
+                    :disabled="v$.$invalid || spinners.buttonSignup == true"
+                    @click="addUser()"
+                  >
+                    <ion-label v-if="spinners.buttonSignup == false">{{
+                      $t("message.signup")
+                    }}</ion-label>
+                    <ion-spinner
+                      v-if="spinners.buttonSignup == true"
+                      name="crescent"
+                    ></ion-spinner>
+                  </ion-button>
+                </div>
+
+                <!-- fill form button (dev only) -->
+                <div v-if="isDev" class="center">
+                  <ion-button fill="clear" size="small" @click="fillForm">
+                    Rellenar
+                  </ion-button>
+                </div>
+              </section>
+            </ion-card-content>
+          </ion-card>
+        </section>
 
         <section>
-          <!-- name -->
-          <ion-row>
-            <ion-col size-xs="11" size="10">
-              <div style="display: flex">
-                <div>
-                  <div style="display: flex; align-items: center; height: 50px">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon :icon="personOutline"></ion-icon
-                    ></ion-button>
-                  </div>
-                </div>
-
-                <div style="width: 100%">
-                  <ion-input
-                    ref="inputName"
-                    fill="outline"
-                    label="Nombre"
-                    label-placement="floating"
-                    autocomplete="given-name"
-                    type="text"
-                    :error-text="v$.form.name.$errors[0]?.$message as string"
-                    :class="[
-                      v$.form.name.$errors.length == 0
-                        ? 'ion-valid'
-                        : 'ion-invalid',
-                    ]"
-                    :value="form.name"
-                    @ion-input="form.name = $event.target.value as string"
-                    @ion-focus="
-                      ($refs.inputName as any).$el.classList.add('ion-touched');
-                      v$.form.name.$touch();
-                    "
-                  ></ion-input>
-                </div>
-              </div>
-            </ion-col>
-          </ion-row>
-
-          <!-- user -->
-          <ion-row>
-            <ion-col size-xs="11" size="10">
-              <div style="display: flex">
-                <div>
-                  <div style="display: flex; align-items: center; height: 50px">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon :icon="personOutline"></ion-icon
-                    ></ion-button>
-                  </div>
-                </div>
-
-                <div style="width: 100%">
-                  <ion-input
-                    ref="inputUser"
-                    fill="outline"
-                    label="Usuario"
-                    label-placement="floating"
-                    autocomplete="username"
-                    type="text"
-                    :error-text="v$.form.user.$errors[0]?.$message as string"
-                    :class="[
-                      v$.form.user.$errors.length == 0
-                        ? 'ion-valid'
-                        : 'ion-invalid',
-                    ]"
-                    :value="form.user"
-                    @ion-input="form.user = $event.target.value as string"
-                    @ion-focus="
-                      ($refs.inputUser as any).$el.classList.add('ion-touched');
-                      v$.form.user.$touch();
-                    "
-                  ></ion-input>
-                </div>
-              </div>
-            </ion-col>
-          </ion-row>
-
-          <!-- email -->
-          <ion-row>
-            <ion-col size-xs="11" size="10">
-              <div style="display: flex">
-                <div>
-                  <div style="display: flex; align-items: center; height: 50px">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon :icon="mailOutline"></ion-icon
-                    ></ion-button>
-                  </div>
-                </div>
-
-                <div style="width: 100%">
-                  <ion-input
-                    ref="inputMail"
-                    fill="outline"
-                    label="Correo electronico"
-                    label-placement="floating"
-                    autocomplete="email"
-                    type="email"
-                    :error-text="v$.form.email.$errors[0]?.$message as string"
-                    :class="[
-                      v$.form.email.$errors.length == 0
-                        ? 'ion-valid'
-                        : 'ion-invalid',
-                    ]"
-                    :value="form.email"
-                    @ion-input="form.email = $event.target.value as string"
-                    @ion-focus="
-                      ($refs.inputMail as any).$el.classList.add('ion-touched');
-                      v$.form.email.$touch();
-                    "
-                  ></ion-input>
-                </div>
-              </div>
-            </ion-col>
-          </ion-row>
-
-          <!-- password 1 -->
-          <ion-row>
-            <ion-col size-xs="11" size="10">
-              <div style="display: flex">
-                <div>
-                  <div style="display: flex; align-items: center; height: 50px">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon :icon="fingerPrintOutline"></ion-icon
-                    ></ion-button>
-                  </div>
-                </div>
-
-                <div style="width: 100%">
-                  <ion-input
-                    ref="inputPassword"
-                    fill="outline"
-                    label="Contraseña"
-                    label-placement="floating"
-                    autocomplete="new-password"
-                    :type="isPasswordVisible1 ? 'text' : 'password'"
-                    :error-text="
-                      v$.form.password.$errors[0]?.$message as string
-                    "
-                    :class="[
-                      v$.form.password.$errors.length == 0
-                        ? 'ion-valid'
-                        : 'ion-invalid',
-                    ]"
-                    :value="form.password"
-                    @ion-input="form.password = $event.target.value as string"
-                    @ion-focus="
-                      ($refs.inputPassword as any).$el.classList.add(
-                        'ion-touched',
-                      );
-                      v$.form.password.$touch();
-                    "
-                  ></ion-input>
-                </div>
-
-                <div>
-                  <div style="display: flex; align-items: center; height: 50px">
-                    <ion-button
-                      slot="end"
-                      fill="clear"
-                      style="margin-top: 20px"
-                      @click="
-                        isPasswordVisible1 = !isPasswordVisible1.valueOf()
-                      "
-                    >
-                      <ion-icon
-                        :icon="
-                          isPasswordVisible1.valueOf()
-                            ? eyeOffOutline
-                            : eyeOutline
-                        "
-                      ></ion-icon>
-                    </ion-button>
-                  </div>
-                </div>
-              </div>
-            </ion-col>
-          </ion-row>
-
-          <!-- password 2 -->
-          <ion-row>
-            <ion-col size-xs="11" size="10">
-              <div style="display: flex">
-                <div>
-                  <div style="display: flex; align-items: center; height: 50px">
-                    <ion-button fill="clear" :disabled="true"
-                      ><ion-icon :icon="fingerPrintOutline"></ion-icon
-                    ></ion-button>
-                  </div>
-                </div>
-
-                <div style="width: 100%">
-                  <ion-input
-                    ref="inputPassword2"
-                    fill="outline"
-                    label="Repetir contraseña"
-                    label-placement="floating"
-                    :type="isPasswordVisible2 ? 'text' : 'password'"
-                    :error-text="
-                      form.password2 != form.password
-                        ? 'Las contraseñas no coinciden'
-                        : ''
-                    "
-                    :class="[
-                      form.password2 == form.password
-                        ? 'ion-valid'
-                        : 'ion-invalid',
-                    ]"
-                    :value="form.password2"
-                    @ion-input="form.password2 = $event.target.value as string"
-                  ></ion-input>
-                </div>
-
-                <div>
-                  <div style="display: flex; align-items: center; height: 50px">
-                    <ion-button
-                      slot="end"
-                      fill="clear"
-                      style="margin-top: 20px"
-                      @click="
-                        isPasswordVisible2 = !isPasswordVisible2.valueOf()
-                      "
-                    >
-                      <ion-icon
-                        :icon="
-                          isPasswordVisible2.valueOf()
-                            ? eyeOffOutline
-                            : eyeOutline
-                        "
-                      ></ion-icon>
-                    </ion-button>
-                  </div>
-                </div>
-              </div>
-            </ion-col>
-          </ion-row>
-
-          <!-- button signup -->
-          <div class="center ion-padding-bottom">
-            <ion-button
-              expand="block"
-              :disabled="v$.$invalid || spinners.buttonSignup == true"
-              @click="addUser()"
-            >
-              <ion-label v-if="spinners.buttonSignup == false">{{
-                $t("message.signup")
-              }}</ion-label>
-              <ion-spinner
-                v-if="spinners.buttonSignup == true"
-                name="crescent"
-              ></ion-spinner>
-            </ion-button>
-          </div>
-
-          <!-- fill form button (dev only) -->
-          <div v-if="isDev" class="center">
-            <ion-button fill="clear" size="small" @click="fillForm">
-              Rellenar
-            </ion-button>
+          <div class="center">
+            <ion-item lines="none" class="transparent">
+              <ion-button
+                class="options"
+                fill="clear"
+                :disabled="spinners.buttonLogin"
+                @click="login"
+              >
+                <ion-label v-if="spinners.buttonLogin == false"
+                  >Iniciar sesión</ion-label
+                >
+                <ion-spinner
+                  v-if="spinners.buttonLogin"
+                  name="crescent"
+                ></ion-spinner>
+              </ion-button>
+            </ion-item>
           </div>
         </section>
-      </ion-card-content>
-    </ion-card>
-  </section>
-
-  <section>
-    <div class="center">
-      <ion-item lines="none" class="transparent">
-        <ion-button
-          class="options"
-          fill="clear"
-          :disabled="spinners.buttonLogin"
-          @click="login"
-        >
-          <ion-label v-if="spinners.buttonLogin == false"
-            >Iniciar sesión</ion-label
-          >
-          <ion-spinner
-            v-if="spinners.buttonLogin"
-            name="crescent"
-          ></ion-spinner>
-        </ion-button>
-      </ion-item>
-    </div>
-  </section>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </template>
 
 <script setup lang="ts">
 import {
   alertController,
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
   IonInput,
 } from "@ionic/vue";
 import { computed, reactive, ref } from "vue";
 import {
   eyeOutline,
   eyeOffOutline,
-  chevronBackOutline,
   personOutline,
   mailOutline,
   fingerPrintOutline,
 } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
-import { required, email, helpers, sameAs } from "@vuelidate/validators";
+import { required, email, helpers } from "@vuelidate/validators";
 import { useRouter } from "vue-router";
-import type { Faker } from "@faker-js/faker";
-
 // controllers
 import { SystemController } from "@/controllers/systemController";
 import { AuthController } from "@/controllers/authController";
@@ -327,8 +325,6 @@ const themeController = new ThemeController();
 import userImage from "@/assets/otros/user.png";
 import userImageGruvbox from "@/assets/otros/user-gruvbox.png";
 import userImageCherry from "@/assets/otros/user-cherry.png";
-import loginImageGruvbox from "@/assets/otros/login-gruvbox.jpg";
-import loginImageCherry from "@/assets/otros/login-cherry.png";
 import { ThemeController } from "@/controllers/themeController";
 
 const router = useRouter();
@@ -339,17 +335,6 @@ const imageUserPath = computed(() => {
   if (theme == "nord" || theme == "light") image = userImage;
   if (theme == "gruvbox") image = userImageGruvbox;
   if (theme == "cherry") image = userImageCherry;
-  return image;
-});
-
-const loginImagePath = computed(() => {
-  const theme = themeController.getTheme();
-  let image = "";
-  if (theme == "nord" || theme == "light")
-    image =
-      "https://image.winudf.com/v2/image/Y29tLnNhcmFzLkJlc3RNaW5pbWFsaXN0V2FsbHBhcGVyX3NjcmVlbl81Xzk4dHZtbnNw/screen-5.jpg?h=800&fakeurl=1&type=.jpg";
-  if (theme == "gruvbox") image = loginImageGruvbox;
-  if (theme == "cherry") image = loginImageCherry;
   return image;
 });
 
@@ -449,7 +434,7 @@ const addUser = async (): Promise<void> => {
   }
 };
 
-const clearInputs = () => {
+const clearInputs = (): void => {
   form.name = "";
   form.user = "";
   form.password = "";
@@ -457,7 +442,7 @@ const clearInputs = () => {
   form.email = "";
 };
 
-const alertConfirmaciónEmail = async () => {
+const alertConfirmaciónEmail = async (): Promise<void> => {
   const alert = await alertController.create({
     header: "Alerta",
     subHeader: "Confirmación",
@@ -468,7 +453,7 @@ const alertConfirmaciónEmail = async () => {
     buttons: [
       {
         text: "Continuar",
-        handler: () => {
+        handler: (): void => {
           router.push("/login");
         },
       },
@@ -478,7 +463,7 @@ const alertConfirmaciónEmail = async () => {
   await alert.present();
 };
 
-const fillForm = async () => {
+const fillForm = async (): Promise<void> => {
   const { faker } = await import("@faker-js/faker");
   const password = faker.internet.password({ length: 12, memorable: true }) + "A1";
   form.name = faker.person.fullName();
@@ -488,7 +473,7 @@ const fillForm = async () => {
   form.password2 = password;
 };
 
-const login = async () => {
+const login = async (): Promise<void> => {
   spinners.buttonLogin = true;
   await router.push("/login");
   spinners.buttonLogin = false;

@@ -25,18 +25,38 @@
 </template>
 
 <script setup lang="ts">
-import { IonInput, IonButton } from "@ionic/vue";
+// 1. Imports (ionic/vue/ionicons)
+import { IonButton, IonIcon, IonInput, IonSpinner } from "@ionic/vue";
 import { reactive, ref } from "vue";
 import { saveOutline } from "ionicons/icons";
 
-// controllers
+// 2. Controllers / Composables
 import { WakaTimeController } from "@/controllers/wakaTimeController";
 const wakaTimeController = new WakaTimeController();
 
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
+// (none)
+
+// 6. Vars and const
 const inputApiKeyValue = ref("");
 const spinners = reactive({ testApiKey: false });
 
-// functions
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
 async function testWakaTimeApiKey(params: { apiKey: string }): Promise<void> {
   const { apiKey } = params;
   spinners.testApiKey = true;

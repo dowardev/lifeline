@@ -19,7 +19,7 @@ export type OptionsMainMenuDocument =
   | "share"
   | "none";
 
-export type Theme = "light" | "nord" | "gruvbox" | "cherry";
+export type Theme = "light" | "dark" | "catppuccin-latte-maroon" | "catppuccin-macchiato-maroon";
 
 export type ViewMode = "list" | "kanban";
 

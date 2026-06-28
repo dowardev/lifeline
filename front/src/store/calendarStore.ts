@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export type ViewCalendar = 'day' | 'week' | 'month' | 'year' | 'diary'
+export type ViewCalendar = 'day' | 'week' | 'diary'
 
 export interface CalendarViewDates {
   date: string
@@ -26,7 +26,7 @@ export const useCalendarStore = defineStore('calendar', () => {
   const calendars = ref<CalendarItem[]>([])
   const now = new Date()
   const viewDates = ref<CalendarViewDates>({ date: now.toISOString(), day: now.getDate(), month: now.getMonth() + 1, year: now.getFullYear() })
-  const calendarModeView = ref<ViewCalendar>('month')
+  const calendarModeView = ref<ViewCalendar>('day')
   const dataStatus = ref<CalendarDataStatus>({ upload: false, download: false })
   const loading = ref(false)
   const error = ref<string | null>(null)

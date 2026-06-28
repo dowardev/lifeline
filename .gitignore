@@ -40,3 +40,6 @@ Homestead.yaml
 
 front.backup/
 .opencode
+docs/
+.playwright-cli/
+.env.local

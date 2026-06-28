@@ -3,7 +3,7 @@
 return [
     'paths' => ['api/*'],
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    'allowed_origins' => [env('CORS_ALLOWED_ORIGIN', 'http://localhost:8100')],
+    'allowed_origins' => array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:8100'))),
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['Content-Type', 'X-Requested-With', 'Authorization', 'Accept'],
     'exposed_headers' => [],

@@ -13,6 +13,7 @@ function getClient(): AxiosInstance {
   client = axios.create({
     baseURL,
     timeout: 15000,
+    withCredentials: true,
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',

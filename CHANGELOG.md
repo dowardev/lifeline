@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.12.0] - 2026-06-12
+
+### Added
+
+- **front:** Add oneSpend UI/UX theme system with 4 themes: light, dark, catppuccin-latte-maroon, catppuccin-macchiato-maroon
+- **front:** Add component utility classes (card shadows, ion-item variants, ion-list styling, border color utilities)
+- **front:** Add body-class-based theme switching with `auto` mode and system dark mode listener
+- **front:** Add old theme migration (gruvbox, nord, cherry → new catppuccin equivalents)
+
+### Changed
+
+- **front:** Replace old 4-theme system (gruvbox, nord, cherry, light) with oneSpend design system
+- **front:** Update ThemeController to use `document.body` theme classes with oneSpend naming convention
+- **front:** Update TemplatePage.vue structure to match oneSpend template with content/modals/popovers/alerts sections
+- **front:** Update theme selector UI to reflect new theme names
+
+### Removed
+
+- **front:** Remove old theme files: gruvbox.css, nord.css, cherry.css, light.css
+
 ## [0.11.1] - 2026-06-11
 
 ### Fixed

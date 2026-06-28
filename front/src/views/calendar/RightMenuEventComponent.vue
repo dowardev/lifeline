@@ -1,20 +1,26 @@
 <template>
   <ion-content>
-    <ion-item
-      v-if="showDeleteOption"
-      button
-      @click="selectOption({ option: 'delete' })"
-    >
-      <ion-icon slot="start" :icon="trashOutline" color="danger"> </ion-icon>
-      <ion-label>Eliminar</ion-label>
-    </ion-item>
+    <ion-grid>
+      <ion-row class="ion-justify-content-center">
+        <ion-col size="12">
+          <ion-item
+            v-if="showDeleteOption"
+            button
+            @click="selectOption({ option: 'delete' })"
+          >
+            <ion-icon slot="start" :icon="trashOutline" color="danger"> </ion-icon>
+            <ion-label>Eliminar</ion-label>
+          </ion-item>
 
-    <ion-item v-if="!showDeleteOption" button>
-      <ion-progress-bar :value="progress"></ion-progress-bar>
-      <ion-button slot="end" fill="clear" @click="cancelDelete()"
-        >Cancelar</ion-button
-      >
-    </ion-item>
+          <ion-item v-if="!showDeleteOption" button>
+            <ion-progress-bar :value="progress"></ion-progress-bar>
+            <ion-button slot="end" fill="clear" @click="cancelDelete()"
+              >Cancelar</ion-button
+            >
+          </ion-item>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
   </ion-content>
 </template>
 

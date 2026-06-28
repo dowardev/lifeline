@@ -31,41 +31,64 @@
 </template>
 
 <script setup lang="ts">
-import { IonContent, popoverController, IonButton } from "@ionic/vue";
+// 1. Imports (ionic/vue/ionicons)
+import { IonButton, IonContent, IonIcon, popoverController } from "@ionic/vue";
 import { addOutline, closeOutline, timeOutline } from "ionicons/icons";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 type Option = "add" | "remove" | "reminders";
 type Role = "confirm" | "cancel";
 
-// functions;
-const selectOption = (params: { option: Option }) => {
+// 6. Vars and const
+// (none)
+
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+const selectOption = (params: { option: Option }): void => {
   const option = params.option;
   if (option == "add") addOption();
   if (option == "remove") removeOption();
   if (option == "reminders") reminderOption();
 };
 
-const addOption = async () => {
+const addOption = async (): Promise<void> => {
   await closeModal({
     data: { option: "add" },
     role: "confirm",
   });
 };
 
-const removeOption = async () => {
+const removeOption = async (): Promise<void> => {
   await closeModal({
     data: { option: "remove" },
     role: "confirm",
   });
 };
 
-const closeModal = async (params: { data: { option: Option }; role: Role }) => {
+const closeModal = async (params: { data: { option: Option }; role: Role }): Promise<void> => {
   const data = params.data;
   const role = params.role;
   await popoverController.dismiss(data, role);
 };
 
-const reminderOption = async () => {
+const reminderOption = async (): Promise<void> => {
   await closeModal({
     data: { option: "reminders" },
     role: "confirm",

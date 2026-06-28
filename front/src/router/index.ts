@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
-// import HomePage from '../views/HomePage.vue'
-const MainPage = () => import("@/views/main/MainPage.vue");
 
 import { useAuthStore } from "@/store/authStore";
 
@@ -13,67 +11,73 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/home",
     name: "home",
-    component: MainPage,
+    component: () => import("@/views/home/HomePage.vue"),
     meta: { requiresAuth: true },
   },
   {
     path: "/calendar",
     name: "CalendarPage",
-    component: MainPage,
+    component: () => import("@/views/calendar/CalendarPage.vue"),
     meta: { requiresAuth: true },
   },
   {
     path: "/signup",
     name: "SignUp",
-    component: MainPage,
+    component: () => import("@/views/sesion/SessionPage.vue"),
     meta: { requiresAuth: false },
   },
   {
     path: "/login",
     name: "Login",
-    component: MainPage,
+    component: () => import("@/views/sesion/SessionPage.vue"),
     meta: { requiresAuth: false },
   },
-{
+  {
+    path: "/session",
+    name: "Session",
+    component: () => import("@/views/sesion/SessionPage.vue"),
+    meta: { requiresAuth: false },
+  },
+  {
     path: "/document/:url",
     name: "DocumentPage",
-    component: MainPage,
+    component: () => import("@/views/documents/DocumentPage.vue"),
     meta: { requiresAuth: true },
   },
   {
     path: "/policies",
     name: "PoliciesPage",
-    component: MainPage,
+    component: () => import("@/views/policies/PoliciesPage.vue"),
     meta: { public: true },
   },
   {
     path: "/documents",
     name: "DocumentsPage",
-    component: MainPage,
+    component: () => import("@/views/documents/DocumentsPage.vue"),
     meta: { requiresAuth: true },
   },
   {
     path: "/tasks",
     name: "TasksPage",
-    component: MainPage,
+    component: () => import("@/views/tasks/TasksPage.vue"),
     meta: { requiresAuth: true },
   },
   {
     path: "/integrations",
     name: "IntegrationsPage",
-    component: MainPage,
+    component: () => import("@/views/integrations/IntegrationsPage.vue"),
     meta: { requiresAuth: true },
   },
   {
     path: "/about",
     name: "AboutPage",
-    component: MainPage,
+    component: () => import("@/views/about/AboutPage.vue"),
     meta: { public: true },
   },
   {
     path: "/landing",
     name: "LandingPage",
-    component: MainPage,
+    component: () => import("@/views/lading/LandingPage.vue"),
     meta: { requiresAuth: false },
   },
   {
@@ -101,7 +105,7 @@ router.beforeEach(async (to, from, next) => {
     return next({ name: "Login" });
   }
 
-  if (isAuthenticated && (to.name === "Login" || to.name === "SignUp")) {
+  if (isAuthenticated && (to.name === "Login" || to.name === "SignUp" || to.name === "Session")) {
     return next({ name: "home" });
   }
 

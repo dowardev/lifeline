@@ -1,6 +1,13 @@
 import { EventController } from '@/controllers/eventController'
 
-export function useEvent() {
+export function useEvent(): {
+  getEvents: EventController['getEvents']
+  loadEvents: EventController['loadEvents']
+  createEvent: EventController['createEvent']
+  updateEvent: EventController['updateEvent']
+  removeEvent: EventController['removeEvent']
+  setDate: EventController['setDate']
+} {
   const controller = new EventController()
   return {
     getEvents: controller.getEvents.bind(controller),
