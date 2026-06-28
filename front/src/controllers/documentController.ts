@@ -35,21 +35,11 @@ export class DocumentController {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
-      const localId = Date.now() + Math.floor(Math.random() * 100000)
-      const temp = { id: localId, user_id: 0, title: params.title, type: (params.type || 'note') as 'note' | 'list' | 'richtext' | 'todo', content: params.content }
-      this.store.addDocument({ document: temp as unknown as DocumentItem })
-      await db.documents.put(temp)
-      try {
-        const response = await documentService.createDocument(params)
-        const serverDoc = response.document || response
-        this.store.updateDocument({ id: localId, updates: serverDoc })
-        await db.documents.delete(localId)
-        await db.documents.put(serverDoc)
-        return serverDoc
-      } catch {
-        this.store.setError({ error: 'Failed to sync document with server' })
-        return temp
-      }
+      const response = await documentService.createDocument(params)
+      const serverDoc = response.document || response
+      this.store.addDocument({ document: serverDoc })
+      await db.documents.put(serverDoc)
+      return serverDoc
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error
@@ -64,6 +54,7 @@ export class DocumentController {
     try {
       const data = params.document || params
       const docId = params.id ?? data.id
+      await documentService.updateDocument(data)
       this.store.updateDocument({ id: docId, updates: data })
       const updateFields: Partial<import('@/db/schema').DocumentRecord> = {}
       if (data.title !== undefined) updateFields.title = data.title
@@ -71,10 +62,6 @@ export class DocumentController {
       if (data.content !== undefined) updateFields.content = data.content
       if (data.order !== undefined) updateFields.order = data.order
       await db.documents.update(docId, updateFields)
-      try { await documentService.updateDocument(data) } catch (error) {
-        console.error('[DocumentController.updateDocument]', error)
-        this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      }
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error
@@ -87,12 +74,9 @@ export class DocumentController {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
+      await documentService.deleteDocument({ id: params.id })
       this.store.removeDocument({ id: params.id })
       await db.documents.delete(params.id)
-      try { await documentService.deleteDocument({ id: params.id }) } catch (error) {
-        console.error('[DocumentController.deleteDocument]', error)
-        this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      }
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error

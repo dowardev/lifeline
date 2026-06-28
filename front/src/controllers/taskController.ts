@@ -42,30 +42,11 @@ export class TaskController {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
-      const localId = Date.now() + Math.floor(Math.random() * 100000)
-      const safeStatus = (params.status || 'pending') as 'pending' | 'in_progress' | 'completed'
-      const tempTask = {
-        id: localId,
-        user_id: 0,
-        title: params.title,
-        description: params.description,
-        status: safeStatus,
-        priority: params.priority,
-        due_date: params.due_date,
-        subtasks: params.subtasks,
-      }
-      this.store.addTask({ task: tempTask as unknown as TaskItem })
-      await db.tasks.put(tempTask)
-      try {
-        const response = await taskService.createTask(params)
-        const serverTask = response.task || response
-        this.store.updateTask({ id: localId, updates: serverTask })
-        await db.tasks.delete(localId)
-        await db.tasks.put(serverTask)
-      } catch (error) {
-        console.error('[TaskController.createTask]', error)
-        this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      }
+      const response = await taskService.createTask(params)
+      const serverTask = response.task || response
+      this.store.addTask({ task: serverTask })
+      await db.tasks.put(serverTask)
+      return serverTask
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error
@@ -80,14 +61,9 @@ export class TaskController {
     try {
       const data = params.task || params
       const taskId = params.id ?? data.id
+      await taskService.updateTask(data)
       this.store.updateTask({ id: taskId, updates: data })
       await db.tasks.update(taskId, data)
-      try {
-        await taskService.updateTask(data)
-      } catch (error) {
-        console.error('[TaskController.updateTask]', error)
-        this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      }
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error
@@ -100,14 +76,9 @@ export class TaskController {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
+      await taskService.deleteTask({ id: params.id })
       this.store.removeTask({ id: params.id })
       await db.tasks.delete(params.id)
-      try {
-        await taskService.deleteTask({ id: params.id })
-      } catch (error) {
-        console.error('[TaskController.deleteTask]', error)
-        this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      }
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error
@@ -130,15 +101,10 @@ export class TaskController {
     this.store.clearError()
     try {
       const id = Number(params.id)
+      await taskService.updateTask({ id, status: params.status })
       const safeStatus = params.status as 'pending' | 'in_progress' | 'completed'
       this.store.updateTask({ id, updates: { status: safeStatus } })
       await db.tasks.update(id, { status: safeStatus })
-      try {
-        await taskService.updateTask({ id, status: params.status })
-      } catch (error) {
-        console.error('[TaskController.updateTaskStatus]', error)
-        this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      }
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error

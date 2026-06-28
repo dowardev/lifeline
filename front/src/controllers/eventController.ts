@@ -32,8 +32,13 @@ export class EventController {
       this.store.setEvents({ events: eventsList })
       await db.events.bulkPut(eventsList)
     } catch (error) {
-      this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      throw error
+      try {
+        const localEvents = await db.events.toArray()
+        this.store.setEvents({ events: localEvents as unknown as EventItem[] })
+      } catch {
+        this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
+        throw error
+      }
     } finally {
       this.store.setLoading({ loading: false })
     }
