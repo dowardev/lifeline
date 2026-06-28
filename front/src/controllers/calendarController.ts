@@ -20,6 +20,7 @@ export class CalendarController {
   setCalendarModeView(params: { mode: ViewCalendar }): void {
     const { mode } = params;
     this.store.setCalendarModeView({ mode });
+    storage.set("calendarModeView", mode);
   }
 
   getCurrentDate(_params: { mode: ViewCalendar }): Date {
