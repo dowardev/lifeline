@@ -1,71 +1,24 @@
-import axios, { type AxiosInstance } from 'axios'
-import { useAuthStore } from '@/store/authStore'
-import router from '@/router'
-
-let client: AxiosInstance | null = null
-let isRedirecting = false
-
-function getClient(): AxiosInstance {
-  if (client) return client
-
-  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8004/api/v1'
-
-  client = axios.create({
-    baseURL,
-    timeout: 15000,
-    withCredentials: true,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-  })
-
-  client.interceptors.request.use((config) => {
-    const authStore = useAuthStore()
-    if (authStore.token) {
-      config.headers.Authorization = `Bearer ${authStore.token}`
-    }
-    return config
-  })
-
-  client.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-      if (error.response?.status === 401 && !isRedirecting) {
-        isRedirecting = true
-        const authStore = useAuthStore()
-        authStore.clearAuth()
-        await router.push('/login')
-        isRedirecting = false
-      }
-
-      if (!error.response) {
-        console.error('[apiClient] Network error - server unreachable')
-      }
-
-      return Promise.reject(error)
-    },
-  )
-
-  return client
-}
+import { getSSOClient } from '@/ssoClientAccessor'
 
 export const apiClient = {
   async executeQuery(params: { url: string; params?: Record<string, unknown> }): Promise<unknown> {
     const { url, params: queryParams } = params
-    const response = await getClient().get(url, { params: queryParams })
-    return response.data
+    const http = getSSOClient().http
+    return http.get(url, { params: queryParams })
   },
 
   async executeMutation(params: { url: string; data?: Record<string, unknown>; method?: 'POST' | 'PUT' }): Promise<unknown> {
     const { url, data, method = 'POST' } = params
-    const response = await getClient().request({ url, data, method })
-    return response.data
+    const http = getSSOClient().http
+    if (method === 'PUT') {
+      return http.put(url, data)
+    }
+    return http.post(url, data)
   },
 
   async executeDelete(params: { url: string }): Promise<unknown> {
     const { url } = params
-    const response = await getClient().delete(url)
-    return response.data
+    const http = getSSOClient().http
+    return http.delete(url)
   },
 }

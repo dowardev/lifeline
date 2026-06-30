@@ -24,7 +24,7 @@
           lines="none"
           :class="{ 'menu-active': isRegister }"
           :aria-current="isRegister ? 'page' : undefined"
-          @click="navigate({ route: '/signup' })"
+          @click="navigate({ route: '/register' })"
         >
           <ion-icon slot="start" :icon="personAddOutline"></ion-icon>
           <ion-label>Registrarse</ion-label>
@@ -212,11 +212,16 @@ const isWakatime = computed(() => route.path === '/integrations')
 const isPolicies = computed(() => route.path === '/policies')
 const isAbout = computed(() => route.path === '/about')
 const isLogin = computed(() => route.path === '/login')
-const isRegister = computed(() => route.path === '/signup')
+const isRegister = computed(() => route.path === '/register')
 
 // 9. OnMounted
 onMounted(async () => {
-  await authController.checkAuth()
+  try {
+    const { getSSOClient } = await import('@/ssoClientAccessor')
+    getSSOClient()
+  } catch {
+    // SSO client not ready yet
+  }
 })
 
 // 10. Functions (named parameters pattern)

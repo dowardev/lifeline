@@ -24,41 +24,104 @@ export { storage };
 
 import { createPinia } from "pinia";
 const pinia = createPinia();
-import { db } from "./db";
-import { useAuthStore } from "./store/authStore";
-import { AuthController } from "./controllers/authController";
+
+import { SSOClient } from "@tu-org/sso-client";
+import { setSSOClient, getSSOClient } from "@/ssoClientAccessor";
+import { useAuthStore } from "@/store/authStore";
 import { ThemeController } from "./controllers/themeController";
 
 async function bootstrap(): Promise<void> {
   await storage.create();
 
+  // Limpieza de PKCE huérfanos SOLO si hay muchos (no tocar el PKCE actual)
+  // Solo se ejecuta una vez por sesión de browser (no cada navigation)
+  try {
+    const allKeys: string[] = []
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i)
+      if (key && key.startsWith("@tu-org/sso-client:pkce:")) {
+        allKeys.push(key)
+      }
+    }
+    // Si hay muchos, limpiar chunks no bloqueantes
+    if (allKeys.length > 100) {
+      await new Promise<void>((resolve) => {
+        let i = 0
+        const chunk = (): void => {
+          const end = Math.min(i + 50, allKeys.length)
+          for (; i < end; i++) {
+            sessionStorage.removeItem(allKeys[i])
+          }
+          if (i < allKeys.length) {
+            requestAnimationFrame(chunk)
+          } else {
+            resolve()
+          }
+        }
+        chunk()
+      })
+    }
+  } catch {
+    // ignorar
+  }
+
   const app = createApp(App).use(IonicVue).use(i18n).use(pinia);
 
-  await loadUser();
+  const ssoClient = new SSOClient({
+    ssoUrl: import.meta.env.VITE_SSO_URL,
+    ssoFrontendUrl: import.meta.env.VITE_SSO_FRONTEND_URL,
+    clientId: import.meta.env.VITE_SSO_CLIENT_ID,
+    apiBaseUrl: import.meta.env.VITE_API_URL,
+  });
+
+  setSSOClient(ssoClient);
+
+  // Detectar si estamos llegando del SSO callback (no limpiar PKCE en ese caso)
+  const isAuthCallback = window.location.pathname === '/auth/callback' && window.location.search.includes('code=');
+
+  if (!isAuthCallback) {
+    await ssoClient.init();
+  }
+
+  ssoClient.onAuthStateChange((state) => {
+    const authStore = useAuthStore();
+    if (state.isAuthenticated && state.user) {
+      authStore.setFromSso({
+        id: Number(state.user.id),
+        name: state.user.name || "",
+        user: state.user.user || "",
+        email: state.user.email || "",
+      });
+    } else {
+      authStore.clearAuth();
+    }
+  });
+
+  if (!isAuthCallback) {
+    await loadUser();
+  }
 
   app.use(router);
   await router.isReady();
   app.mount("#app");
 
   async function loadUser(): Promise<void> {
-    const logged = await db.usersLogged.where('user').above('').first();
-    if (!logged) return;
+    const ssoClient = getSSOClient();
+    if (!ssoClient.isAuthenticated) return;
 
     const authStore = useAuthStore();
-    authStore.setAuth({
-      userData: { id: 0, name: logged.user, user_name: logged.user, email: '' },
-      accessToken: logged.token,
-    });
+    const authUser = await ssoClient.getUser();
+    if (authUser) {
+      authStore.setFromSso({
+        id: Number(authUser.id),
+        name: authUser.name || "",
+        user: authUser.user || "",
+        email: authUser.email || "",
+      });
+    }
 
     const themeController = new ThemeController();
     await themeController.loadTheme();
-
-    try {
-      const authController = new AuthController();
-      await authController.loadUser();
-    } catch {
-      // Offline — keep local state
-    }
   }
 }
 

@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
 
-import { useAuthStore } from "@/store/authStore";
-
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
@@ -21,22 +19,22 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true },
   },
   {
-    path: "/signup",
-    name: "SignUp",
-    component: () => import("@/views/sesion/SessionPage.vue"),
-    meta: { requiresAuth: false },
+    path: "/auth/callback",
+    name: "AuthCallback",
+    component: () => import("@/views/auth/AuthCallbackPage.vue"),
+    meta: { public: true },
   },
   {
     path: "/login",
     name: "Login",
-    component: () => import("@/views/sesion/SessionPage.vue"),
-    meta: { requiresAuth: false },
+    component: () => import("@/views/auth/LoginPage.vue"),
+    meta: { public: true },
   },
   {
-    path: "/session",
-    name: "Session",
-    component: () => import("@/views/sesion/SessionPage.vue"),
-    meta: { requiresAuth: false },
+    path: "/register",
+    name: "Register",
+    component: () => import("@/views/auth/RegisterPage.vue"),
+    meta: { public: true },
   },
   {
     path: "/document/:url",
@@ -78,7 +76,7 @@ const routes: Array<RouteRecordRaw> = [
     path: "/landing",
     name: "LandingPage",
     component: () => import("@/views/lading/LandingPage.vue"),
-    meta: { requiresAuth: false },
+    meta: { public: true },
   },
   {
     path: "/:pathMatch(.*)*",
@@ -91,25 +89,19 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(async (to, from, next) => {
-  const authStore = useAuthStore();
-  const isAuthenticated = authStore.isLogged;
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
-  const isPublic = to.matched.some((record) => record.meta.public);
+router.beforeEach(async (to, _from, next) => {
+  const isPublic = to.meta?.public === true
+  if (isPublic) return next()
 
-  if (isPublic) {
-    return next();
+  const { getSSOClient } = await import('@/ssoClientAccessor')
+  const ssoClient = getSSOClient()
+  if (!ssoClient.isAuthenticated) {
+    await ssoClient.loginWithRedirect({
+      redirectUri: `${window.location.origin}/auth/callback`,
+    })
+    return next(false)
   }
-
-  if (requiresAuth && !isAuthenticated) {
-    return next({ name: "Login" });
-  }
-
-  if (isAuthenticated && (to.name === "Login" || to.name === "SignUp" || to.name === "Session")) {
-    return next({ name: "home" });
-  }
-
-  return next();
-});
+  return next()
+})
 
 export default router;
