@@ -31,3 +31,7 @@ npm-debug.log*
 /plugins
 /www
 .eslintcache
+
+# Environment files (production + local overrides)
+.env.production
+.env.local
