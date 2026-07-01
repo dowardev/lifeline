@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 use TuOrg\SsoServer\Client\SsoServerClient;
 
@@ -34,7 +35,7 @@ class ResolveSsoUser
                         'name' => $ssoUser->name ?? '',
                         'user' => $ssoUser->userName ?? '',
                         'email' => $ssoUser->email ?? '',
-                        'password' => '',
+                        'password' => bcrypt(Str::random(32)),
                     ],
                 );
             }

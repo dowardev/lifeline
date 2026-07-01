@@ -26,44 +26,15 @@ import { createPinia } from "pinia";
 const pinia = createPinia();
 
 import { SSOClient } from "@tu-org/sso-client";
-import { setSSOClient, getSSOClient } from "@/ssoClientAccessor";
+import { setSSOClient } from "@/ssoClientAccessor";
 import { useAuthStore } from "@/store/authStore";
 import { ThemeController } from "./controllers/themeController";
+import { cleanupOrphanedPkceKeys } from './utils/sessionStorageCleanup'
 
 async function bootstrap(): Promise<void> {
   await storage.create();
 
-  // Limpieza de PKCE huérfanos SOLO si hay muchos (no tocar el PKCE actual)
-  // Solo se ejecuta una vez por sesión de browser (no cada navigation)
-  try {
-    const allKeys: string[] = []
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i)
-      if (key && key.startsWith("@tu-org/sso-client:pkce:")) {
-        allKeys.push(key)
-      }
-    }
-    // Si hay muchos, limpiar chunks no bloqueantes
-    if (allKeys.length > 100) {
-      await new Promise<void>((resolve) => {
-        let i = 0
-        const chunk = (): void => {
-          const end = Math.min(i + 50, allKeys.length)
-          for (; i < end; i++) {
-            sessionStorage.removeItem(allKeys[i])
-          }
-          if (i < allKeys.length) {
-            requestAnimationFrame(chunk)
-          } else {
-            resolve()
-          }
-        }
-        chunk()
-      })
-    }
-  } catch {
-    // ignorar
-  }
+  await cleanupOrphanedPkceKeys()
 
   const app = createApp(App).use(IonicVue).use(i18n).use(pinia);
 
@@ -76,12 +47,7 @@ async function bootstrap(): Promise<void> {
 
   setSSOClient(ssoClient);
 
-  // Detectar si estamos llegando del SSO callback (no limpiar PKCE en ese caso)
-  const isAuthCallback = window.location.pathname === '/auth/callback' && window.location.search.includes('code=');
-
-  if (!isAuthCallback) {
-    await ssoClient.init();
-  }
+  await ssoClient.init();
 
   ssoClient.onAuthStateChange((state) => {
     const authStore = useAuthStore();
@@ -97,16 +63,13 @@ async function bootstrap(): Promise<void> {
     }
   });
 
-  if (!isAuthCallback) {
-    await loadUser();
-  }
+  await loadUser();
 
   app.use(router);
   await router.isReady();
   app.mount("#app");
 
   async function loadUser(): Promise<void> {
-    const ssoClient = getSSOClient();
     if (!ssoClient.isAuthenticated) return;
 
     const authStore = useAuthStore();

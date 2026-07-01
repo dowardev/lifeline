@@ -162,7 +162,7 @@ import {
   menuController,
   modalController,
 } from '@ionic/vue'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   calendarOutline,
@@ -215,14 +215,7 @@ const isLogin = computed(() => route.path === '/login')
 const isRegister = computed(() => route.path === '/register')
 
 // 9. OnMounted
-onMounted(async () => {
-  try {
-    const { getSSOClient } = await import('@/ssoClientAccessor')
-    getSSOClient()
-  } catch {
-    // SSO client not ready yet
-  }
-})
+// none
 
 // 10. Functions (named parameters pattern)
 async function navigate(params: { route: string }): Promise<void> {

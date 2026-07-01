@@ -27,13 +27,13 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/login",
     name: "Login",
-    component: () => import("@/views/auth/LoginPage.vue"),
+    component: () => import("@/views/auth/SsoRedirectPage.vue"),
     meta: { public: true },
   },
   {
     path: "/register",
     name: "Register",
-    component: () => import("@/views/auth/RegisterPage.vue"),
+    component: () => import("@/views/auth/SsoRedirectPage.vue"),
     meta: { public: true },
   },
   {

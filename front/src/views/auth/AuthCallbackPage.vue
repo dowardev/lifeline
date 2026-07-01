@@ -61,11 +61,6 @@ onMounted(async () => {
 
   try {
     const ssoClient = (await import('@/ssoClientAccessor')).getSSOClient()
-
-    if (!ssoClient.isAuthenticated && !ssoClient.http) {
-      await ssoClient.init?.()
-    }
-
     await ssoClient.handleCallback(window.location.href)
     router.push('/home')
   } catch (e: any) {

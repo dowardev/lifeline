@@ -5,7 +5,7 @@
         <ion-row class="ion-justify-content-center ion-align-items-center" style="height: 100%;">
           <ion-col size="12" size-md="6" size-lg="4" class="ion-text-center">
             <ion-spinner name="crescent"></ion-spinner>
-            <p>Redirigiendo al SSO...</p>
+            <p>{{ loadingMessage }}</p>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -14,8 +14,9 @@
 </template>
 
 <script setup lang="ts">
-// 1. Imports (ionic/vue/ionicons)
-import { onMounted } from 'vue'
+// 1. Imports
+import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { IonCol, IonContent, IonGrid, IonPage, IonRow, IonSpinner } from '@ionic/vue'
 
 // 2. Controllers / Composables
@@ -28,7 +29,7 @@ import { IonCol, IonContent, IonGrid, IonPage, IonRow, IonSpinner } from '@ionic
 // none
 
 // 5. Main
-// none
+const route = useRoute()
 
 // 6. Vars and const
 // none
@@ -37,17 +38,20 @@ import { IonCol, IonContent, IonGrid, IonPage, IonRow, IonSpinner } from '@ionic
 // none
 
 // 8. Computed
-// none
+const screenHint = computed<"login" | "register">(() => (route.query.screenHint as string) === 'register' ? 'register' : 'login')
+const loadingMessage = computed(() =>
+  screenHint.value === 'register' ? 'Redirigiendo al registro SSO...' : 'Redirigiendo al SSO...'
+)
 
 // 9. OnMounted
 onMounted(async () => {
   const ssoClient = (await import('@/ssoClientAccessor')).getSSOClient()
   await ssoClient.loginWithRedirect({
-    screenHint: 'login',
+    screenHint: screenHint.value,
     redirectUri: `${window.location.origin}/auth/callback`,
   })
 })
 
-// 10. Functions (named parameters pattern)
+// 10. Functions
 // none
 </script>
