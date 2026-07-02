@@ -24,7 +24,7 @@
           lines="none"
           :class="{ 'menu-active': isRegister }"
           :aria-current="isRegister ? 'page' : undefined"
-          @click="navigate({ route: '/signup' })"
+          @click="navigate({ route: '/register' })"
         >
           <ion-icon slot="start" :icon="personAddOutline"></ion-icon>
           <ion-label>Registrarse</ion-label>
@@ -162,7 +162,7 @@ import {
   menuController,
   modalController,
 } from '@ionic/vue'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   calendarOutline,
@@ -212,12 +212,10 @@ const isWakatime = computed(() => route.path === '/integrations')
 const isPolicies = computed(() => route.path === '/policies')
 const isAbout = computed(() => route.path === '/about')
 const isLogin = computed(() => route.path === '/login')
-const isRegister = computed(() => route.path === '/signup')
+const isRegister = computed(() => route.path === '/register')
 
 // 9. OnMounted
-onMounted(async () => {
-  await authController.checkAuth()
-})
+// none
 
 // 10. Functions (named parameters pattern)
 async function navigate(params: { route: string }): Promise<void> {

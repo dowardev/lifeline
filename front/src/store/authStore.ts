@@ -35,5 +35,15 @@ export const useAuthStore = defineStore('auth', () => {
     isLogged.value = false
   }
 
-  return { user, token, isLogged, setAuth, setUser, setToken, clearAuth }
+  function setFromSso(params: { id: number; name: string; user: string; email: string }) {
+    user.value = {
+      id: params.id,
+      name: params.name,
+      user_name: params.user,
+      email: params.email,
+    }
+    isLogged.value = true
+  }
+
+  return { user, token, isLogged, setAuth, setUser, setToken, clearAuth, setFromSso }
 })
