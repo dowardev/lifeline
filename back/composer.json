@@ -12,8 +12,8 @@
         "doctrine/dbal": "^4.4",
         "guzzlehttp/guzzle": "^7.6",
         "laravel/framework": "^13.0",
-        "laravel/passport": "^13.0",
-        "laravel/tinker": "^3.0"
+        "laravel/tinker": "^3.0",
+        "tu-org/sso-server": "^1.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -49,6 +49,12 @@
             "@php artisan key:generate --ansi"
         ]
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../sso-client/packages/sso-server"
+        }
+    ],
     "extra": {
         "laravel": {
             "dont-discover": []

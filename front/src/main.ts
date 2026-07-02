@@ -24,15 +24,44 @@ export { storage };
 
 import { createPinia } from "pinia";
 const pinia = createPinia();
-import { db } from "./db";
-import { useAuthStore } from "./store/authStore";
-import { AuthController } from "./controllers/authController";
+
+import { SSOClient } from "@tu-org/sso-client";
+import { setSSOClient } from "@/ssoClientAccessor";
+import { useAuthStore } from "@/store/authStore";
 import { ThemeController } from "./controllers/themeController";
+import { cleanupOrphanedPkceKeys } from './utils/sessionStorageCleanup'
 
 async function bootstrap(): Promise<void> {
   await storage.create();
 
+  await cleanupOrphanedPkceKeys()
+
   const app = createApp(App).use(IonicVue).use(i18n).use(pinia);
+
+  const ssoClient = new SSOClient({
+    ssoUrl: import.meta.env.VITE_SSO_URL,
+    ssoFrontendUrl: import.meta.env.VITE_SSO_FRONTEND_URL,
+    clientId: import.meta.env.VITE_SSO_CLIENT_ID,
+    apiBaseUrl: import.meta.env.VITE_API_URL,
+  });
+
+  setSSOClient(ssoClient);
+
+  await ssoClient.init();
+
+  ssoClient.onAuthStateChange((state) => {
+    const authStore = useAuthStore();
+    if (state.isAuthenticated && state.user) {
+      authStore.setFromSso({
+        id: Number(state.user.id),
+        name: state.user.name || "",
+        user: state.user.user || "",
+        email: state.user.email || "",
+      });
+    } else {
+      authStore.clearAuth();
+    }
+  });
 
   await loadUser();
 
@@ -41,24 +70,21 @@ async function bootstrap(): Promise<void> {
   app.mount("#app");
 
   async function loadUser(): Promise<void> {
-    const logged = await db.usersLogged.where('user').above('').first();
-    if (!logged) return;
+    if (!ssoClient.isAuthenticated) return;
 
     const authStore = useAuthStore();
-    authStore.setAuth({
-      userData: { id: 0, name: logged.user, user_name: logged.user, email: '' },
-      accessToken: logged.token,
-    });
+    const authUser = await ssoClient.getUser();
+    if (authUser) {
+      authStore.setFromSso({
+        id: Number(authUser.id),
+        name: authUser.name || "",
+        user: authUser.user || "",
+        email: authUser.email || "",
+      });
+    }
 
     const themeController = new ThemeController();
     await themeController.loadTheme();
-
-    try {
-      const authController = new AuthController();
-      await authController.loadUser();
-    } catch {
-      // Offline — keep local state
-    }
   }
 }
 
