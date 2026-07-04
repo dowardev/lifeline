@@ -32,7 +32,7 @@ npm-debug.log*
 /www
 .eslintcache
 
-# Environment files (production + local overrides)
-.env.development
-.env.production
-.env.local
+# Environment files (overrides — use .env.local for local overrides)
+.env
+.env.*
+!.env.*.example
