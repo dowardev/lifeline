@@ -52,7 +52,7 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../sso-client/packages/sso-server"
+            "url": "../sso/packages/sso-server"
         }
     ],
     "extra": {
