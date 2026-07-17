@@ -555,12 +555,8 @@ function getEventById(params: { id: number }): CalendarEvent | undefined {
   } as unknown as CalendarEvent;
 }
 
-async function openModalAdd(params?: { event: unknown }): Promise<void> {
+function openModalAdd(params?: { event: unknown }): void {
   void params;
-  if (isOpenModalAddEvent.value) {
-    isOpenModalAddEvent.value = false;
-    await nextTick();
-  }
   isOpenModalAddEvent.value = true;
 }
 
@@ -583,6 +579,7 @@ function onOpenDatePopover(event: PointerEvent): void {
 }
 
 function onModalAddDismiss(): void {
+  if (!isOpenModalAddEvent.value) return
   isOpenModalAddEvent.value = false;
   clickedDate.value = null;
   clickedEndDate.value = null;
