@@ -8,7 +8,7 @@
             <p v-if="loading">Iniciando sesión...</p>
             <div v-else-if="error">
               <p style="color: var(--ion-color-danger); word-break: break-all;">{{ error }}</p>
-              <ion-button @click="redirectToSSO" class="ion-margin-top">
+              <ion-button class="ion-margin-top" @click="redirectToSSO">
                 Intentar de nuevo
               </ion-button>
             </div>

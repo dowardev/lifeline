@@ -1,9 +1,12 @@
 <template>
   <ion-menu ref="menuRef" content-id="menu-content" type="overlay" menu-id="main-menu">
     <ion-header mode="ios" class="ion-no-border">
-      <ion-toolbar>
-        <ion-title>LifeLine</ion-title>
-      </ion-toolbar>
+      <div class="menu-header-wrapper">
+        <ion-toolbar>
+          <ion-title>LifeLine</ion-title>
+        </ion-toolbar>
+        <span class="menu-version-chip" :class="chipClass">{{ versionLabel }}</span>
+      </div>
     </ion-header>
 
     <ion-content>
@@ -183,6 +186,9 @@ import {
 import { AuthController } from '@/controllers/authController'
 const authController = new AuthController()
 
+import { useAppVersion } from '@/composables/useAppVersion'
+const { label: versionLabel, chipClass } = useAppVersion()
+
 // 3. Components
 import ThemeSelectorComponent from './theme/ThemeMenuComponent.vue'
 
@@ -311,5 +317,41 @@ ion-menu ion-content {
 
 ion-menu ion-content::part(scroll) {
   flex: 1;
+}
+
+.menu-header-wrapper {
+  position: relative;
+}
+
+.menu-header-wrapper .menu-version-chip {
+  position: absolute;
+  bottom: -8px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 3px 7px;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.menu-header-wrapper .menu-version-chip.alpha {
+  background: var(--ion-color-danger);
+  color: var(--ion-color-danger-contrast);
+}
+
+.menu-header-wrapper .menu-version-chip.beta {
+  background: var(--ion-color-warning);
+  color: var(--ion-color-warning-contrast);
+}
+
+.menu-header-wrapper .menu-version-chip.stable {
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
 }
 </style>

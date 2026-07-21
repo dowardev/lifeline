@@ -43,3 +43,4 @@ front.backup/
 .opencode
 docs/
 .playwright-cli/
+.superpowers/
