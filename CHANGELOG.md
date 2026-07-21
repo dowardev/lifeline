@@ -1,29 +1,59 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.13.0] - 2026-07-01
+
+### Added
+- **front:** Migrate authentication to tu-org/sso-server and fix OAuth redirect loop
+- **front:** Add dev-only form fill button with Faker-generated random data
+- **front:** New data flow architecture for LBDS-105
+- **front:** SSO-style environment configuration
+
+### Changed
+- **front:** Upgrade to OAuth2-based authentication via SSO server
+- **front:** Replace GraphQL with REST API (LBDS-62)
+- **front:** Improve overall UI/UX (LBDS-74)
+- **front:** Refactor architecture and data layer (LBDS-52)
+- **front:** Improve SQLite sync logic (LBDS-61)
+- **front:** Clean up and improve post-migration SSO integration
+
+### Fixed
+- **front:** Fix login flow and authentication (LBDS-71)
+- **front:** Fix SQLite data synchronization issues (LBDS-61)
+- **front:** Fix event creation and calendar selection
+
+### Removed
+- **front:** Remove GraphQL dependency and related code
+
+### Security
+- **front:** Replace direct auth with SSO-based OAuth2 authentication flow
+
 ## [0.12.0] - 2026-06-12
 
 ### Added
-
 - **front:** Add oneSpend UI/UX theme system with 4 themes: light, dark, catppuccin-latte-maroon, catppuccin-macchiato-maroon
 - **front:** Add component utility classes (card shadows, ion-item variants, ion-list styling, border color utilities)
 - **front:** Add body-class-based theme switching with `auto` mode and system dark mode listener
 - **front:** Add old theme migration (gruvbox, nord, cherry → new catppuccin equivalents)
 
 ### Changed
-
 - **front:** Replace old 4-theme system (gruvbox, nord, cherry, light) with oneSpend design system
 - **front:** Update ThemeController to use `document.body` theme classes with oneSpend naming convention
 - **front:** Update TemplatePage.vue structure to match oneSpend template with content/modals/popovers/alerts sections
 - **front:** Update theme selector UI to reflect new theme names
 
 ### Removed
-
 - **front:** Remove old theme files: gruvbox.css, nord.css, cherry.css, light.css
 
 ## [0.11.1] - 2026-06-11
 
 ### Fixed
-
 - **back:** Prevent null pointer crash on login and eliminate user enumeration via uniform 401 response
 - **back:** Remove `$guarded` from User model (Eloquent ignores it when `$fillable` is set)
 - **back:** Remove `user_id` from `$fillable` on all 5 models; set explicitly in controllers for defense-in-depth
@@ -37,19 +67,16 @@
 - **front:** Apply named parameters pattern to `presentToast` in LoginPage
 
 ### Changed
-
 - **back:** Move resource routes out of `/v1/auth/` prefix to `/v1/` for proper REST semantics
 - **back:** Rename CalendarController methods to standard resource names (store, update, destroy)
 - **front:** Convert `calendarController.ts` to lazy store getter with typed `getViewDates` return
 
 ### Added
-
 - **root:** Add `.eslintcache` to `.gitignore`
 
 ## [0.11.0] - 2026-06-09
 
 ### Added
-
 - **front:** Migrate from SQLite (Capacitor SQLite) to Dexie.js (IndexedDB) for offline persistence with schema versioning and automatic recovery
 - **front:** Add Pinia stores for auth, events, tasks, documents, tags, theme, and WakaTime
 - **front:** Add remaining controllers (calendar, event, note, reminder, schedule, system, tag, theme, wakaTime)
@@ -57,7 +84,6 @@
 - **back:** Add CRUD endpoints for tasks, documents, and notes
 
 ### Changed
-
 - **front:** Refactor from legacy js/ controllers to services/controllers/stores layered architecture
 - **front:** Load events from IndexedDB first (instant), sync with server in background
 - **front:** Replace OAuth token flow with new AuthController pattern
@@ -66,13 +92,11 @@
 - **front:** Initialize viewDates with current date in calendar store
 
 ### Removed
-
 - **front:** Remove @capacitor-community/sqlite dependency and all SQLite-related code
 - **front:** Remove old js/ controller files and legacy stores
 - **front:** Remove dead getViewDates/setCurrentDates call from MainPage
 
 ### Fixed
-
 - **front:** Resolve 38 codebase quality issues across all phases — critical sync loop, data loss, token management, notification collisions, backend validation, store logic, rate limiting, and code cleanup
 - **front:** Resolve 13 TypeScript and runtime issues across CalendarComponent, HomePage, LoginPage, controllers, stores, and components
 - **front:** Resolve 10 functional issues in Dexie migration — schema upgrade, event validation, userId resolution, database corruption recovery
