@@ -5,11 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
-  use HasApiTokens, HasFactory, Notifiable;
+  use HasFactory, Notifiable;
 
   /**
    * The attributes that are mass assignable.
@@ -20,8 +19,6 @@ class User extends Authenticatable
     "name",
     "user",
     "email",
-    "password",
-    "is_email_verified",
   ];
 
   /**
@@ -38,6 +35,9 @@ class User extends Authenticatable
    */
   protected $casts = [
     "email_verified_at" => "datetime",
+    "is_email_verified" => "boolean",
+    "is_admin" => "boolean",
+    "is_user_disabled" => "boolean",
   ];
 
   public function calendars()
@@ -48,5 +48,20 @@ class User extends Authenticatable
   public function events()
   {
     return $this->hasMany(Event::class);
+  }
+
+  public function tasks()
+  {
+    return $this->hasMany(Task::class);
+  }
+
+  public function documents()
+  {
+    return $this->hasMany(Document::class);
+  }
+
+  public function notes()
+  {
+    return $this->hasMany(Note::class);
   }
 }

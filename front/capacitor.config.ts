@@ -4,10 +4,8 @@ const config: CapacitorConfig = {
   appId: "com.dowardev.lifeline",
   appName: "LifeLine",
   webDir: "dist",
-  bundledWebRuntime: false,
   server: {
-    url: "http://192.168.1.74:8100",
-    cleartext: true,
+    androidScheme: "https",
   },
   plugins: {
     LocalNotifications: {
@@ -17,5 +15,13 @@ const config: CapacitorConfig = {
     },
   },
 };
+
+if (process.env.NODE_ENV === "development") {
+  config.server = {
+    ...config.server,
+    url: process.env.CAPACITOR_SERVER_URL || "http://localhost:8100",
+    cleartext: true,
+  };
+}
 
 export default config;

@@ -1,43 +1,32 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\EventController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\NoteController;
+use App\Http\Controllers\TagController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\WakaTimeController;
+use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
- */
+Route::prefix('v1')->group(function () {
+    Route::middleware(['sso.auth', 'sso.user', 'throttle:api'])->prefix('auth')->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
+        Route::get('user', [AuthController::class, 'user']);
+    });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-  return $request->user();
-});
+    Route::middleware(['sso.auth', 'sso.user', 'throttle:api'])->group(function () {
+        Route::apiResource('events', EventController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::apiResource('calendars', CalendarController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::apiResource('tasks', TaskController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::apiResource('documents', DocumentController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::apiResource('notes', NoteController::class)->only(['index', 'store', 'update', 'destroy']);
 
-/* wakatime */
-Route::get('wakatime-durations', [WakaTimeController::class, 'durations']);
+        Route::get('wakatime-durations', [WakaTimeController::class, 'durations'])->middleware('throttle:30,1');
 
-Route::group(['prefix' => 'auth'], function () {
-  Route::post('login', [AuthController::class, 'login']);
-  Route::post('signup', [AuthController::class, 'signup']);
-
-  Route::group(['middleware' => 'auth:api'], function () {
-    Route::get('logout', [AuthController::class, 'logout']);
-    Route::get('user', [AuthController::class, 'user']);
-
-    Route::post('create-event', [EventController::class, 'createEvent']);
-    Route::get('get-events', [EventController::class, 'getEvents']);
-    Route::post('update-event', [EventController::class, 'updateEvent']);
-    Route::post('remove-event', [EventController::class, 'removeEvent']);
-
-    Route::get('get-calendars', [CalendarController::class, 'getCalendars']);
-  });
+        Route::get('admin-tags', [TagController::class, 'adminTags']);
+        Route::post('events/{eventId}/tags', [TagController::class, 'attachTag']);
+        Route::delete('events/{eventId}/tags/{tagId}', [TagController::class, 'detachTag']);
+    });
 });

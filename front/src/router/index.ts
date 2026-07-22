@@ -1,60 +1,5 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
-// import HomePage from '../views/HomePage.vue'
-import MainPage from "@/views/main/MainPage.vue";
-
-import { UserController } from "@/js/userController";
-import { User } from "@/utils/interfaces";
-import { useUserStore } from "@/store/userStore";
-
-async function loadUser(): Promise<void> {
-  const userController = new UserController();
-  const queryName = "USER_BASIC";
-  const fragmentName = "UserBasic";
-
-  try {
-    await userController.loadUser({ queryName, fragmentName });
-  } catch (error: any) {
-    throw new Error(error.message);
-  }
-}
-
-async function adminGuard(): Promise<true | "/"> {
-  const userController = new UserController();
-  await loadUser();
-  const isAdmin = userController.refs.user.value.isAdmin;
-  if (isAdmin == true) return true;
-  return "/";
-}
-
-async function userLoggedGuard(): Promise<true | "/landing"> {
-  const userController = new UserController();
-  let value = "landing" as true | "/landing";
-  try {
-    await loadUser();
-    const user = userController.refs.user.value.user;
-    if (user) value = true;
-  } catch (error) {
-    console.error(error);
-    value = "/landing";
-  } finally {
-    return value;
-  }
-}
-
-async function userSignOutGuard(): Promise<true | "/" | undefined> {
-  const userController = new UserController();
-  let value = true as true | "/";
-  try {
-    await loadUser();
-    const user = userController.refs.user.value.user;
-    if (user) value = "/";
-  } catch (error) {
-    value = true;
-  } finally {
-    return value;
-  }
-}
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -62,68 +7,80 @@ const routes: Array<RouteRecordRaw> = [
     redirect: "/home",
   },
   {
-    path: "/(.*)",
-    redirect: "/home",
-  },
-  {
     path: "/home",
     name: "home",
-    component: MainPage,
+    component: () => import("@/views/home/HomePage.vue"),
+    meta: { requiresAuth: true },
   },
   {
     path: "/calendar",
     name: "CalendarPage",
-    component: MainPage,
+    component: () => import("@/views/calendar/CalendarPage.vue"),
+    meta: { requiresAuth: true },
   },
   {
-    path: "/signup",
-    name: "SignUp",
-    component: MainPage,
+    path: "/auth/callback",
+    name: "AuthCallback",
+    component: () => import("@/views/auth/AuthCallbackPage.vue"),
+    meta: { public: true },
   },
   {
     path: "/login",
     name: "Login",
-    component: MainPage,
+    component: () => import("@/views/auth/SsoRedirectPage.vue"),
+    meta: { public: true },
   },
   {
-    path: "/prueba",
-    name: "PruebaPage",
-    component: MainPage,
+    path: "/register",
+    name: "Register",
+    component: () => import("@/views/auth/SsoRedirectPage.vue"),
+    meta: { public: true },
   },
   {
     path: "/document/:url",
     name: "DocumentPage",
-    component: MainPage,
+    component: () => import("@/views/documents/DocumentPage.vue"),
+    meta: { requiresAuth: true },
   },
   {
     path: "/policies",
     name: "PoliciesPage",
-    component: MainPage,
+    component: () => import("@/views/policies/PoliciesPage.vue"),
+    meta: { public: true },
   },
   {
     path: "/documents",
     name: "DocumentsPage",
-    component: MainPage,
+    component: () => import("@/views/documents/DocumentsPage.vue"),
+    meta: { requiresAuth: true },
   },
   {
     path: "/tasks",
     name: "TasksPage",
-    component: MainPage,
+    component: () => import("@/views/tasks/TasksPage.vue"),
+    meta: { requiresAuth: true },
   },
   {
     path: "/integrations",
     name: "IntegrationsPage",
-    component: MainPage,
+    component: () => import("@/views/integrations/IntegrationsPage.vue"),
+    meta: { requiresAuth: true },
   },
   {
     path: "/about",
     name: "AboutPage",
-    component: MainPage,
+    component: () => import("@/views/about/AboutPage.vue"),
+    meta: { public: true },
   },
   {
     path: "/landing",
     name: "LandingPage",
-    component: MainPage,
+    component: () => import("@/views/lading/LandingPage.vue"),
+    meta: { public: true },
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/home",
   },
 ];
 
@@ -132,49 +89,19 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(async (to, from, next) => {
-  const userController = new UserController();
-  const queryName = "USER_BASIC";
-  const fragmentName = "UserBasic";
-  let user = {} as User;
-  const path = to.path;
-  const authorizedRoutes = [
-    "/home",
-    "/calendar",
-    "/document/:url",
-    "/documents",
-    "/tasks",
-    "/integrations",
-  ];
-  const unauthorizedRoutes = ["/signup", "/login", "/landing"];
-  const publicRoutes = ["/policies", "/about"];
+router.beforeEach(async (to, _from, next) => {
+  const isPublic = to.meta?.public === true
+  if (isPublic) return next()
 
-  try {
-    const userStore = useUserStore();
-    user = userStore.user;
-    if (Object.keys(user).length == 0) throw new Error("No token found");
-    // await userController.loadUser({ queryName, fragmentName });
-  } catch (error: any) {
-    if (
-      error.message !=
-        "Error: Query failed: SelectSQL: queryAll: no such table: Users" &&
-      error.message != "No token found"
-    ) {
-      console.error(error);
-    }
+  const { getSSOClient } = await import('@/ssoClientAccessor')
+  const ssoClient = getSSOClient()
+  if (!ssoClient.isAuthenticated) {
+    await ssoClient.loginWithRedirect({
+      redirectUri: `${window.location.origin}/auth/callback`,
+    })
+    return next(false)
   }
-
-  if (publicRoutes.includes(path)) return next();
-
-  if (Object.keys(user).length > 0) {
-    if (authorizedRoutes.includes(path)) return next();
-    if (unauthorizedRoutes.includes(path)) return next("/home");
-  }
-
-  if (Object.keys(user).length <= 0) {
-    if (unauthorizedRoutes.includes(path)) return next();
-    return next("/landing");
-  }
-});
+  return next()
+})
 
 export default router;

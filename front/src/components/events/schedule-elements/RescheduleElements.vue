@@ -26,9 +26,23 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import { ref } from "vue";
 import { stopwatchOutline, trashOutline } from "ionicons/icons";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
+// (none)
+
+// 6. Vars and const
 const showButtonsOptionTODO = ref(-1);
 const todo = [
   { title: "Terminar proyecto" },
@@ -51,4 +65,16 @@ const todo = [
   { title: "Terminar proyecto" },
   { title: "Terminar proyecto" },
 ];
+
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+// (none)
 </script>

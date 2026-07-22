@@ -125,12 +125,22 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
+  IonButton,
+  IonCard,
+  IonCol,
   IonContent,
+  IonIcon,
   IonInput,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonPopover,
+  IonRow,
   IonSegment,
   IonSegmentButton,
-  IonButton,
+  IonToggle,
   isPlatform,
 } from "@ionic/vue";
 import {
@@ -142,13 +152,27 @@ import {
   mailOutline,
 } from "ionicons/icons";
 import { computed, ref } from "vue";
-import { copyToClipboard as copyToClipboardService } from "../../../../../services/system";
 
+// 2. Controllers / Composables
+import { SystemController } from "@/controllers/systemController";
+const systemController = new SystemController();
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 const props = defineProps({ url: { type: String, default: "" } });
 
+// 6. Vars and const
 const mainSegment = ref("url");
 
-// computed
+// 7. Watch
+// (none)
+
+// 8. Computed
 const generateQR = computed(() => {
   return (
     "https://chart.googleapis.com/chart?cht=qr&chs=" +
@@ -160,9 +184,12 @@ const generateQR = computed(() => {
   );
 });
 
-// functions
-const copyToClipboard = async (params: { phrase: string }) => {
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+const copyToClipboard = async (params: { phrase: string }): Promise<void> => {
   const phrase = params.phrase;
-  await copyToClipboardService({ phrase });
+  await systemController.copyToClipboard({ text: phrase });
 };
 </script>

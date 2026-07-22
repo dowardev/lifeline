@@ -3,7 +3,7 @@
     <ion-header mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
+          <ion-menu-button menu="main-menu" mode="md"></ion-menu-button>
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
@@ -16,43 +16,49 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
-      <ion-row class="ion-padding">
-        <ion-col size="12">
-          <div class="center">
-            <img :src="DeveloperByImage" alt="" class="logo" />
-          </div>
-        </ion-col>
+    <ion-content>
+      <ion-grid>
+        <ion-row class="ion-justify-content-center">
+          <ion-col size="12" size-md="10" size-lg="8" size-xl="6">
+            <ion-row class="ion-padding">
+              <ion-col size="12">
+                <div class="center">
+                  <img :src="DeveloperByImage" alt="" class="logo" />
+                </div>
+              </ion-col>
 
-        <ion-col size="12" class="center">
-          <p class="description">
-            LifeLine es una aplicación de productividad todo en uno donde podrás
-            aumentar tu nivel de productividad gracias a todas las herramientas
-            que te ofrece ademas de las diversas integraciones con las que es
-            compatible.
-          </p>
-        </ion-col>
-      </ion-row>
+              <ion-col size="12" class="center">
+                <p class="description">
+                  LifeLine es una aplicación de productividad todo en uno donde podrás
+                  aumentar tu nivel de productividad gracias a todas las herramientas
+                  que te ofrece ademas de las diversas integraciones con las que es
+                  compatible.
+                </p>
+              </ion-col>
+            </ion-row>
 
-      <!-- popovers -->
-      <ion-popover trigger="click-trigger-main-options" trigger-action="click">
-        <ion-content
-          ><ion-item
-            button
-            lines="none"
-            @click="openURl({ url: 'https://dowar.xyz' })"
-            ><ion-icon slot="start" :icon="globeOutline"></ion-icon
-            ><ion-label>DowarDev</ion-label></ion-item
-          >
+            <!-- popovers -->
+            <ion-popover trigger="click-trigger-main-options" trigger-action="click">
+              <ion-content
+                ><ion-item
+                  button
+                  lines="none"
+                  @click="openURl({ url: 'https://dowar.xyz' })"
+                  ><ion-icon slot="start" :icon="globeOutline"></ion-icon
+                  ><ion-label>DowarDev</ion-label></ion-item
+                >
 
-          <ion-item button lines="none" disabled
-            ><ion-icon slot="start" :icon="logoAppleAppstore"></ion-icon
-            ><ion-label class="ion-text-wrap"
-              >Aplicación movil(App Gallery)</ion-label
-            ></ion-item
-          >
-        </ion-content>
-      </ion-popover>
+                <ion-item button lines="none" disabled
+                  ><ion-icon slot="start" :icon="logoAppleAppstore"></ion-icon
+                  ><ion-label class="ion-text-wrap"
+                    >Aplicación movil(App Gallery)</ion-label
+                  ></ion-item
+                >
+              </ion-content>
+            </ion-popover>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
     </ion-content>
   </ion-page>
 </template>
@@ -75,7 +81,7 @@ import {
 const pageTitle = "LifeLine";
 
 // functions
-function openURl(params: { url: string }) {
+function openURl(params: { url: string }): void {
   const { url } = params;
   window.open(url, "_blank");
 }

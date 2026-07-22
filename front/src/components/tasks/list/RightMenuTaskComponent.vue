@@ -31,6 +31,7 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
   IonContent,
   popoverController,
@@ -41,27 +42,47 @@ import {
 import { createOutline, trashOutline } from "ionicons/icons";
 import { ref } from "vue";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 type Option = "delete" | "edit";
 type Role = "confirm" | "cancel";
 
+// 6. Vars and const
 let progress = ref(0);
 
 const showDeleteOption = ref(true);
 const intervalDeleteId = ref(null as any);
 
-// funtions
-function selectOption(params: { option: Option }) {
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
+function selectOption(params: { option: Option }): void {
   const option = params.option;
   if (option == "delete") deleteOption();
   if (option == "edit") editOption();
 }
 
-function deleteOption() {
+function deleteOption(): void {
   showDeleteOption.value = false;
   intervalDeleteId.value = setInterval(() => {
     progress.value += 0.01;
     if (progress.value > 1) {
-      clearInterval(intervalDeleteId);
+      clearInterval(intervalDeleteId.value);
       setTimeout(async () => {
         progress.value = 0;
         await closeModal({
@@ -73,18 +94,18 @@ function deleteOption() {
   }, 30);
 }
 
-async function cancelDelete() {
-  clearInterval(intervalDeleteId);
+async function cancelDelete(): Promise<void> {
+  clearInterval(intervalDeleteId.value);
   await closeModal({ data: { option: "delete" }, role: "cancel" });
 }
 
-async function closeModal(params: { data: { option: Option }; role: Role }) {
+async function closeModal(params: { data: { option: Option }; role: Role }): Promise<void> {
   const data = params.data;
   const role = params.role;
   await popoverController.dismiss(data, role);
 }
 
-async function editOption() {
+async function editOption(): Promise<void> {
   await closeModal({
     data: { option: "edit" },
     role: "confirm",

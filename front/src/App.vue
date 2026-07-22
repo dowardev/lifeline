@@ -1,52 +1,44 @@
 <template>
-  <ion-app style="margin-bottom: 16px">
-    <ion-split-pane when="lg" content-id="menu-content">
-      <ion-menu
-        content-id="menu-content"
-        menu-id="mainMenu"
-        side="start"
-        type="overlay"
-        style="--side-max-width: 200px; border-right-width: 0px"
-      >
-        <MenuComponent></MenuComponent>
-      </ion-menu>
+    <ion-app>
+    <ion-split-pane when="(min-width: 992px)" content-id="menu-content">
+      <MenuComponent />
       <ion-router-outlet id="menu-content" />
     </ion-split-pane>
   </ion-app>
 </template>
 
 <script setup lang="ts">
-import { IonApp, IonRouterOutlet, IonMenu, IonSplitPane } from "@ionic/vue";
+import { IonApp, IonRouterOutlet, IonSplitPane } from "@ionic/vue";
 import { onMounted } from "vue";
-import { ref } from "vue";
 import messages from "./utils/messages.json";
-import { endOfMonth, startOfMonth } from "date-fns";
 
 // components
 import MenuComponent from "@/components/menu/MenuComponent.vue";
 
 // controllers
-import { SystemController } from "@/js/systemController";
-import { EventController } from "@/js/eventController";
-import { UserController } from "@/js/userController";
-import { CalendarController } from "./js/calendarController";
+import { SystemController } from "@/controllers/systemController";
+import { AuthController } from "@/controllers/authController";
+import { ThemeController } from "@/controllers/themeController";
 const systemController = new SystemController();
-const eventController = new EventController();
-const userController = new UserController();
-const calendarController = new CalendarController();
-
-// const componentLoaded = ref(false);
+const themeController = new ThemeController();
 
 // mounted
 onMounted(async () => {
+  themeController.setupThemeListener();
+
+  const storedTheme = themeController.getTheme()
+  if (storedTheme) {
+    themeController.applyTheme({ theme: storedTheme })
+  }
+
   // sync calendar
   try {
     await systemController.openToast({
       message: messages.syncStart,
     });
 
-    const userController = new UserController();
-    await userController.syncUserLogged();
+    const userController = new AuthController();
+    await userController.loadUser();
 
     await systemController.openToast({
       message: messages.syncEnd,
@@ -66,14 +58,12 @@ onMounted(async () => {
 });
 
 // functions
-async function deleteData(): Promise<void> {
-  await systemController.deleteAllDataSystem({
-    events: true,
-    schedule: true,
-    reminders: true,
-    tokens: true,
-    users: true,
-  });
-  // location.reload();
-}
 </script>
+
+<style>
+@media (min-width: 992px) {
+  ion-split-pane {
+    --side-width: 300px;
+  }
+}
+</style>

@@ -1,25 +1,16 @@
-import { DocumentNode } from "graphql";
 import { DocumentElements, Theme, RepeatType } from "./types";
-
-export interface Graphql {
-  name: DocumentNode;
-  fragment: string;
-  refetch?: boolean;
-}
 
 // user
 export interface User {
   id: number;
+  idSync?: number | string;
   name?: string;
   userName?: string;
-  // password?: string;
   email?: string;
   isAdmin?: boolean;
   rol?: Array<any>;
-  // isEmailVerified?: boolean;
-  // isDisabled?: boolean;
   imageProfile?: string;
-  // token?: string;
+  theme?: string;
   events?: Array<Event>;
   preferences?: {
     theme: Theme;
@@ -56,24 +47,18 @@ export interface UserServer {
 }
 
 export interface UserRegister {
-  name: User["name"];
-  user: User["user"];
-  email: User["email"];
-  password: User["password"];
+  name: string;
+  user: string;
+  email: string;
+  password: string;
 }
 export interface SetUserToken {
   token: string;
   userId: string;
 }
-export interface ResendEmailConfirmation {
-  email: string;
-}
 export interface UserLogin {
-  user: User["user"];
-  password: User["password"];
-}
-export interface GetUserAuth {
-  graphql: Graphql;
+  user: string;
+  password: string;
 }
 export interface GetUserAuthResponse {
   id: string;
@@ -142,9 +127,6 @@ export interface NewEvent {
   description: string;
   availability: string;
 }
-export interface GetCalendars {
-  graphql: Graphql;
-}
 export interface GetCalendarsResponse {
   id: string;
   name: string;
@@ -153,7 +135,6 @@ export interface GetCalendarsResponse {
 
 export interface GetEvents {
   date: string;
-  graphql: Graphql;
 }
 
 export interface CalendarViewDates {
@@ -252,6 +233,7 @@ export interface ScheduleElement {
   date: string;
   type: string;
   reminder: boolean;
+  idElement?: string;
 }
 
 export interface Schedule {

@@ -24,20 +24,45 @@
 </template>
 
 <script setup lang="ts">
-import { IonTextarea } from "@ionic/vue";
-// markdown
-import Markdown from "vue3-markdown-it";
-import "highlight.js/styles/monokai.css";
+// 1. Imports (ionic/vue/ionicons)
+import {
+  IonButton,
+  IonIcon,
+  IonItem,
+  IonPage,
+  IonTextarea,
+} from "@ionic/vue";
 import { closeOutline, createOutline } from "ionicons/icons";
 import { ref } from "vue";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+import Markdown from "vue3-markdown-it";
+import "highlight.js/styles/monokai.css";
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 const props = defineProps({
   contentEditable: { type: Boolean, default: false },
 });
 
+// 6. Vars and const
 const content = ref("# e");
 let isContentEditable = false;
 
-// mounted
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
 if (props.contentEditable == true) isContentEditable = true;
+
+// 10. Functions (named parameters pattern)
+// (none)
 </script>

@@ -122,19 +122,24 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonButton,
-  IonItem,
-  IonLabel,
   IonAccordion,
   IonAccordionGroup,
-  popoverController,
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonListHeader,
+  IonTitle,
+  IonToolbar,
+  isPlatform,
   modalController,
+  popoverController,
 } from "@ionic/vue";
 import {
   closeOutline,
@@ -142,26 +147,40 @@ import {
   shareSocialOutline,
   timeOutline,
 } from "ionicons/icons";
-import { OptionsMainMenuDocument } from "../../../../utils/types";
-import { isPlatform } from "@ionic/vue";
+
+// 2. Controllers / Composables
+import { DocumentController } from "@/controllers/documentController";
+const documentController = new DocumentController();
+
+// 3. Components
 import ShareComponent from "./share/ShareComponent.vue";
 import RemindersComponent from "./reminder/RemindersComponent.vue";
 
-// controllers
-import { DocumentController } from "@/js/documentController";
-const documentController = new DocumentController();
+// 4. Interface and types imports
+import type { OptionsMainMenuDocument } from "../../../../utils/types";
 
+// 5. Main (props, emits)
 const props = defineProps({ documentId: { default: "", type: String } });
 
+// 6. Vars and const
 const pageTitle = "Opciones";
 
 let optionSelected = "none";
 
-// functions
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
 const closePage = async (params: {
   role: "confirm" | "cancel";
   data?: { option: OptionsMainMenuDocument; data?: any };
-}) => {
+}): Promise<void> => {
   const role = params.role;
   const data = params.data;
   const modal = await modalController.getTop();
@@ -170,7 +189,7 @@ const closePage = async (params: {
   else await popoverController.dismiss(data, role);
 };
 
-const selectOption = (params: { option: OptionsMainMenuDocument }) => {
+const selectOption = (params: { option: OptionsMainMenuDocument }): void => {
   const option = params.option;
 
   if (option == "save") saveOption();
@@ -179,20 +198,20 @@ const selectOption = (params: { option: OptionsMainMenuDocument }) => {
   if (option == "reminder") toggleReminderOption();
 };
 
-const saveOption = async () => {
+const saveOption = async (): Promise<void> => {
   await closePage({ role: "confirm", data: { option: "save" } });
 };
 
-const orderElementsOption = async () => {
+const orderElementsOption = async (): Promise<void> => {
   await closePage({ role: "confirm", data: { option: "order" } });
 };
 
-const toggleShareOption = () => {
+const toggleShareOption = (): void => {
   if (optionSelected == "none") optionSelected = "share";
   if (optionSelected == "share") optionSelected = "none";
 };
 
-const toggleReminderOption = () => {
+const toggleReminderOption = (): void => {
   if (optionSelected == "none") optionSelected = "reminder";
   if (optionSelected == "reminder") optionSelected = "none";
 };

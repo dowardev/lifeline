@@ -1,0 +1,16 @@
+diff --git a/package.json b/package.json
+index ceec1f9992b1b1122df56f692bbbcfcb4193f5c4..9a8680e16dd78a9b6802a8c4ab5c6be86c421a1f 100755
+--- a/package.json
++++ b/package.json
+@@ -38,6 +38,11 @@
+       "import": "./icons/index.mjs",
+       "require": "./icons/index.js"
+     },
++    "./icons/": {
++      "types": "./icons/index.d.ts",
++      "import": "./icons/index.mjs",
++      "require": "./icons/index.js"
++    },
+     "./dist/ionicons.json": {
+       "default": "./dist/ionicons.json"
+     }

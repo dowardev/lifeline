@@ -3,7 +3,7 @@
     <ion-header mode="ios" class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-menu-button menu="mainMenu" mode="md"></ion-menu-button>
+          <ion-menu-button menu="main-menu" mode="md"></ion-menu-button>
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
@@ -11,110 +11,115 @@
     </ion-header>
 
     <ion-content
-      :fullscreen="true"
       :scroll-events="true"
       @ion-scroll="handleScroll"
     >
-      <!-- input add task -->
-      <section>
-        <ion-row
-          class="ion-padding-start ion-padding-end"
-          :class="{ center: screenWidth >= 768 }"
-        >
-          <ion-col size-xs="12" size-md="9" size-lg="6">
-            <div style="display: flex; justify-content: space-between">
-              <div style="width: 100%">
-                <ion-input
-                  label="Agregar tarea"
-                  placeholder="Comprar pan"
-                  :fill="positionScroll > 10 ? 'outline' : 'solid'"
-                  :value="inputTaskValue"
-                  label-placement="floating"
-                  @ion-input="inputTaskValue = $event.detail.value as string"
-                ></ion-input>
-              </div>
+      <ion-grid>
+        <ion-row class="ion-justify-content-center">
+          <ion-col size="12" size-md="10" size-lg="8" size-xl="6">
+            <!-- input add task -->
+            <section>
+              <ion-row
+                class="ion-padding-start ion-padding-end"
+                :class="{ center: screenWidth >= 768 }"
+              >
+                <ion-col size-xs="12" size-md="9" size-lg="6">
+                  <div style="display: flex; justify-content: space-between">
+                    <div style="width: 100%">
+                      <ion-input
+                        label="Agregar tarea"
+                        placeholder="Comprar pan"
+                        :fill="positionScroll > 10 ? 'outline' : 'solid'"
+                        :value="inputTaskValue"
+                        label-placement="floating"
+                        @ion-input="inputTaskValue = $event.detail.value as string"
+                      ></ion-input>
+                    </div>
 
-              <div class="center-vertical ion-padding-start">
-                <ion-button
-                  slot="end"
-                  :disabled="!inputTaskValue"
-                  @click="addTask({ name: inputTaskValue })"
-                  ><ion-icon :icon="addOutline"></ion-icon
-                ></ion-button>
-              </div>
-            </div>
+                    <div class="center-vertical ion-padding-start">
+                      <ion-button
+                        slot="end"
+                        :disabled="!inputTaskValue"
+                        @click="addTask({ name: inputTaskValue })"
+                        ><ion-icon :icon="addOutline"></ion-icon
+                      ></ion-button>
+                    </div>
+                  </div>
+                </ion-col>
+              </ion-row>
+            </section>
+
+            <section>
+              <ion-row :class="{ center: screenWidth >= 768 }">
+                <ion-col size-xs="12" size-lg="6">
+                  <ion-card class="card-main-content">
+                    <ion-card-content>
+                      <ion-row>
+                        <ion-col size-xs="12" size-md="9" size-lg="12">
+                          <ion-item lines="none" style="--background: transparent">
+                            <ion-select interface="popover" :value="listSelected">
+                              <ion-select-option value="tray"
+                                >Bandeja de entrada</ion-select-option
+                              >
+                            </ion-select>
+
+                            <div slot="end">
+                              <ion-button fill="clear"
+                                ><ion-icon :icon="appsOutline"></ion-icon
+                              ></ion-button>
+
+                              <ion-button
+                                :fill="viewMode == 'list' ? 'clear' : 'solid'"
+                                @click="
+                                  viewMode = viewMode == 'list' ? 'kanban' : 'list';
+                                  setTasksViewMode({ viewMode });
+                                "
+                                ><ion-icon :icon="albumsOutline"></ion-icon
+                              ></ion-button>
+                            </div>
+                          </ion-item>
+                        </ion-col>
+                      </ion-row>
+
+                      <!-- tasks -->
+                      <ion-row>
+                        <ion-col size="12">
+                          <listTasksComponent
+                            v-show="viewMode == 'list'"
+                            :task-data="taskController.getTasks()"
+                            @update="updateTask({ idTask: $event.idTask })"
+                            @remove="removeTask({ id: $event.idTask })"
+                            @toggle-check="toggleCheckTask({ id: $event.idTask })"
+                          />
+                        </ion-col>
+                      </ion-row>
+
+                      <ion-row>
+                        <ion-col size-xs="12" size-md="12" size-lg="12">
+                          <kanbanComponent
+                            v-show="viewMode == 'kanban'"
+                            :task-data="taskController.getTasks()"
+                            @update="updateTask({ idTask: $event.idTask })"
+                            @delete="removeTask({ id: $event.idTask })"
+                            @toggle-check="toggleCheckTask({ id: $event.idTask })"
+                            @kanban-update="
+                              kanbanUpdate({
+                                columnName: $event.columnName,
+                                id: $event.id,
+                                position: $event.position,
+                              })
+                            "
+                          />
+                        </ion-col>
+                      </ion-row>
+                    </ion-card-content>
+                  </ion-card>
+                </ion-col>
+              </ion-row>
+            </section>
           </ion-col>
         </ion-row>
-      </section>
-
-      <section>
-        <ion-row :class="{ center: screenWidth >= 768 }">
-          <ion-col size-xs="12" size-lg="6">
-            <ion-card class="card-main-content">
-              <ion-card-content>
-                <ion-row>
-                  <ion-col size-xs="12" size-md="9" size-lg="12">
-                    <ion-item lines="none" style="--background: transparent">
-                      <ion-select interface="popover" :value="listSelected">
-                        <ion-select-option value="tray"
-                          >Bandeja de entrada</ion-select-option
-                        >
-                      </ion-select>
-
-                      <div slot="end">
-                        <ion-button fill="clear"
-                          ><ion-icon :icon="appsOutline"></ion-icon
-                        ></ion-button>
-
-                        <ion-button
-                          :fill="viewMode == 'list' ? 'clear' : 'solid'"
-                          @click="
-                            viewMode = viewMode == 'list' ? 'kanban' : 'list';
-                            setTasksViewMode({ viewMode });
-                          "
-                          ><ion-icon :icon="albumsOutline"></ion-icon
-                        ></ion-button>
-                      </div>
-                    </ion-item>
-                  </ion-col>
-                </ion-row>
-
-                <!-- tasks -->
-                <ion-row>
-                  <ion-col size="12">
-                    <listTasksComponent
-                      v-show="viewMode == 'list'"
-                      :task-data="taskController.getTasks()"
-                      @update="updateTask({ idTask: $event.idTask })"
-                      @remove="removeTask({ id: $event.idTask })"
-                      @toggle-check="toggleCheckTask({ id: $event.idTask })"
-                    />
-                  </ion-col>
-                </ion-row>
-
-                <ion-row>
-                  <ion-col size-xs="12" size-md="12" size-lg="12">
-                    <kanbanComponent
-                      v-show="viewMode == 'kanban'"
-                      :task-data="taskController.getTasks()"
-                      @update="updateTask({ idTask: $event.idTask })"
-                      @delete="removeTask({ id: $event.idTask })"
-                      @toggle-check="toggleCheckTask({ id: $event.idTask })"
-                      @kanban-update="
-                        kanbanUpdate({
-                          columnName: $event.columnName,
-                          id: $event.id,
-                          position: $event.position,
-                        })
-                      "
-                    />
-                  </ion-col>
-                </ion-row>
-              </ion-card-content>
-            </ion-card>
-          </ion-col>
-        </ion-row>
-      </section>
+      </ion-grid>
 
       <!-- modals -->
       <ion-modal
@@ -133,7 +138,7 @@
         :is-open="isOpenModalUpdateTask"
         @did-dismiss="isOpenModalUpdateTask = false"
       >
-        <AddTaskComponent :task-data="taskController.getTask({ idTask })" />
+        <AddTaskComponent :task-data="taskController.getTask({ id: idTask }) ?? undefined" />
       </ion-modal>
     </ion-content>
   </ion-page>
@@ -158,13 +163,10 @@ import { addOutline, albumsOutline, appsOutline } from "ionicons/icons";
 import { onMounted, ref } from "vue";
 
 // controllers
-import { TaskController } from "@/js/taskController";
-import { SystemController } from "@/js/systemController";
+import { TaskController } from "@/controllers/taskController";
+import { SystemController } from "@/controllers/systemController";
 const taskController = new TaskController();
 const systemController = new SystemController();
-
-// interface
-import { NewTask } from "@/utils/interfaces";
 
 // components
 import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
@@ -176,7 +178,7 @@ const pageTitle = "Tareas";
 const listSelected = ref("tray");
 
 const positionScroll = ref(0);
-const handleScroll = (event: CustomEvent) => {
+const handleScroll = (event: CustomEvent): void => {
   positionScroll.value = event.detail.scrollTop;
 };
 const screenWidth = ref(window.innerWidth);
@@ -193,58 +195,39 @@ onMounted(() => {
 });
 
 // functions
-async function addTask(params: { name: string }) {
+async function addTask(params: { name: string }): Promise<void> {
   const { name } = params;
-  const task = {
-    name,
-    checked: false,
-    guests: [],
-    reminders: {
-      start: null,
-      end: null,
-      notifications: [],
-      repeat: { frecuency: 1, type: "daily", daysWeek: [] },
-    },
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    subtasks: [],
-    kanban: {
-      columnName: "pending",
-      position: taskController.getTasks()!.length,
-    },
-  } as NewTask;
-  await taskController.saveTask({ task });
+  await taskController.createTask({ title: name });
   inputTaskValue.value = "";
 }
 
-async function removeTask(params: { id: string }) {
+async function removeTask(params: { id: string }): Promise<void> {
   const { id } = params;
-  await taskController.deleteTask({ taskId: id });
+  await taskController.deleteTask({ id: Number(id) });
 }
 
-function updateTask(params: { idTask: string }) {
+function updateTask(params: { idTask: string }): void {
   const { idTask: id } = params;
   idTask.value = id;
   isOpenModalUpdateTask.value = true;
 }
 
-function toggleCheckTask(params: { id: string }) {
+function toggleCheckTask(params: { id: string }): void {
   const { id } = params;
-  const task = taskController.getTask({ idTask: id });
+  const task = taskController.getTask({ id });
   if (!task) return;
 
-  task.checked = !task.checked;
-
-  taskController.updateTask({
-    task: { id: task.id, name: task.name, checked: task.checked },
-  });
+  const newChecked = !task.checked;
+  const newStatus = newChecked ? 'completed' : 'pending';
+  taskController.updateTaskStatus({ id: task.id, status: newStatus });
 }
 
-function setTasksViewMode(params: { viewMode: ViewMode }) {
+function setTasksViewMode(params: { viewMode: ViewMode }): void {
   const { viewMode } = params;
   systemController.setTasksViewMode({ viewMode });
 }
 
-async function getTasksViewMode() {
+async function getTasksViewMode(): Promise<void> {
   viewMode.value = await systemController.getTasksViewMode();
 }
 
@@ -252,12 +235,18 @@ async function kanbanUpdate(params: {
   position: number;
   id: string;
   columnName: "pending" | "progress" | "finalized";
-}) {
+}): Promise<void> {
   const { id, columnName, position } = params;
-  const task = taskController.getTask({ idTask: id })!;
-  task.kanban.columnName = columnName;
-  task.kanban.position = position;
-  taskController.updateTask({ task });
+  const columnToStatus: Record<string, string> = {
+    pending: 'pending',
+    progress: 'in_progress',
+    finalized: 'completed',
+  };
+  taskController.updateTask({
+    id: Number(id),
+    status: columnToStatus[columnName] ?? 'pending',
+    order: position,
+  });
 }
 </script>
 

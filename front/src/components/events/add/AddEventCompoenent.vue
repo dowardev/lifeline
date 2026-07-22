@@ -15,10 +15,6 @@
             ><ion-icon :icon="trashOutline" color="danger"></ion-icon
           ></ion-button>
 
-          <ion-button v-if="!isPlatform('desktop')" id="open-modal-calendar"
-            ><ion-icon :icon="calendarOutline"></ion-icon
-          ></ion-button>
-
           <ion-button :disabled="v$.$invalid" @click="save()"
             ><ion-icon :icon="saveOutline"></ion-icon
           ></ion-button>
@@ -26,294 +22,266 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
-      <!-- form -->
-      <ion-row class="container">
-        <ion-col
-          size-lg="7"
-          size-xl="8"
-          class="hidde-scroll-chrome hidde-scroll-others container"
-        >
-          <!-- basic -->
-          <ion-list>
-            <ion-list-header>
-              <ion-label>Básico</ion-label>
-            </ion-list-header>
+    <ion-content class="event-form-content">
+      <ion-grid style="height: 100%">
+        <ion-row style="height: 100%">
+          <!-- left column: form -->
+          <ion-col
+            v-show="!(isMobile && showMobileCalendar)"
+            size-lg="7"
+            size-xl="8"
+            class="container form-column"
+          >
+            <div class="form-wrapper">
+              <!-- basic -->
+              <ion-row>
+                <ion-col size-xs="11" size="10">
+                  <ion-list>
+                    <ion-list-header>
+                      <ion-label>Básico</ion-label>
+                    </ion-list-header>
 
-            <!-- name -->
-            <ion-row class="ion-padding">
-              <ion-col size-xs="11" size="10">
-                <ion-input
-                  ref="inputName"
-                  label="Nombre"
-                  placeholder="Visita al dentista"
-                  label-placement="floating"
-                  fill="solid"
-                  autocomplete="on"
-                  autocorrect="on"
-                  type="text"
-                  :error-text="v$.event.name.$errors[0]?.$message as string"
-                  :class="[
-                    v$.event.name.$errors.length == 0
-                      ? 'ion-valid'
-                      : 'ion-invalid',
-                  ]"
-                  :value="event.name.value"
-                  @ion-input="event.name.value = $event.target.value as string"
-                  @ion-focus="
-                    ($refs.inputName as any).$el.classList.add('ion-touched');
-                    v$.event.name.$touch();
-                  "
-                ></ion-input>
-              </ion-col>
-            </ion-row>
-
-            <br />
-
-            <!-- description -->
-            <ion-row class="ion-padding">
-              <ion-col size-xs="11" size="10">
-                <ion-textarea
-                  placeholder="Visita rutinaria"
-                  fill="solid"
-                  label="Descripcion"
-                  label-placement="floating"
-                  :auto-grow="true"
-                  autocomplete="on"
-                  autocorrect="on"
-                  type="text"
-                  :value="event.description.value"
-                  @ion-input="
-                    event.description.value = $event.target.value as string
-                  "
-                ></ion-textarea>
-              </ion-col>
-            </ion-row>
-          </ion-list>
-
-          <br />
-
-          <!-- time -->
-          <ion-list>
-            <ion-list-header>
-              <ion-label>Tiempo</ion-label>
-            </ion-list-header>
-
-            <ion-row class="ion-padding">
-              <ion-col size-xs="11" size="10">
-                <div style="display: flex">
-                  <div style="width: 100%">
-                    <!-- dates -->
-                    <ion-textarea
-                      label="Tiempo"
-                      label-placement="floating"
-                      fill="solid"
-                      :value="
-                        format(new Date(event.reminders.value.start), 'Pp') +
-                        '\n' +
-                        format(new Date(event.reminders.value.end), 'Pp')
-                      "
-                      @click="
-                        popoverRemindersSegment = 'date-start';
-                        isOpenPopoverReminders = true;
-                      "
-                    ></ion-textarea>
-
-                    <!-- notifications -->
-                    <section
-                      v-if="event.reminders.value.notifications.length > 0"
-                    >
-                      <ion-textarea
-                        label="Notificaciones"
-                        label-placement="floating"
-                        fill="solid"
-                        :value="formatTextNotifications()"
-                        @click="
-                          popoverRemindersSegment = 'reminders';
-                          isOpenPopoverReminders = true;
-                        "
-                      ></ion-textarea>
-                    </section>
-
-                    <!-- repeat -->
-                    <section v-if="event.reminders.value.repeat">
-                      <ion-textarea
-                        label="Repetir"
-                        label-placement="floating"
-                        fill="solid"
-                        :value="formatTextRepeat()"
-                        @click="
-                          popoverRemindersSegment = 'repeats';
-                          isOpenPopoverReminders = true;
-                        "
-                      ></ion-textarea>
-                    </section>
-                  </div>
-                </div>
-              </ion-col>
-            </ion-row>
-
-            <br />
-
-            <!-- time zone -->
-            <ion-row class="ion-padding">
-              <ion-col size-xs="11" size="10">
-                <ion-item
-                  fill="solid"
-                  lines="none"
-                  @click="isOpenPopoverTimezones = true"
-                >
-                  <ion-label>Zona horaria</ion-label>
-                  <ion-label slot="end" class="ion-text-wrap"
-                    >{{ event.timezone.value }}
-                  </ion-label>
-                </ion-item>
-              </ion-col>
-            </ion-row>
-          </ion-list>
-
-          <br />
-
-          <!-- others -->
-          <ion-list>
-            <ion-list-header>
-              <ion-label>Otros</ion-label>
-            </ion-list-header>
-
-            <!-- guests -->
-            <ion-row class="ion-padding">
-              <ion-col size-xs="11" size="10">
-                <div style="display: flex">
-                  <div style="width: 100%">
-                    <ion-input
-                      ref="inputGuest"
-                      label="Invitados"
-                      label-placement="floating"
-                      fill="solid"
-                      placeholder="Correo electronico"
-                      autocomplete="on"
-                      autocorrect="on"
-                      type="email"
-                      :error-text="
-                            v2$.emailGuest.$errors[0]?.$message as string
+                    <ion-card class="shadow1">
+                      <!-- name -->
+                      <ion-item class="transparent" lines="full">
+                        <ion-input
+                          ref="inputName"
+                          label="Nombre"
+                          placeholder="Visita al dentista"
+                          label-placement="floating"
+                          autocomplete="on"
+                          autocorrect="on"
+                          type="text"
+                          :error-text="v$.event.name.$errors[0]?.$message as string"
+                          :class="[v$.event.name.$errors.length == 0 ? 'ion-valid' : 'ion-invalid']"
+                          :value="event.name.value"
+                          @ion-input="event.name.value = $event.target.value as string"
+                          @ion-focus="
+                            ($refs.inputName as any).$el.classList.add('ion-touched');
+                            v$.event.name.$touch();
                           "
-                      :class="[
-                        v2$.emailGuest.$errors.length == 0
-                          ? 'ion-valid'
-                          : 'ion-invalid',
-                      ]"
-                      :value="emailGuest"
-                      @ion-input="emailGuest = $event.target.value as string"
-                      @ion-focus="
-                        ($refs.inputGuest as any).$el.classList.add(
-                          'ion-touched'
-                        )
-                      "
-                      @ion-blur="
-                        ($refs.inputGuest as any).$el.classList.remove(
-                          'ion-touched'
-                        );
-                        v2$.emailGuest.$touch();
-                      "
-                    ></ion-input>
+                        ></ion-input>
+                      </ion-item>
 
-                    <ion-item
-                      v-for="(guest, indexGuest) in event.guests.value"
-                      :key="indexGuest"
-                      @mouseenter="showButtonsOptionGuest = indexGuest"
-                      @mouseleave="showButtonsOptionGuest = -1"
-                    >
-                      <ion-label>{{ guest.email }}</ion-label>
+                      <!-- description -->
+                      <ion-item class="transparent" lines="full">
+                        <ion-textarea
+                          placeholder="Visita rutinaria"
+                          label="Descripcion"
+                          label-placement="floating"
+                          :auto-grow="true"
+                          autocomplete="on"
+                          autocorrect="on"
+                          type="text"
+                          :value="event.description.value"
+                          @ion-input="event.description.value = $event.target.value as string"
+                        ></ion-textarea>
+                      </ion-item>
+                    </ion-card>
+                  </ion-list>
+                </ion-col>
+              </ion-row>
 
-                      <ion-button
-                        v-if="showButtonsOptionGuest === indexGuest"
-                        fill="clear"
-                        color="danger"
-                        @click="removeGuest({ index: indexGuest })"
-                        ><ion-icon :icon="trashOutline"></ion-icon
-                      ></ion-button>
-                    </ion-item>
-                  </div>
+              <!-- time -->
+              <ion-row>
+                <ion-col size-xs="11" size="10">
+                  <ion-list>
+                    <ion-list-header>
+                      <ion-label>Tiempo</ion-label>
+                      <ion-button v-if="isMobile" fill="clear" @click="showMobileCalendar = true">
+                        Disponibilidad
+                      </ion-button>
+                    </ion-list-header>
 
-                  <div>
-                    <div
-                      style="display: flex; align-items: center; height: 50px"
-                    >
-                      <ion-button
-                        fill="clear"
-                        :disabled="v2$.$invalid"
-                        @click="addGuest()"
-                        ><ion-icon :icon="addOutline"></ion-icon
-                      ></ion-button>
-                    </div>
-                  </div>
-                </div>
-              </ion-col>
-            </ion-row>
+                    <ion-card class="shadow1">
+                      <!-- dates -->
+                      <ion-item class="transparent" lines="full">
+                        <ion-textarea
+                          label="Tiempo"
+                          label-placement="floating"
+                          :value="
+                            format(new Date(event.reminders.value.start), 'Pp') +
+                            '\n' +
+                            format(new Date(event.reminders.value.end), 'Pp')
+                          "
+                          @click="
+                            popoverRemindersSegment = 'date-start';
+                            isOpenPopoverReminders = true;
+                          "
+                        ></ion-textarea>
+                      </ion-item>
 
-            <br />
+                      <!-- notifications -->
+                      <ion-item
+                        v-if="event.reminders.value.notifications.length > 0"
+                        class="transparent"
+                        lines="full"
+                      >
+                        <ion-textarea
+                          label="Notificaciones"
+                          label-placement="floating"
+                          :value="formatTextNotifications()"
+                          @click="
+                            popoverRemindersSegment = 'reminders';
+                            isOpenPopoverReminders = true;
+                          "
+                        ></ion-textarea>
+                      </ion-item>
 
-            <!-- availability -->
-            <ion-row class="ion-padding">
-              <ion-col size-xs="11" size="10">
-                <ion-item fill="solid">
-                  <ion-select
-                    placeholder="Disponibilidad"
-                    ok-text="Confirmar"
-                    cancel-text="Cancelar"
-                    :value="event.availability.value"
-                    :interface="isPlatform('desktop') ? 'popover' : 'alert'"
-                    @ion-change="
-                      event.availability.value = $event.target.value as string
-                    "
-                  >
-                    <ion-select-option value="available"
-                      >Disponible</ion-select-option
-                    >
-                    <ion-select-option value="unavailable"
-                      >Ocupado</ion-select-option
-                    >
-                  </ion-select>
-                </ion-item>
-              </ion-col>
-            </ion-row>
-          </ion-list>
-        </ion-col>
+                      <!-- repeat -->
+                      <ion-item v-if="event.reminders.value.repeat" class="transparent">
+                        <ion-textarea
+                          label="Repetir"
+                          label-placement="floating"
+                          :value="formatTextRepeat()"
+                          @click="
+                            popoverRemindersSegment = 'repeats';
+                            isOpenPopoverReminders = true;
+                          "
+                        ></ion-textarea>
+                      </ion-item>
 
-        <ion-col size-lg="5" size-xl="4" class="container">
-          <div class="center">
-            <ion-item lines="none">
-              <ion-button
-                fill="clear"
-                @click="currentDate = sub(currentDate, { days: 1 })"
-                ><ion-icon :icon="arrowBackOutline"></ion-icon
-              ></ion-button>
+                      <!-- time zone -->
+                      <ion-item
+                        class="transparent"
+                        lines="full"
+                        @click="isOpenPopoverTimezones = true"
+                      >
+                        <ion-label>Zona horaria</ion-label>
+                        <ion-label slot="end" class="ion-text-wrap"
+                          >{{ event.timezone.value }}
+                        </ion-label>
+                      </ion-item>
+                    </ion-card>
+                  </ion-list>
+                </ion-col>
+              </ion-row>
 
-              <ion-datetime-button
-                datetime="datetime-availability"
-              ></ion-datetime-button>
+              <!-- others -->
+              <ion-row>
+                <ion-col size-xs="11" size="10">
+                  <ion-list>
+                    <ion-list-header>
+                      <ion-label>Otros</ion-label>
+                    </ion-list-header>
 
-              <ion-button
-                fill="clear"
-                @click="currentDate = add(currentDate, { days: 1 })"
-                ><ion-icon :icon="arrowForwardOutline"></ion-icon
-              ></ion-button>
-            </ion-item>
-          </div>
+                    <ion-card class="shadow1">
+                      <!-- guests -->
+                      <div style="display: flex">
+                        <div style="width: 100%">
+                          <ion-item lines="full" class="transparent">
+                            <ion-input
+                              ref="inputGuest"
+                              label="Invitados"
+                              label-placement="floating"
+                              placeholder="Correo electronico"
+                              autocomplete="on"
+                              autocorrect="on"
+                              type="email"
+                              :error-text="v2$.emailGuest.$errors[0]?.$message as string"
+                              :class="[
+                                v2$.emailGuest.$errors.length == 0 ? 'ion-valid' : 'ion-invalid',
+                              ]"
+                              :value="emailGuest"
+                              @ion-input="emailGuest = $event.target.value as string"
+                              @ion-focus="
+                                ($refs.inputGuest as any).$el.classList.add('ion-touched')
+                              "
+                              @ion-blur="
+                                ($refs.inputGuest as any).$el.classList.remove('ion-touched');
+                                v2$.emailGuest.$touch();
+                              "
+                            ></ion-input>
+                          </ion-item>
+                        </div>
 
-          <div>
-            <ion-card id="card">
-              <ion-card-content style="height: 73dvh">
-                <CalendarDayComponent
-                  :events-data="generateCalendar || []"
-                  :date="currentDate"
-                  :show-current-day="false"
-                />
-              </ion-card-content>
-            </ion-card>
-          </div>
-        </ion-col>
-      </ion-row>
+                        <div>
+                          <div style="display: flex; align-items: center; height: 50px">
+                            <ion-button fill="clear" :disabled="v2$.$invalid" @click="addGuest()"
+                              ><ion-icon :icon="addOutline"></ion-icon
+                            ></ion-button>
+                          </div>
+                        </div>
+                      </div>
+                      <ion-item
+                        v-for="(guest, indexGuest) in event.guests.value"
+                        :key="indexGuest"
+                        @mouseenter="showButtonsOptionGuest = indexGuest"
+                        @mouseleave="showButtonsOptionGuest = -1"
+                      >
+                        <ion-label>{{ guest.email }}</ion-label>
+
+                        <ion-button
+                          v-if="showButtonsOptionGuest === indexGuest"
+                          fill="clear"
+                          color="danger"
+                          @click="removeGuest({ index: indexGuest })"
+                          ><ion-icon :icon="trashOutline"></ion-icon
+                        ></ion-button>
+                      </ion-item>
+
+                      <!-- availability -->
+                      <ion-item lines="full" class="transparent">
+                        <ion-select
+                          placeholder="Disponibilidad"
+                          ok-text="Confirmar"
+                          cancel-text="Cancelar"
+                          :value="event.availability.value"
+                          :interface="isPlatform('desktop') ? 'popover' : 'alert'"
+                          @ion-change="event.availability.value = $event.target.value as string"
+                        >
+                          <ion-select-option value="available">Disponible</ion-select-option>
+                          <ion-select-option value="unavailable">Ocupado</ion-select-option>
+                        </ion-select>
+                      </ion-item>
+                    </ion-card>
+                  </ion-list>
+                </ion-col>
+              </ion-row>
+            </div>
+          </ion-col>
+
+          <!-- right column: calendar -->
+          <ion-col
+            v-show="!isMobile || showMobileCalendar"
+            size-lg="5"
+            size-xl="4"
+            class="container calendar-column"
+          >
+            <div v-show="isMobile && showMobileCalendar">
+              <ion-item lines="none">
+                <ion-button fill="clear" @click="showMobileCalendar = false">
+                  Cerrar calendario
+                </ion-button>
+              </ion-item>
+            </div>
+
+            <div class="center ion-padding-bottom">
+              <ion-item lines="none">
+                <ion-button fill="clear" @click="currentDate = sub(currentDate, { days: 1 })"
+                  ><ion-icon :icon="arrowBackOutline"></ion-icon
+                ></ion-button>
+
+                <ion-datetime-button datetime="datetime-availability"></ion-datetime-button>
+
+                <ion-button fill="clear" @click="currentDate = add(currentDate, { days: 1 })"
+                  ><ion-icon :icon="arrowForwardOutline"></ion-icon
+                ></ion-button>
+              </ion-item>
+            </div>
+
+            <div class="calendar-wrapper">
+              <FullyCalendarVue3
+                :events="calendarEvents"
+                :current-view="'day'"
+                :current-date="currentDate"
+                :is-mobile="isMobile"
+                @date-click="onCalendarDateClick"
+              />
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
 
       <!-- popovers -->
       <!-- popover reminders -->
@@ -397,32 +365,9 @@
       <!-- end popovers -->
 
       <!-- modals -->
-      <ion-modal trigger="open-modal-calendar">
-        <ion-header :translucent="true" class="ion-no-border" mode="ios">
-          <ion-toolbar>
-            <ion-buttons slot="start">
-              <ion-button @click="modalController.dismiss()"
-                ><ion-icon :icon="closeOutline"></ion-icon
-              ></ion-button>
-            </ion-buttons>
-
-            <ion-title>Calendario</ion-title>
-          </ion-toolbar>
-        </ion-header>
-
-        <ion-content class="ion-padding">
-          <CalendarComponent />
-        </ion-content>
-      </ion-modal>
-
       <ion-modal ref="modalDatetimeAvailability" :keep-contents-mounted="true">
         <ion-header :translucent="true" mode="ios" class="ion-no-border">
-          <ion-toolbar
-            style="
-              --background: var(--ion-background-light-color);
-              --opacity: 1;
-            "
-          >
+          <ion-toolbar style="--background: var(--ion-background-light-color); --opacity: 1">
             <ion-buttons slot="start">
               <ion-button @click="closeModalDatetimeAvailability()"
                 ><ion-icon :icon="closeOutline"></ion-icon
@@ -454,6 +399,7 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
   IonContent,
   IonHeader,
@@ -462,6 +408,7 @@ import {
   IonToolbar,
   IonRow,
   IonCol,
+  IonGrid,
   IonInput,
   IonButton,
   IonPopover,
@@ -479,104 +426,86 @@ import {
   IonDatetime,
   IonDatetimeButton,
   IonIcon,
-} from "@ionic/vue";
-import { computed, onMounted, ref, watch } from "vue";
-import { add, compareAsc, format, getDay, sub } from "date-fns";
+} from '@ionic/vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { add, format, sub } from 'date-fns';
 import {
   addOutline,
   arrowBackOutline,
   arrowForwardOutline,
-  briefcaseOutline,
-  calendarOutline,
   closeOutline,
-  documentTextOutline,
-  globeOutline,
-  peopleOutline,
-  personOutline,
   saveOutline,
-  timeOutline,
   trashOutline,
   todayOutline,
-} from "ionicons/icons";
-import useVuelidate from "@vuelidate/core";
-import { email, helpers, required } from "@vuelidate/validators";
-import { useRouter } from "vue-router";
+} from 'ionicons/icons';
+import useVuelidate from '@vuelidate/core';
+import { email, helpers, required } from '@vuelidate/validators';
+import { db } from '@/db';
 
-const router = useRouter();
-
-const props = defineProps({
-  eventData: { type: Object as () => Event, default: () => null },
-});
-
-const emits = defineEmits(["create", "update", "delete"]);
-
-// components
-import CalendarComponent from "./calendar/CalendarComponent.vue";
-import RemindersComponent from "../reminders/RemindersComponent.vue";
-import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent.vue";
-
-// controllers
-import { EventController } from "@/js/eventController";
-import { ScheduleController } from "@/js/scheduleController";
-import { SystemController } from "@/js/systemController";
-import { ReminderController } from "@/js/reminderController";
-import { CalendarController } from "@/js/calendarController";
+// 2. Controllers / Composables
+import { EventController } from '@/controllers/eventController';
+import { SystemController } from '@/controllers/systemController';
+import { CalendarController } from '@/controllers/calendarController';
 const eventController = new EventController();
-const scheduleController = new ScheduleController();
 const systemController = new SystemController();
-const reminderController = new ReminderController();
 const calendarController = new CalendarController();
 
-// interface
-import {
-  EventReminderNotification,
-  EventReminderRepeat,
-  Event,
-  Schedule,
-} from "@/utils/interfaces";
+// 3. Components
+import FullyCalendarVue3 from '@/components/calendar/fullcalendar/FullyCalendarVue3.vue';
+import RemindersComponent from '../reminders/RemindersComponent.vue';
 
+// 4. Interface and types imports
+import type { EventReminderNotification, EventReminderRepeat, Event } from '@/utils/interfaces';
+import type { EventItem } from '@/store/eventStore';
+
+// 5. Main (props, emits)
+const props = defineProps({
+  eventData: { type: Object as () => Event, default: () => null },
+  initialDate: { type: Object as () => Date | null, default: () => null },
+  initialEndDate: { type: Object as () => Date | null, default: () => null },
+});
+
+const emits = defineEmits(['create', 'update', 'delete']);
+
+// 6. Vars and const
 const isOpenPopoverReminders = ref(false);
-const timeZones = (Intl as any)
-  .supportedValuesOf("timeZone")
-  .map((timeZone: string) => timeZone);
+const timeZones = (Intl as any).supportedValuesOf('timeZone').map((timeZone: string) => timeZone);
 const isOpenPopoverTimezones = ref(false);
 const filteredZones = ref(Array<string>());
 const showButtonsOptionGuest = ref(-1);
-// const repeats: string[] = [];
-const emailGuest = ref("");
-// event
+const emailGuest = ref('');
 const event = {
-  name: ref(""),
-  description: ref(""),
+  name: ref(''),
+  description: ref(''),
   reminders: ref({
     start: new Date() as Date,
     end: new Date() as Date,
     notifications: Array<string>(),
-    repeat: { type: "daily", frecuency: 1 } as {
+    repeat: { type: 'daily', frecuency: 1 } as {
       frecuency: number;
-      type: "daily" | "weekly" | "monthly" | "annually";
+      type: 'daily' | 'weekly' | 'monthly' | 'annually';
       daysWeek?: string[];
     },
     idReminders: [],
   }),
   timezone: ref(Intl.DateTimeFormat().resolvedOptions().timeZone),
   guests: ref(Array<{ email: string }>()),
-  availability: ref("available"),
+  availability: ref('available'),
 };
-const events = ref([] as Event[]);
+
 const currentDate = ref(
   calendarController.getCurrentDate({
     mode: calendarController.getCalendarModeView(),
-  }) ?? new Date()
+  }) ?? new Date(),
 );
 const modalDatetimeAvailability = ref();
-const closeModalDatetimeAvailability = (): void =>
-  modalDatetimeAvailability.value.$el.dismiss();
-
-// validation
+const closeModalDatetimeAvailability = (): void => modalDatetimeAvailability.value.$el.dismiss();
+const isMobile = ref(window.innerWidth < 768);
+const showMobileCalendar = ref(false);
+const calendarEvents = computed<EventItem[]>(() => eventController.getEvents());
 const messageError = {
-  email: "Correo electrónico no valido",
-  required: "Campo requerido",
+  email: 'Correo electrónico no valido',
+  required: 'Campo requerido',
 };
 const rules = {
   event: {
@@ -593,49 +522,97 @@ const rulesGuest = {
 };
 const v$ = useVuelidate(rules, { event });
 const v2$ = useVuelidate(rulesGuest, { emailGuest });
-// inputs
 const inputName = ref(null);
 const inputGuest = ref(null);
+const pageTitle = ref('Agregar evento');
+const popoverRemindersSegment = ref('date-start');
 
-const pageTitle = ref("Agregar evento");
-const popoverRemindersSegment = ref("date-start");
+// 7. Watch
+watch(
+  () => props.eventData,
+  (val) => {
+    console.log('[AdminEventComponent] eventData received:', val);
+    if (val) setEvent({ event: val });
+  },
+  { immediate: true },
+);
 
-// mounted
+watch(
+  () => props.initialDate,
+  (val) => {
+    if (val) {
+      event.reminders.value.start = val;
+      event.reminders.value.end = props.initialEndDate
+        ? props.initialEndDate
+        : new Date(val.getTime() + 30 * 60 * 1000);
+    }
+  },
+  { immediate: true },
+);
+
+watch(showMobileCalendar, (val) => {
+  if (val) {
+    nextTick(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+  }
+});
+
+// 8. Computed
+// (calendarEvents computed defined above in vars/const)
+
+// 9. OnMounted
 onMounted(async () => {
+  isMobile.value = window.innerWidth < 768;
+  window.addEventListener('resize', onResize);
   if (props.eventData) {
-    pageTitle.value = "Actualizar evento";
+    pageTitle.value = 'Actualizar evento';
     setEvent({ event: props.eventData });
   }
-  events.value = await eventController.getEvents();
+  await loadStoredEvents();
 });
 
-// computed
-const generateCalendar = computed(() => {
-  if (events.value.length == 0) return;
-  const response = groupEvents({ events: events.value });
-  return flattenEvents({ events: response });
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize);
 });
 
-// functions
-const filterZones = (query: string) => {
+// 10. Functions (named parameters pattern)
+function onResize(): void {
+  isMobile.value = window.innerWidth < 768;
+}
+
+async function loadStoredEvents(): Promise<void> {
+  const storeEvents = eventController.getEvents();
+  if (storeEvents.length > 0) return;
+  try {
+    const localEvents = await db.events.limit(200).toArray();
+    if (localEvents.length > 0) {
+      eventController.setEvents({ events: localEvents as EventItem[] });
+    }
+  } catch (e) {
+    console.warn('[AdminEventComponent] No events in IndexedDB:', e);
+  }
+}
+
+const filterZones = (query: string): void => {
   filteredZones.value = timeZones.filter((zone: string) =>
-    zone.toLowerCase().includes(query.toLowerCase())
+    zone.toLowerCase().includes(query.toLowerCase()),
   );
 };
 
-const selectZone = (params: { zone: string }) => {
+const selectZone = (params: { zone: string }): void => {
   const zone = params.zone;
   event.timezone.value = zone;
   isOpenPopoverTimezones.value = false;
 };
 
-const addGuest = () => {
+const addGuest = (): void => {
   const email = emailGuest.value;
   event.guests.value.push({ email });
-  emailGuest.value = "";
+  emailGuest.value = '';
 };
 
-const removeGuest = (params: { index: number }) => {
+const removeGuest = (params: { index: number }): void => {
   const index = params.index;
   event.guests.value.splice(index, 1);
 };
@@ -658,9 +635,9 @@ async function save(): Promise<void> {
     eventData.timezone = event.timezone.value;
 
     if (!props.eventData) {
-      emits("create", { data: { event: eventData } });
+      emits('create', { data: { event: eventData } });
     } else {
-      emits("update", { data: { event: eventData } });
+      emits('update', { data: { event: eventData } });
     }
     closePage();
   } catch (error) {
@@ -668,39 +645,39 @@ async function save(): Promise<void> {
   }
 }
 
-function formatTextNotifications() {
-  let text = "";
+function formatTextNotifications(): string {
+  let text = '';
   const len = event.reminders.value.notifications.length - 1;
   let index = 0;
 
   event.reminders.value.notifications.forEach((notification) => {
-    if (len > index) text += translateNotifications({ notification }) + ", ";
+    if (len > index) text += translateNotifications({ notification }) + ', ';
     else text += translateNotifications({ notification });
     index++;
   });
   return text;
 }
 
-function formatTextRepeat() {
+function formatTextRepeat(): string {
   const type = event.reminders.value.repeat.type;
   let text = translateRepeat({
     repeat: type,
   });
-  const len = event.reminders.value.repeat.daysWeek?.length! - 1;
+  const len = (event.reminders.value.repeat.daysWeek?.length ?? 0) - 1;
   let index = 0;
-  let days = "";
+  let days = '';
 
   event.reminders.value.repeat.daysWeek?.forEach((day) => {
-    if (len > index) days += translateDaysWeekRepear({ day }) + ", ";
+    if (len > index) days += translateDaysWeekRepear({ day }) + ', ';
     else days += translateDaysWeekRepear({ day });
     index++;
   });
-  if (days != "") text = `${text}(${days})`;
+  if (days != '') text = `${text}(${days})`;
 
   return text;
 }
 
-function translateRepeat(params: { repeat: string }) {
+function translateRepeat(params: { repeat: string }): string {
   const repeat = params.repeat as keyof EventReminderRepeat;
 
   let result = systemController.translateEventReminderRepeat({
@@ -710,7 +687,7 @@ function translateRepeat(params: { repeat: string }) {
   return result;
 }
 
-function translateDaysWeekRepear(params: { day: string }) {
+function translateDaysWeekRepear(params: { day: string }): string {
   const day = params.day as any;
 
   let result = systemController.translateDay({
@@ -720,7 +697,7 @@ function translateDaysWeekRepear(params: { day: string }) {
   return result;
 }
 
-function translateNotifications(params: { notification: string }) {
+function translateNotifications(params: { notification: string }): string {
   const notification = params.notification as keyof EventReminderNotification;
 
   const result = systemController.translateEventReminderNotification({
@@ -729,19 +706,24 @@ function translateNotifications(params: { notification: string }) {
   return result;
 }
 
-async function closePage() {
+async function closePage(): Promise<void> {
   await modalController.dismiss();
 }
 
-function setEvent(params: { event: Event }) {
+function onCalendarDateClick(params: { date: Date; endDate?: Date }): void {
+  event.reminders.value.start = params.date;
+  event.reminders.value.end = params.endDate || new Date(params.date.getTime() + 30 * 60 * 1000);
+  showMobileCalendar.value = false;
+}
+
+function setEvent(params: { event: Event }): void {
   const eventData = params.event;
   event.name.value = eventData.name!;
   event.description.value = eventData.description;
   event.reminders.value.start = eventData.reminders!.start;
   event.reminders.value.end = eventData.reminders!.end;
-  event.reminders.value.notifications =
-    eventData.reminders!.notifications ?? [];
-  event.reminders.value.repeat = eventData.reminders!.repeat;
+  event.reminders.value.notifications = eventData.reminders!.notifications ?? [];
+  event.reminders.value.repeat = eventData.reminders!.repeat!;
   event.timezone.value = eventData.timezone!;
   event.guests.value = eventData.guests!;
   event.availability.value = eventData.availability!;
@@ -749,283 +731,12 @@ function setEvent(params: { event: Event }) {
 
 async function deleteEvent(): Promise<void> {
   const { id } = props.eventData;
-  emits("delete", { data: { id } });
+  emits('delete', { data: { id } });
   await closePage();
-}
-
-async function postCreateEvent(params: {
-  eventId: string;
-  schedule: Schedule;
-}) {
-  const { eventId } = params;
-  let { schedule } = params;
-  const scheduleId = (Math.floor(Math.random() * 900) + 100).toString();
-
-  const scheduleElement = scheduleController.generateScheduleElement({
-    id: scheduleId,
-    idElement: eventId,
-    title: event.name.value,
-    message: event.description.value,
-    startDate: new Date(event.reminders.value.start),
-    endDate: new Date(event.reminders.value.end),
-    type: "Event",
-    reminder: event.reminders.value.notifications.length > 0 ? true : false,
-    repeat: event.reminders.value.repeat,
-  });
-
-  if (eventId)
-    schedule = scheduleController.removeElementSchedule({
-      id: eventId,
-      schedule,
-    });
-
-  schedule = scheduleController.generateEventSchedule({
-    scheduleElement,
-    schedule,
-  });
-  await scheduleController.saveSchedule({ schedule });
-  await scheduleController.loadSchedule();
-
-  const notifications = reminderController.getEventReminders({
-    dateStart: event.reminders.value.start,
-    notifications: event.reminders.value.notifications,
-  });
-
-  if (notifications) {
-    await Promise.all(
-      notifications.map(async (notification) => {
-        await scheduleController.setReminders({
-          id: parseInt(scheduleId),
-          reminder: notification,
-          title: event.name.value,
-          message: event.description.value,
-        });
-      })
-    );
-  }
-}
-
-function groupEvents(params: { events: Event[] }): {
-  [year: string]: {
-    [month: string]: {
-      [day: string]: {
-        [time: string]: {
-          id: number;
-          name: string;
-          reminders: any;
-        }[];
-      };
-    };
-  };
-} {
-  let events = systemController.cloneObjet({
-    obj: params.events,
-  }) as Event[];
-  events = events.map((event) => {
-    event.reminders.start = new Date(event.reminders.start);
-    event.reminders.end = new Date(event.reminders.end);
-    return event;
-  });
-
-  return events.reduce(
-    (
-      groupedEvents: {
-        [year: string]: {
-          [month: string]: {
-            [day: string]: {
-              [time: string]: {
-                id: number;
-                name: string;
-                reminders: any;
-              }[];
-            };
-          };
-        };
-      },
-      event: Event
-    ) => {
-      const reminderStart = event.reminders.start;
-      const reminderEnd = event.reminders.end;
-      const repeatType = event.reminders.repeat?.type ?? "daily";
-      const daysWeek = event.reminders.repeat!.daysWeek;
-      const frecuency = event.reminders.repeat?.frecuency ?? 1;
-
-      reminderStart.setMilliseconds(0);
-      reminderStart.setSeconds(0);
-
-      const dates = eachPeriodOfInterval({
-        start: reminderStart,
-        end: reminderEnd,
-        repeatType,
-        frecuency,
-        daysWeek,
-      }).dates;
-
-      dates.forEach((date) => {
-        const yearKey = date.getFullYear().toString();
-        const monthKey = (date.getMonth() + 1).toString();
-        const dayKey = date.getDate().toString();
-        const timeKey = `${date.getHours().toString()}:00`;
-
-        if (!groupedEvents[yearKey]) {
-          groupedEvents[yearKey] = {};
-        }
-
-        if (!groupedEvents[yearKey][monthKey]) {
-          groupedEvents[yearKey][monthKey] = {};
-        }
-
-        if (!groupedEvents[yearKey][monthKey][dayKey]) {
-          groupedEvents[yearKey][monthKey][dayKey] = {};
-        }
-
-        if (!groupedEvents[yearKey][monthKey][dayKey][timeKey]) {
-          groupedEvents[yearKey][monthKey][dayKey][timeKey] = [];
-        }
-
-        groupedEvents[yearKey][monthKey][dayKey][timeKey].push({
-          id: event.id!,
-          name: event.name ?? "",
-          reminders: event.reminders,
-        });
-
-        // Ordenar los eventos por hora
-        groupedEvents[yearKey][monthKey][dayKey][timeKey].sort((a, b) => {
-          const aTime =
-            a.reminders.start.getHours() * 60 + a.reminders.start.getMinutes();
-          const bTime =
-            b.reminders.start.getHours() * 60 + b.reminders.start.getMinutes();
-          return aTime - bTime;
-        });
-      });
-
-      return groupedEvents;
-    },
-    {} as {
-      [year: string]: {
-        [month: string]: {
-          [day: string]: {
-            [time: string]: {
-              id: number;
-              name: string;
-              reminders: any;
-            }[];
-          };
-        };
-      };
-    }
-  );
-}
-
-function eachPeriodOfInterval(params: {
-  start: Date;
-  end: Date;
-  repeatType: string;
-  frecuency: number;
-  daysWeek?: string[];
-}): { dates: Date[] } {
-  const { end, repeatType, frecuency, daysWeek } = params;
-  let { start: currentDate } = params;
-  const dates = [];
-
-  const repeatDict = {
-    daily: "days",
-    weekly: "weeks",
-    monthly: "months",
-    annually: "years",
-  };
-
-  const rep = repeatDict[repeatType as keyof typeof repeatDict];
-
-  while (compareAsc(currentDate, end) <= 0) {
-    if (repeatType === "weekly" && daysWeek) {
-      const daysOfWeekNames = [
-        "sunday",
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-      ];
-      for (let i = 0; i < 7; i++) {
-        if (
-          daysWeek
-            .map((day) => day.toLowerCase())
-            .includes(daysOfWeekNames[getDay(currentDate)])
-        ) {
-          dates.push(new Date(currentDate));
-        }
-        currentDate = add(currentDate, { days: 1 });
-      }
-    } else {
-      dates.push(new Date(currentDate));
-      currentDate = add(currentDate, { [rep]: frecuency });
-    }
-  }
-
-  return { dates };
-}
-
-function flattenEvents(params: {
-  events: {
-    [year: string]: {
-      [month: string]: {
-        [day: string]: {
-          [time: string]: {
-            id: number;
-            name: string;
-            reminders: any;
-          }[];
-        };
-      };
-    };
-  };
-}): {
-  year: string;
-  month: string;
-  day: string;
-  time: string;
-  id: number;
-  name: string;
-  reminders: any;
-}[] {
-  const { events } = params;
-  const flattened = [];
-
-  for (const year in events) {
-    for (const month in events[year]) {
-      for (const day in events[year][month]) {
-        for (const time in events[year][month][day]) {
-          if (Array.isArray(events[year][month][day][time])) {
-            for (const event of events[year][month][day][time]) {
-              flattened.push({
-                year: year,
-                month: month,
-                day: day,
-                time: time,
-                id: event.id,
-                name: event.name,
-                reminders: event.reminders,
-              });
-            }
-          }
-        }
-      }
-    }
-  }
-  return flattened;
 }
 </script>
 
 <style scoped>
-.hidde-scroll-chrome::-webkit-scrollbar {
-  display: none;
-}
-.hidde-scroll-others {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 @media only screen and (min-width: 1024px) and (max-width: 1280px) {
   .form-container {
     height: 85vh;
@@ -1047,7 +758,40 @@ function flattenEvents(params: {
 }
 
 .container {
-  height: 84dvh;
+  overflow: auto;
+  min-height: 0;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.calendar-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.form-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.calendar-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.event-form-content {
+  --padding-bottom: 0;
+  --padding-end: 0;
+  height: 100%;
   overflow: auto;
 }
 </style>

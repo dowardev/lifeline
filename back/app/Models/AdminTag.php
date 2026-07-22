@@ -9,4 +9,9 @@ class AdminTag extends Model
 {
   use HasFactory;
   protected $fillable = ['name'];
+
+  public function tags()
+  {
+    return $this->hasMany(Tag::class, 'tag_id');
+  }
 }

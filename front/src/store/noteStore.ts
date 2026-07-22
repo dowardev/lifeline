@@ -1,51 +1,51 @@
-import { defineStore } from "pinia";
-import { Note } from "../utils/interfaces";
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
-interface NoteState {
-  notes: Array<Note>;
+export interface NoteItem {
+  id: number
+  user_id: number
+  document_id?: number
+  title: string
+  content?: string
+  reminder?: string
 }
 
-export const useNoteStore = defineStore("note", {
-  state: (): NoteState => ({
-    notes: [],
-  }),
+export const useNoteStore = defineStore('note', () => {
+  const notes = ref<NoteItem[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-  getters: {
-    getNotes(state) {
-      return () => {
-        return state.notes;
-      };
-    },
-  },
+  function setNotes(params: { notes: NoteItem[] }) {
+    notes.value = params.notes
+  }
 
-  actions: {
-    addNote(params: { note: Note }) {
-      const bite = params.note;
+  function addNote(params: { note: NoteItem }) {
+    notes.value.push(params.note)
+  }
 
-      if (this.notes.length == 0) this.notes = [bite];
-      else {
-        let exists = false as boolean;
-        this.notes.forEach((element) => {
-          if (element.id == bite.id) exists = true;
-        });
+  function updateNote(params: { id: number; updates: Partial<NoteItem> }) {
+    const { id, updates } = params
+    const index = notes.value.findIndex((n) => n.id === id)
+    if (index !== -1) {
+      notes.value[index] = { ...notes.value[index], ...updates }
+    }
+  }
 
-        if (exists == false) this.notes.push(bite);
-      }
-    },
+  function removeNote(params: { id: number }) {
+    notes.value = notes.value.filter((n) => n.id !== params.id)
+  }
 
-    updateNote(params: { document: Note }) {
-      const document = params.document;
+  function setLoading(params: { loading: boolean }) {
+    loading.value = params.loading
+  }
 
-      this.notes = this.notes.map((element) => {
-        if (element.id == document.id) element = { ...element, ...document };
-        return element;
-      });
-    },
+  function setError(params: { error: string | null }) {
+    error.value = params.error
+  }
 
-    // removeNote(params: { id: string }) {
-    //   const id = params.id;
-    //   const index = this.documents.findIndex((element) => element.id == id);
-    //   this.documents?.splice(index!, 1);
-    // },
-  },
-});
+  function clearError() {
+    error.value = null
+  }
+
+  return { notes, loading, error, setNotes, addNote, updateNote, removeNote, setLoading, setError, clearError }
+})

@@ -88,28 +88,31 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed, ref } from "vue";
-import { ViewCalendar } from "@/types";
+// 1. Imports (ionic/vue/ionicons)
+import { computed, ref } from "vue";
 import { add, compareAsc, getDay } from "date-fns";
 import { closeOutline } from "ionicons/icons";
 import { popoverController, IonModal } from "@ionic/vue";
 
-// components
+// 2. Controllers / Composables
+import { SystemController } from "@/controllers/systemController";
+import { EventController } from "@/controllers/eventController";
+import { useReminder } from "@/composables/useReminder";
+const systemController = new SystemController();
+const eventController = new EventController();
+
+// 3. Components
 import CalendarDayComponent from "@/components/calendar/day/CalendarDayComponent.vue";
 import CalendarWeekComponent from "@/components/calendar/week/CalendarWeekComponent.vue";
 import RightMenuEventComponent from "@/views/calendar/RightMenuEventComponent.vue";
 import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue";
 import RescheduleComponent from "@/components/events/schedule-elements/RescheduleElements.vue";
 
-// controllers
-import { SystemController } from "@/js/systemController";
-import { EventController } from "@/js/eventController";
-const systemController = new SystemController();
-const eventController = new EventController();
+// 4. Interface and types imports
+import type { ViewCalendar } from "@/types";
+import type { Event } from "@/utils/interfaces";
 
-// interface
-import { Event } from "@/utils/interfaces";
-
+// 5. Main (props, emits)
 const props = defineProps({
   modeView: {
     type: Object as () => ViewCalendar,
@@ -125,14 +128,7 @@ const props = defineProps({
   },
 });
 
-// computed
-const generateCalendar = computed(() => {
-  if (props.events.length == 0) return;
-  const response = groupEvents({ events: props.events });
-  return flattenEvents({ events: response });
-});
-
-// vars
+// 6. Vars and const
 const isOpenModalRecheduleTasks = ref(false);
 const modalRescheduleElements = ref(null);
 const isOpenModalAddEvent = ref(false);
@@ -146,7 +142,20 @@ defineExpose({
   reschedule,
 });
 
-// functions
+// 7. Watch
+// (none)
+
+// 8. Computed
+const generateCalendar = computed(() => {
+  if (props.events.length == 0) return [];
+  const response = groupEvents({ events: props.events });
+  return flattenEvents({ events: response });
+});
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
 function groupEvents(params: { events: Event[] }): {
   [year: string]: {
     [month: string]: {
@@ -160,9 +169,7 @@ function groupEvents(params: { events: Event[] }): {
     };
   };
 } {
-  let events = systemController.cloneObjet({
-    obj: params.events,
-  }) as Event[];
+  let events = JSON.parse(JSON.stringify(params.events)) as Event[];
   events = events.map((event) => {
     event.reminders.start = new Date(event.reminders.start);
     event.reminders.end = new Date(event.reminders.end);
@@ -231,7 +238,6 @@ function groupEvents(params: { events: Event[] }): {
           reminders: event.reminders,
         });
 
-        // Ordenar los eventos por hora
         groupedEvents[yearKey][monthKey][dayKey][timeKey].sort((a, b) => {
           const aTime =
             a.reminders.start.getHours() * 60 + a.reminders.start.getMinutes();
@@ -362,24 +368,10 @@ function eachPeriodOfInterval(params: {
 async function saveEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   try {
-    // const remindersId = (
-    //   await eventController.setEventReminder({
-    //     daysWeek: event.reminders.repeat!.daysWeek!,
-    //     description: event.description,
-    //     frecuency: event.reminders.repeat!.frecuency!,
-    //     name: event.name!,
-    //     notifications: event.reminders.notifications!,
-    //     reminderEnd: event.reminders.end,
-    //     reminderStart: event.reminders.start,
-    //     repeatType: event.reminders.repeat!.type!,
-    //   })
-    // ).remindersId;
-    // event.reminders.idReminders = remindersId;
-
-    await eventController.saveLocalEvent({
+    await eventController.updateLocalEvent({
       event,
     });
-    eventController.addEventToStore({ event });
+    eventController.updateLocalEvent({ event });
   } catch (error) {
     console.error(error);
   }
@@ -388,37 +380,32 @@ async function saveEvent(params: { event: Event }): Promise<void> {
 async function updateEvent(params: { event: Event }): Promise<void> {
   const { event } = params;
   try {
-    if (event.reminders.idReminders && event.reminders.idReminders.length > 0) {
-      await eventController.discardEventReminders({
-        idReminders: event.reminders.idReminders,
-      });
-    }
-
     if (event.reminders.idReminders.length == 0) {
-      const remindersId = (
-        await eventController.setEventReminder({
-          daysWeek: event.reminders.repeat!.daysWeek!,
-          description: event.description,
-          frecuency: event.reminders.repeat!.frecuency!,
-          name: event.name!,
-          notifications: event.reminders.notifications!,
-          reminderEnd: event.reminders.end,
-          reminderStart: event.reminders.start,
-          repeatType: event.reminders.repeat!.type!,
+      const { generatorReminder, setReminder } = useReminder()
+      const reminders = generatorReminder({
+        frecuency: event.reminders.repeat!.frecuency!,
+        reminderStart: event.reminders.start,
+        reminderEnd: event.reminders.end,
+        repeat: event.reminders.repeat!.type!,
+        daysWeek: event.reminders.repeat!.daysWeek!,
+        notifications: event.reminders.notifications!,
+      })
+      const reminderIds: number[] = []
+      for (const reminderDate of reminders) {
+        const { reminderId } = await setReminder({
+          title: event.name!,
+          message: event.description,
+          extraInfo: String(event.id),
+          reminder: reminderDate,
         })
-      ).remindersId;
+        reminderIds.push(reminderId)
+      }
       event.reminders.idReminders = [
         ...event.reminders.idReminders,
-        ...remindersId,
+        ...reminderIds,
       ];
-      // console.log({ seted: event.reminders.idReminders });
     }
 
-    // event.syncStatus = false;
-    // await eventController.updateLocalEvent({
-    //   event,
-    // });
-    // await syncData({ date: calendarController.getCurrentDate() });
     event.syncStatus = true;
     await eventController.updateLocalEvent({
       event,
@@ -432,18 +419,12 @@ async function updateEvent(params: { event: Event }): Promise<void> {
   }
 }
 
-/**
- * Delete event
- *
- * params {Object} params
- * @param {Number} params.eventId sssssss
- */
 async function deleteEvent(params: { eventId: number }): Promise<void> {
   const { eventId } = params;
   try {
-    await eventController.deleteEvent({ id: eventId });
+    await eventController.removeEvent({ id: eventId });
     await systemController.openToast({ message: "Evento eliminado" });
-    await syncData();
+    await eventController.loadEvents();
   } catch (error) {
     console.error(error);
     await systemController.openToast({

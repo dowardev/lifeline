@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
   IonContent,
   IonHeader,
@@ -45,30 +46,46 @@ import {
   modalController,
 } from "@ionic/vue";
 import { checkmarkOutline, chevronBackOutline } from "ionicons/icons";
-import { Theme } from "@/utils/types";
 import { onMounted, ref } from "vue";
 
-const availableThemes: Theme[] = ["light", "nord", "gruvbox", "cherry"];
+// 2. Controllers / Composables
+import { ThemeController } from "@/controllers/themeController";
+const themeController = new ThemeController();
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+import { Theme } from "@/utils/types";
+
+// 5. Main (props, emits)
+// (none)
+
+// 6. Vars and const
+const availableThemes: Theme[] = ["light", "dark", "catppuccin-latte-maroon", "catppuccin-macchiato-maroon"];
 const pageTitle = "Selector de tema";
 const currentTheme = ref("" as Theme);
 
-// controllers
-import { SystemController } from "@/js/systemController";
-const systemController = new SystemController();
+// 7. Watch
+// (none)
 
+// 8. Computed
+// (none)
+
+// 9. OnMounted
 onMounted(() => {
-  currentTheme.value = systemController.getTheme();
+  currentTheme.value = themeController.getTheme() as Theme;
 });
 
-// funtions
-const closeModal = () => {
+// 10. Functions (named parameters pattern)
+const closeModal = (): void => {
   modalController.dismiss();
 };
 
-async function applyTheme(params: { name: Theme }) {
+async function applyTheme(params: { name: Theme }): Promise<void> {
   const theme = params.name;
-  systemController.applyTheme({ theme });
-  await systemController.updateThemeSelected({ theme });
+  themeController.applyTheme({ theme });
+  themeController.setTheme({ theme });
   currentTheme.value = theme;
 }
 </script>

@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border" :translucent="true">
+    <ion-header class="ion-no-border" mode="ios">
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button menu="firstMenu" mode="md"></ion-menu-button>
@@ -36,32 +36,35 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content
-      v-if="documentController.getUserDocuments() != undefined"
-      :fullscreen="true"
-    >
-      <ion-row>
-        <ion-col
-          v-for="(document, index) in documentController.getUserDocuments()"
-          :key="index"
-          size-xs="12"
-          class="center"
-        >
-          <ion-card
-            @click="openDocument({ documentUrl: document.url })"
-            @contextmenu.prevent="
-              openPopoverRightMenu({ ev: $event, documentId: document.id })
-            "
-            @press="
-              openPopoverRightMenu({ ev: $event, documentId: document.id })
-            "
-          >
-            <ion-card-header>
-              <ion-card-title>{{ document.title }}</ion-card-title>
-            </ion-card-header>
-          </ion-card>
-        </ion-col>
-      </ion-row>
+    <ion-content v-if="documentsList != undefined">
+      <ion-grid>
+        <ion-row class="ion-justify-content-center">
+          <ion-col size="12" size-md="10" size-lg="8" size-xl="6">
+            <ion-row>
+              <ion-col
+                v-for="(document, index) in documentsList"
+                :key="index"
+                size-xs="12"
+                class="center"
+              >
+                <ion-card
+                  @click="openDocument({ documentUrl: document.url ?? '' })"
+                  @contextmenu.prevent="
+                    openPopoverRightMenu({ ev: $event, documentId: String(document.id) })
+                  "
+                  @press="
+                    openPopoverRightMenu({ ev: $event, documentId: String(document.id) })
+                  "
+                >
+                  <ion-card-header>
+                    <ion-card-title>{{ document.title }}</ion-card-title>
+                  </ion-card-header>
+                </ion-card>
+              </ion-col>
+            </ion-row>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
     </ion-content>
   </ion-page>
 </template>
@@ -87,40 +90,37 @@ import {
   IonIcon,
   popoverController,
 } from "@ionic/vue";
-import { ref } from "vue";
-import { useEventsStore } from "../../store/eventsStore";
-import { Storage } from "@ionic/storage";
-import { storeToRefs } from "pinia";
+import { computed, onMounted, ref } from "vue";
 import RightMenuComponent from "./RightMenuComponent.vue";
 import { useRouter } from "vue-router";
 import { addOutline, calendarOutline } from "ionicons/icons";
+import { EventController } from "@/controllers/eventController";
 
-const eventsStore = useEventsStore();
-const { date } = storeToRefs(eventsStore);
-const storage = new Storage();
-storage.create();
 const router = useRouter();
+const eventController = new EventController();
+const date = ref("");
 
 // controllers
-import { DocumentController } from "@/js/documentController";
+import { DocumentController } from "@/controllers/documentController";
 const documentController = new DocumentController();
+const documentsList = computed(() => documentController.getUserDocuments())
 
 // refs
 const pageTitle = ref("Inicio");
 const mainCalendar = ref(null);
 
 // functions
-const resetCalendar = async () => {
+const resetCalendar = async (): Promise<void> => {
   (mainCalendar.value as any).$el.reset();
 };
 
-const selectDay = (e: any) => {
-  const date = e.detail.value;
-  eventsStore.date = date;
-  // eventsStore.loadEvents({ refetch: false });
+const selectDay = (e: any): void => {
+  const selectedDate = e.detail.value;
+  eventController.setDate({ date: selectedDate });
+  date.value = selectedDate;
 };
 
-const addDocument = async () => {
+const addDocument = async (): Promise<void> => {
   const documentUrl = (await createDocument())?.documentUrl;
 
   await router.push({
@@ -129,24 +129,24 @@ const addDocument = async () => {
   });
 };
 
-const loadDocuments = async () => {
-  await documentController.loadUserDocuments();
+const loadDocuments = async (): Promise<void> => {
+  await documentController.loadDocuments();
 };
 
-const openDocument = async (params: { documentUrl: string }) => {
+const openDocument = async (params: { documentUrl: string }): Promise<void> => {
   const url = params.documentUrl;
   router.push(`/document/${url}`);
 };
 
-const deleteDocument = async (params: { documentId: string }) => {
+const deleteDocument = async (params: { documentId: string }): Promise<void> => {
   const documentId = params.documentId;
-  await documentController.deleteDocument({ documentId });
+  await documentController.deleteDocument({ id: Number(documentId) });
 };
 
 const openPopoverRightMenu = async (params: {
   ev: Event;
   documentId: string;
-}) => {
+}): Promise<void> => {
   const documentId = params.documentId;
   const ev = params.ev;
 
@@ -172,7 +172,7 @@ const createDocument = async (): Promise<
 
   let url = undefined;
   try {
-    const response = await documentController.saveDocument({ document });
+    const response = await documentController.createDocument({ title: document.title });
     if (response == null) return undefined;
     url = response.url;
     return { documentUrl: url };
@@ -184,6 +184,7 @@ const createDocument = async (): Promise<
 };
 
 // mounted
-// this.eventsStore.loadEvents({ refetch: true });
-loadDocuments();
+onMounted(() => {
+  loadDocuments();
+});
 </script>

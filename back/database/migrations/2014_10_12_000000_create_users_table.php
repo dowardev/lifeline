@@ -3,8 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
-
 class CreateUsersTable extends Migration
 {
   /**
@@ -26,15 +24,6 @@ class CreateUsersTable extends Migration
       $table->rememberToken();
       $table->timestamps();
     });
-
-    DB::table('users')->insert([
-      'name' => 'Admin',
-      'user' => 'admin',
-      'email' => 'admin@admin.com',
-      'image_profile' => '',
-      'is_email_verified' => true,
-      'password' => bcrypt('d2f%PF'),
-    ]);
   }
 
   /**
@@ -44,7 +33,6 @@ class CreateUsersTable extends Migration
    */
   public function down()
   {
-    Schema::dropIfExists('users');
     Schema::dropIfExists('users');
   }
 }

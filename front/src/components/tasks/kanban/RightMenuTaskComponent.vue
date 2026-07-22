@@ -66,6 +66,7 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
   IonContent,
   popoverController,
@@ -82,6 +83,16 @@ import {
 } from "ionicons/icons";
 import { ref } from "vue";
 
+// 2. Controllers / Composables
+// (none)
+
+// 3. Components
+// (none)
+
+// 4. Interface and types imports
+// (none)
+
+// 5. Main (props, emits)
 type Option = "delete" | "edit" | "moveElement";
 type Role = "confirm" | "cancel";
 
@@ -89,28 +100,38 @@ const props = defineProps({
   currentColumn: { default: "pending", type: String, required: true },
 });
 
+// 6. Vars and const
 let progress = ref(0);
 
 const showDeleteOption = ref(true);
 const intervalDeleteId = ref(null as any);
 
-// funtions
+// 7. Watch
+// (none)
+
+// 8. Computed
+// (none)
+
+// 9. OnMounted
+// (none)
+
+// 10. Functions (named parameters pattern)
 function selectOption(params: {
   option: Option;
   newcolumn?: "pending" | "progress" | "finalized";
-}) {
+}): void {
   const { option, newcolumn } = params;
   if (option == "delete") deleteOption();
   if (option == "edit") editOption();
   if (option == "moveElement") moveElementOption({ columnName: newcolumn });
 }
 
-function deleteOption() {
+function deleteOption(): void {
   showDeleteOption.value = false;
   intervalDeleteId.value = setInterval(() => {
     progress.value += 0.01;
     if (progress.value > 1) {
-      clearInterval(intervalDeleteId);
+      clearInterval(intervalDeleteId.value);
       setTimeout(async () => {
         progress.value = 0;
         await closeModal({
@@ -122,21 +143,21 @@ function deleteOption() {
   }, 30);
 }
 
-async function cancelDelete() {
-  clearInterval(intervalDeleteId);
+async function cancelDelete(): Promise<void> {
+  clearInterval(intervalDeleteId.value);
   await closeModal({ data: { option: "delete" }, role: "cancel" });
 }
 
 async function closeModal(params: {
   data: { option: Option; newcolumn?: "pending" | "progress" | "finalized" };
   role: Role;
-}) {
+}): Promise<void> {
   const { data, role } = params;
 
   await popoverController.dismiss(data, role);
 }
 
-async function editOption() {
+async function editOption(): Promise<void> {
   await closeModal({
     data: { option: "edit" },
     role: "confirm",
@@ -145,7 +166,7 @@ async function editOption() {
 
 async function moveElementOption(params: {
   columnName?: "pending" | "progress" | "finalized";
-}) {
+}): Promise<void> {
   const { columnName } = params;
 
   await closeModal({

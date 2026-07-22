@@ -2,158 +2,123 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\EventResource;
 use Illuminate\Http\Request;
 use App\Models\Event;
-use Illuminate\Support\Facades\DB;
-use App\Models\Tag;
-use App\Models\AdminTag;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Calendar;
+use Carbon\Carbon;
 
 class EventController extends Controller
 {
-  public function createEvent(Request $request)
-  {
-    $request->validate([
-      'title' => 'required|string',
-    ]);
-
-    $dateTimeStart = $this->formatDate(json_decode($request->dateTime)->start);
-    $dateTimeEnd = $this->formatDate(json_decode($request->dateTime)->end);
-
-    $event = Event::create([
-      'title' => $request->title,
-      'calendar_id' => $request->calendar,
-      'time_start' => $dateTimeStart,
-      'time_end' => $dateTimeEnd,
-      'reminders' => serialize($request->reminders),
-      'repeats' => serialize($request->repeats),
-      'guests' => serialize($request->guests),
-      'notes' => $request->notes,
-      'time_zone' => $request->timeZone,
-      'user_id' => Auth::user()->id,
-    ]);
-    $eventId = $event->id;
-    if (json_decode($request->tags)) {
-      $tags = json_decode($request->tags);
-      $this->createTagsEvent($tags, $eventId);
-    }
-
-    return response()->json('Success', 200);
-  }
-  function createTagsEvent($tags, $eventId)
-  {
-    $tagsDB = Event::join('tags', 'events.id', '=', 'event_id')
-      ->join('admin_tags', 'admin_tags.id', '=', 'tag_id')
-      ->join('users', 'users.id', '=', 'events.user_id')
-      ->groupBy('admin_tags.id', 'admin_tags.name')
-      ->get(['admin_tags.id', 'admin_tags.name']);
-
-    $tagIndex = [];
-    if (count($tagsDB) > 0) {
-      foreach ($tags as $key => $value) {
-        $result = $this->searchExistsTag($value, $tagsDB);
-        if ($result[0]) {
-          array_push($tagIndex, $result[1]);
-        } else {
-          $tag = AdminTag::create([
-            'name' => $value,
-          ]);
-          array_push($tagIndex, $tag->id);
-        }
-      }
-    } else {
-      foreach ($tags as $key1 => $value1) {
-        $tag = AdminTag::create([
-          'name' => $value1,
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'dateStart' => 'required|date',
+            'dateEnd' => 'required|date',
+            'timeZone' => 'required|string|max:100',
+            'availability' => 'required|string|max:65535',
+            'calendar_id' => 'integer|nullable',
+            'notifications' => 'nullable|array',
+            'repeat' => 'nullable|array',
+            'guests' => 'nullable|array',
+            'description' => 'nullable|string|max:65535',
         ]);
-        array_push($tagIndex, $tag->id);
-      }
-    }
-    foreach ($tagIndex as $key) {
-      Tag::create([
-        'event_id' => $eventId,
-        'tag_id' => $key,
-      ]);
-    }
-  }
-  public function searchExistsTag($element, $array)
-  {
-    foreach ($array as $key => $value) {
-      if ($value->name == $element) {
-        return [true, $value->id];
-      }
-    }
-    return [false, 0];
-  }
-  public function formatDate($date)
-  {
-    return date('Y-m-d H:i', strtotime($date));
-  }
-  public function getEvents(Request $request)
-  {
-    $dateStart = $request->dateStart;
-    $dateEnd = $request->dateEnd;
-    $result = Event::whereDate('time_start', '>=', $dateStart)
-      ->whereDate('time_start', '<=', $dateEnd)
-      ->get();
 
-    foreach ($result as $key => $value) {
-      $value->reminders = unserialize($value->reminders);
-      $value->repeats = unserialize($value->repeats);
-      $value->guests = unserialize($value->guests);
-      $value->calendar = Event::find($result[0]->id)->calendar;
+        if ($request->calendar_id) {
+            $calendar = Calendar::where('id', $request->calendar_id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+            if (!$calendar) {
+                return response()->json(['message' => 'Calendar not found'], 404);
+            }
+        }
+
+        $event = new Event([
+            'title' => $request->name,
+            'calendar_id' => $request->calendar_id,
+            'date_start' => Carbon::parse($request->dateStart),
+            'date_end' => Carbon::parse($request->dateEnd),
+            'time_zone' => $request->timeZone,
+            'availability' => $request->availability,
+            'notifications' => $request->notifications,
+            'repeat' => $request->repeat,
+            'guests' => $request->guests,
+            'description' => $request->description,
+        ]);
+        $event->user_id = $request->user()->id;
+        $event->save();
+
+        return response()->json(['event' => new EventResource($event)], 201);
     }
 
-    $events = [];
-    foreach ($result as $key => $value) {
-      $value->tags = Event::find($value->id)->tags;
+    public function index(Request $request)
+    {
+        $request->validate([
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'page' => 'nullable|integer|min:1',
+        ]);
+
+        $perPage = $request->input('per_page', 15);
+
+        $events = Event::where('user_id', $request->user()->id)
+            ->orderBy('date_start', 'desc')
+            ->paginate($perPage);
+
+        return EventResource::collection($events);
     }
-    return response()->json($result, 200);
-  }
-  public function updateEvent(Request $request)
-  {
-    $request->validate([
-      'title' => 'required|string',
-    ]);
 
-    $dateTimeStart = date(
-      'Y-m-d H:i',
-      strtotime(json_decode($request->dateTime)->start)
-    );
-    $dateTimeEnd = date(
-      'Y-m-d H:i',
-      strtotime(json_decode($request->dateTime)->end)
-    );
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'dateStart' => 'sometimes|required|date',
+            'dateEnd' => 'sometimes|required|date',
+            'timeZone' => 'sometimes|string|max:100',
+            'availability' => 'sometimes|string|max:65535',
+            'calendar_id' => 'sometimes|integer|nullable',
+            'notifications' => 'sometimes|nullable|array',
+            'repeat' => 'sometimes|nullable|array',
+            'guests' => 'sometimes|nullable|array',
+            'description' => 'sometimes|nullable|string|max:65535',
+        ]);
 
-    Event::where('id', $request->id)->update([
-      'title' => $request->title,
-      'calendar_id' => $request->calendar,
-      'time_start' => $dateTimeStart,
-      'time_end' => $dateTimeEnd,
-      'reminders' => serialize($request->reminders),
-      'repeats' => serialize($request->repeats),
-      'guests' => serialize($request->guests),
-      'notes' => $request->notes,
-      'time_zone' => $request->timeZone,
-    ]);
+        $event = Event::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
 
-    // $removeTags = [];
-    // $newTags = [];
-    // foreach (Event::find($request->id)->tags as $key => $value1) {
-    //   foreach (json_decode($request->tags) as $key => $value2) {
-    //     if ($value1['name'] == $value2) {
-    //       array_push($newTags, $value2);
-    //     } else {
-    //       array_push($removeTags, $value2);
-    //     }
-    //   }
-    // }
-    // return $removeTags;
-    return response()->json('Success', 200);
-  }
-  public function removeEvent(Request $request)
-  {
-    Event::find($request->id)->delete();
-    return response()->json('Success', 200);
-  }
+        if ($request->has('calendar_id') && $request->calendar_id) {
+            $calendar = Calendar::where('id', $request->calendar_id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+            if (!$calendar) {
+                return response()->json(['message' => 'Calendar not found'], 404);
+            }
+        }
+
+        $updates = [];
+        if ($request->has('name')) $updates['title'] = $request->name;
+        if ($request->has('guests')) $updates['guests'] = $request->guests;
+        if ($request->has('timeZone')) $updates['time_zone'] = $request->timeZone;
+        if ($request->has('description')) $updates['description'] = $request->description;
+        if ($request->has('availability')) $updates['availability'] = $request->availability;
+        if ($request->has('dateStart')) $updates['date_start'] = Carbon::parse($request->dateStart);
+        if ($request->has('dateEnd')) $updates['date_end'] = Carbon::parse($request->dateEnd);
+        if ($request->has('notifications')) $updates['notifications'] = $request->notifications;
+        if ($request->has('repeat')) $updates['repeat'] = $request->repeat;
+        if ($request->has('calendar_id')) $updates['calendar_id'] = $request->calendar_id;
+
+        $event->update($updates);
+
+        return response()->json(['event' => new EventResource($event)]);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $event = Event::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
+
+        $event->delete();
+
+        return response()->json(['state' => true]);
+    }
+
+
 }

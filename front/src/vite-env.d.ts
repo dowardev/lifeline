@@ -6,6 +6,8 @@ declare module "*.vue" {
   export default component;
 }
 
+declare const __APP_VERSION__: string;
+
 declare module "*.md" {
   import type { ComponentOptions } from "vue";
   const Component: ComponentOptions;

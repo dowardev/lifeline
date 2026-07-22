@@ -19,7 +19,7 @@ export type OptionsMainMenuDocument =
   | "share"
   | "none";
 
-export type Theme = "light" | "nord" | "gruvbox" | "cherry";
+export type Theme = "light" | "dark" | "catppuccin-latte-maroon" | "catppuccin-macchiato-maroon";
 
 export type ViewMode = "list" | "kanban";
 
@@ -35,20 +35,9 @@ export type RepeatType = "daily" | "weekly" | "monthly" | "annually";
 
 export type CalendarDataStatus = "loading" | "success" | "error";
 
-export type GraphQLQueryNameUser =
-  | "USER_PERMISSIONS"
-  | "USER_BASIC"
-  | "USER_NAME"
-  | "USER_CALENDARS"
-  | "USER_EVENTS";
-
-export type GraphQLFragmentNameUser = "UserMenu";
-
-export type userGrapQLTypeData = "menu";
-
 export type UserDBType = Pick<
   User,
-  "name" | "user" | "email" | "token" | "idSync"
+  "name" | "userName" | "email" | "idSync"
 >;
 
 export type UserSource = "local" | "server" | "both";
