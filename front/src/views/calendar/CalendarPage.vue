@@ -278,7 +278,7 @@ import {
   IonToolbar,
   isPlatform,
 } from '@ionic/vue';
-import { ref, onMounted, onUnmounted, reactive, computed, watch, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, reactive, computed, watch } from 'vue';
 import {
   addOutline,
   chevronBackOutline,
@@ -298,6 +298,8 @@ import messages from '@/utils/messages.json';
 import { CalendarController } from '@/controllers/calendarController';
 import { EventController } from '@/controllers/eventController';
 import { SystemController } from '@/controllers/systemController';
+import { useCalendarModals } from '@/composables/useCalendarModals';
+
 const calendarController = new CalendarController();
 const eventController = new EventController();
 const systemController = new SystemController();
@@ -326,6 +328,19 @@ const clickedDate = ref<Date | null>(null);
 const clickedEndDate = ref<Date | null>(null);
 const toastIsOpen = ref(false);
 const toastMessage = ref('');
+
+const {
+  openModalAdd,
+  openModalUpdate,
+  onModalAddDismiss,
+  onModalUpdateDismiss,
+} = useCalendarModals({
+  isOpenModalAddEvent,
+  isOpenModalUpdateEvent,
+  clickedDate,
+  clickedEndDate,
+  selectedEventId,
+});
 
 const popoverMainCalendar = reactive({
   open: false,
@@ -555,20 +570,6 @@ function getEventById(params: { id: number }): CalendarEvent | undefined {
   } as unknown as CalendarEvent;
 }
 
-function openModalAdd(params?: { event: unknown }): void {
-  void params;
-  isOpenModalAddEvent.value = true;
-}
-
-async function openModalUpdate(id: number): Promise<void> {
-  if (isOpenModalUpdateEvent.value) {
-    isOpenModalUpdateEvent.value = false;
-    await nextTick();
-  }
-  selectedEventId.value = id;
-  isOpenModalUpdateEvent.value = true;
-}
-
 function reschedule(): void {
   isOpenModalRescheduleTasks.value = true;
 }
@@ -576,18 +577,6 @@ function reschedule(): void {
 function onOpenDatePopover(event: PointerEvent): void {
   popoverMainCalendar.event = event;
   popoverMainCalendar.open = true;
-}
-
-function onModalAddDismiss(): void {
-  if (!isOpenModalAddEvent.value) return
-  isOpenModalAddEvent.value = false;
-  clickedDate.value = null;
-  clickedEndDate.value = null;
-}
-
-function onModalUpdateDismiss(): void {
-  isOpenModalUpdateEvent.value = false;
-  selectedEventId.value = 0;
 }
 
 function handleDateClick(params: { date: Date; endDate?: Date }): void {
@@ -598,7 +587,7 @@ function handleDateClick(params: { date: Date; endDate?: Date }): void {
 
 function handleEventClick(params: { event: { id: string | number } }): void {
   const id = typeof params.event.id === 'string' ? parseInt(params.event.id, 10) : params.event.id;
-  openModalUpdate(id);
+  openModalUpdate({ id });
 }
 
 async function handleEventUpdate(params: {

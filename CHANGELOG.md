@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **front:** Trim `useAppVersion` composable return type (removed unused `isAlpha`/`isBeta`/`isStable`).
 - **front:** Reorder `useAppVersion` import in `MenuComponent.vue` so all section 2 imports are grouped.
+- **front:** Refactor: extract `useCalendarModals` composable from `CalendarPage.vue` (no user-facing change).
 
 ## [0.13.0] - 2026-07-01
 
