@@ -184,9 +184,9 @@ import {
 
 // 2. Controllers / Composables
 import { AuthController } from '@/controllers/authController'
-const authController = new AuthController()
-
 import { useAppVersion } from '@/composables/useAppVersion'
+
+const authController = new AuthController()
 const { label: versionLabel, chipClass } = useAppVersion()
 
 // 3. Components

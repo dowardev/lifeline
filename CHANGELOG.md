@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **front:** Trim `useAppVersion` composable return type (removed unused `isAlpha`/`isBeta`/`isStable`).
+- **front:** Reorder `useAppVersion` import in `MenuComponent.vue` so all section 2 imports are grouped.
+
 ## [0.13.0] - 2026-07-01
 
 ### Added
