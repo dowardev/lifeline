@@ -8,60 +8,60 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-  use HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
-  /**
-   * The attributes that are mass assignable.
-   *
-   * @var string[]
-   */
-  protected $fillable = [
-    "name",
-    "user",
-    "email",
-  ];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var string[]
+     */
+    protected $fillable = [
+        'name',
+        'user',
+        'email',
+    ];
 
-  /**
-   * The attributes that should be hidden for serialization.
-   *
-   * @var array
-   */
-  protected $hidden = ["password", "remember_token"];
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array
+     */
+    protected $hidden = ['password', 'remember_token'];
 
-  /**
-   * The attributes that should be cast.
-   *
-   * @var array
-   */
-  protected $casts = [
-    "email_verified_at" => "datetime",
-    "is_email_verified" => "boolean",
-    "is_admin" => "boolean",
-    "is_user_disabled" => "boolean",
-  ];
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'is_email_verified' => 'boolean',
+        'is_admin' => 'boolean',
+        'is_user_disabled' => 'boolean',
+    ];
 
-  public function calendars()
-  {
-    return $this->hasMany(Calendar::class);
-  }
+    public function calendars()
+    {
+        return $this->hasMany(Calendar::class);
+    }
 
-  public function events()
-  {
-    return $this->hasMany(Event::class);
-  }
+    public function events()
+    {
+        return $this->hasMany(Event::class);
+    }
 
-  public function tasks()
-  {
-    return $this->hasMany(Task::class);
-  }
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
 
-  public function documents()
-  {
-    return $this->hasMany(Document::class);
-  }
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
+    }
 
-  public function notes()
-  {
-    return $this->hasMany(Note::class);
-  }
+    public function notes()
+    {
+        return $this->hasMany(Note::class);
+    }
 }

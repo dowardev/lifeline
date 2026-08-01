@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Note extends Model
 {
-  use SoftDeletes;
+    use SoftDeletes;
+
     protected $fillable = [
-        'document_id', 'title', 'content', 'reminder'
+        'document_id', 'title', 'content', 'reminder',
     ];
 
     protected $casts = [

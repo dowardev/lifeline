@@ -8,14 +8,12 @@
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "test:e2e": "cypress run",
-    "test:unit": "vitest --pool=forks",
-    "lint": "run-s lint:*",
-    "lint:oxlint": "oxlint . --fix",
-    "lint:eslint": "eslint . --fix --cache",
+    "test:unit": "vitest run --pool=forks",
+    "lint": "oxlint . --fix && eslint . --fix --cache",
     "format": "oxfmt src/"
   },
   "dependencies": {
-    "@tu-org/sso-client": "file:../../sso/packages/sso-client",
+    "@tu-org/sso-client": "npm:@dowardev/sso-client@^0.0.2",
     "@capacitor/android": "^8.3.4",
     "@capacitor/app": "^8.1.0",
     "@capacitor/clipboard": "^8.0.1",

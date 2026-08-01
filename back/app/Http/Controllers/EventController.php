@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\EventResource;
-use Illuminate\Http\Request;
-use App\Models\Event;
 use App\Models\Calendar;
+use App\Models\Event;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
@@ -29,7 +29,7 @@ class EventController extends Controller
             $calendar = Calendar::where('id', $request->calendar_id)
                 ->where('user_id', $request->user()->id)
                 ->first();
-            if (!$calendar) {
+            if (! $calendar) {
                 return response()->json(['message' => 'Calendar not found'], 404);
             }
         }
@@ -89,22 +89,42 @@ class EventController extends Controller
             $calendar = Calendar::where('id', $request->calendar_id)
                 ->where('user_id', $request->user()->id)
                 ->first();
-            if (!$calendar) {
+            if (! $calendar) {
                 return response()->json(['message' => 'Calendar not found'], 404);
             }
         }
 
         $updates = [];
-        if ($request->has('name')) $updates['title'] = $request->name;
-        if ($request->has('guests')) $updates['guests'] = $request->guests;
-        if ($request->has('timeZone')) $updates['time_zone'] = $request->timeZone;
-        if ($request->has('description')) $updates['description'] = $request->description;
-        if ($request->has('availability')) $updates['availability'] = $request->availability;
-        if ($request->has('dateStart')) $updates['date_start'] = Carbon::parse($request->dateStart);
-        if ($request->has('dateEnd')) $updates['date_end'] = Carbon::parse($request->dateEnd);
-        if ($request->has('notifications')) $updates['notifications'] = $request->notifications;
-        if ($request->has('repeat')) $updates['repeat'] = $request->repeat;
-        if ($request->has('calendar_id')) $updates['calendar_id'] = $request->calendar_id;
+        if ($request->has('name')) {
+            $updates['title'] = $request->name;
+        }
+        if ($request->has('guests')) {
+            $updates['guests'] = $request->guests;
+        }
+        if ($request->has('timeZone')) {
+            $updates['time_zone'] = $request->timeZone;
+        }
+        if ($request->has('description')) {
+            $updates['description'] = $request->description;
+        }
+        if ($request->has('availability')) {
+            $updates['availability'] = $request->availability;
+        }
+        if ($request->has('dateStart')) {
+            $updates['date_start'] = Carbon::parse($request->dateStart);
+        }
+        if ($request->has('dateEnd')) {
+            $updates['date_end'] = Carbon::parse($request->dateEnd);
+        }
+        if ($request->has('notifications')) {
+            $updates['notifications'] = $request->notifications;
+        }
+        if ($request->has('repeat')) {
+            $updates['repeat'] = $request->repeat;
+        }
+        if ($request->has('calendar_id')) {
+            $updates['calendar_id'] = $request->calendar_id;
+        }
 
         $event->update($updates);
 
@@ -119,6 +139,4 @@ class EventController extends Controller
 
         return response()->json(['state' => true]);
     }
-
-
 }

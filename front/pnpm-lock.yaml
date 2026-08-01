@@ -66,8 +66,8 @@ importers:
         specifier: ^8.8.8
         version: 8.8.8(@stencil/core@4.43.4)(vue-router@5.0.7(@vue/compiler-sfc@3.5.35)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.35(typescript@5.9.3)))(vue@3.5.35(typescript@5.9.3)))(vue@3.5.35(typescript@5.9.3))
       '@tu-org/sso-client':
-        specifier: file:../../sso/packages/sso-client
-        version: file:../../sso/packages/sso-client
+        specifier: npm:@dowardev/sso-client@^0.0.2
+        version: '@dowardev/sso-client@0.0.2'
       '@vuelidate/core':
         specifier: ^2.0.3
         version: 2.0.3(vue@3.5.35(typescript@5.9.3))
@@ -924,6 +924,9 @@ packages:
   '@cypress/xvfb@1.2.4':
     resolution: {integrity: sha512-skbBzPggOVYCbnGgV+0dmBdW/s77ZkAOXIC1knS8NagwDjBrNC1LuXtQJeiN6l+m7lzmHtaoUw/ctJKdqkG57Q==}
 
+  '@dowardev/sso-client@0.0.2':
+    resolution: {integrity: sha512-ZshZrMB2UEmdE53cwfGdzWn/F6oiHZGkgRWC6/W/qDb6fEU4gevUsk3SQDrM43ZSAYHQlEIiFiVpoUt/6O0fig==}
+
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
 
@@ -1660,9 +1663,6 @@ packages:
 
   '@surma/rollup-plugin-off-main-thread@2.2.3':
     resolution: {integrity: sha512-lR8q/9W7hZpMWweNiAKU7NQerBnzQQLvi8qnTDU/fxItPhtZVMbPV3lbCwjhIlNBe9Bbr5V+KHshvWmVSG9cxQ==}
-
-  '@tu-org/sso-client@file:../../sso/packages/sso-client':
-    resolution: {directory: ../../sso/packages/sso-client, type: directory}
 
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
@@ -5459,6 +5459,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@dowardev/sso-client@0.0.2':
+    dependencies:
+      axios: 1.16.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@emnapi/core@1.10.0':
     dependencies:
       '@emnapi/wasi-threads': 1.2.1
@@ -6056,13 +6063,6 @@ snapshots:
       json5: 2.2.3
       magic-string: 0.25.9
       string.prototype.matchall: 4.0.11
-
-  '@tu-org/sso-client@file:../../sso/packages/sso-client':
-    dependencies:
-      axios: 1.16.1
-    transitivePeerDependencies:
-      - debug
-      - supports-color
 
   '@tybys/wasm-util@0.10.2':
     dependencies:

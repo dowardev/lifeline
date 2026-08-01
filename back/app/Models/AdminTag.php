@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class AdminTag extends Model
 {
-  use HasFactory;
-  protected $fillable = ['name'];
+    use HasFactory;
 
-  public function tags()
-  {
-    return $this->hasMany(Tag::class, 'tag_id');
-  }
+    protected $fillable = ['name'];
+
+    public function tags()
+    {
+        return $this->hasMany(Tag::class, 'tag_id');
+    }
 }

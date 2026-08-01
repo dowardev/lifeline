@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\Request;
 
 class WakaTimeController extends Controller
 {
@@ -22,7 +24,7 @@ class WakaTimeController extends Controller
                 'https://wakatime.com/api/v1/users/current/durations',
                 [
                     'headers' => [
-                        'Authorization' => 'Bearer ' . $request->apiKey,
+                        'Authorization' => 'Bearer '.$request->apiKey,
                     ],
                     'query' => [
                         'date' => $request->date,
@@ -34,12 +36,13 @@ class WakaTimeController extends Controller
                 json_decode($response->getBody()->getContents(), true),
                 $response->getStatusCode()
             );
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (RequestException $e) {
             $statusCode = $e->getResponse()?->getStatusCode() ?? 502;
+
             return response()->json([
                 'message' => 'WakaTime API request failed',
             ], $statusCode);
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+        } catch (ConnectException $e) {
             return response()->json([
                 'message' => 'Unable to connect to WakaTime API',
             ], 503);

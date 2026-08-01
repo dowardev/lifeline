@@ -7,19 +7,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
 {
-  use SoftDeletes;
-  protected $fillable = [
-    'title', 'description', 'status',
-    'priority', 'due_date', 'subtasks', 'order'
-  ];
+    use SoftDeletes;
 
-  protected $casts = [
-    'subtasks' => 'array',
-    'due_date' => 'datetime',
-  ];
+    protected $fillable = [
+        'title', 'description', 'status',
+        'priority', 'due_date', 'subtasks', 'order',
+    ];
 
-  public function user()
-  {
-    return $this->belongsTo(User::class);
-  }
+    protected $casts = [
+        'subtasks' => 'array',
+        'due_date' => 'datetime',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\NoteResource;
-use Illuminate\Http\Request;
+use App\Models\Document;
 use App\Models\Note;
+use Illuminate\Http\Request;
 
 class NoteController extends Controller
 {
@@ -34,10 +35,10 @@ class NoteController extends Controller
         ]);
 
         if ($request->document_id) {
-            $document = \App\Models\Document::where('id', $request->document_id)
+            $document = Document::where('id', $request->document_id)
                 ->where('user_id', $request->user()->id)
                 ->first();
-            if (!$document) {
+            if (! $document) {
                 return response()->json(['message' => 'Document not found'], 404);
             }
         }
@@ -45,6 +46,7 @@ class NoteController extends Controller
         $note = new Note($request->only(['title', 'content', 'document_id', 'reminder']));
         $note->user_id = $request->user()->id;
         $note->save();
+
         return response()->json(['note' => new NoteResource($note)], 201);
     }
 
@@ -59,15 +61,16 @@ class NoteController extends Controller
         ]);
 
         if ($request->document_id) {
-            $document = \App\Models\Document::where('id', $request->document_id)
+            $document = Document::where('id', $request->document_id)
                 ->where('user_id', $request->user()->id)
                 ->first();
-            if (!$document) {
+            if (! $document) {
                 return response()->json(['message' => 'Document not found'], 404);
             }
         }
 
         $note->update($request->only(['title', 'content', 'document_id', 'reminder']));
+
         return response()->json(['note' => new NoteResource($note)]);
     }
 
@@ -75,6 +78,7 @@ class NoteController extends Controller
     {
         $note = Note::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
         $note->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 }

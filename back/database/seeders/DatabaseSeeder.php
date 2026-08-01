@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Calendar;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -9,7 +11,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        \App\Models\User::factory()->create([
+        User::factory()->create([
             'name' => config('app.admin_name'),
             'user' => 'admin',
             'email' => config('app.admin_email'),
@@ -18,9 +20,9 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make(config('app.admin_password')),
         ]);
 
-        $adminUser = \App\Models\User::where('email', config('app.admin_email'))->first();
+        $adminUser = User::where('email', config('app.admin_email'))->first();
 
-        \App\Models\Calendar::create([
+        Calendar::create([
             'name' => 'Personal',
             'user_id' => $adminUser->id,
             'default' => true,

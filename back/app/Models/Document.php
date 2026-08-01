@@ -7,22 +7,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Document extends Model
 {
-  use SoftDeletes;
+    use SoftDeletes;
+
     protected $fillable = [
-        'title', 'type', 'content', 'order'
+        'title', 'type', 'content', 'order',
     ];
 
     protected $casts = [
         'content' => 'array',
     ];
 
-  public function user()
-  {
-    return $this->belongsTo(User::class);
-  }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-  public function notes()
-  {
-    return $this->hasMany(Note::class);
-  }
+    public function notes()
+    {
+        return $this->hasMany(Note::class);
+    }
 }

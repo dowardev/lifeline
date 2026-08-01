@@ -9,7 +9,7 @@ class IsVerifyEmail
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->user() || !$request->user()->is_email_verified) {
+        if (! $request->user() || ! $request->user()->is_email_verified) {
             return response()->json(['message' => 'Email verification required'], 403);
         }
 

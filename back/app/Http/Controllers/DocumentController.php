@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\DocumentResource;
-use Illuminate\Http\Request;
 use App\Models\Document;
+use Illuminate\Http\Request;
 
 class DocumentController extends Controller
 {
@@ -35,6 +35,7 @@ class DocumentController extends Controller
         $document = new Document($request->only(['title', 'type', 'content', 'order']));
         $document->user_id = $request->user()->id;
         $document->save();
+
         return response()->json(['document' => new DocumentResource($document)], 201);
     }
 
@@ -48,6 +49,7 @@ class DocumentController extends Controller
             'order' => 'nullable|integer',
         ]);
         $document->update($request->only(['title', 'type', 'content', 'order']));
+
         return response()->json(['document' => new DocumentResource($document)]);
     }
 
@@ -55,6 +57,7 @@ class DocumentController extends Controller
     {
         $document = Document::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
         $document->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 }

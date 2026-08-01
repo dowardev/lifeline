@@ -13,10 +13,11 @@
         "guzzlehttp/guzzle": "^7.6",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
-        "tu-org/sso-server": "^1.0"
+        "dowardev/sso-server": "^0.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "laravel/pint": "^1.30",
         "laravel/sail": "^1.26",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
@@ -49,12 +50,6 @@
             "@php artisan key:generate --ansi"
         ]
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../sso/packages/sso-server"
-        }
-    ],
     "extra": {
         "laravel": {
             "dont-discover": []

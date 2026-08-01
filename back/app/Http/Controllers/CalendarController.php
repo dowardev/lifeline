@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\CalendarResource;
-use Illuminate\Http\Request;
 use App\Models\Calendar;
+use Illuminate\Http\Request;
 
 class CalendarController extends Controller
 {
@@ -33,6 +33,7 @@ class CalendarController extends Controller
         ]);
         $calendar->user_id = $request->user()->id;
         $calendar->save();
+
         return response()->json(['calendar' => new CalendarResource($calendar)], 201);
     }
 
@@ -41,6 +42,7 @@ class CalendarController extends Controller
         $calendar = Calendar::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
         $request->validate(['name' => 'required|string|max:255']);
         $calendar->update(['name' => $request->name]);
+
         return response()->json(['calendar' => new CalendarResource($calendar)]);
     }
 
@@ -48,6 +50,7 @@ class CalendarController extends Controller
     {
         $calendar = Calendar::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
         $calendar->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 }

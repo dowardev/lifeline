@@ -8,24 +8,24 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Calendar extends Model
 {
-  use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes;
 
-  protected $fillable = [
-    'name',
-    'default',
-  ];
+    protected $fillable = [
+        'name',
+        'default',
+    ];
 
-  protected $casts = [
-    'default' => 'boolean',
-  ];
+    protected $casts = [
+        'default' => 'boolean',
+    ];
 
-  public function user()
-  {
-    return $this->belongsTo(User::class);
-  }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-  public function events()
-  {
-    return $this->hasMany(Event::class);
-  }
+    public function events()
+    {
+        return $this->hasMany(Event::class);
+    }
 }

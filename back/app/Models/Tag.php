@@ -7,16 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tag extends Model
 {
-  use HasFactory;
-  protected $fillable = ['event_id', 'tag_id'];
+    use HasFactory;
 
-  public function event()
-  {
-    return $this->belongsTo(Event::class);
-  }
+    protected $fillable = ['event_id', 'tag_id'];
 
-  public function adminTag()
-  {
-    return $this->belongsTo(AdminTag::class, 'tag_id');
-  }
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function adminTag()
+    {
+        return $this->belongsTo(AdminTag::class, 'tag_id');
+    }
 }
