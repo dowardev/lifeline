@@ -140,8 +140,8 @@ backend_build:
     - backend_assets_build
   script:
     - composer install --no-dev --optimize-autoloader --no-interaction
-    - php artisan config:cache
-    - php artisan route:cache
+    - php artisan config:clear
+    - php artisan route:clear
   artifacts:
     paths:
       - back/
