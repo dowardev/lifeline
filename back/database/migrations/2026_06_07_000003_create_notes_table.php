@@ -10,8 +10,8 @@ class CreateNotesTable extends Migration
     {
         Schema::create('notes', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('document_id')->nullable();
+            $table->unsignedInteger('user_id');
+            $table->unsignedInteger('document_id')->nullable();
             $table->string('title');
             $table->text('content')->nullable();
             $table->dateTime('reminder')->nullable();

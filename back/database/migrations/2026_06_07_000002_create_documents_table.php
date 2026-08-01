@@ -10,7 +10,7 @@ class CreateDocumentsTable extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedInteger('user_id');
             $table->string('title');
             $table->enum('type', ['note', 'list', 'richtext', 'todo'])->default('note');
             $table->json('content')->nullable();
