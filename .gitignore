@@ -44,3 +44,7 @@ front.backup/
 docs/
 .playwright-cli/
 .superpowers/
+
+# Local AI runtime state
+.atl/
+.codegraph/
