@@ -10,10 +10,28 @@ class HealthController extends Controller
 {
     public function show(): JsonResponse
     {
+        $envPath = base_path('.env');
+        $envReadable = is_readable($envPath);
+        $envMtime = $envReadable ? filemtime($envPath) : null;
+        $envContent = $envReadable ? file_get_contents($envPath) : null;
+
+        $envAppUrl = null;
+        if ($envContent !== null) {
+            foreach (explode("\n", $envContent) as $line) {
+                if (preg_match('/^APP_URL=(.*)$/', trim($line), $m)) {
+                    $envAppUrl = $m[1];
+                    break;
+                }
+            }
+        }
+
         $checks = [
             'app_env' => config('app.env'),
             'app_debug' => config('app.debug'),
             'app_url' => config('app.url'),
+            'env_app_url_raw' => $envAppUrl,
+            'env_mtime' => $envMtime ? date('c', $envMtime) : null,
+            'env_path' => $envPath,
             'db' => 'fail',
             'laravel' => app()->version(),
             'php' => PHP_VERSION,
