@@ -11,13 +11,13 @@ class HealthController extends Controller
     public function show(): JsonResponse
     {
         $checks = [
-            'app_env'    => config('app.env'),
-            'app_debug'  => config('app.debug'),
-            'app_url'    => config('app.url'),
-            'db'         => 'fail',
-            'laravel'    => app()->version(),
-            'php'        => PHP_VERSION,
-            'timestamp'  => now()->toIso8601String(),
+            'app_env' => config('app.env'),
+            'app_debug' => config('app.debug'),
+            'app_url' => config('app.url'),
+            'db' => 'fail',
+            'laravel' => app()->version(),
+            'php' => PHP_VERSION,
+            'timestamp' => now()->toIso8601String(),
         ];
 
         try {
