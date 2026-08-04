@@ -9,15 +9,15 @@ export const useWakaTimeStore = defineStore('wakaTime', () => {
   const wakaTimeApiKey = ref('')
   const today = ref<WakaTimeToday>({})
 
-  function setApiKey(params: { key: string }) {
+  function setApiKey(params: { key: string }): void {
     wakaTimeApiKey.value = params.key
   }
 
-  function setToday(params: { today: WakaTimeToday }) {
+  function setToday(params: { today: WakaTimeToday }): void {
     today.value = params.today
   }
 
-  function clearApiKey() {
+  function clearApiKey(): void {
     wakaTimeApiKey.value = ''
     today.value = {}
   }

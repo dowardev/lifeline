@@ -1,7 +1,7 @@
 import { apiClient } from './apiClient'
 
 export const taskService = {
-  getTasks() {
+  getTasks(): Promise<unknown> {
     return apiClient.executeQuery({ url: '/tasks' })
   },
 
@@ -13,7 +13,7 @@ export const taskService = {
     due_date?: string
     subtasks?: string
     order?: number
-  }) {
+  }): Promise<unknown> {
     return apiClient.executeMutation({ url: '/tasks', data: params })
   },
 
@@ -26,11 +26,11 @@ export const taskService = {
     due_date?: string
     subtasks?: string
     order?: number
-  }) {
+  }): Promise<unknown> {
     return apiClient.executeMutation({ url: `/tasks/${params.id}`, data: params, method: 'PUT' })
   },
 
-  deleteTask(params: { id: number }) {
+  deleteTask(params: { id: number }): Promise<unknown> {
     return apiClient.executeDelete({ url: `/tasks/${params.id}` })
   },
 }

@@ -19,11 +19,11 @@ interface ScheduleDay {
 }
 
 export class EventController {
-  private get store() {
+  private get store(): ReturnType<typeof useEventStore> {
     return useEventStore()
   }
 
-  async loadEvents() {
+  async loadEvents(): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -44,7 +44,7 @@ export class EventController {
     }
   }
 
-  async loadLocalEvents(params: { userId: number }) {
+  async loadLocalEvents(params: { userId: number }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -78,7 +78,7 @@ export class EventController {
     guests?: string
     description?: string
     availability?: string
-  }) {
+  }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -86,7 +86,6 @@ export class EventController {
       const newEvent = response.event || response
       this.store.addEvent({ event: newEvent })
       await db.events.put(newEvent)
-      return newEvent
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error
@@ -102,7 +101,7 @@ export class EventController {
     dateEnd?: string
     notifications?: string
     repeat?: string
-  }) {
+  }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -117,7 +116,7 @@ export class EventController {
     }
   }
 
-  async updateLocalEvent(params: { id?: number; event?: Partial<EventItem>; updates?: Partial<EventItem> }) {
+  async updateLocalEvent(params: { id?: number; event?: Partial<EventItem>; updates?: Partial<EventItem> }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -135,7 +134,7 @@ export class EventController {
     }
   }
 
-  async removeEvent(params: { id: number }) {
+  async removeEvent(params: { id: number }): Promise<void> {
     const { id } = params
     this.store.setLoading({ loading: true })
     this.store.clearError()
@@ -156,7 +155,7 @@ export class EventController {
     }
   }
 
-  generateSchedule(params: { events: EventItem[]; year: number; month: number }) {
+  generateSchedule(params: { events: EventItem[]; year: number; month: number }): void {
     const { events: eventList, year, month } = params
     const schedule: ScheduleDay[] = []
     const daysInMonth = new Date(year, month, 0).getDate()
@@ -191,7 +190,7 @@ export class EventController {
     this.store.setSchedule({ schedule: { schedule } })
   }
 
-  setDate(params: { date: string }) {
+  setDate(params: { date: string }): void {
     this.store.setDate({ date: params.date })
   }
 

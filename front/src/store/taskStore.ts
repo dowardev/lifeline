@@ -56,15 +56,15 @@ export const useTaskStore = defineStore('task', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  function setTasks(params: { tasks: TaskItem[] }) {
+  function setTasks(params: { tasks: TaskItem[] }): void {
     tasks.value = params.tasks.map(mapTaskToItem)
   }
 
-  function addTask(params: { task: TaskItem }) {
+  function addTask(params: { task: TaskItem }): void {
     tasks.value.push(mapTaskToItem(params.task))
   }
 
-  function updateTask(params: { id: number; updates: Partial<TaskItem> }) {
+  function updateTask(params: { id: number; updates: Partial<TaskItem> }): void {
     const { id, updates } = params
     const index = tasks.value.findIndex((t) => t.id === id)
     if (index !== -1) {
@@ -73,19 +73,19 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  function removeTask(params: { id: number }) {
+  function removeTask(params: { id: number }): void {
     tasks.value = tasks.value.filter((t) => t.id !== params.id)
   }
 
-  function setLoading(params: { loading: boolean }) {
+  function setLoading(params: { loading: boolean }): void {
     loading.value = params.loading
   }
 
-  function setError(params: { error: string | null }) {
+  function setError(params: { error: string | null }): void {
     error.value = params.error
   }
 
-  function clearError() {
+  function clearError(): void {
     error.value = null
   }
 

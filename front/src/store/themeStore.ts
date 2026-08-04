@@ -8,7 +8,7 @@ export interface ThemeState {
 export const useThemeStore = defineStore('theme', () => {
   const theme = ref<ThemeState>({ selected: 'light' })
 
-  function setTheme(params: { theme: ThemeState }) {
+  function setTheme(params: { theme: ThemeState }): void {
     theme.value = params.theme
   }
 

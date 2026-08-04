@@ -14,28 +14,28 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref('')
   const isLogged = ref(false)
 
-  function setAuth(params: { userData: AuthUser; accessToken: string }) {
+  function setAuth(params: { userData: AuthUser; accessToken: string }): void {
     user.value = params.userData
     token.value = params.accessToken
     isLogged.value = true
   }
 
-  function setUser(params: { userData: AuthUser }) {
+  function setUser(params: { userData: AuthUser }): void {
     user.value = params.userData
     isLogged.value = true
   }
 
-  function setToken(params: { accessToken: string }) {
+  function setToken(params: { accessToken: string }): void {
     token.value = params.accessToken
   }
 
-  function clearAuth() {
+  function clearAuth(): void {
     user.value = null
     token.value = ''
     isLogged.value = false
   }
 
-  function setFromSso(params: { id: number; name: string; user: string; email: string }) {
+  function setFromSso(params: { id: number; name: string; user: string; email: string }): void {
     user.value = {
       id: params.id,
       name: params.name,

@@ -1,7 +1,7 @@
 import { apiClient } from './apiClient'
 
 export const eventService = {
-  getEvents() {
+  getEvents(): Promise<unknown> {
     return apiClient.executeQuery({ url: '/events' })
   },
 
@@ -16,7 +16,7 @@ export const eventService = {
     guests?: string
     description?: string
     availability?: string
-  }) {
+  }): Promise<unknown> {
     return apiClient.executeMutation({ url: '/events', data: params })
   },
 
@@ -31,12 +31,12 @@ export const eventService = {
     guests?: string
     description?: string
     availability?: string
-  }) {
+  }): Promise<unknown> {
     const { id, ...data } = params
     return apiClient.executeMutation({ url: `/events/${id}`, data, method: 'PUT' })
   },
 
-  removeEvent(params: { id: number }) {
+  removeEvent(params: { id: number }): Promise<unknown> {
     return apiClient.executeDelete({ url: `/events/${params.id}` })
   },
 }

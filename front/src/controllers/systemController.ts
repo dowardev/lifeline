@@ -4,7 +4,7 @@ import { Days, EventReminderNotification, EventReminderRepeat, Months } from '@/
 import { toastController } from '@ionic/vue'
 
 export class SystemController {
-  async openToast(params: { message: string; color?: string; duration?: number }) {
+  async openToast(params: { message: string; color?: string; duration?: number }): Promise<void> {
     const { message, color = 'dark', duration = 2000 } = params
     const toast = await toastController.create({ message, duration, color, position: 'bottom' })
     await toast.present()
@@ -30,7 +30,7 @@ export class SystemController {
     return types[params.typeRepeat]
   }
 
-  async setTasksViewMode(params: { viewMode: ViewMode }) {
+  async setTasksViewMode(params: { viewMode: ViewMode }): Promise<void> {
     await storage.set('tasksViewMode', params.viewMode)
   }
 

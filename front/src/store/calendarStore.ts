@@ -31,31 +31,31 @@ export const useCalendarStore = defineStore('calendar', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  function setCalendars(params: { calendars: CalendarItem[] }) {
+  function setCalendars(params: { calendars: CalendarItem[] }): void {
     calendars.value = params.calendars
   }
 
-  function setViewDates(params: { viewDates: CalendarViewDates }) {
+  function setViewDates(params: { viewDates: CalendarViewDates }): void {
     viewDates.value = params.viewDates
   }
 
-  function setCalendarModeView(params: { mode: ViewCalendar }) {
+  function setCalendarModeView(params: { mode: ViewCalendar }): void {
     calendarModeView.value = params.mode
   }
 
-  function setDataStatus(params: { dataStatus: CalendarDataStatus }) {
+  function setDataStatus(params: { dataStatus: CalendarDataStatus }): void {
     dataStatus.value = params.dataStatus
   }
 
-  function setLoading(params: { loading: boolean }) {
+  function setLoading(params: { loading: boolean }): void {
     loading.value = params.loading
   }
 
-  function setError(params: { error: string | null }) {
+  function setError(params: { error: string | null }): void {
     error.value = params.error
   }
 
-  function clearError() {
+  function clearError(): void {
     error.value = null
   }
 

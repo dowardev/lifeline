@@ -4,11 +4,11 @@ import { db } from '@/db'
 import type { DocumentItem } from '@/store/documentStore'
 
 export class DocumentController {
-  private get store() {
+  private get store(): ReturnType<typeof useDocumentStore> {
     return useDocumentStore()
   }
 
-  async loadDocuments() {
+  async loadDocuments(): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -31,7 +31,7 @@ export class DocumentController {
     }
   }
 
-  async createDocument(params: { title: string; type?: string; content?: string }) {
+  async createDocument(params: { title: string; type?: string; content?: string }): Promise<DocumentItem> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -48,7 +48,7 @@ export class DocumentController {
     }
   }
 
-  async updateDocument(params: { id?: number; document?: any; title?: string; type?: string; content?: string }) {
+  async updateDocument(params: { id?: number; document?: any; title?: string; type?: string; content?: string }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -70,7 +70,7 @@ export class DocumentController {
     }
   }
 
-  async deleteDocument(params: { id: number }) {
+  async deleteDocument(params: { id: number }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {

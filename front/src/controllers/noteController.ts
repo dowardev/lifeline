@@ -4,11 +4,11 @@ import { db } from '@/db'
 import type { NoteItem } from '@/store/noteStore'
 
 export class NoteController {
-  private get store() {
+  private get store(): ReturnType<typeof useNoteStore> {
     return useNoteStore()
   }
 
-  async loadNotes() {
+  async loadNotes(): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -31,7 +31,7 @@ export class NoteController {
     }
   }
 
-  async createNote(params: { title: string; content?: string; document_id?: number; reminder?: string }) {
+  async createNote(params: { title: string; content?: string; document_id?: number; reminder?: string }): Promise<NoteItem> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -48,7 +48,7 @@ export class NoteController {
     }
   }
 
-  async updateNote(params: { id: number; title?: string; content?: string; reminder?: string }) {
+  async updateNote(params: { id: number; title?: string; content?: string; reminder?: string }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -63,7 +63,7 @@ export class NoteController {
     }
   }
 
-  async deleteNote(params: { id: number }) {
+  async deleteNote(params: { id: number }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {

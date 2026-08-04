@@ -2,7 +2,7 @@ import { getDB } from '@/db'
 import type { UserRecord, EventRecord } from '@/db/schema'
 
 export class UserFactory {
-  static async fromLocal(params: { userId: number }) {
+  static async fromLocal(params: { userId: number }): Promise<{ user: UserRecord | null; events: EventRecord[] } | null> {
     const { userId } = params
     const db = getDB()
     const user = await db.users.get(userId)
@@ -11,12 +11,12 @@ export class UserFactory {
     return { user, events }
   }
 
-  static async fromServer() {
+  static async fromServer(): Promise<unknown> {
     const { authService } = await import('@/services/authService')
     return authService.getUser()
   }
 
-  static async fromBoth(params: { userId: number }) {
+  static async fromBoth(params: { userId: number }): Promise<{ user: UserRecord | null; events: EventRecord[] }> {
     const { userId } = params
     const [local, server] = await Promise.all([
       UserFactory.fromLocal({ userId }).catch(() => ({ user: null as UserRecord | null, events: [] as EventRecord[] })),

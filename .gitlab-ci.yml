@@ -75,7 +75,6 @@ frontend_lint:
   extends: [.tag_rules, .frontend_setup]
   script:
     - pnpm run lint
-  allow_failure: true  # pre-existing eslint type-checking debt
 
 # ============================================
 # STAGE: test
@@ -108,7 +107,6 @@ frontend_test:
   extends: [.tag_rules, .frontend_setup]
   script:
     - pnpm run test:unit
-  allow_failure: true  # pre-existing test flakiness (IndexedDB in jsdom)
 
 # ============================================
 # STAGE: build

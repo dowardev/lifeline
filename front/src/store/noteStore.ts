@@ -15,15 +15,15 @@ export const useNoteStore = defineStore('note', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  function setNotes(params: { notes: NoteItem[] }) {
+  function setNotes(params: { notes: NoteItem[] }): void {
     notes.value = params.notes
   }
 
-  function addNote(params: { note: NoteItem }) {
+  function addNote(params: { note: NoteItem }): void {
     notes.value.push(params.note)
   }
 
-  function updateNote(params: { id: number; updates: Partial<NoteItem> }) {
+  function updateNote(params: { id: number; updates: Partial<NoteItem> }): void {
     const { id, updates } = params
     const index = notes.value.findIndex((n) => n.id === id)
     if (index !== -1) {
@@ -31,19 +31,19 @@ export const useNoteStore = defineStore('note', () => {
     }
   }
 
-  function removeNote(params: { id: number }) {
+  function removeNote(params: { id: number }): void {
     notes.value = notes.value.filter((n) => n.id !== params.id)
   }
 
-  function setLoading(params: { loading: boolean }) {
+  function setLoading(params: { loading: boolean }): void {
     loading.value = params.loading
   }
 
-  function setError(params: { error: string | null }) {
+  function setError(params: { error: string | null }): void {
     error.value = params.error
   }
 
-  function clearError() {
+  function clearError(): void {
     error.value = null
   }
 

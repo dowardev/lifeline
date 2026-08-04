@@ -9,7 +9,7 @@ export interface AdminTagItem {
 export const useTagStore = defineStore('tag', () => {
   const adminTags = ref<AdminTagItem[]>([])
 
-  function setAdminTags(params: { tags: AdminTagItem[] }) {
+  function setAdminTags(params: { tags: AdminTagItem[] }): void {
     adminTags.value = params.tags
   }
 

@@ -4,11 +4,11 @@ import { db } from '@/db'
 import type { TaskItem } from '@/store/taskStore'
 
 export class TaskController {
-  private get store() {
+  private get store(): ReturnType<typeof useTaskStore> {
     return useTaskStore()
   }
 
-  async loadTasks() {
+  async loadTasks(): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -38,7 +38,7 @@ export class TaskController {
     priority?: number
     due_date?: string
     subtasks?: string
-  }) {
+  }): Promise<TaskItem> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -55,7 +55,7 @@ export class TaskController {
     }
   }
 
-  async updateTask(params: { id?: number; task?: any; title?: string; description?: string; status?: string; priority?: number; due_date?: string; order?: number }) {
+  async updateTask(params: { id?: number; task?: any; title?: string; description?: string; status?: string; priority?: number; due_date?: string; order?: number }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -72,7 +72,7 @@ export class TaskController {
     }
   }
 
-  async deleteTask(params: { id: number }) {
+  async deleteTask(params: { id: number }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -96,7 +96,7 @@ export class TaskController {
     return this.store.tasks.find((t) => t.id === id) || null
   }
 
-  async updateTaskStatus(params: { id: number | string; status: string }) {
+  async updateTaskStatus(params: { id: number | string; status: string }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {

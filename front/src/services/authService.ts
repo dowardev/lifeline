@@ -1,11 +1,11 @@
 import { apiClient } from './apiClient'
 
 export const authService = {
-  logout() {
+  logout(): Promise<unknown> {
     return apiClient.executeMutation({ url: '/auth/logout' })
   },
 
-  getUser() {
+  getUser(): Promise<unknown> {
     return apiClient.executeQuery({ url: '/auth/user' })
   },
 }

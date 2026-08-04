@@ -8,11 +8,11 @@ const THEME_MIGRATIONS: Record<string, string> = {
 }
 
 export class ThemeController {
-  private get store() {
+  private get store(): ReturnType<typeof useThemeStore> {
     return useThemeStore()
   }
 
-  async loadTheme() {
+  async loadTheme(): Promise<void> {
     const config = await db.config.get('theme')
     if (config) {
       const migrated = THEME_MIGRATIONS[config.value] || config.value
@@ -24,7 +24,7 @@ export class ThemeController {
     }
   }
 
-  async setTheme(params: { theme: string }) {
+  async setTheme(params: { theme: string }): Promise<void> {
     this.store.setTheme({ theme: { selected: params.theme } })
     this.applyTheme({ theme: params.theme })
     await db.config.put({ name: 'theme', value: params.theme })
@@ -34,7 +34,7 @@ export class ThemeController {
     return this.store.theme.selected
   }
 
-  applyTheme(params: { theme: string }) {
+  applyTheme(params: { theme: string }): void {
     const { theme } = params
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 
@@ -48,7 +48,7 @@ export class ThemeController {
     }
   }
 
-  setupThemeListener() {
+  setupThemeListener(): void {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async () => {
       const theme = this.getTheme()
       if (theme === 'auto') {

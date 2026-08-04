@@ -45,15 +45,15 @@ export const useEventStore = defineStore('event', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  function setEvents(params: { events: EventItem[] }) {
+  function setEvents(params: { events: EventItem[] }): void {
     events.value = params.events
   }
 
-  function addEvent(params: { event: EventItem }) {
+  function addEvent(params: { event: EventItem }): void {
     events.value.push(params.event)
   }
 
-  function updateEvent(params: { id: number; updates: Partial<EventItem> }) {
+  function updateEvent(params: { id: number; updates: Partial<EventItem> }): void {
     const { id, updates } = params
     const index = events.value.findIndex((e) => e.id === id)
     if (index !== -1) {
@@ -61,27 +61,27 @@ export const useEventStore = defineStore('event', () => {
     }
   }
 
-  function removeEvent(params: { id: number }) {
+  function removeEvent(params: { id: number }): void {
     events.value = events.value.filter((e) => e.id !== params.id)
   }
 
-  function setSchedule(params: { schedule: Schedule }) {
+  function setSchedule(params: { schedule: Schedule }): void {
     calendarSchedule.value = params.schedule
   }
 
-  function setDate(params: { date: string }) {
+  function setDate(params: { date: string }): void {
     date.value = params.date
   }
 
-  function setLoading(params: { loading: boolean }) {
+  function setLoading(params: { loading: boolean }): void {
     loading.value = params.loading
   }
 
-  function setError(params: { error: string | null }) {
+  function setError(params: { error: string | null }): void {
     error.value = params.error
   }
 
-  function clearError() {
+  function clearError(): void {
     error.value = null
   }
 

@@ -17,21 +17,21 @@ export const useDocumentStore = defineStore('document', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  function setDocuments(params: { documents: DocumentItem[] }) {
+  function setDocuments(params: { documents: DocumentItem[] }): void {
     documents.value = params.documents
   }
 
-  function addDocument(params: { document: DocumentItem }) {
+  function addDocument(params: { document: DocumentItem }): void {
     documents.value.push(params.document)
   }
 
-  function updateDocument(params: { id: number; updates: Partial<DocumentItem> }) {
+  function updateDocument(params: { id: number; updates: Partial<DocumentItem> }): void {
     const { id, updates } = params
     const index = documents.value.findIndex((d) => d.id === id)
     if (index !== -1) documents.value[index] = { ...documents.value[index], ...updates }
   }
 
-  function removeDocument(params: { id: number }) {
+  function removeDocument(params: { id: number }): void {
     documents.value = documents.value.filter((d) => d.id !== params.id)
   }
 
@@ -44,15 +44,15 @@ export const useDocumentStore = defineStore('document', () => {
     return documents.value.find((d) => String(d.id) === elementSearch || d.url === elementSearch)
   }
 
-  function setLoading(params: { loading: boolean }) {
+  function setLoading(params: { loading: boolean }): void {
     loading.value = params.loading
   }
 
-  function setError(params: { error: string | null }) {
+  function setError(params: { error: string | null }): void {
     error.value = params.error
   }
 
-  function clearError() {
+  function clearError(): void {
     error.value = null
   }
 
