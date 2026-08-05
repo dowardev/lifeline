@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **root:** Add DEPLOY.md deployment guide (manual SSH setup, tag-based GitLab CI/CD, rollback, dryrun tags)
+
 ### Changed
 - **front:** Trim `useAppVersion` composable return type (removed unused `isAlpha`/`isBeta`/`isStable`).
 - **front:** Reorder `useAppVersion` import in `MenuComponent.vue` so all section 2 imports are grouped.
