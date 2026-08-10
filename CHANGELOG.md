@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **front:** Reorder `useAppVersion` import in `MenuComponent.vue` so all section 2 imports are grouped.
 - **front:** Refactor: extract `useCalendarModals` composable from `CalendarPage.vue` (no user-facing change).
 
+## [0.14.0] - 2026-08-09
+
+### Added
+- **root:** Unified hardened deploy script with safety checks, dry-run, and npm/composer version checks (`scripts/deploy/deploy.sh` + `deploy.conf`)
+- **root:** Optional setup script upload to the server (`SETUP_SCRIPT`)
+
 ## [0.13.0] - 2026-07-01
 
 ### Added
