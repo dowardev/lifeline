@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **front:** Reorder `useAppVersion` import in `MenuComponent.vue` so all section 2 imports are grouped.
 - **front:** Refactor: extract `useCalendarModals` composable from `CalendarPage.vue` (no user-facing change).
 
+## [0.15.0] - 2026-08-10
+
+### Added
+- **front:** SPA `.htaccess` in `front/public/` so history-mode routing works on page reload
+- **root:** CI copies the `FRONTEND_ENV_FILE` File variable into `front/.env.production` before `frontend_build` and `rollback_frontend`, so the pipeline compiles the frontend with the configured production URLs
+
+### Fixed
+- **root:** Deploy script glob expansion disabled while building tarball excludes, preventing local `.env` files from reaching the server
+- **root:** Remote deploy creates `storage/framework/{views,cache/data,sessions}` before `artisan`, fixing "Please provide a valid cache path"
+
 ## [0.14.0] - 2026-08-09
 
 ### Added
