@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
+
 import { storage } from '@/main'
 import { ViewMode } from '@/utils/types'
 import { Days, EventReminderNotification, EventReminderRepeat, Months } from '@/utils/interfaces'
