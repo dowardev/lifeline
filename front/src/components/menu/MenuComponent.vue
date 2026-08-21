@@ -1,3 +1,8 @@
+<!--
+  SPDX-License-Identifier: AGPL-3.0-only
+  Copyright (C) 2025 Gonzalo Ponce <gonzalo@dowar.xyz>
+-->
+
 <template>
   <ion-menu ref="menuRef" content-id="menu-content" type="overlay" menu-id="main-menu">
     <ion-header mode="ios" class="ion-no-border">
