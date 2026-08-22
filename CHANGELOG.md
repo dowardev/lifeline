@@ -136,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **back:** Upgrade Laravel 9 → 13 with Passport-only auth and Vite. PHP min version raised to ^8.3. Removes Sanctum, fruitcake/laravel-cors, graphql-playground, and Laravel Mix (webpack). Migrates to L13 bootstrap/app.php + providers.php architecture.
 - **front:** Upgrade Capacitor 6 → 8 (Android SDK 36, AGP 8.13, Kotlin 2.2, minSdk 24). Upgrade Vite 5 → 8 with Rolldown bundler (replaces esbuild/Rollup). Upgrade Vue Router 4 → 5, Pinia 2 → 3, vue-i18n 10 → 11, vue-tsc 2 → 3.
 
-### Features
+### Added
 
 - **front:** Update all Vue ecosystem packages to latest stable - Vue 3.5.35, Vue Router 5.0.7, Pinia 3.0.4, vue-i18n 11.4.4, vue-tsc 3.3.2
 - **front:** Update Ionic 8.3.1 → 8.8.8 and ionicons 7 → 8 with pnpm patch for Rolldown exports compatibility
@@ -149,7 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **back:** Migrate build system from Laravel Mix to Vite
 - **back:** Update PHPUnit configuration for PHPUnit 12
 
-### Bug Fixes
+### Fixed
 
 - **back:** Fix migration bugs - rename password_resets to password_reset_tokens, fix column mismatches
 - **back:** Sync Event/Calendar models with actual migration schemas
@@ -158,18 +158,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **front:** Fix Android config for Capacitor 8 - add `navigation` and `density` to configChanges, update namespace syntax
 - **front:** Fix PWA build - set maximumFileSizeToCacheInBytes for large JS bundles (2.27 MB)
 
-### Code Improvements
+### Changed
 
 - **front:** Remove unused `bundledWebRuntime` config from capacitor.config.ts
 - **front:** Multiple auto-fixes from oxlint - shorthand object properties, correct Ionic event naming
 - **front:** Apply Java 21 compileOptions and Kotlin 2.x compilerOptions in Android build
 
-### Documentation
+### Changed
 
 - Update AGENTS.md with flattened monorepo structure, developer commands, and code conventions
 
 ## [0.9.4] - 2026-05-26
 
-### Previous release
+### Added
 
 - Original Ionic 8 / Capacitor 6 / Laravel 9 stack
