@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **front:** Remove redundant type cast in `useAppVersion` composable (`chipClass` return type already declares the union).
 - **front:** Refactor: extract `useCalendarModals` composable from `CalendarPage.vue` (no user-facing change).
+- **front:** Remove dead `requiresAuth` meta from router and use static SSO client import
 
 ## [0.15.0] - 2026-08-10
 
