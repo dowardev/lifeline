@@ -13,7 +13,7 @@ export function useAppVersion(): {
   const isStable = !isAlpha && !isBeta
 
   const label = isStable ? `v${version}` : `${isAlpha ? 'ALPHA' : 'BETA'} v${version}`
-  const chipClass = (isAlpha ? 'alpha' : isBeta ? 'beta' : 'stable') as 'alpha' | 'beta' | 'stable'
+  const chipClass = isAlpha ? 'alpha' : isBeta ? 'beta' : 'stable'
 
   return { version, label, chipClass }
 }
