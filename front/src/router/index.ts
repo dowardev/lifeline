@@ -3,6 +3,7 @@
 
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
+import { getSSOClient } from "@/ssoClientAccessor";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -13,13 +14,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/home",
     name: "home",
     component: () => import("@/views/home/HomePage.vue"),
-    meta: { requiresAuth: true },
   },
   {
     path: "/calendar",
     name: "CalendarPage",
     component: () => import("@/views/calendar/CalendarPage.vue"),
-    meta: { requiresAuth: true },
   },
   {
     path: "/auth/callback",
@@ -43,7 +42,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/document/:url",
     name: "DocumentPage",
     component: () => import("@/views/documents/DocumentPage.vue"),
-    meta: { requiresAuth: true },
   },
   {
     path: "/policies",
@@ -55,19 +53,16 @@ const routes: Array<RouteRecordRaw> = [
     path: "/documents",
     name: "DocumentsPage",
     component: () => import("@/views/documents/DocumentsPage.vue"),
-    meta: { requiresAuth: true },
   },
   {
     path: "/tasks",
     name: "TasksPage",
     component: () => import("@/views/tasks/TasksPage.vue"),
-    meta: { requiresAuth: true },
   },
   {
     path: "/integrations",
     name: "IntegrationsPage",
     component: () => import("@/views/integrations/IntegrationsPage.vue"),
-    meta: { requiresAuth: true },
   },
   {
     path: "/about",
@@ -96,7 +91,6 @@ router.beforeEach(async (to, _from, next) => {
   const isPublic = to.meta?.public === true
   if (isPublic) return next()
 
-  const { getSSOClient } = await import('@/ssoClientAccessor')
   const ssoClient = getSSOClient()
   if (!ssoClient.isAuthenticated) {
     await ssoClient.loginWithRedirect({
