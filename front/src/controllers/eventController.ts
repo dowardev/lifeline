@@ -70,6 +70,11 @@ export class EventController {
     this.store.addEvent({ event: params.event })
   }
 
+  async addLocalEvent(params: { event: EventItem }): Promise<void> {
+    this.store.addEvent({ event: params.event })
+    await db.events.put(params.event)
+  }
+
   async createEvent(params: {
     name: string
     dateStart: string

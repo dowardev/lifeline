@@ -1,98 +1,100 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
-import { createRouter, createWebHistory } from "@ionic/vue-router";
-import { RouteRecordRaw } from "vue-router";
-import { getSSOClient } from "@/ssoClientAccessor";
+import { createRouter, createWebHistory } from '@ionic/vue-router'
+import type { RouteRecordRaw } from 'vue-router'
+import { getSSOClient } from '@/ssoClientAccessor'
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: "/",
-    redirect: "/home",
+    path: '/',
+    redirect: '/home',
   },
   {
-    path: "/home",
-    name: "home",
-    component: () => import("@/views/home/HomePage.vue"),
+    path: '/home',
+    name: 'home',
+    component: () => import('@/views/home/HomePage.vue'),
   },
   {
-    path: "/calendar",
-    name: "CalendarPage",
-    component: () => import("@/views/calendar/CalendarPage.vue"),
+    path: '/calendar',
+    name: 'CalendarPage',
+    component: () => import('@/views/calendar/CalendarPage.vue'),
   },
   {
-    path: "/auth/callback",
-    name: "AuthCallback",
-    component: () => import("@/views/auth/AuthCallbackPage.vue"),
+    path: '/auth/callback',
+    name: 'AuthCallback',
+    component: () => import('@/views/auth/AuthCallbackPage.vue'),
     meta: { public: true },
   },
   {
-    path: "/login",
-    name: "Login",
-    component: () => import("@/views/auth/SsoRedirectPage.vue"),
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/auth/SsoRedirectPage.vue'),
     meta: { public: true },
   },
   {
-    path: "/register",
-    name: "Register",
-    component: () => import("@/views/auth/SsoRedirectPage.vue"),
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/auth/SsoRedirectPage.vue'),
     meta: { public: true },
   },
   {
-    path: "/document/:url",
-    name: "DocumentPage",
-    component: () => import("@/views/documents/DocumentPage.vue"),
+    path: '/document/:url',
+    name: 'DocumentPage',
+    component: () => import('@/views/documents/DocumentPage.vue'),
   },
   {
-    path: "/policies",
-    name: "PoliciesPage",
-    component: () => import("@/views/policies/PoliciesPage.vue"),
+    path: '/policies',
+    name: 'PoliciesPage',
+    component: () => import('@/views/policies/PoliciesPage.vue'),
     meta: { public: true },
   },
   {
-    path: "/documents",
-    name: "DocumentsPage",
-    component: () => import("@/views/documents/DocumentsPage.vue"),
+    path: '/documents',
+    name: 'DocumentsPage',
+    component: () => import('@/views/documents/DocumentsPage.vue'),
   },
   {
-    path: "/tasks",
-    name: "TasksPage",
-    component: () => import("@/views/tasks/TasksPage.vue"),
+    path: '/tasks',
+    name: 'TasksPage',
+    component: () => import('@/views/tasks/TasksPage.vue'),
   },
   {
-    path: "/integrations",
-    name: "IntegrationsPage",
-    component: () => import("@/views/integrations/IntegrationsPage.vue"),
+    path: '/integrations',
+    name: 'IntegrationsPage',
+    component: () => import('@/views/integrations/IntegrationsPage.vue'),
   },
   {
-    path: "/about",
-    name: "AboutPage",
-    component: () => import("@/views/about/AboutPage.vue"),
+    path: '/about',
+    name: 'AboutPage',
+    component: () => import('@/views/about/AboutPage.vue'),
     meta: { public: true },
   },
   {
-    path: "/landing",
-    name: "LandingPage",
-    component: () => import("@/views/lading/LandingPage.vue"),
+    path: '/landing',
+    name: 'LandingPage',
+    component: () => import('@/views/lading/LandingPage.vue'),
     meta: { public: true },
   },
   {
-    path: "/:pathMatch(.*)*",
-    redirect: "/home",
+    path: '/:pathMatch(.*)*',
+    redirect: '/home',
   },
-];
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-});
+})
 
 router.beforeEach(async (to, _from, next) => {
   const isPublic = to.meta?.public === true
   if (isPublic) return next()
 
+  // Test-only escape hatch so E2E can exercise guarded routes offline.
+  const e2eBypass = import.meta.env.VITE_E2E_BYPASS_AUTH === '1'
   const ssoClient = getSSOClient()
-  if (!ssoClient.isAuthenticated) {
+  if (!e2eBypass && !ssoClient.isAuthenticated) {
     await ssoClient.loginWithRedirect({
       redirectUri: `${window.location.origin}/auth/callback`,
     })
@@ -101,4 +103,4 @@ router.beforeEach(async (to, _from, next) => {
   return next()
 })
 
-export default router;
+export default router
