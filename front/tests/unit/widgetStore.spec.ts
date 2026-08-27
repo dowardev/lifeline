@@ -36,4 +36,16 @@ describe('widgetStore persistence', () => {
     expect(restored?.x.lg).toBe(3)
     expect(restored?.y.lg).toBe(5)
   })
+
+  it('removes a widget from the store when removeWidget is called', () => {
+    const store = useWidgetStore()
+    store.initializeDefaultLayout()
+    expect(store.activeWidgets.length).toBe(2)
+
+    const target = store.activeWidgets[0]
+    store.removeWidget({ instanceId: target.id })
+
+    expect(store.activeWidgets.length).toBe(1)
+    expect(store.activeWidgets.find((w) => w.id === target.id)).toBeUndefined()
+  })
 })

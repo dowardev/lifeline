@@ -54,6 +54,7 @@ const gridOptions = ref<GridStackOptions>({
   cellHeight: 70,
   margin: 8,
   draggable: {
+    handle: '.widget-drag-handle',
     scroll: true,
     appendTo: 'body',
   },
