@@ -9,11 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **root:** Add DEPLOY.md deployment guide (manual SSH setup, tag-based GitLab CI/CD, rollback, dryrun tags)
+- **front:** Widget system on the home page: desktop GridStack grid (drag/resize) and a mobile horizontal pager (scroll-snap, one full-width page per widget) with an active-pill page indicator, persisted per breakpoint in localStorage (LBDS-102)
+- **front:** Add `gridstack` dependency and extract `CalendarWidget` / `WakaTimeWidget` from the home page
 
 ### Changed
 - **front:** Remove redundant type cast in `useAppVersion` composable (`chipClass` return type already declares the union).
 - **front:** Refactor: extract `useCalendarModals` composable from `CalendarPage.vue` (no user-facing change).
 - **front:** Remove dead `requiresAuth` meta from router and use static SSO client import
+- **front:** HomePage mounts only the active layout (grid on desktop/tablet, pager on mobile) instead of both
+- **front:** Persist events created from the home calendar widget via `EventController.addLocalEvent()` (store + IndexedDB)
+- **front:** Simplify the widget layout model to `lg`/`md` breakpoints only (`sm` slot removed); mobile order follows desktop drag order
+
+### Fixed
+- **front:** Persist widget drag/resize positions after grid drags (GridStack events previously carried empty payloads)
+- **front:** Hydrate the WakaTime API key from IndexedDB and restore a functional "Configurar API Key" modal on the home widget
 
 ## [0.15.0] - 2026-08-10
 

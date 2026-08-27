@@ -92,6 +92,9 @@ importers:
       fs-extra:
         specifier: ^11.3.5
         version: 11.3.5
+      gridstack:
+        specifier: ^13.2.0
+        version: 13.2.0
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
@@ -2547,6 +2550,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -2806,6 +2810,9 @@ packages:
 
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
+
+  gridstack@13.2.0:
+    resolution: {integrity: sha512-+ImmOx6qd1wiF0EagY7e/pPdngh/6s0FM+r9hh4d8AsXslO51iHEuoAF7CMrXCFr0Xqd0X4WS/bqRLXtEUThug==}
 
   has-bigints@1.0.2:
     resolution: {integrity: sha512-tSvCKtBr9lkF0Ex0aQiP9N+OpV4zi2r/Nee5VkRDbaqv35RLYMzbwQfFSZZH0kR+Rd6302UJZ2p/bJCEoR3VoQ==}
@@ -7412,6 +7419,8 @@ snapshots:
   gopd@1.2.0: {}
 
   graceful-fs@4.2.11: {}
+
+  gridstack@13.2.0: {}
 
   has-bigints@1.0.2: {}
 

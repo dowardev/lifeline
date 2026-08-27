@@ -12,149 +12,205 @@
         </ion-buttons>
 
         <ion-title>{{ pageTitle }}</ion-title>
+
+        <ion-buttons slot="end">
+          <ion-button fill="clear" @click="openWidgetPicker()">
+            <ion-icon :icon="addOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content>
+    <ion-content class="ion-padding">
       <ion-grid>
-        <ion-row >
-          <ion-col size="12" >
-            <ion-list>
-              <ion-list-header>
-                <ion-label>Widgets</ion-label>
+        <ion-row class="ion-justify-content-center">
+          <ion-col size="12">
+            <!-- Desktop/Tablet: GridStack -->
+            <div v-if="isDesktopOrTablet" class="widget-grid-section">
+              <WidgetGrid @layout-change="onLayoutChange" />
+            </div>
 
-                <ion-button id="main-options-trigger" fill="clear">
-                  <ion-icon :icon="ellipsisVerticalOutline"></ion-icon>
-                </ion-button>
-              </ion-list-header>
-
-              <ion-row class="ion-justify-content-center">
-                <ion-col size=12 size-lg="6">
-                  <ion-row class="ion-justify-content-center">
-                    <ion-col size-xs="12" size-md="6" size-lg="5">
-                      <ion-card class="scroll-card-calendar">
-                          <CalendarComponent />
-                      </ion-card>
-                    </ion-col>
-
-                    <ion-col size-xs="12" size-md="6" size-lg="5">
-                      <ion-card>
-                        <ion-card-header>
-                          <div style="display: flex; justify-content: space-between">
-                            <div class="center-vertical">
-                              <ion-card-title>Wakatime</ion-card-title>
-                            </div>
-
-                            <div>
-                              <ion-button
-                                fill="clear"
-                                size="small"
-                                @click="refreshTodayComponent()"
-                                ><ion-icon :icon="refreshOutline"></ion-icon
-                              ></ion-button>
-
-                              <ion-button fill="clear" size="small" @click="logoutWakaTime()"
-                                ><ion-icon :icon="logOutOutline"></ion-icon
-                              ></ion-button>
-                            </div>
-                          </div>
-                        </ion-card-header>
-
-                        <div>
-                          <!-- input api key -->
-                          <div v-if="!wakaTimeController.getApiKey()" class="ion-padding">
-                            <WakaTimeApiKeyComponent />
-                          </div>
-                          <div v-if="wakaTimeController.getApiKey()">
-                            <WakaTimeToday
-                              ref="todayComponentRef"
-                              :api-key="wakaTimeController.getApiKey()"
-                            />
-                          </div>
-                        </div>
-                      </ion-card>
-                    </ion-col>
-                  </ion-row>
-                </ion-col>
-              </ion-row>
-            </ion-list>
+            <!-- Mobile: Stack -->
+            <div v-if="isMobile" class="widget-stack-section">
+              <WidgetStack />
+            </div>
           </ion-col>
         </ion-row>
       </ion-grid>
 
       <!-- popovers -->
-      <!-- popover main options -->
-      <ion-popover trigger="main-options-trigger" trigger-action="click">
-        <ion-content>
-          <ion-list>
-            <ion-list-header>
-              <ion-label>General</ion-label>
-            </ion-list-header>
-
-            <ion-row>
-              <ion-col>
-                <!-- button modal reschedule tasks -->
-                <ion-item button lines="none">
-                  <ion-icon slot="start" :icon="brushOutline"></ion-icon>
-                  <ion-label class="ion-text-wrap">Personalizar</ion-label>
-                </ion-item>
-              </ion-col>
-            </ion-row>
-          </ion-list>
-        </ion-content>
-      </ion-popover>
       <!-- end popovers -->
+
+      <!-- alerts -->
+      <!-- end alerts -->
+
     </ion-content>
+
+    <!-- modals -->
+      <!-- widget picker modal -->
+      <ion-modal
+        :is-open="showWidgetPicker"
+        @did-dismiss="showWidgetPicker = false"
+      >
+        <ion-page>
+          <ion-header mode="ios" class="ion-no-border">
+            <ion-toolbar>
+              <ion-buttons slot="start">
+                <ion-button fill="clear" @click="showWidgetPicker = false">
+                  <ion-icon :icon="closeOutline"></ion-icon>
+                </ion-button>
+              </ion-buttons>
+
+              <ion-title>Añadir widget</ion-title>
+            </ion-toolbar>
+          </ion-header>
+
+          <ion-content class="ion-padding">
+            <ion-list>
+              <ion-list-header>
+                <ion-label>Widgets disponibles</ion-label>
+              </ion-list-header>
+
+              <ion-item
+                v-for="widget in availableWidgets"
+                :key="widget.id"
+                button
+                lines="full"
+                @click="addWidget({ widgetId: widget.id })"
+              >
+                <ion-icon slot="start" :icon="getWidgetIcon({ id: widget.id })"></ion-icon>
+                <ion-label>
+                  <h3>{{ widget.name }}</h3>
+                  <p>{{ widget.description }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-content>
+        </ion-page>
+      </ion-modal>
+      <!-- end widget picker modal -->
+      <!-- end modals -->
   </ion-page>
 </template>
 
 <script setup lang="ts">
+// 1. Imports (ionic/vue/ionicons)
 import {
+  IonButton,
+  IonButtons,
+  IonCol,
   IonContent,
+  IonGrid,
   IonHeader,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonListHeader,
+  IonMenuButton,
+  IonModal,
   IonPage,
+  IonRow,
   IonTitle,
   IonToolbar,
-  IonButton,
-  IonCard,
-  IonCardTitle,
-} from '@ionic/vue';
-import { onMounted, ref } from 'vue';
-
+} from '@ionic/vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import {
-  brushOutline,
-  ellipsisVerticalOutline,
-  logOutOutline,
-  refreshOutline,
-} from 'ionicons/icons';
+  addOutline,
+  calendarOutline,
+  closeOutline,
+  gridOutline,
+  timerOutline,
+} from 'ionicons/icons'
 
-// components
-import CalendarComponent from './calendar/CalendarComponent.vue';
-import WakaTimeApiKeyComponent from '@/components/wakatime/ApiKeyComponent.vue';
-import WakaTimeToday from '@/components/wakatime/today/WakaTimeToday.vue';
+// 2. Controllers / Composables
+import { useWidgets } from '@/composables/useWidgets'
+const {
+  availableWidgets,
+  activeWidgets,
+  addWidget: addWidgetToLayout,
+  setBreakpoint,
+  loadFromStorage,
+  initializeDefaultLayout,
+} = useWidgets()
 
-// controllers
-import { WakaTimeController } from '@/controllers/wakaTimeController';
-const wakaTimeController = new WakaTimeController();
+// 3. Components
+import WidgetGrid from '@/components/widgets/WidgetGrid.vue'
+import WidgetStack from '@/components/widgets/WidgetStack.vue'
 
-const pageTitle = 'Inicio';
-const todayComponentRef = ref();
+// 4. Interface and types imports
 
+// 5. Main (props, emits, etc.)
+
+// 6. Vars and const
+const pageTitle = 'Inicio'
+const showWidgetPicker = ref(false)
+const isMobile = ref(false)
+const isDesktopOrTablet = ref(true)
+
+// 7. Watch
+
+// 8. Computed
+// availableWidgets and activeWidgets come from the composable
+
+// 9. OnMounted
 onMounted(() => {
-  wakaTimeController.loadApiKey();
-});
+  loadFromStorage()
+  if (activeWidgets.value.length === 0) {
+    initializeDefaultLayout()
+  }
 
-function refreshTodayComponent(): void {
-  todayComponentRef.value.refresh();
+  updateBreakpoint()
+
+  window.addEventListener('resize', updateBreakpoint)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateBreakpoint)
+})
+
+// 10. Functions (named parameters pattern)
+function updateBreakpoint(): void {
+  const width = window.innerWidth
+  isMobile.value = width < 768
+  isDesktopOrTablet.value = width >= 768
+  const bp = width < 992 ? 'md' : 'lg'
+  setBreakpoint({ breakpoint: bp })
 }
 
-function logoutWakaTime(): void {
-  todayComponentRef.value.logout();
+function getWidgetIcon(params: { id: string }) {
+  switch (params.id) {
+    case 'calendar':
+      return calendarOutline
+    case 'wakatime':
+      return timerOutline
+    default:
+      return gridOutline
+  }
+}
+
+function addWidget(params: { widgetId: string }): void {
+  addWidgetToLayout({ widgetId: params.widgetId })
+  showWidgetPicker.value = false
+}
+
+function openWidgetPicker(): void {
+  showWidgetPicker.value = true
+}
+
+function onLayoutChange(): void {
+  // Layout changed, store already saved by WidgetGrid
 }
 </script>
 
 <style scoped>
-.card-calendar-content {
-  height: 76vh;
+.widget-grid-section {
+  height: calc(100vh - 140px);
+  min-height: 600px;
+}
+
+.widget-stack-section {
+  height: calc(100vh - 140px);
+  display: flex;
 }
 </style>
