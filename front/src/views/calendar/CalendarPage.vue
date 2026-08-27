@@ -304,10 +304,12 @@ import { CalendarController } from '@/controllers/calendarController';
 import { EventController } from '@/controllers/eventController';
 import { SystemController } from '@/controllers/systemController';
 import { useCalendarModals } from '@/composables/useCalendarModals';
+import { useAuthStore } from '@/store/authStore';
 
 const calendarController = new CalendarController();
 const eventController = new EventController();
 const systemController = new SystemController();
+const authStore = useAuthStore();
 
 // 3. Components
 import FullyCalendarVue3 from '@/components/calendar/fullcalendar/FullyCalendarVue3.vue';
@@ -488,7 +490,7 @@ function normalizeEvents(params: { events: EventItem[] }): EventItem[] {
     if (event.title && event.date_start) return event;
     return {
       id: event.id,
-      user_id: (anyEvent.user_id as number) || (anyEvent.userId as number) || 0,
+      user_id: (anyEvent.user_id as number) || (anyEvent.userId as number) || (authStore.localUser?.id ?? 0),
       title: event.title || (anyEvent.name as string) || '',
       calendar_id: (anyEvent.calendar_id as number) || 1,
       date_start:
@@ -528,7 +530,7 @@ function eventToEventItem(params: { event: CalendarEvent }): EventItem {
 
   return {
     id: event.id || 0,
-    user_id: event.userId,
+    user_id: event.userId ?? (authStore.localUser?.id ?? 0),
     title: event.name || '',
     calendar_id: 1,
     date_start: dateStart,
@@ -563,7 +565,7 @@ function getEventById(params: { id: number }): CalendarEvent | undefined {
   };
   return {
     id: eventItem.id as number,
-    userId: (eventItem.user_id as number) || (eventItem.userId as number) || 0,
+    userId: (eventItem.user_id as number) || (eventItem.userId as number) || (authStore.localUser?.id ?? 0),
     name: (eventItem.title as string) || (eventItem.name as string) || '',
     reminders,
     timezone: (eventItem.time_zone as string) || (eventItem.timezone as string) || '',

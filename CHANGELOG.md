@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **front:** Make authentication optional — the app boots to a usable anonymous mode with no SSO, backed by a persisted local profile (`lifeline_local_user`) anchored to a real `user_id` in IndexedDB (LBDS-199)
+- **front:** Soft router guard with opt-in `requiresAuth` meta; app-shell routes (home, calendar, tasks, documents, notes) are reachable anonymously
+- **front:** `AuthController` façade splitting always-available `LocalAuthController` from optional `SsoAuthController`; `apiClient` degrades to local Dexie when no SSO is available
 - **root:** Add DEPLOY.md deployment guide (manual SSH setup, tag-based GitLab CI/CD, rollback, dryrun tags)
 - **front:** Widget system on the home page: desktop GridStack grid (drag/resize) and a mobile horizontal pager (scroll-snap, one full-width page per widget) with an active-pill page indicator, persisted per breakpoint in localStorage (LBDS-102)
 - **front:** Add `gridstack` dependency and extract `CalendarWidget` / `WakaTimeWidget` from the home page

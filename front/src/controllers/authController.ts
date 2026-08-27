@@ -2,14 +2,57 @@
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
 import { useAuthStore } from '@/store/authStore'
+import type { AuthUser } from '@/store/authStore'
 import { getSSOClient } from '@/ssoClientAccessor'
 
-export class AuthController {
+export interface CurrentUserView {
+  userName: string
+  name: string
+  imageProfile: string
+}
+
+function toCurrentUserView(params: { user: AuthUser | null }): CurrentUserView {
+  const { user } = params
+  if (!user) return { userName: '', name: '', imageProfile: '' }
+  return {
+    userName: user.user_name || '',
+    name: user.name || '',
+    imageProfile: user.image_profile || '',
+  }
+}
+
+/**
+ * Always-available backend. Manages the local anonymous profile so the app is
+ * usable with no SSO client at all.
+ */
+class LocalAuthController {
   private get store(): ReturnType<typeof useAuthStore> {
     return useAuthStore()
   }
 
-  async loadUser(_params?: any): Promise<any> {
+  ensureLocalUser(): AuthUser {
+    return this.store.ensureLocalUser()
+  }
+
+  isAnonymous(): boolean {
+    return this.store.isAnonymous
+  }
+
+  getCurrentUser(): CurrentUserView {
+    return toCurrentUserView({ user: this.store.user })
+  }
+}
+
+/**
+ * Optional backend resolved through the SSO client. All its operations may fail
+ * (or throw) when SSO is not configured/unreachable; the facade degrades to local.
+ */
+class SsoAuthController {
+  private get store(): ReturnType<typeof useAuthStore> {
+    return useAuthStore()
+  }
+
+  async loadUser(): Promise<any> {
     const ssoClient = getSSOClient()
     if (!ssoClient.isAuthenticated) {
       throw new Error('No autenticado')
@@ -18,8 +61,7 @@ export class AuthController {
     if (!ssoUser) {
       throw new Error('No se pudo obtener usuario del SSO')
     }
-    const authStore = this.store
-    authStore.setFromSso({
+    this.store.setFromSso({
       id: Number(ssoUser.id),
       name: ssoUser.name || '',
       user: ssoUser.user || '',
@@ -38,13 +80,57 @@ export class AuthController {
     return this.store.isLogged
   }
 
-  getCurrentUser(): { userName: string; name: string; imageProfile: string } {
-    const u = this.store.user
-    if (!u) return { userName: '', name: '', imageProfile: '' }
-    return {
-      userName: u.user_name || '',
-      name: u.name || '',
-      imageProfile: u.image_profile || '',
+  getCurrentUser(): CurrentUserView {
+    return toCurrentUserView({ user: this.store.user })
+  }
+}
+
+/**
+ * Public facade. Always seeds a usable local identity, then optionally (and
+ * non-fatally) upgrades to an SSO-authenticated session when one is available.
+ */
+export class AuthController {
+  private get store(): ReturnType<typeof useAuthStore> {
+    return useAuthStore()
+  }
+
+  private local = new LocalAuthController()
+  private sso = new SsoAuthController()
+
+  async loadUser(_params?: any): Promise<any> {
+    // Always materialize the local anonymous identity first. Never throws.
+    this.local.ensureLocalUser()
+    try {
+      return await this.sso.loadUser()
+    } catch {
+      // SSO unavailable / unauthenticated → anonymous local mode.
+      return null
     }
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await this.sso.logout()
+    } catch {
+      // No SSO session wired up; nothing remote to tear down.
+    }
+    // Return to a usable anonymous state. Local data stays (no destructive wipe).
+    this.store.clearAuth()
+  }
+
+  isLoggedIn(): boolean {
+    return this.store.isLogged
+  }
+
+  isAnonymous(): boolean {
+    return this.local.isAnonymous()
+  }
+
+  ensureLocalUser(): AuthUser {
+    return this.local.ensureLocalUser()
+  }
+
+  getCurrentUser(): CurrentUserView {
+    return toCurrentUserView({ user: this.store.user })
   }
 }
