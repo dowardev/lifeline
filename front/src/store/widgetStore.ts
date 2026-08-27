@@ -193,7 +193,7 @@ export const useWidgetStore = defineStore('widget', () => {
     saveToStorage()
   }
 
-  function showAllWidgets(params: {}): void {
+  function showAllWidgets(_params: {}): void {
     activeWidgets.value.forEach(w => { w.isVisible = true })
     saveToStorage()
   }

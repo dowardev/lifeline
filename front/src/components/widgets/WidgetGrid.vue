@@ -4,7 +4,7 @@
 -->
 
 <template>
-  <div class="widget-grid-container" ref="gridContainer">
+  <div ref="gridContainer" class="widget-grid-container">
     <GridStack
       :options="gridOptions"
       :components="widgetComponents"
@@ -28,9 +28,7 @@ const {
   availableWidgets,
   activeWidgets,
   currentBreakpoint,
-  loadFromStorage,
   saveToStorage,
-  initializeDefaultLayout,
   removeWidget,
   updateWidgetLayout,
   setOrderForLayout,
@@ -91,11 +89,10 @@ watch(() => currentBreakpoint.value, (bp) => {
 const breakpoint = computed<Breakpoint>(() => currentBreakpoint.value)
 
 // 9. OnMounted
+// Layout init is owned by HomePage (single source of truth). WidgetGrid only
+// reconciles the grid against whatever the store already has; the watch on
+// `activeWidgets` keeps the grid in sync after HomePage loads.
 onMounted(() => {
-  loadFromStorage()
-  if (activeWidgets.value.length === 0) {
-    initializeDefaultLayout()
-  }
   nextTick(() => {
     syncGridWithStore({ widgets: activeWidgets.value })
     // Vue wrapper teleports child content into item DOM asynchronously;
@@ -139,29 +136,63 @@ function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): voi
   if (!grid) return
 
   const bp = breakpoint.value
+  const visible = params.widgets.filter((w) => w.isVisible)
 
-  grid.removeAll(true)
+  const gridNodes: GridStackNode[] = grid.engine?.nodes ?? []
+  const byId = new Map<string, GridStackNode>()
+  gridNodes.forEach((n) => {
+    if (n.id != null) byId.set(String(n.id), n)
+  })
+  const wantedIds = new Set(visible.map((w) => w.id))
 
-  params.widgets
-    .filter((w) => w.isVisible)
-    .forEach((w) => {
-      grid.addWidget({
-        id: w.id,
-        x: w.x[bp],
-        y: w.y[bp],
-        w: w.w[bp],
-        h: w.h[bp],
-        component: 'WidgetWrapper',
-        props: {
-          widgetId: w.widgetId,
-          instanceId: w.id,
-        },
-        minW: getWidgetLimit({ widgetId: w.widgetId, prop: 'minWidth', fallback: 1 }),
-        minH: getWidgetLimit({ widgetId: w.widgetId, prop: 'minHeight', fallback: 1 }),
-        maxW: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxWidth', fallback: 12 }),
-        maxH: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxHeight', fallback: 12 }),
-      })
+  function buildAddConfig(params: { widget: (typeof activeWidgets.value)[number] }) {
+    const w = params.widget
+    return {
+      id: w.id,
+      x: w.x[bp],
+      y: w.y[bp],
+      w: w.w[bp],
+      h: w.h[bp],
+      component: 'WidgetWrapper',
+      props: {
+        widgetId: w.widgetId,
+        instanceId: w.id,
+      },
+      minW: getWidgetLimit({ widgetId: w.widgetId, prop: 'minWidth', fallback: 1 }),
+      minH: getWidgetLimit({ widgetId: w.widgetId, prop: 'minHeight', fallback: 1 }),
+      maxW: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxWidth', fallback: 12 }),
+      maxH: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxHeight', fallback: 12 }),
+    }
+  }
+
+  // 1. Add widgets present in the store but missing in the grid.
+  visible.forEach((w) => {
+    if (byId.has(w.id)) return
+    grid.addWidget(buildAddConfig({ widget: w }))
+  })
+
+  // 2. Remove grid nodes that are no longer visible/present in the store.
+  //    `triggerEvent: false` avoids re-firing `removed` (no store mutation
+  //    loop during reconciliation) and protects already-added siblings.
+  gridNodes.forEach((n) => {
+    if (n.id == null) return
+    const id = String(n.id)
+    if (wantedIds.has(id)) return
+    grid.removeWidget(n, true, false)
+  })
+
+  // 3. Align geometry of existing nodes with the store (idempotent no-op
+  //    when coordinates didn't change, so idle re-syncs don't move widgets).
+  visible.forEach((w) => {
+    const node = byId.get(w.id)
+    if (!node) return
+    grid.update(node, {
+      x: w.x[bp] ?? 0,
+      y: w.y[bp] ?? 0,
+      w: w.w[bp] ?? 4,
+      h: w.h[bp] ?? 4,
     })
+  })
 }
 
 function updateGridForBreakpoint(params: { breakpoint: Breakpoint }): void {
