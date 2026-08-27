@@ -3,7 +3,7 @@
 
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { getSSOClient } from '@/ssoClientAccessor'
+import { getSSOClientOrNull } from '@/ssoClientAccessor'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -88,19 +88,23 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, _from, next) => {
-  const isPublic = to.meta?.public === true
-  if (isPublic) return next()
+  // Only opt-in privileged routes require auth. Public and app-shell routes
+  // are reachable anonymously so the app stays usable without SSO.
+  const requiresAuth = to.meta?.requiresAuth === true
+  if (!requiresAuth) return next()
 
   // Test-only escape hatch so E2E can exercise guarded routes offline.
   const e2eBypass = import.meta.env.VITE_E2E_BYPASS_AUTH === '1'
-  const ssoClient = getSSOClient()
-  if (!e2eBypass && !ssoClient.isAuthenticated) {
-    await ssoClient.loginWithRedirect({
-      redirectUri: `${window.location.origin}/auth/callback`,
-    })
-    return next(false)
-  }
-  return next()
+  if (e2eBypass) return next()
+
+  const ssoClient = getSSOClientOrNull()
+  if (!ssoClient) return next()
+  if (ssoClient.isAuthenticated) return next()
+
+  await ssoClient.loginWithRedirect({
+    redirectUri: `${window.location.origin}/auth/callback`,
+  })
+  return next(false)
 })
 
 export default router

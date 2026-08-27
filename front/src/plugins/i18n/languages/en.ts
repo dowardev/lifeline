@@ -89,5 +89,12 @@ export default {
     name: "name",
     user: "user",
     repeatPassword: "repeat password",
+    menu: {
+      login: "Sign In",
+      register: "Register",
+      logout: "Sign Out",
+      logoutConfirm: "Are you sure you want to sign out?",
+      cancel: "Cancel",
+    },
   },
 };

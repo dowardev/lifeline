@@ -24,6 +24,7 @@ import MenuComponent from "@/components/menu/MenuComponent.vue";
 import { SystemController } from "@/controllers/systemController";
 import { AuthController } from "@/controllers/authController";
 import { ThemeController } from "@/controllers/themeController";
+import { isSSOAvailable } from "@/ssoClientAccessor";
 const systemController = new SystemController();
 const themeController = new ThemeController();
 
@@ -37,6 +38,10 @@ onMounted(async () => {
   }
 
   // sync calendar
+  // In anonymous mode (no SSO client) skip the sync toasts entirely so we
+  // never show an error toast for an intentionally absent SSO.
+  if (!isSSOAvailable()) return;
+
   try {
     await systemController.openToast({
       message: messages.syncStart,

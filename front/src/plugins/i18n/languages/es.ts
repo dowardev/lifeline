@@ -88,5 +88,12 @@ export default {
     name: "nombre",
     user: "usuario",
     repeatPassword: "repetir contraseña",
+    menu: {
+      login: "Iniciar Sesión",
+      register: "Registrarse",
+      logout: "Cerrar Sesión",
+      logoutConfirm: "¿Estás seguro de que quieres cerrar sesión?",
+      cancel: "Cancelar",
+    },
   },
 };

@@ -15,7 +15,7 @@
     </ion-header>
 
     <ion-content>
-      <div v-if="!isAuthenticated" class="auth-section">
+      <div v-if="isAnonymous" class="auth-section">
         <ion-item
           button
           lines="none"
@@ -24,7 +24,7 @@
           @click="navigate({ route: '/login' })"
         >
           <ion-icon slot="start" :icon="logInOutline"></ion-icon>
-          <ion-label>Iniciar Sesión</ion-label>
+          <ion-label>{{ t('message.menu.login') }}</ion-label>
         </ion-item>
 
         <ion-item
@@ -35,7 +35,7 @@
           @click="navigate({ route: '/register' })"
         >
           <ion-icon slot="start" :icon="personAddOutline"></ion-icon>
-          <ion-label>Registrarse</ion-label>
+          <ion-label>{{ t('message.menu.register') }}</ion-label>
         </ion-item>
       </div>
 
@@ -43,7 +43,12 @@
         <div class="user-info">
           <ion-icon :icon="personCircleOutline" class="user-avatar"></ion-icon>
           <ion-label class="user-name">{{ userName }}</ion-label>
-          <ion-button fill="clear" size="small" class="logout-button" @click="handleLogout">
+          <ion-button
+            fill="clear"
+            size="small"
+            class="logout-button"
+            @click="handleLogout"
+          >
             <ion-icon :icon="logOutOutline"></ion-icon>
           </ion-button>
         </div>
@@ -172,6 +177,7 @@ import {
 } from '@ionic/vue'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   calendarOutline,
   checkboxOutline,
@@ -212,8 +218,9 @@ const router = useRouter()
 // (none)
 
 // 8. Computed
-const isAuthenticated = computed(() => authController.isLoggedIn())
-const userName = computed(() => authController.getCurrentUser().userName || 'Usuario')
+const { t } = useI18n()
+const isAnonymous = computed(() => authController.isAnonymous())
+const userName = computed(() => authController.getCurrentUser().name || 'Usuario')
 
 const isHome = computed(() => route.path === '/')
 const isCalendar = computed(() => route.path === '/calendar')
@@ -246,15 +253,15 @@ async function navigate(params: { route: string }): Promise<void> {
 
 async function handleLogout(): Promise<void> {
   const alert = await alertController.create({
-    header: 'Cerrar Sesión',
-    message: '¿Estás seguro de que quieres cerrar sesión?',
+    header: t('message.menu.logout'),
+    message: t('message.menu.logoutConfirm'),
     buttons: [
       {
-        text: 'Cancelar',
+        text: t('message.menu.cancel'),
         role: 'cancel',
       },
       {
-        text: 'Cerrar Sesión',
+        text: t('message.menu.logout'),
         role: 'confirm',
         handler: async (): Promise<void> => {
           await authController.logout()

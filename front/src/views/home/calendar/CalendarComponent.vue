@@ -121,6 +121,8 @@ import { EventController } from "@/controllers/eventController";
 import { SystemController } from "@/controllers/systemController";
 const eventController = new EventController();
 const systemController = new SystemController();
+import { useAuthStore } from '@/store/authStore';
+const authStore = useAuthStore();
 
 // 3. Components
 import FullyCalendarVue3 from "@/components/calendar/fullcalendar/FullyCalendarVue3.vue";
@@ -228,7 +230,7 @@ function eventToEventItem(params: { event: Event }): EventItem {
 
   return {
     id: event.id || 0,
-    user_id: event.userId,
+    user_id: event.userId ?? (authStore.localUser?.id ?? 0),
     title: event.name || "",
     calendar_id: 1,
     date_start: dateStart,
