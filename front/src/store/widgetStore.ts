@@ -83,7 +83,7 @@ export const useWidgetStore = defineStore('widget', () => {
   const getActiveWidgetsForBreakpoint = computed(() => {
     return (params: { breakpoint: Breakpoint }) => {
       const breakpoint = params.breakpoint
-      return activeWidgets.value
+      return [...activeWidgets.value]
         .sort((a, b) => a.order - b.order)
         .map(w => ({
           ...w,
@@ -402,10 +402,14 @@ export function canFitInEscritorio(params: {
   breakpoint: Breakpoint
   rowsPerEscritorio: number
   mobileOnePerPage?: boolean
+  cols?: number
 }): boolean {
   const bp = params.breakpoint
   const rows = Math.max(1, params.rowsPerEscritorio)
-  const cols = 12
+  const cols = params.cols ?? 12
+  if (params.mobileOnePerPage) {
+    return (params.escritorios[params.targetIndex]?.length ?? 0) === 0
+  }
   const grid = Array.from({ length: rows }, () => new Array<boolean>(cols).fill(false))
   const fits = (r: number, c: number, w: number, h: number): boolean => {
     if (r + h > rows || c + w > cols) return false

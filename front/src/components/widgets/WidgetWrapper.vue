@@ -18,6 +18,7 @@
         </button>
 
         <ion-button
+          v-if="(props.escritorioCount ?? 1) > 1"
           class="widget-action-btn"
           fill="clear"
           size="small"

@@ -28,7 +28,7 @@
           :key="i"
           class="escritorio-page"
         >
-          <WidgetGrid :widgets="esc" :escritorio-index="i" :escritorio-count="escritorios.length" @layout-change="onLayoutChange" />
+          <WidgetGrid :widgets="esc" :escritorio-index="i" :escritorio-count="escritorios.length" :mobile="isMobile" @layout-change="onLayoutChange" />
         </section>
       </div>
 
@@ -70,7 +70,7 @@
 
 <script lang="ts" setup>
 // 1. Imports
-import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
+import { ref, computed, onMounted, onUnmounted, provide, watch } from 'vue'
 import {
   IonButton,
   IonContent,
@@ -107,8 +107,19 @@ const viewportHeight = ref(typeof window !== 'undefined' ? window.innerHeight : 
 const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200)
 const CELL_HEIGHT = 70
 const HEADER_OFFSET = 180
+const MOBILE_BREAKPOINT = 768
 
 // 7. Watch
+// Keep the active page in range when the number of escritorios shrinks
+// (delete / move can reduce the page count and leave activeIndex out of bounds).
+watch(
+  () => escritorios.value.length,
+  (len) => {
+    if (activeIndex.value > len - 1) {
+      activeIndex.value = Math.max(0, len - 1)
+    }
+  },
+)
 
 // 8. Computed
 const rowsPerEscritorio = computed(() =>
@@ -116,7 +127,7 @@ const rowsPerEscritorio = computed(() =>
 )
 
 // Mobile breakpoint: each escritorio holds a single widget (matches the mobile WidgetStack).
-const isMobile = computed(() => viewportWidth.value < 768)
+const isMobile = computed(() => viewportWidth.value < MOBILE_BREAKPOINT)
 
 // Capacity-aware packing: widgets are grouped into "escritorios" (screens).
 // Desktop/tablet packs by actual size; when a widget does not fit the remaining

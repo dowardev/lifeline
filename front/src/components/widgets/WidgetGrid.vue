@@ -43,7 +43,7 @@ import type { GridStackOptions, GridStackNode } from 'gridstack'
 import type { Breakpoint, WidgetInstance } from '@/store/widgetStore'
 
 // 5. Main (props, emits, etc.)
-const props = defineProps<{ widgets?: WidgetInstance[]; escritorioIndex?: number; escritorioCount?: number }>()
+const props = defineProps<{ widgets?: WidgetInstance[]; escritorioIndex?: number; escritorioCount?: number; mobile?: boolean }>()
 const emit = defineEmits<{
   'layout-change': []
 }>()
@@ -154,7 +154,7 @@ function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): voi
       id: w.id,
       x: w.x[bp],
       y: w.y[bp],
-      w: w.w[bp],
+      w: props.mobile ? 12 : w.w[bp],
       h: w.h[bp],
       component: 'WidgetWrapper',
       props: {
@@ -163,7 +163,7 @@ function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): voi
         escritorioIndex: props.escritorioIndex,
         escritorioCount: props.escritorioCount,
       },
-      minW: getWidgetLimit({ widgetId: w.widgetId, prop: 'minWidth', fallback: 1 }),
+      minW: props.mobile ? 12 : getWidgetLimit({ widgetId: w.widgetId, prop: 'minWidth', fallback: 1 }),
       minH: getWidgetLimit({ widgetId: w.widgetId, prop: 'minHeight', fallback: 1 }),
       maxW: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxWidth', fallback: 12 }),
       maxH: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxHeight', fallback: 12 }),
@@ -198,26 +198,6 @@ function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): voi
       h: w.h[bp] ?? 4,
     })
   })
-}
-
-function updateGridForBreakpoint(params: { breakpoint: Breakpoint }): void {
-  const grid = getGrid()
-  if (!grid) return
-
-  const bp = params.breakpoint
-
-  activeWidgets.value
-    .forEach((w) => {
-      const node = getGridNode({ grid, id: w.id })
-      if (!node) return
-
-      grid.update(node.el, {
-        x: w.x[bp] ?? 0,
-        y: w.y[bp] ?? 0,
-        w: w.w[bp] ?? 4,
-        h: w.h[bp] ?? 4,
-      })
-    })
 }
 
 function persistLiveLayout(): void {
