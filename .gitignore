@@ -60,3 +60,8 @@ progress.md
 findings.md
 *.bak
 .php-cs-fixer.cache
+
+# Frontend build artifacts
+*.tsbuildinfo
+front/vite.config.js
+front/vite.config.d.ts
