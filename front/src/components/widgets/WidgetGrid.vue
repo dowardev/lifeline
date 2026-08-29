@@ -54,9 +54,12 @@ const gridOptions = ref<GridStackOptions>({
   cellHeight: 70,
   margin: 8,
   draggable: {
-    handle: '.widget-drag-handle',
+    // Drag from the stable header container (always rendered, large target) so
+    // binding does not depend on discovering the small icon handle. Exclude the
+    // delete button via cancel so its click is never swallowed by drag.
+    handle: '.widget-header',
+    cancel: '.widget-action-btn',
     scroll: true,
-    appendTo: 'body',
   },
   resizable: {
     handles: 'e, se, s, sw',
@@ -73,17 +76,19 @@ const widgetComponents = { WidgetWrapper }
 // Only rebuild the grid when widgets are added/removed/shown/hidden.
 // Position mutations must NOT trigger a full rebuild (feedback loop).
 watch(
-  () => activeWidgets.value.map((w) => `${w.id}:${w.isVisible}`).join('|'),
+  () => activeWidgets.value.map((w) => w.id).join('|'),
   () => {
     if (!gridContainer.value) return
     syncGridWithStore({ widgets: activeWidgets.value })
   },
 )
 
-watch(() => currentBreakpoint.value, (bp) => {
-  if (gridContainer.value) {
-    updateGridForBreakpoint({ breakpoint: bp })
-  }
+watch(() => currentBreakpoint.value, () => {
+  if (!gridContainer.value) return
+  // Full reconcile against the (already-updated) breakpoint so node coordinates
+  // always match the store. More robust than a position-only update across
+  // breakpoints, and avoids any drift if a node was skipped on a prior pass.
+  syncGridWithStore({ widgets: activeWidgets.value })
 })
 
 // 8. Computed
@@ -93,24 +98,21 @@ const breakpoint = computed<Breakpoint>(() => currentBreakpoint.value)
 // Layout init is owned by HomePage (single source of truth). WidgetGrid only
 // reconciles the grid against whatever the store already has; the watch on
 // `activeWidgets` keeps the grid in sync after HomePage loads.
-onMounted(() => {
-  nextTick(() => {
-    syncGridWithStore({ widgets: activeWidgets.value })
-    // Vue wrapper teleports child content into item DOM asynchronously;
-    // do a final rescan after the next tick to be sure drag handles
-    // inside dynamic content are picked up.
-    nextTick(() => {
-      const grid = getGrid()
-      if (!grid) return
-      const els = gridContainer.value?.querySelectorAll('.grid-stack-item') ?? []
-      els.forEach((el) => grid.refreshDragHandles(el))
+    onMounted(() => {
+      nextTick(() => {
+        syncGridWithStore({ widgets: activeWidgets.value })
+        nextTick(() => {
+          const grid = getGrid()
+          if (!grid) return
+          const els = gridContainer.value?.querySelectorAll('.grid-stack-item') ?? []
+          els.forEach((el) => grid.refreshDragHandles(el))
+        })
+      })
     })
-  })
-})
 
-onUnmounted(() => {
-  saveToStorage()
-})
+    onUnmounted(() => {
+      saveToStorage()
+    })
 
 // 10. Functions (named parameters pattern)
 function getGrid(): any {
@@ -135,9 +137,8 @@ function getWidgetLimit(params: {
 function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): void {
   const grid = getGrid()
   if (!grid) return
-
   const bp = breakpoint.value
-  const visible = params.widgets.filter((w) => w.isVisible)
+  const visible = params.widgets
 
   const gridNodes: GridStackNode[] = grid.engine?.nodes ?? []
   const byId = new Map<string, GridStackNode>()
@@ -179,7 +180,7 @@ function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): voi
     if (n.id == null) return
     const id = String(n.id)
     if (wantedIds.has(id)) return
-    grid.removeWidget(n, true, false)
+    grid.removeWidget(n.el, true, false)
   })
 
   // 3. Align geometry of existing nodes with the store (idempotent no-op
@@ -187,7 +188,7 @@ function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): voi
   visible.forEach((w) => {
     const node = byId.get(w.id)
     if (!node) return
-    grid.update(node, {
+    grid.update(node.el, {
       x: w.x[bp] ?? 0,
       y: w.y[bp] ?? 0,
       w: w.w[bp] ?? 4,
@@ -203,12 +204,11 @@ function updateGridForBreakpoint(params: { breakpoint: Breakpoint }): void {
   const bp = params.breakpoint
 
   activeWidgets.value
-    .filter((w) => w.isVisible)
     .forEach((w) => {
       const node = getGridNode({ grid, id: w.id })
       if (!node) return
 
-      grid.update(node, {
+      grid.update(node.el, {
         x: w.x[bp] ?? 0,
         y: w.y[bp] ?? 0,
         w: w.w[bp] ?? 4,

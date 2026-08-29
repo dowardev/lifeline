@@ -123,6 +123,11 @@ function onRemove(): void {
   background: var(--ion-background-color, #fafafa);
   border-bottom: 1px solid var(--ion-border-color, #e0e0e0);
   flex-shrink: 0;
+  cursor: grab;
+}
+
+.widget-header:active {
+  cursor: grabbing;
 }
 
 .widget-title {
@@ -161,6 +166,7 @@ function onRemove(): void {
 
 .widget-action-btn {
       color: var(--ion-color-medium, #999);
+      cursor: pointer;
     }
 
     .widget-action-btn:hover {

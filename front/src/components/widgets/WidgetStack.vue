@@ -26,13 +26,10 @@
             <ion-button
               fill="clear"
               size="small"
-              @click="toggleVisibility({ instanceId: widget.id })"
+              color="danger"
+              @click="removeWidget({ instanceId: widget.id })"
             >
-              <ion-icon
-                slot="icon-only"
-                :icon="widget.isVisible ? eyeOutline : eyeOffOutline"
-                :color="widget.isVisible ? 'primary' : 'medium'"
-              ></ion-icon>
+              <ion-icon slot="icon-only" :icon="trashOutline"></ion-icon>
             </ion-button>
           </ion-card-header>
 
@@ -83,17 +80,15 @@ import {
   IonIcon,
 } from '@ionic/vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { eyeOutline, eyeOffOutline, gridOutline } from 'ionicons/icons'
+import { gridOutline, trashOutline } from 'ionicons/icons'
 
 // 2. Controllers / Composables
 import { useWidgets } from '@/composables/useWidgets'
 const {
   activeWidgets,
   getWidgetName,
-  toggleVisibility,
-  initializeDefaultLayout,
-  showAllWidgets,
-} = useWidgets()
+  removeWidget,
+  initializeDefaultLayout,} = useWidgets()
 
 // 3. Components
 import CalendarWidget from './CalendarWidget.vue'
@@ -109,7 +104,7 @@ const currentPage = ref(0)
 
 // 7. Watch
 watch(activeWidgets, () => {
-  const visibleCount = activeWidgets.value.filter((w) => w.isVisible).length
+  const visibleCount = activeWidgets.value.length
   const maxIndex = Math.max(0, visibleCount - 1)
   if (currentPage.value > maxIndex) {
     currentPage.value = maxIndex
@@ -123,7 +118,6 @@ watch(activeWidgets, () => {
 // 8. Computed
 const widgets = computed(() =>
   [...activeWidgets.value]
-    .filter((w) => w.isVisible)
     .sort((a, b) => a.order - b.order),
 )
 
@@ -149,11 +143,7 @@ function getWidgetComponent(params: { widgetId: string }) {
 }
 
 function emptyStateAction(): void {
-  if (activeWidgets.value.length === 0) {
-    initializeDefaultLayout()
-  } else {
-    showAllWidgets({})
-  }
+  initializeDefaultLayout()
 }
 
 function onTrackScroll(params: { event: Event }): void {

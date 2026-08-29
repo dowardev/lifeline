@@ -28,8 +28,7 @@ export interface WidgetInstance {
   w: { lg: number; md: number }
   h: { lg: number; md: number }
   props?: Record<string, unknown>
-  isVisible: boolean
-  order: number
+      order: number
 }
 
 export interface SavedLayout {
@@ -84,7 +83,6 @@ export const useWidgetStore = defineStore('widget', () => {
     return (params: { breakpoint: Breakpoint }) => {
       const breakpoint = params.breakpoint
       return activeWidgets.value
-        .filter(w => w.isVisible)
         .sort((a, b) => a.order - b.order)
         .map(w => ({
           ...w,
@@ -121,7 +119,6 @@ export const useWidgetStore = defineStore('widget', () => {
       w: { ...widgetDef.defaultWidth },
       h: { ...widgetDef.defaultHeight },
       props: { ...widgetDef.props },
-      isVisible: true,
       order: getNextOrder(),
     }
   }
@@ -169,14 +166,7 @@ export const useWidgetStore = defineStore('widget', () => {
     saveToStorage()
   }
 
-  function toggleWidgetVisibility(params: { instanceId: string; visible: boolean }): void {
-    const widget = activeWidgets.value.find(w => w.id === params.instanceId)
-    if (!widget) return
-    widget.isVisible = params.visible
-    saveToStorage()
-  }
-
-  function reorderWidgets(params: { instanceId: string; newOrder: number }): void {
+    function reorderWidgets(params: { instanceId: string; newOrder: number }): void {
     const widget = activeWidgets.value.find(w => w.id === params.instanceId)
     if (!widget) return
     widget.order = params.newOrder
@@ -193,12 +183,7 @@ export const useWidgetStore = defineStore('widget', () => {
     saveToStorage()
   }
 
-  function showAllWidgets(_params: {}): void {
-    activeWidgets.value.forEach(w => { w.isVisible = true })
-    saveToStorage()
-  }
-
-  function updateWidgetLayout(params: {
+    function updateWidgetLayout(params: {
     items: Array<{ instanceId: string; x: number; y: number; w: number; h: number }>
     breakpoint: Breakpoint
   }): void {
@@ -218,20 +203,25 @@ export const useWidgetStore = defineStore('widget', () => {
     currentBreakpoint.value = params.breakpoint
   }
 
-  function loadFromStorage(): void {
+  function loadFromStorage(): boolean {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      if (!stored) return
+      if (!stored) {
+        return false
+      }
 
       const layout: SavedLayout = JSON.parse(stored)
-      if (layout.version !== LAYOUT_VERSION) return
+      if (layout.version !== LAYOUT_VERSION) {
+        return false
+      }
 
       activeWidgets.value = layout.widgets
       currentBreakpoint.value = layout.breakpoint
       isInitialized.value = true
+      return true
     } catch (error) {
       console.warn('widget layout load failed', error)
-      isInitialized.value = true
+      return false
     }
   }
 
@@ -250,7 +240,9 @@ export const useWidgetStore = defineStore('widget', () => {
   }
 
   function initializeDefaultLayout(): void {
-    if (activeWidgets.value.length > 0) return
+    if (activeWidgets.value.length > 0) {
+      return
+    }
 
     DEFAULT_WIDGETS.forEach(def => {
       const instance = createDefaultInstance({ widgetDef: def })
@@ -275,12 +267,8 @@ export const useWidgetStore = defineStore('widget', () => {
     removeWidget,
     updateWidgetPosition,
     updateWidgetLayout,
-    updateWidgetProps,
-    toggleWidgetVisibility,
-    reorderWidgets,
-    setOrderForLayout,
-    showAllWidgets,
-    setBreakpoint,
+    updateWidgetProps,    reorderWidgets,
+    setOrderForLayout,    setBreakpoint,
     loadFromStorage,
     saveToStorage,
     initializeDefaultLayout,

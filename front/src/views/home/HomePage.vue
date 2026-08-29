@@ -27,7 +27,12 @@
           <ion-col size="12">
             <!-- Desktop/Tablet: GridStack -->
             <div v-if="isDesktopOrTablet" class="widget-grid-section">
-              <WidgetGrid @layout-change="onLayoutChange" />
+              <WidgetGrid v-if="activeWidgets.length > 0" @layout-change="onLayoutChange" />
+              <div v-else class="empty-state">
+                <ion-icon :icon="gridOutline" class="empty-icon"></ion-icon>
+                <p class="empty-message">No hay widgets todavía. Agregá uno para empezar.</p>
+                <ion-button fill="outline" @click="openWidgetPicker()">Agregar widget</ion-button>
+              </div>
             </div>
 
             <!-- Mobile: Stack -->
@@ -76,6 +81,7 @@
                 :key="widget.id"
                 button
                 lines="full"
+                :disabled="isWidgetAdded({ widgetId: widget.id })"
                 @click="addWidget({ widgetId: widget.id })"
               >
                 <ion-icon slot="start" :icon="getWidgetIcon({ id: widget.id })"></ion-icon>
@@ -83,6 +89,12 @@
                   <h3>{{ widget.name }}</h3>
                   <p>{{ widget.description }}</p>
                 </ion-label>
+                <ion-icon
+                  v-if="isWidgetAdded({ widgetId: widget.id })"
+                  slot="end"
+                  :icon="checkmarkOutline"
+                  color="medium"
+                ></ion-icon>
               </ion-item>
             </ion-list>
           </ion-content>
@@ -114,9 +126,10 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import {
   addOutline,
+  checkmarkOutline,
   calendarOutline,
   closeOutline,
   gridOutline,
@@ -152,11 +165,16 @@ const isDesktopOrTablet = ref(true)
 
 // 8. Computed
 // availableWidgets and activeWidgets come from the composable
+const addedWidgetIds = computed<Set<string>>(() => new Set(activeWidgets.value.map((w) => w.widgetId)))
 
 // 9. OnMounted
 onMounted(() => {
-  loadFromStorage()
-  if (activeWidgets.value.length === 0) {
+  // Seed default widgets ONLY when there is no previously saved layout.
+  // A saved layout may legitimately be empty (the user removed every widget);
+  // re-seeding it on reload would resurrect the default widgets and undo the
+  // deletions (LBDS-201 regression: removed widgets came back after reload).
+  const hadSavedLayout = loadFromStorage()
+  if (!hadSavedLayout) {
     initializeDefaultLayout()
   }
 
@@ -194,6 +212,10 @@ function addWidget(params: { widgetId: string }): void {
   showWidgetPicker.value = false
 }
 
+function isWidgetAdded(params: { widgetId: string }): boolean {
+  return addedWidgetIds.value.has(params.widgetId)
+}
+
 function openWidgetPicker(): void {
   showWidgetPicker.value = true
 }
@@ -213,4 +235,24 @@ function onLayoutChange(): void {
   height: calc(100vh - 140px);
   display: flex;
 }
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      gap: 12px;
+      color: var(--ion-color-medium);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+    }
+
+    .empty-message {
+      margin: 0;
+      font-size: 1rem;
+    }
+
 </style>
