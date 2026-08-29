@@ -28,16 +28,7 @@ export function useWidgets() {
     store.removeWidget({ instanceId: params.instanceId })
   }
 
-  function toggleVisibility(params: { instanceId: string }): void {
-    const widget = store.activeWidgets.find((w) => w.id === params.instanceId)
-    if (!widget) return
-    store.toggleWidgetVisibility({
-      instanceId: params.instanceId,
-      visible: !widget.isVisible,
-    })
-  }
-
-  function setBreakpoint(params: { breakpoint: Breakpoint }): void {
+    function setBreakpoint(params: { breakpoint: Breakpoint }): void {
     store.setBreakpoint({ breakpoint: params.breakpoint })
   }
 
@@ -47,9 +38,7 @@ export function useWidgets() {
     currentBreakpoint,
     getWidgetName,
     addWidget,
-    removeWidget,
-    toggleVisibility,
-    setBreakpoint,
+    removeWidget,    setBreakpoint,
     loadFromStorage: store.loadFromStorage,
     saveToStorage: store.saveToStorage,
     initializeDefaultLayout: store.initializeDefaultLayout,
@@ -58,6 +47,6 @@ export function useWidgets() {
     updateWidgetLayout: store.updateWidgetLayout,
     updateWidgetProps: store.updateWidgetProps,
     setOrderForLayout: store.setOrderForLayout,
-    showAllWidgets: store.showAllWidgets,
-  }
+        assignWidgetEscritorio: store.assignWidgetEscritorio,
+    }
 }

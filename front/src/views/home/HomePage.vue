@@ -25,16 +25,10 @@
       <ion-grid>
         <ion-row class="ion-justify-content-center">
           <ion-col size="12">
-            <!-- Desktop/Tablet: GridStack -->
-            <div v-if="isDesktopOrTablet" class="widget-grid-section">
-              <WidgetGrid @layout-change="onLayoutChange" />
-            </div>
-
-            <!-- Mobile: Stack -->
-            <div v-if="isMobile" class="widget-stack-section">
-              <WidgetStack />
-            </div>
-          </ion-col>
+                <div class="widget-grid-section">
+                  <EscritoriosPager @layout-change="onLayoutChange" />
+                </div>
+              </ion-col>
         </ion-row>
       </ion-grid>
 
@@ -76,6 +70,7 @@
                 :key="widget.id"
                 button
                 lines="full"
+                :disabled="isWidgetAdded({ widgetId: widget.id })"
                 @click="addWidget({ widgetId: widget.id })"
               >
                 <ion-icon slot="start" :icon="getWidgetIcon({ id: widget.id })"></ion-icon>
@@ -83,6 +78,12 @@
                   <h3>{{ widget.name }}</h3>
                   <p>{{ widget.description }}</p>
                 </ion-label>
+                <ion-icon
+                  v-if="isWidgetAdded({ widgetId: widget.id })"
+                  slot="end"
+                  :icon="checkmarkOutline"
+                  color="medium"
+                ></ion-icon>
               </ion-item>
             </ion-list>
           </ion-content>
@@ -114,9 +115,10 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import {
   addOutline,
+  checkmarkOutline,
   calendarOutline,
   closeOutline,
   gridOutline,
@@ -135,8 +137,7 @@ const {
 } = useWidgets()
 
 // 3. Components
-import WidgetGrid from '@/components/widgets/WidgetGrid.vue'
-import WidgetStack from '@/components/widgets/WidgetStack.vue'
+import EscritoriosPager from '@/components/widgets/EscritoriosPager.vue'
 
 // 4. Interface and types imports
 
@@ -145,18 +146,21 @@ import WidgetStack from '@/components/widgets/WidgetStack.vue'
 // 6. Vars and const
 const pageTitle = 'Inicio'
 const showWidgetPicker = ref(false)
-const isMobile = ref(false)
-const isDesktopOrTablet = ref(true)
 
 // 7. Watch
 
 // 8. Computed
 // availableWidgets and activeWidgets come from the composable
+const addedWidgetIds = computed<Set<string>>(() => new Set(activeWidgets.value.map((w) => w.widgetId)))
 
 // 9. OnMounted
 onMounted(() => {
-  loadFromStorage()
-  if (activeWidgets.value.length === 0) {
+  // Seed default widgets ONLY when there is no previously saved layout.
+  // A saved layout may legitimately be empty (the user removed every widget);
+  // re-seeding it on reload would resurrect the default widgets and undo the
+  // deletions (LBDS-201 regression: removed widgets came back after reload).
+  const hadSavedLayout = loadFromStorage()
+  if (!hadSavedLayout) {
     initializeDefaultLayout()
   }
 
@@ -172,8 +176,6 @@ onBeforeUnmount(() => {
 // 10. Functions (named parameters pattern)
 function updateBreakpoint(): void {
   const width = window.innerWidth
-  isMobile.value = width < 768
-  isDesktopOrTablet.value = width >= 768
   const bp = width < 992 ? 'md' : 'lg'
   setBreakpoint({ breakpoint: bp })
 }
@@ -194,6 +196,10 @@ function addWidget(params: { widgetId: string }): void {
   showWidgetPicker.value = false
 }
 
+function isWidgetAdded(params: { widgetId: string }): boolean {
+  return addedWidgetIds.value.has(params.widgetId)
+}
+
 function openWidgetPicker(): void {
   showWidgetPicker.value = true
 }
@@ -201,16 +207,16 @@ function openWidgetPicker(): void {
 function onLayoutChange(): void {
   // Layout changed, store already saved by WidgetGrid
 }
+
 </script>
 
 <style scoped>
 .widget-grid-section {
   height: calc(100vh - 140px);
   min-height: 600px;
+  /* Desktop/tablet: the widget grid must fit the screen with NO vertical scroll.
+     Clip any overflow instead of letting the page scroll (like the mobile WidgetStack). */
+  overflow: hidden;
 }
 
-.widget-stack-section {
-  height: calc(100vh - 140px);
-  display: flex;
-}
 </style>

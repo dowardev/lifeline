@@ -4,7 +4,7 @@
 -->
 
 <template>
-  <div class="widget-grid-container" ref="gridContainer">
+  <div ref="gridContainer" class="widget-grid-container">
     <GridStack
       :options="gridOptions"
       :components="widgetComponents"
@@ -28,9 +28,7 @@ const {
   availableWidgets,
   activeWidgets,
   currentBreakpoint,
-  loadFromStorage,
   saveToStorage,
-  initializeDefaultLayout,
   removeWidget,
   updateWidgetLayout,
   setOrderForLayout,
@@ -42,9 +40,10 @@ import WidgetWrapper from './WidgetWrapper.vue'
 
 // 4. Interface and types imports
 import type { GridStackOptions, GridStackNode } from 'gridstack'
-import type { Breakpoint } from '@/store/widgetStore'
+import type { Breakpoint, WidgetInstance } from '@/store/widgetStore'
 
 // 5. Main (props, emits, etc.)
+const props = defineProps<{ widgets?: WidgetInstance[]; escritorioIndex?: number; escritorioCount?: number; mobile?: boolean }>()
 const emit = defineEmits<{
   'layout-change': []
 }>()
@@ -56,8 +55,12 @@ const gridOptions = ref<GridStackOptions>({
   cellHeight: 70,
   margin: 8,
   draggable: {
+    // Drag from the stable header container (always rendered, large target) so
+    // binding does not depend on discovering the small icon handle. Exclude the
+    // delete button via cancel so its click is never swallowed by drag.
+    handle: '.widget-header',
+    cancel: '.widget-action-btn',
     scroll: true,
-    appendTo: 'body',
   },
   resizable: {
     handles: 'e, se, s, sw',
@@ -74,45 +77,43 @@ const widgetComponents = { WidgetWrapper }
 // Only rebuild the grid when widgets are added/removed/shown/hidden.
 // Position mutations must NOT trigger a full rebuild (feedback loop).
 watch(
-  () => activeWidgets.value.map((w) => `${w.id}:${w.isVisible}`).join('|'),
+  () => (props.widgets ?? activeWidgets.value).map((w) => w.id).join('|'),
   () => {
     if (!gridContainer.value) return
-    syncGridWithStore({ widgets: activeWidgets.value })
+    syncGridWithStore({ widgets: props.widgets ?? activeWidgets.value })
   },
 )
 
-watch(() => currentBreakpoint.value, (bp) => {
-  if (gridContainer.value) {
-    updateGridForBreakpoint({ breakpoint: bp })
-  }
+watch(() => currentBreakpoint.value, () => {
+  if (!gridContainer.value) return
+  // Full reconcile against the (already-updated) breakpoint so node coordinates
+  // always match the store. More robust than a position-only update across
+  // breakpoints, and avoids any drift if a node was skipped on a prior pass.
+  syncGridWithStore({ widgets: props.widgets ?? activeWidgets.value })
 })
 
 // 8. Computed
 const breakpoint = computed<Breakpoint>(() => currentBreakpoint.value)
 
 // 9. OnMounted
-onMounted(() => {
-  loadFromStorage()
-  if (activeWidgets.value.length === 0) {
-    initializeDefaultLayout()
-  }
-  nextTick(() => {
-    syncGridWithStore({ widgets: activeWidgets.value })
-    // Vue wrapper teleports child content into item DOM asynchronously;
-    // do a final rescan after the next tick to be sure drag handles
-    // inside dynamic content are picked up.
-    nextTick(() => {
-      const grid = getGrid()
-      if (!grid) return
-      const els = gridContainer.value?.querySelectorAll('.grid-stack-item') ?? []
-      els.forEach((el) => grid.refreshDragHandles(el))
+// Layout init is owned by HomePage (single source of truth). WidgetGrid only
+// reconciles the grid against whatever the store already has; the watch on
+// `activeWidgets` keeps the grid in sync after HomePage loads.
+    onMounted(() => {
+      nextTick(() => {
+        syncGridWithStore({ widgets: props.widgets ?? activeWidgets.value })
+        nextTick(() => {
+          const grid = getGrid()
+          if (!grid) return
+          const els = gridContainer.value?.querySelectorAll('.grid-stack-item') ?? []
+          els.forEach((el) => grid.refreshDragHandles(el))
+        })
+      })
     })
-  })
-})
 
-onUnmounted(() => {
-  saveToStorage()
-})
+    onUnmounted(() => {
+      saveToStorage()
+    })
 
 // 10. Functions (named parameters pattern)
 function getGrid(): any {
@@ -137,52 +138,66 @@ function getWidgetLimit(params: {
 function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): void {
   const grid = getGrid()
   if (!grid) return
-
   const bp = breakpoint.value
+  const visible = params.widgets
 
-  grid.removeAll(true)
+  const gridNodes: GridStackNode[] = grid.engine?.nodes ?? []
+  const byId = new Map<string, GridStackNode>()
+  gridNodes.forEach((n) => {
+    if (n.id != null) byId.set(String(n.id), n)
+  })
+  const wantedIds = new Set(visible.map((w) => w.id))
 
-  params.widgets
-    .filter((w) => w.isVisible)
-    .forEach((w) => {
-      grid.addWidget({
-        id: w.id,
-        x: w.x[bp],
-        y: w.y[bp],
-        w: w.w[bp],
-        h: w.h[bp],
-        component: 'WidgetWrapper',
-        props: {
-          widgetId: w.widgetId,
-          instanceId: w.id,
-        },
-        minW: getWidgetLimit({ widgetId: w.widgetId, prop: 'minWidth', fallback: 1 }),
-        minH: getWidgetLimit({ widgetId: w.widgetId, prop: 'minHeight', fallback: 1 }),
-        maxW: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxWidth', fallback: 12 }),
-        maxH: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxHeight', fallback: 12 }),
-      })
+  function buildAddConfig(params: { widget: (typeof activeWidgets.value)[number] }) {
+    const w = params.widget
+    return {
+      id: w.id,
+      x: w.x[bp],
+      y: w.y[bp],
+      w: props.mobile ? 12 : w.w[bp],
+      h: w.h[bp],
+      component: 'WidgetWrapper',
+      props: {
+        widgetId: w.widgetId,
+        instanceId: w.id,
+        escritorioIndex: props.escritorioIndex,
+        escritorioCount: props.escritorioCount,
+      },
+      minW: props.mobile ? 12 : getWidgetLimit({ widgetId: w.widgetId, prop: 'minWidth', fallback: 1 }),
+      minH: getWidgetLimit({ widgetId: w.widgetId, prop: 'minHeight', fallback: 1 }),
+      maxW: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxWidth', fallback: 12 }),
+      maxH: getWidgetLimit({ widgetId: w.widgetId, prop: 'maxHeight', fallback: 12 }),
+    }
+  }
+
+  // 1. Add widgets present in the store but missing in the grid.
+  visible.forEach((w) => {
+    if (byId.has(w.id)) return
+    grid.addWidget(buildAddConfig({ widget: w }))
+  })
+
+  // 2. Remove grid nodes that are no longer visible/present in the store.
+  //    `triggerEvent: false` avoids re-firing `removed` (no store mutation
+  //    loop during reconciliation) and protects already-added siblings.
+  gridNodes.forEach((n) => {
+    if (n.id == null) return
+    const id = String(n.id)
+    if (wantedIds.has(id)) return
+    grid.removeWidget(n.el, true, false)
+  })
+
+  // 3. Align geometry of existing nodes with the store (idempotent no-op
+  //    when coordinates didn't change, so idle re-syncs don't move widgets).
+  visible.forEach((w) => {
+    const node = byId.get(w.id)
+    if (!node) return
+    grid.update(node.el, {
+      x: w.x[bp] ?? 0,
+      y: w.y[bp] ?? 0,
+      w: w.w[bp] ?? 4,
+      h: w.h[bp] ?? 4,
     })
-}
-
-function updateGridForBreakpoint(params: { breakpoint: Breakpoint }): void {
-  const grid = getGrid()
-  if (!grid) return
-
-  const bp = params.breakpoint
-
-  activeWidgets.value
-    .filter((w) => w.isVisible)
-    .forEach((w) => {
-      const node = getGridNode({ grid, id: w.id })
-      if (!node) return
-
-      grid.update(node, {
-        x: w.x[bp] ?? 0,
-        y: w.y[bp] ?? 0,
-        w: w.w[bp] ?? 4,
-        h: w.h[bp] ?? 4,
-      })
-    })
+  })
 }
 
 function persistLiveLayout(): void {
@@ -260,6 +275,9 @@ function onDragStop(params: { el: unknown }): void {
 
 .widget-grid-container :deep(.grid-stack) {
   height: 100%;
+  /* Desktop/tablet: disable GridStack's internal vertical scroll so the page scrolls
+     natively (like the mobile WidgetStack) instead of a scrollbar trapped inside the grid. */
+  overflow-y: visible !important;
 }
 
 .widget-grid-container :deep(.grid-stack-item-content) {

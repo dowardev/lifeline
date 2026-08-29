@@ -28,8 +28,8 @@ export interface WidgetInstance {
   w: { lg: number; md: number }
   h: { lg: number; md: number }
   props?: Record<string, unknown>
-  isVisible: boolean
-  order: number
+      order: number
+      escritorio?: number
 }
 
 export interface SavedLayout {
@@ -83,8 +83,7 @@ export const useWidgetStore = defineStore('widget', () => {
   const getActiveWidgetsForBreakpoint = computed(() => {
     return (params: { breakpoint: Breakpoint }) => {
       const breakpoint = params.breakpoint
-      return activeWidgets.value
-        .filter(w => w.isVisible)
+      return [...activeWidgets.value]
         .sort((a, b) => a.order - b.order)
         .map(w => ({
           ...w,
@@ -108,20 +107,19 @@ export const useWidgetStore = defineStore('widget', () => {
 
   function createDefaultInstance(params: { widgetDef: WidgetDefinition }): WidgetInstance {
     const widgetDef = params.widgetDef
-    const bp = currentBreakpoint.value
-    let y = 0
-    if (activeWidgets.value.length > 0) {
-      y = Math.max(...activeWidgets.value.map(w => w.y[bp] + w.h[bp]))
-    }
+    // Arrange widgets in a 2-column grid so the desktop/tablet default layout fits the
+    // viewport with no vertical scroll: column 0 -> x:0, column 1 -> x:6, same row per pair.
+    const index = activeWidgets.value.length
+    const col = index % 2
+    const row = Math.floor(index / 2)
     return {
       id: generateId(),
       widgetId: widgetDef.id,
-      x: { lg: 0, md: 0 },
-      y: { lg: y, md: y },
+      x: { lg: col * 6, md: col * 6 },
+      y: { lg: row * 8, md: row * 8 },
       w: { ...widgetDef.defaultWidth },
       h: { ...widgetDef.defaultHeight },
       props: { ...widgetDef.props },
-      isVisible: true,
       order: getNextOrder(),
     }
   }
@@ -169,14 +167,7 @@ export const useWidgetStore = defineStore('widget', () => {
     saveToStorage()
   }
 
-  function toggleWidgetVisibility(params: { instanceId: string; visible: boolean }): void {
-    const widget = activeWidgets.value.find(w => w.id === params.instanceId)
-    if (!widget) return
-    widget.isVisible = params.visible
-    saveToStorage()
-  }
-
-  function reorderWidgets(params: { instanceId: string; newOrder: number }): void {
+    function reorderWidgets(params: { instanceId: string; newOrder: number }): void {
     const widget = activeWidgets.value.find(w => w.id === params.instanceId)
     if (!widget) return
     widget.order = params.newOrder
@@ -193,12 +184,7 @@ export const useWidgetStore = defineStore('widget', () => {
     saveToStorage()
   }
 
-  function showAllWidgets(params: {}): void {
-    activeWidgets.value.forEach(w => { w.isVisible = true })
-    saveToStorage()
-  }
-
-  function updateWidgetLayout(params: {
+    function updateWidgetLayout(params: {
     items: Array<{ instanceId: string; x: number; y: number; w: number; h: number }>
     breakpoint: Breakpoint
   }): void {
@@ -218,20 +204,32 @@ export const useWidgetStore = defineStore('widget', () => {
     currentBreakpoint.value = params.breakpoint
   }
 
-  function loadFromStorage(): void {
+  function assignWidgetEscritorio(params: { instanceId: string; targetIndex: number | null }): void {
+    const widget = activeWidgets.value.find((w) => w.id === params.instanceId)
+    if (!widget) return
+    widget.escritorio = params.targetIndex ?? undefined
+    saveToStorage()
+  }
+
+  function loadFromStorage(): boolean {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      if (!stored) return
+      if (!stored) {
+        return false
+      }
 
       const layout: SavedLayout = JSON.parse(stored)
-      if (layout.version !== LAYOUT_VERSION) return
+      if (layout.version !== LAYOUT_VERSION) {
+        return false
+      }
 
       activeWidgets.value = layout.widgets
       currentBreakpoint.value = layout.breakpoint
       isInitialized.value = true
+      return true
     } catch (error) {
       console.warn('widget layout load failed', error)
-      isInitialized.value = true
+      return false
     }
   }
 
@@ -250,7 +248,9 @@ export const useWidgetStore = defineStore('widget', () => {
   }
 
   function initializeDefaultLayout(): void {
-    if (activeWidgets.value.length > 0) return
+    if (activeWidgets.value.length > 0) {
+      return
+    }
 
     DEFAULT_WIDGETS.forEach(def => {
       const instance = createDefaultInstance({ widgetDef: def })
@@ -270,20 +270,177 @@ export const useWidgetStore = defineStore('widget', () => {
     currentBreakpoint,
     isInitialized,
     getWidgetDefinition,
+    assignWidgetEscritorio,
     getActiveWidgetsForBreakpoint,
     addWidget,
     removeWidget,
     updateWidgetPosition,
     updateWidgetLayout,
-    updateWidgetProps,
-    toggleWidgetVisibility,
-    reorderWidgets,
-    setOrderForLayout,
-    showAllWidgets,
-    setBreakpoint,
+    updateWidgetProps,    reorderWidgets,
+    setOrderForLayout,    setBreakpoint,
     loadFromStorage,
     saveToStorage,
     initializeDefaultLayout,
     resetToDefault,
   }
 })
+
+/**
+ * Capacity-aware greedy packing of widgets into "escritorios" (screens/pages).
+ * Each escritorio is a grid of `cols` columns and `rowsPerEscritorio` rows. Widgets are
+ * placed in order; when one does not fit the remaining space of the current escritorio, a
+ * new escritorio is opened. Mobile packs one widget per page (`mobileOnePerPage`).
+ */
+export function packIntoEscritorios(params: {
+  widgets: WidgetInstance[]
+  breakpoint: Breakpoint
+  rowsPerEscritorio: number
+  cols?: number
+  mobileOnePerPage?: boolean
+}): WidgetInstance[][] {
+  if (params.mobileOnePerPage) {
+    return params.widgets.map((w) => [w])
+  }
+  const cols = params.cols ?? 12
+  const rows = Math.max(1, params.rowsPerEscritorio)
+  const bp = params.breakpoint
+  const newGrid = () => Array.from({ length: rows }, () => new Array<boolean>(cols).fill(false))
+  const fits = (grid: boolean[][], r: number, c: number, w: number, h: number): boolean => {
+    if (r + h > rows || c + w > cols) return false
+    for (let rr = r; rr < r + h; rr++) {
+      for (let cc = c; cc < c + w; cc++) {
+        if (grid[rr][cc]) return false
+      }
+    }
+    return true
+  }
+  const mark = (grid: boolean[][], r: number, c: number, w: number, h: number): void => {
+    for (let rr = r; rr < r + h; rr++) {
+      for (let cc = c; cc < c + w; cc++) {
+        grid[rr][cc] = true
+      }
+    }
+  }
+  const place = (w: WidgetInstance, r: number, c: number): WidgetInstance => ({
+    ...w,
+    x: { ...w.x, [bp]: c },
+    y: { ...w.y, [bp]: r },
+  })
+
+  // Pinned widgets keep their assigned escritorio; unpinned ones are auto-packed.
+  const pinned = params.widgets
+    .filter((w) => w.escritorio != null)
+    .sort((a, b) => (a.escritorio as number) - (b.escritorio as number))
+  const unpinned = params.widgets.filter((w) => w.escritorio == null)
+
+  const maxPinned = pinned.reduce((m, w) => Math.max(m, w.escritorio as number), -1)
+  const escritorios: WidgetInstance[][] = Array.from(
+    { length: Math.max(maxPinned + 1, 1) },
+    () => [],
+  )
+  const grids = escritorios.map(() => newGrid())
+
+  const tryPlace = (w: WidgetInstance, e: number): boolean => {
+    if (e < 0 || e >= escritorios.length) return false
+    const ww = w.w[bp] ?? 4
+    const hh = w.h[bp] ?? 4
+    const curX = w.x[bp] ?? 0
+    const curY = w.y[bp] ?? 0
+    if (fits(grids[e], curY, curX, ww, hh)) {
+      mark(grids[e], curY, curX, ww, hh)
+      escritorios[e].push(place(w, curY, curX))
+      return true
+    }
+    for (let r = 0; r <= rows - hh; r++) {
+      for (let c = 0; c <= cols - ww; c++) {
+        if (fits(grids[e], r, c, ww, hh)) {
+          mark(grids[e], r, c, ww, hh)
+          escritorios[e].push(place(w, r, c))
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  // 1) Pinned widgets go to their assigned escritorio (best effort).
+  for (const w of pinned) {
+    const e = w.escritorio as number
+    if (!tryPlace(w, e)) {
+      escritorios[e].push(place(w, 0, 0))
+      mark(grids[e], 0, 0, w.w[bp] ?? 4, w.h[bp] ?? 4)
+    }
+  }
+
+  // 2) Auto-pack unpinned widgets, filling existing escritorios then new ones.
+  for (const w of unpinned) {
+    let placed = false
+    for (let e = 0; e < escritorios.length; e++) {
+      if (tryPlace(w, e)) {
+        placed = true
+        break
+      }
+    }
+    if (!placed) {
+      escritorios.push([])
+      grids.push(newGrid())
+      tryPlace(w, escritorios.length - 1)
+    }
+  }
+
+  return escritorios
+}
+
+/**
+ * Returns true when `widget` fits inside `targetIndex` given the current packing.
+ * Used to verify a manual "move to escritorio" before committing the pin.
+ */
+export function canFitInEscritorio(params: {
+  widget: WidgetInstance
+  targetIndex: number
+  escritorios: WidgetInstance[][]
+  breakpoint: Breakpoint
+  rowsPerEscritorio: number
+  mobileOnePerPage?: boolean
+  cols?: number
+}): boolean {
+  const bp = params.breakpoint
+  const rows = Math.max(1, params.rowsPerEscritorio)
+  const cols = params.cols ?? 12
+  if (params.mobileOnePerPage) {
+    return (params.escritorios[params.targetIndex]?.length ?? 0) === 0
+  }
+  const grid = Array.from({ length: rows }, () => new Array<boolean>(cols).fill(false))
+  const fits = (r: number, c: number, w: number, h: number): boolean => {
+    if (r + h > rows || c + w > cols) return false
+    for (let rr = r; rr < r + h; rr++) {
+      for (let cc = c; cc < c + w; cc++) {
+        if (grid[rr][cc]) return false
+      }
+    }
+    return true
+  }
+  const mark = (r: number, c: number, w: number, h: number): void => {
+    for (let rr = r; rr < r + h; rr++) {
+      for (let cc = c; cc < c + w; cc++) {
+        grid[rr][cc] = true
+      }
+    }
+  }
+
+  // Place the widgets already in the target escritorio at their current positions.
+  for (const w of params.escritorios[params.targetIndex] ?? []) {
+    mark(w.y[bp] ?? 0, w.x[bp] ?? 0, w.w[bp] ?? 4, w.h[bp] ?? 4)
+  }
+
+  // Try the moved widget at its current position, then scan for any free slot.
+  const mw = params.widget.w[bp] ?? 4
+  const mh = params.widget.h[bp] ?? 4
+  if (fits(params.widget.y[bp] ?? 0, params.widget.x[bp] ?? 0, mw, mh)) return true
+  for (let r = 0; r <= rows - mh; r++) {
+    for (let c = 0; c <= cols - mw; c++) {
+      if (fits(r, c, mw, mh)) return true
+    }
+  }
+  return false
+}
