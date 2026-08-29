@@ -325,3 +325,18 @@ NEVER create git commits unless the user explicitly requests it. This overrides 
 - `front/src/components/events/add/AddEventCompoenent.vue`: event form modal with responsive form/calendar layout
 - `front/src/components/calendar/fullcalendar/FullyCalendarVue3.vue`: FullCalendar wrapper with touch/click callbacks
 - `front/src/views/calendar/CalendarPage.vue`: main calendar page (reference for working touch behavior)
+
+## Pi lifecycle command guard (gentle-ai)
+
+`git commit` / `git push` / `glab mr ...` desde el bash tool se bloquean si el
+comando tiene `&&`, `;`, `|`, backtick o `$(` (reporte: "Compound or wrapped
+lifecycle command ... must fail closed"). NO tiene que ver con RDD; RDD off no
+bloquea. El guard es stateless: cada comando se evalúa de forma aislada, no queda
+"trabado" tras un bloqueo.
+
+Fix: un solo comando directo, sin `&&` ni `cd`, preferiblemente
+`git -C <ruta-absoluta> <subcommand> -m "mensaje de una sola linea"`.
+IMPORTANTE: el mensaje del `-m` debe ser UNA sola linea (sin saltos de linea);
+un cuerpo multilinea introduce un `\n` sin comillar que dispara el mismo bloqueo.
+Si un comando "simple" sigue bloqueando, no es estado persistido: tiene algun
+control-char sin comillar (`;`, `|`, `&`, backtick, `$(` o `\n`) en la linea.
