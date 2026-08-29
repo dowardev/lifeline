@@ -18,7 +18,7 @@
         </button>
 
         <ion-button
-          v-if="(props.escritorioCount ?? 1) > 1"
+          v-if="(props.screenCount ?? 1) > 1"
           class="widget-action-btn"
           fill="clear"
           size="small"
@@ -52,15 +52,15 @@
           <ion-item
             button
             :detail="false"
-            v-for="n in (props.escritorioCount ?? 1)"
+            v-for="n in (props.screenCount ?? 1)"
             :key="n"
             @click="moveTo(n - 1)"
           >
             <ion-label>
-              Escritorio {{ n }}<span v-if="(n - 1) === props.escritorioIndex"> (actual)</span>
+              Escritorio {{ n }}<span v-if="(n - 1) === props.screenIndex"> (actual)</span>
             </ion-label>
           </ion-item>
-          <ion-item button :detail="false" @click="moveTo(props.escritorioCount ?? 1)">
+          <ion-item button :detail="false" @click="moveTo(props.screenCount ?? 1)">
             <ion-label>Nuevo escritorio</ion-label>
           </ion-item>
         </ion-list>
@@ -92,8 +92,8 @@ import WakaTimeWidget from './WakaTimeWidget.vue'
 const props = defineProps<{
   widgetId: string
   instanceId: string
-  escritorioIndex?: number
-  escritorioCount?: number
+  screenIndex?: number
+  screenCount?: number
 }>()
 
 // 6. Vars and const

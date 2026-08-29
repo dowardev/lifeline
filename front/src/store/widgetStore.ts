@@ -29,7 +29,7 @@ export interface WidgetInstance {
   h: { lg: number; md: number }
   props?: Record<string, unknown>
       order: number
-      escritorio?: number
+      screen?: number
 }
 
 export interface SavedLayout {
@@ -204,10 +204,10 @@ export const useWidgetStore = defineStore('widget', () => {
     currentBreakpoint.value = params.breakpoint
   }
 
-  function assignWidgetEscritorio(params: { instanceId: string; targetIndex: number | null }): void {
+  function assignWidgetScreen(params: { instanceId: string; targetIndex: number | null }): void {
     const widget = activeWidgets.value.find((w) => w.id === params.instanceId)
     if (!widget) return
-    widget.escritorio = params.targetIndex ?? undefined
+    widget.screen = params.targetIndex ?? undefined
     saveToStorage()
   }
 
@@ -270,7 +270,7 @@ export const useWidgetStore = defineStore('widget', () => {
     currentBreakpoint,
     isInitialized,
     getWidgetDefinition,
-    assignWidgetEscritorio,
+    assignWidgetScreen,
     getActiveWidgetsForBreakpoint,
     addWidget,
     removeWidget,
@@ -286,15 +286,15 @@ export const useWidgetStore = defineStore('widget', () => {
 })
 
 /**
- * Capacity-aware greedy packing of widgets into "escritorios" (screens/pages).
- * Each escritorio is a grid of `cols` columns and `rowsPerEscritorio` rows. Widgets are
- * placed in order; when one does not fit the remaining space of the current escritorio, a
- * new escritorio is opened. Mobile packs one widget per page (`mobileOnePerPage`).
+ * Capacity-aware greedy packing of widgets into "screens" (pages).
+ * Each screen is a grid of `cols` columns and `rowsPerScreen` rows. Widgets are
+ * placed in order; when one does not fit the remaining space of the current screen, a
+ * new screen is opened. Mobile packs one widget per page (`mobileOnePerPage`).
  */
-export function packIntoEscritorios(params: {
+export function packIntoScreens(params: {
   widgets: WidgetInstance[]
   breakpoint: Breakpoint
-  rowsPerEscritorio: number
+  rowsPerScreen: number
   cols?: number
   mobileOnePerPage?: boolean
 }): WidgetInstance[][] {
@@ -302,7 +302,7 @@ export function packIntoEscritorios(params: {
     return params.widgets.map((w) => [w])
   }
   const cols = params.cols ?? 12
-  const rows = Math.max(1, params.rowsPerEscritorio)
+  const rows = Math.max(1, params.rowsPerScreen)
   const bp = params.breakpoint
   const newGrid = () => Array.from({ length: rows }, () => new Array<boolean>(cols).fill(false))
   const fits = (grid: boolean[][], r: number, c: number, w: number, h: number): boolean => {
@@ -327,35 +327,35 @@ export function packIntoEscritorios(params: {
     y: { ...w.y, [bp]: r },
   })
 
-  // Pinned widgets keep their assigned escritorio; unpinned ones are auto-packed.
+  // Pinned widgets keep their assigned screen; unpinned ones are auto-packed.
   const pinned = params.widgets
-    .filter((w) => w.escritorio != null)
-    .sort((a, b) => (a.escritorio as number) - (b.escritorio as number))
-  const unpinned = params.widgets.filter((w) => w.escritorio == null)
+    .filter((w) => w.screen != null)
+    .sort((a, b) => (a.screen as number) - (b.screen as number))
+  const unpinned = params.widgets.filter((w) => w.screen == null)
 
-  const maxPinned = pinned.reduce((m, w) => Math.max(m, w.escritorio as number), -1)
-  const escritorios: WidgetInstance[][] = Array.from(
+  const maxPinned = pinned.reduce((m, w) => Math.max(m, w.screen as number), -1)
+  const screens: WidgetInstance[][] = Array.from(
     { length: Math.max(maxPinned + 1, 1) },
     () => [],
   )
-  const grids = escritorios.map(() => newGrid())
+  const grids = screens.map(() => newGrid())
 
   const tryPlace = (w: WidgetInstance, e: number): boolean => {
-    if (e < 0 || e >= escritorios.length) return false
+    if (e < 0 || e >= screens.length) return false
     const ww = w.w[bp] ?? 4
     const hh = w.h[bp] ?? 4
     const curX = w.x[bp] ?? 0
     const curY = w.y[bp] ?? 0
     if (fits(grids[e], curY, curX, ww, hh)) {
       mark(grids[e], curY, curX, ww, hh)
-      escritorios[e].push(place(w, curY, curX))
+      screens[e].push(place(w, curY, curX))
       return true
     }
     for (let r = 0; r <= rows - hh; r++) {
       for (let c = 0; c <= cols - ww; c++) {
         if (fits(grids[e], r, c, ww, hh)) {
           mark(grids[e], r, c, ww, hh)
-          escritorios[e].push(place(w, r, c))
+          screens[e].push(place(w, r, c))
           return true
         }
       }
@@ -363,52 +363,52 @@ export function packIntoEscritorios(params: {
     return false
   }
 
-  // 1) Pinned widgets go to their assigned escritorio (best effort).
+  // 1) Pinned widgets go to their assigned screen (best effort).
   for (const w of pinned) {
-    const e = w.escritorio as number
+    const e = w.screen as number
     if (!tryPlace(w, e)) {
-      escritorios[e].push(place(w, 0, 0))
+      screens[e].push(place(w, 0, 0))
       mark(grids[e], 0, 0, w.w[bp] ?? 4, w.h[bp] ?? 4)
     }
   }
 
-  // 2) Auto-pack unpinned widgets, filling existing escritorios then new ones.
+  // 2) Auto-pack unpinned widgets, filling existing screens then new ones.
   for (const w of unpinned) {
     let placed = false
-    for (let e = 0; e < escritorios.length; e++) {
+    for (let e = 0; e < screens.length; e++) {
       if (tryPlace(w, e)) {
         placed = true
         break
       }
     }
     if (!placed) {
-      escritorios.push([])
+      screens.push([])
       grids.push(newGrid())
-      tryPlace(w, escritorios.length - 1)
+      tryPlace(w, screens.length - 1)
     }
   }
 
-  return escritorios
+  return screens
 }
 
 /**
  * Returns true when `widget` fits inside `targetIndex` given the current packing.
- * Used to verify a manual "move to escritorio" before committing the pin.
+ * Used to verify a manual "move to screen" before committing the pin.
  */
-export function canFitInEscritorio(params: {
+export function canFitInScreen(params: {
   widget: WidgetInstance
   targetIndex: number
-  escritorios: WidgetInstance[][]
+  screens: WidgetInstance[][]
   breakpoint: Breakpoint
-  rowsPerEscritorio: number
+  rowsPerScreen: number
   mobileOnePerPage?: boolean
   cols?: number
 }): boolean {
   const bp = params.breakpoint
-  const rows = Math.max(1, params.rowsPerEscritorio)
+  const rows = Math.max(1, params.rowsPerScreen)
   const cols = params.cols ?? 12
   if (params.mobileOnePerPage) {
-    return (params.escritorios[params.targetIndex]?.length ?? 0) === 0
+    return (params.screens[params.targetIndex]?.length ?? 0) === 0
   }
   const grid = Array.from({ length: rows }, () => new Array<boolean>(cols).fill(false))
   const fits = (r: number, c: number, w: number, h: number): boolean => {
@@ -428,8 +428,8 @@ export function canFitInEscritorio(params: {
     }
   }
 
-  // Place the widgets already in the target escritorio at their current positions.
-  for (const w of params.escritorios[params.targetIndex] ?? []) {
+  // Place the widgets already in the target screen at their current positions.
+  for (const w of params.screens[params.targetIndex] ?? []) {
     mark(w.y[bp] ?? 0, w.x[bp] ?? 0, w.w[bp] ?? 4, w.h[bp] ?? 4)
   }
 

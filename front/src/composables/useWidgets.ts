@@ -47,6 +47,6 @@ export function useWidgets() {
     updateWidgetLayout: store.updateWidgetLayout,
     updateWidgetProps: store.updateWidgetProps,
     setOrderForLayout: store.setOrderForLayout,
-        assignWidgetEscritorio: store.assignWidgetEscritorio,
+        assignWidgetScreen: store.assignWidgetScreen,
     }
 }

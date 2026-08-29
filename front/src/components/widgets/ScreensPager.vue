@@ -1,40 +1,40 @@
 <template>
-  <div class="escritorios-pager">
+  <div class="screens-pager">
     <template v-if="activeWidgets.length > 0">
-      <div class="escritorios-header" v-if="escritorios.length > 1">
+      <div class="screens-header" v-if="screens.length > 1">
         <ion-button fill="clear" class="nav-arrow" @click="prev" :disabled="activeIndex === 0">
           <ion-icon :icon="chevronBackOutline" />
         </ion-button>
-        <ion-button fill="clear" class="escritorio-trigger" @click="popoverOpen = true">
-          {{ activeIndex + 1 }} / {{ escritorios.length }}
+        <ion-button fill="clear" class="screen-trigger" @click="popoverOpen = true">
+          {{ activeIndex + 1 }} / {{ screens.length }}
         </ion-button>
         <ion-button
           fill="clear"
           class="nav-arrow"
           @click="next"
-          :disabled="activeIndex === escritorios.length - 1"
+          :disabled="activeIndex === screens.length - 1"
         >
           <ion-icon :icon="chevronForwardOutline" />
         </ion-button>
       </div>
 
       <div
-        class="escritorios-track"
+        class="screens-track"
         ref="trackRef"
         @scroll.passive="onScroll"
       >
         <section
-          v-for="(esc, i) in escritorios"
+          v-for="(scr, i) in screens"
           :key="i"
-          class="escritorio-page"
+          class="screen-page"
         >
-          <WidgetGrid :widgets="esc" :escritorio-index="i" :escritorio-count="escritorios.length" :mobile="isMobile" @layout-change="onLayoutChange" />
+          <WidgetGrid :widgets="scr" :screen-index="i" :screen-count="screens.length" :mobile="isMobile" @layout-change="onLayoutChange" />
         </section>
       </div>
 
-      <div class="escritorios-dots" v-if="escritorios.length > 1">
+      <div class="screens-dots" v-if="screens.length > 1">
         <span
-          v-for="(esc, i) in escritorios"
+          v-for="(scr, i) in screens"
           :key="'dot-' + i"
           class="dot"
           :class="{ active: i === activeIndex }"
@@ -56,9 +56,9 @@
           <ion-item
             button
             :detail="false"
-            v-for="(esc, i) in escritorios"
+            v-for="(scr, i) in screens"
             :key="'pop-' + i"
-            @click="selectEscritorio(i)"
+            @click="selectScreen(i)"
           >
             <ion-label>Escritorio {{ i + 1 }}</ion-label>
           </ion-item>
@@ -83,11 +83,11 @@ import {
 import { chevronBackOutline, chevronForwardOutline } from 'ionicons/icons'
 import WidgetGrid from '@/components/widgets/WidgetGrid.vue'
 import { showToast } from '@/utils/toast'
-import { packIntoEscritorios, canFitInEscritorio } from '@/store/widgetStore'
+import { packIntoScreens, canFitInScreen } from '@/store/widgetStore'
 import { useWidgets } from '@/composables/useWidgets'
 
 // 2. Controllers / Composables
-const { activeWidgets, currentBreakpoint, assignWidgetEscritorio } = useWidgets()
+const { activeWidgets, currentBreakpoint, assignWidgetScreen } = useWidgets()
 provide('requestMove', requestMove)
 
 // 3. Components
@@ -110,38 +110,40 @@ const HEADER_OFFSET = 180
 const MOBILE_BREAKPOINT = 768
 
 // 7. Watch
-// Keep the active page in range when the number of escritorios shrinks
+// (declared after the `screens` computed below to avoid a temporal-dead-zone reference)
+
+// 8. Computed
+const rowsPerScreen = computed(() =>
+  Math.max(1, Math.floor((viewportHeight.value - HEADER_OFFSET) / CELL_HEIGHT)),
+)
+
+// Mobile breakpoint: each screen holds a single widget (matches the mobile WidgetStack).
+const isMobile = computed(() => viewportWidth.value < MOBILE_BREAKPOINT)
+
+// Capacity-aware packing: widgets are grouped into "screens".
+// Desktop/tablet packs by actual size; when a widget does not fit the remaining
+// space of the current screen it is sent to the next one. Mobile = 1 widget
+// per screen (matches the mobile WidgetStack behaviour).
+const screens = computed<WidgetInstance[][]>(() => {
+  const widgets = [...activeWidgets.value].sort((a, b) => a.order - b.order)
+  return packIntoScreens({
+    widgets,
+    breakpoint: currentBreakpoint.value,
+    rowsPerScreen: rowsPerScreen.value,
+    mobileOnePerPage: isMobile.value,
+  })
+})
+
+// Keep the active page in range when the number of screens shrinks
 // (delete / move can reduce the page count and leave activeIndex out of bounds).
 watch(
-  () => escritorios.value.length,
+  () => screens.value.length,
   (len) => {
     if (activeIndex.value > len - 1) {
       activeIndex.value = Math.max(0, len - 1)
     }
   },
 )
-
-// 8. Computed
-const rowsPerEscritorio = computed(() =>
-  Math.max(1, Math.floor((viewportHeight.value - HEADER_OFFSET) / CELL_HEIGHT)),
-)
-
-// Mobile breakpoint: each escritorio holds a single widget (matches the mobile WidgetStack).
-const isMobile = computed(() => viewportWidth.value < MOBILE_BREAKPOINT)
-
-// Capacity-aware packing: widgets are grouped into "escritorios" (screens).
-// Desktop/tablet packs by actual size; when a widget does not fit the remaining
-// space of the current escritorio it is sent to the next one. Mobile = 1 widget
-// per escritorio (matches the mobile WidgetStack behaviour).
-const escritorios = computed<WidgetInstance[][]>(() => {
-  const widgets = [...activeWidgets.value].sort((a, b) => a.order - b.order)
-  return packIntoEscritorios({
-    widgets,
-    breakpoint: currentBreakpoint.value,
-    rowsPerEscritorio: rowsPerEscritorio.value,
-    mobileOnePerPage: isMobile.value,
-  })
-})
 
 // 9. OnMounted
 onMounted(() => {
@@ -164,7 +166,7 @@ function onScroll() {
   const pageWidth = el.clientWidth
   if (pageWidth <= 0) return
   const idx = Math.round(el.scrollLeft / pageWidth)
-  activeIndex.value = Math.min(Math.max(idx, 0), escritorios.value.length - 1)
+  activeIndex.value = Math.min(Math.max(idx, 0), screens.value.length - 1)
 }
 
 function goTo(index: number) {
@@ -179,10 +181,10 @@ function prev() {
 }
 
 function next() {
-  goTo(Math.min(escritorios.value.length - 1, activeIndex.value + 1))
+  goTo(Math.min(screens.value.length - 1, activeIndex.value + 1))
 }
 
-function selectEscritorio(index: number) {
+function selectScreen(index: number) {
   goTo(index)
   popoverOpen.value = false
 }
@@ -191,18 +193,18 @@ function onLayoutChange() {
   emit('layout-change')
 }
 
-// Move a widget to another escritorio, verifying capacity first.
+// Move a widget to another screen, verifying capacity first.
 function requestMove(instanceId: string, targetIndex: number): void {
   const widget = activeWidgets.value.find((w) => w.id === instanceId)
   if (!widget) return
-  const current = escritorios.value.findIndex((e) => e.some((w) => w.id === instanceId))
+  const current = screens.value.findIndex((e) => e.some((w) => w.id === instanceId))
   if (current === targetIndex) return
-  const fits = canFitInEscritorio({
+  const fits = canFitInScreen({
     widget,
     targetIndex,
-    escritorios: escritorios.value,
+    screens: screens.value,
     breakpoint: currentBreakpoint.value,
-    rowsPerEscritorio: rowsPerEscritorio.value,
+    rowsPerScreen: rowsPerScreen.value,
     mobileOnePerPage: isMobile.value,
   })
   if (!fits) {
@@ -212,19 +214,19 @@ function requestMove(instanceId: string, targetIndex: number): void {
     })
     return
   }
-  assignWidgetEscritorio({ instanceId, targetIndex })
+  assignWidgetScreen({ instanceId, targetIndex })
 }
 </script>
 
 <style scoped>
-.escritorios-pager {
+.screens-pager {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
 }
 
-.escritorios-header {
+.screens-header {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,7 +235,7 @@ function requestMove(instanceId: string, targetIndex: number): void {
   flex: 0 0 auto;
 }
 
-.escritorio-trigger {
+.screen-trigger {
   --padding-start: 12px;
   --padding-end: 12px;
   font-weight: 600;
@@ -245,7 +247,7 @@ function requestMove(instanceId: string, targetIndex: number): void {
   --padding-end: 8px;
 }
 
-.escritorios-track {
+.screens-track {
   flex: 1;
   display: flex;
   flex-direction: row;
@@ -256,11 +258,11 @@ function requestMove(instanceId: string, targetIndex: number): void {
   scrollbar-width: none;
 }
 
-.escritorios-track::-webkit-scrollbar {
+.screens-track::-webkit-scrollbar {
   display: none;
 }
 
-.escritorio-page {
+.screen-page {
   flex: 0 0 100%;
   width: 100%;
   height: 100%;
@@ -270,7 +272,7 @@ function requestMove(instanceId: string, targetIndex: number): void {
   flex-direction: column;
 }
 
-.escritorios-dots {
+.screens-dots {
   display: flex;
   justify-content: center;
   align-items: center;

@@ -43,7 +43,7 @@ import type { GridStackOptions, GridStackNode } from 'gridstack'
 import type { Breakpoint, WidgetInstance } from '@/store/widgetStore'
 
 // 5. Main (props, emits, etc.)
-const props = defineProps<{ widgets?: WidgetInstance[]; escritorioIndex?: number; escritorioCount?: number; mobile?: boolean }>()
+const props = defineProps<{ widgets?: WidgetInstance[]; screenIndex?: number; screenCount?: number; mobile?: boolean }>()
 const emit = defineEmits<{
   'layout-change': []
 }>()
@@ -160,8 +160,8 @@ function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): voi
       props: {
         widgetId: w.widgetId,
         instanceId: w.id,
-        escritorioIndex: props.escritorioIndex,
-        escritorioCount: props.escritorioCount,
+        screenIndex: props.screenIndex,
+        screenCount: props.screenCount,
       },
       minW: props.mobile ? 12 : getWidgetLimit({ widgetId: w.widgetId, prop: 'minWidth', fallback: 1 }),
       minH: getWidgetLimit({ widgetId: w.widgetId, prop: 'minHeight', fallback: 1 }),

@@ -26,7 +26,7 @@
         <ion-row class="ion-justify-content-center">
           <ion-col size="12">
                 <div class="widget-grid-section">
-                  <EscritoriosPager @layout-change="onLayoutChange" />
+                  <ScreensPager @layout-change="onLayoutChange" />
                 </div>
               </ion-col>
         </ion-row>
@@ -137,7 +137,7 @@ const {
 } = useWidgets()
 
 // 3. Components
-import EscritoriosPager from '@/components/widgets/EscritoriosPager.vue'
+import ScreensPager from '@/components/widgets/ScreensPager.vue'
 
 // 4. Interface and types imports
 

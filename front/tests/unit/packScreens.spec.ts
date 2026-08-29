@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { packIntoEscritorios, canFitInEscritorio } from '@/store/widgetStore'
+import { packIntoScreens, canFitInScreen } from '@/store/widgetStore'
 import type { WidgetInstance } from '@/store/widgetStore'
 
 function makeWidget(
@@ -14,53 +14,53 @@ function makeWidget(
     h: { lg: p.h, md: p.h },
     order: p.order,
     props: p.props,
-    escritorio: p.escritorio,
+    screen: p.screen,
   }
 }
 
-describe('packIntoEscritorios', () => {
-  it('packs two side-by-side w:6 widgets into one escritorio', () => {
+describe('packIntoScreens', () => {
+  it('packs two side-by-side w:6 widgets into one screen', () => {
     const widgets = [
       makeWidget({ id: 'a', w: 6, h: 8, order: 0 }),
       makeWidget({ id: 'b', w: 6, h: 8, order: 1 }),
     ]
-    const result = packIntoEscritorios({ widgets, breakpoint: 'lg', rowsPerEscritorio: 10 })
+    const result = packIntoScreens({ widgets, breakpoint: 'lg', rowsPerScreen: 10 })
     expect(result.length).toBe(1)
     expect(result[0].length).toBe(2)
   })
 
-  it('sends wakatime to the next escritorio when calendar is 100% width', () => {
+  it('sends wakatime to the next screen when calendar is 100% width', () => {
     const widgets = [
       makeWidget({ id: 'cal', w: 12, h: 8, order: 0 }),
       makeWidget({ id: 'waka', w: 6, h: 8, order: 1 }),
     ]
-    const result = packIntoEscritorios({ widgets, breakpoint: 'lg', rowsPerEscritorio: 10 })
+    const result = packIntoScreens({ widgets, breakpoint: 'lg', rowsPerScreen: 10 })
     expect(result.length).toBe(2)
     expect(result[0][0].id).toBe('cal')
     expect(result[1][0].id).toBe('waka')
   })
 
-  it('opens a new escritorio when the current one is full', () => {
+  it('opens a new screen when the current one is full', () => {
     const widgets = [
       makeWidget({ id: 'a', w: 6, h: 8, order: 0 }),
       makeWidget({ id: 'b', w: 6, h: 8, order: 1 }),
       makeWidget({ id: 'c', w: 6, h: 8, order: 2 }),
     ]
-    const result = packIntoEscritorios({ widgets, breakpoint: 'lg', rowsPerEscritorio: 10 })
+    const result = packIntoScreens({ widgets, breakpoint: 'lg', rowsPerScreen: 10 })
     expect(result.length).toBe(2)
     expect(result[0].map((w) => w.id).sort()).toEqual(['a', 'b'])
     expect(result[1].map((w) => w.id)).toEqual(['c'])
   })
 
-  it('packs one widget per escritorio on mobile', () => {
+  it('packs one widget per screen on mobile', () => {
     const widgets = [
       makeWidget({ id: 'a', w: 12, h: 8, order: 0 }),
       makeWidget({ id: 'b', w: 12, h: 8, order: 1 }),
     ]
-    const result = packIntoEscritorios({
+    const result = packIntoScreens({
       widgets,
       breakpoint: 'md',
-      rowsPerEscritorio: 8,
+      rowsPerScreen: 8,
       mobileOnePerPage: true,
     })
     expect(result.length).toBe(2)
@@ -73,20 +73,20 @@ describe('packIntoEscritorios', () => {
       makeWidget({ id: 'a', w: 6, h: 8, order: 0, x: { lg: 6, md: 6 }, y: { lg: 0, md: 0 } }),
       makeWidget({ id: 'b', w: 6, h: 8, order: 1, x: { lg: 0, md: 0 }, y: { lg: 0, md: 0 } }),
     ]
-    const result = packIntoEscritorios({ widgets, breakpoint: 'lg', rowsPerEscritorio: 10 })
+    const result = packIntoScreens({ widgets, breakpoint: 'lg', rowsPerScreen: 10 })
     expect(result.length).toBe(1)
     const a = result[0].find((w) => w.id === 'a')!
     expect(a.x.lg).toBe(6)
     expect(a.y.lg).toBe(0)
   })
 })
-    describe('packIntoEscritorios with pinned escritorio', () => {
-      it('keeps a widget pinned to its assigned escritorio', () => {
+    describe('packIntoScreens with pinned screen', () => {
+      it('keeps a widget pinned to its assigned screen', () => {
         const widgets = [
           makeWidget({ id: 'cal', w: 12, h: 8, order: 0 }),
-          makeWidget({ id: 'waka', w: 6, h: 8, order: 1, escritorio: 2 }),
+          makeWidget({ id: 'waka', w: 6, h: 8, order: 1, screen: 2 }),
         ]
-        const result = packIntoEscritorios({ widgets, breakpoint: 'lg', rowsPerEscritorio: 10 })
+        const result = packIntoScreens({ widgets, breakpoint: 'lg', rowsPerScreen: 10 })
         expect(result.length).toBe(3) // e0, e1 (empty), e2
         expect(result[0][0].id).toBe('cal')
         expect(result[2][0].id).toBe('waka')
@@ -94,58 +94,58 @@ describe('packIntoEscritorios', () => {
 
       it('keeps pinned widgets in place and packs unpinned ones', () => {
         const widgets = [
-          makeWidget({ id: 'a', w: 6, h: 8, order: 0, escritorio: 0 }),
-          makeWidget({ id: 'b', w: 6, h: 8, order: 1, escritorio: 1 }),
+          makeWidget({ id: 'a', w: 6, h: 8, order: 0, screen: 0 }),
+          makeWidget({ id: 'b', w: 6, h: 8, order: 1, screen: 1 }),
           makeWidget({ id: 'c', w: 6, h: 8, order: 2 }),
         ]
-        const result = packIntoEscritorios({ widgets, breakpoint: 'lg', rowsPerEscritorio: 10 })
+        const result = packIntoScreens({ widgets, breakpoint: 'lg', rowsPerScreen: 10 })
         expect(result[0].some((w) => w.id === 'a')).toBe(true)
         expect(result[1].some((w) => w.id === 'b')).toBe(true)
         expect(result.flat().map((w) => w.id).sort()).toEqual(['a', 'b', 'c'])
       })
     })
 
-    describe('canFitInEscritorio', () => {
+    describe('canFitInScreen', () => {
       const calHalf = makeWidget({ id: 'calHalf', w: 6, h: 8, order: 0 })
       const calFull = makeWidget({ id: 'calFull', w: 12, h: 8, order: 0 })
       const waka = makeWidget({ id: 'waka', w: 6, h: 8, order: 1 })
 
-      it('returns true when the target escritorio has room', () => {
-        const escritorios = packIntoEscritorios({ widgets: [calHalf], breakpoint: 'lg', rowsPerEscritorio: 10 })
-        expect(escritorios.length).toBe(1)
+      it('returns true when the target screen has room', () => {
+        const screens = packIntoScreens({ widgets: [calHalf], breakpoint: 'lg', rowsPerScreen: 10 })
+        expect(screens.length).toBe(1)
         expect(
-          canFitInEscritorio({
+          canFitInScreen({
             widget: waka,
             targetIndex: 0,
-            escritorios,
+            screens,
             breakpoint: 'lg',
-            rowsPerEscritorio: 10,
+            rowsPerScreen: 10,
           }),
         ).toBe(true)
       })
 
-      it('returns false when the target escritorio is full', () => {
-        const escritorios = packIntoEscritorios({ widgets: [calFull], breakpoint: 'lg', rowsPerEscritorio: 10 })
+      it('returns false when the target screen is full', () => {
+        const screens = packIntoScreens({ widgets: [calFull], breakpoint: 'lg', rowsPerScreen: 10 })
         expect(
-          canFitInEscritorio({
+          canFitInScreen({
             widget: waka,
             targetIndex: 0,
-            escritorios,
+            screens,
             breakpoint: 'lg',
-            rowsPerEscritorio: 10,
+            rowsPerScreen: 10,
           }),
         ).toBe(false)
       })
 
-      it('returns true for an empty target (new escritorio)', () => {
-        const escritorios = packIntoEscritorios({ widgets: [calHalf], breakpoint: 'lg', rowsPerEscritorio: 10 })
+      it('returns true for an empty target (new screen)', () => {
+        const screens = packIntoScreens({ widgets: [calHalf], breakpoint: 'lg', rowsPerScreen: 10 })
         expect(
-          canFitInEscritorio({
+          canFitInScreen({
             widget: waka,
             targetIndex: 1,
-            escritorios,
+            screens,
             breakpoint: 'lg',
-            rowsPerEscritorio: 10,
+            rowsPerScreen: 10,
           }),
         ).toBe(true)
       })
