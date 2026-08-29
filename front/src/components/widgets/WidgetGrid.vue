@@ -40,9 +40,10 @@ import WidgetWrapper from './WidgetWrapper.vue'
 
 // 4. Interface and types imports
 import type { GridStackOptions, GridStackNode } from 'gridstack'
-import type { Breakpoint } from '@/store/widgetStore'
+import type { Breakpoint, WidgetInstance } from '@/store/widgetStore'
 
 // 5. Main (props, emits, etc.)
+const props = defineProps<{ widgets?: WidgetInstance[]; escritorioIndex?: number; escritorioCount?: number }>()
 const emit = defineEmits<{
   'layout-change': []
 }>()
@@ -76,10 +77,10 @@ const widgetComponents = { WidgetWrapper }
 // Only rebuild the grid when widgets are added/removed/shown/hidden.
 // Position mutations must NOT trigger a full rebuild (feedback loop).
 watch(
-  () => activeWidgets.value.map((w) => w.id).join('|'),
+  () => (props.widgets ?? activeWidgets.value).map((w) => w.id).join('|'),
   () => {
     if (!gridContainer.value) return
-    syncGridWithStore({ widgets: activeWidgets.value })
+    syncGridWithStore({ widgets: props.widgets ?? activeWidgets.value })
   },
 )
 
@@ -88,7 +89,7 @@ watch(() => currentBreakpoint.value, () => {
   // Full reconcile against the (already-updated) breakpoint so node coordinates
   // always match the store. More robust than a position-only update across
   // breakpoints, and avoids any drift if a node was skipped on a prior pass.
-  syncGridWithStore({ widgets: activeWidgets.value })
+  syncGridWithStore({ widgets: props.widgets ?? activeWidgets.value })
 })
 
 // 8. Computed
@@ -100,7 +101,7 @@ const breakpoint = computed<Breakpoint>(() => currentBreakpoint.value)
 // `activeWidgets` keeps the grid in sync after HomePage loads.
     onMounted(() => {
       nextTick(() => {
-        syncGridWithStore({ widgets: activeWidgets.value })
+        syncGridWithStore({ widgets: props.widgets ?? activeWidgets.value })
         nextTick(() => {
           const grid = getGrid()
           if (!grid) return
@@ -159,6 +160,8 @@ function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): voi
       props: {
         widgetId: w.widgetId,
         instanceId: w.id,
+        escritorioIndex: props.escritorioIndex,
+        escritorioCount: props.escritorioCount,
       },
       minW: getWidgetLimit({ widgetId: w.widgetId, prop: 'minWidth', fallback: 1 }),
       minH: getWidgetLimit({ widgetId: w.widgetId, prop: 'minHeight', fallback: 1 }),
@@ -292,6 +295,9 @@ function onDragStop(params: { el: unknown }): void {
 
 .widget-grid-container :deep(.grid-stack) {
   height: 100%;
+  /* Desktop/tablet: disable GridStack's internal vertical scroll so the page scrolls
+     natively (like the mobile WidgetStack) instead of a scrollbar trapped inside the grid. */
+  overflow-y: visible !important;
 }
 
 .widget-grid-container :deep(.grid-stack-item-content) {

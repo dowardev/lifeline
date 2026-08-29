@@ -21,6 +21,17 @@
           class="widget-action-btn"
           fill="clear"
           size="small"
+          title="Mover de escritorio"
+          aria-label="Mover widget de escritorio"
+          @click="onMove()"
+        >
+          <ion-icon slot="icon-only" :icon="swapHorizontalOutline"></ion-icon>
+        </ion-button>
+
+        <ion-button
+          class="widget-action-btn"
+          fill="clear"
+          size="small"
           title="Eliminar"
           aria-label="Eliminar widget"
           @click="onRemove()"
@@ -33,14 +44,35 @@
     <div class="widget-content">
       <component :is="widgetComponent" />
     </div>
+
+    <ion-popover :is-open="popoverOpen" @did-dismiss="popoverOpen = false">
+      <ion-content>
+        <ion-list>
+          <ion-item
+            button
+            :detail="false"
+            v-for="n in (props.escritorioCount ?? 1)"
+            :key="n"
+            @click="moveTo(n - 1)"
+          >
+            <ion-label>
+              Escritorio {{ n }}<span v-if="(n - 1) === props.escritorioIndex"> (actual)</span>
+            </ion-label>
+          </ion-item>
+          <ion-item button :detail="false" @click="moveTo(props.escritorioCount ?? 1)">
+            <ion-label>Nuevo escritorio</ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-content>
+    </ion-popover>
   </div>
 </template>
 
 <script setup lang="ts">
 // 1. Imports (ionic/vue/ionicons)
-import { IonButton, IonIcon } from '@ionic/vue'
-import { computed, onMounted } from 'vue'
-import { reorderTwoOutline, trashOutline } from 'ionicons/icons'
+import { IonButton, IonIcon, IonPopover, IonContent, IonList, IonItem, IonLabel } from '@ionic/vue'
+import { computed, onMounted, ref, inject } from 'vue'
+import { reorderTwoOutline, trashOutline, swapHorizontalOutline } from 'ionicons/icons'
 
 // 2. Controllers / Composables
 import { useWidgets } from '@/composables/useWidgets'
@@ -59,10 +91,14 @@ import WakaTimeWidget from './WakaTimeWidget.vue'
 const props = defineProps<{
   widgetId: string
   instanceId: string
+  escritorioIndex?: number
+  escritorioCount?: number
 }>()
 
 // 6. Vars and const
 const showHeader = true
+const popoverOpen = ref(false)
+const requestMove = inject<(instanceId: string, targetIndex: number) => void>('requestMove')
 
 // 7. Watch
 
@@ -100,6 +136,15 @@ onMounted(() => {
 // 10. Functions (named parameters pattern)
 function onRemove(): void {
   removeWidget({ instanceId: props.instanceId })
+}
+
+function onMove(): void {
+  popoverOpen.value = true
+}
+
+function moveTo(targetIndex: number): void {
+  popoverOpen.value = false
+  requestMove?.(props.instanceId, targetIndex)
 }
 </script>
 

@@ -46,5 +46,7 @@ export function useWidgets() {
     updateWidgetPosition: store.updateWidgetPosition,
     updateWidgetLayout: store.updateWidgetLayout,
     updateWidgetProps: store.updateWidgetProps,
-    setOrderForLayout: store.setOrderForLayout,  }
+    setOrderForLayout: store.setOrderForLayout,
+        assignWidgetEscritorio: store.assignWidgetEscritorio,
+    }
 }

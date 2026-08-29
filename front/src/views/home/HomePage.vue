@@ -25,21 +25,10 @@
       <ion-grid>
         <ion-row class="ion-justify-content-center">
           <ion-col size="12">
-            <!-- Desktop/Tablet: GridStack -->
-            <div v-if="isDesktopOrTablet" class="widget-grid-section">
-              <WidgetGrid v-if="activeWidgets.length > 0" @layout-change="onLayoutChange" />
-              <div v-else class="empty-state">
-                <ion-icon :icon="gridOutline" class="empty-icon"></ion-icon>
-                <p class="empty-message">No hay widgets todavía. Agregá uno para empezar.</p>
-                <ion-button fill="outline" @click="openWidgetPicker()">Agregar widget</ion-button>
-              </div>
-            </div>
-
-            <!-- Mobile: Stack -->
-            <div v-if="isMobile" class="widget-stack-section">
-              <WidgetStack />
-            </div>
-          </ion-col>
+                <div class="widget-grid-section">
+                  <EscritoriosPager @layout-change="onLayoutChange" />
+                </div>
+              </ion-col>
         </ion-row>
       </ion-grid>
 
@@ -148,8 +137,7 @@ const {
 } = useWidgets()
 
 // 3. Components
-import WidgetGrid from '@/components/widgets/WidgetGrid.vue'
-import WidgetStack from '@/components/widgets/WidgetStack.vue'
+import EscritoriosPager from '@/components/widgets/EscritoriosPager.vue'
 
 // 4. Interface and types imports
 
@@ -158,8 +146,6 @@ import WidgetStack from '@/components/widgets/WidgetStack.vue'
 // 6. Vars and const
 const pageTitle = 'Inicio'
 const showWidgetPicker = ref(false)
-const isMobile = ref(false)
-const isDesktopOrTablet = ref(true)
 
 // 7. Watch
 
@@ -190,8 +176,6 @@ onBeforeUnmount(() => {
 // 10. Functions (named parameters pattern)
 function updateBreakpoint(): void {
   const width = window.innerWidth
-  isMobile.value = width < 768
-  isDesktopOrTablet.value = width >= 768
   const bp = width < 992 ? 'md' : 'lg'
   setBreakpoint({ breakpoint: bp })
 }
@@ -223,36 +207,16 @@ function openWidgetPicker(): void {
 function onLayoutChange(): void {
   // Layout changed, store already saved by WidgetGrid
 }
+
 </script>
 
 <style scoped>
 .widget-grid-section {
   height: calc(100vh - 140px);
   min-height: 600px;
+  /* Desktop/tablet: the widget grid must fit the screen with NO vertical scroll.
+     Clip any overflow instead of letting the page scroll (like the mobile WidgetStack). */
+  overflow: hidden;
 }
-
-.widget-stack-section {
-  height: calc(100vh - 140px);
-  display: flex;
-}
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      text-align: center;
-      gap: 12px;
-      color: var(--ion-color-medium);
-    }
-
-    .empty-icon {
-      font-size: 48px;
-    }
-
-    .empty-message {
-      margin: 0;
-      font-size: 1rem;
-    }
 
 </style>
