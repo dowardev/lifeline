@@ -7,17 +7,28 @@
   <div style="display: flex">
     <div style="padding-right: 16px">
       <ion-input
+        ref="inputApiKey"
         label="Api key"
         fill="outline"
         label-placement="floating"
+        :error-text="v$.inputApiKeyValue.$errors[0]?.$message as string"
+        :class="[
+          v$.inputApiKeyValue.$errors.length == 0
+            ? 'ion-valid'
+            : 'ion-invalid',
+        ]"
         :value="inputApiKeyValue"
         @ion-input="inputApiKeyValue = $event.detail.value as string"
+        @ion-focus="
+          ($refs.inputApiKey as any).$el.classList.add('ion-touched');
+          v$.inputApiKeyValue.$touch();
+        "
       ></ion-input>
     </div>
 
     <div class="center-vertical">
       <ion-button
-        :disabled="inputApiKeyValue == ''"
+        :disabled="v$.$invalid"
         @click="testWakaTimeApiKey({ apiKey: inputApiKeyValue })"
         ><ion-icon
           v-if="spinners.testApiKey == false"
@@ -33,6 +44,8 @@
 // 1. Imports (ionic/vue/ionicons)
 import { IonButton, IonIcon, IonInput, IonSpinner } from "@ionic/vue";
 import { reactive, ref } from "vue";
+import useVuelidate from "@vuelidate/core";
+import { helpers, maxLength, minLength, required } from "@vuelidate/validators";
 import { saveOutline } from "ionicons/icons";
 
 // 2. Controllers / Composables
@@ -51,6 +64,21 @@ const wakaTimeController = new WakaTimeController();
 // 6. Vars and const
 const inputApiKeyValue = ref("");
 const spinners = reactive({ testApiKey: false });
+
+const rules = {
+  inputApiKeyValue: {
+    required: helpers.withMessage("Campo requerido", required),
+    minLength: helpers.withMessage(
+      "La api key debe tener al menos 36 caracteres",
+      minLength(36),
+    ),
+    maxLength: helpers.withMessage(
+      "La api key debe tener como máximo 64 caracteres",
+      maxLength(64),
+    ),
+  },
+};
+const v$ = useVuelidate(rules, { inputApiKeyValue });
 
 // 7. Watch
 // (none)

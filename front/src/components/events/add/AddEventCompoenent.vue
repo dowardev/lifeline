@@ -444,7 +444,7 @@ import {
   todayOutline,
 } from 'ionicons/icons';
 import useVuelidate from '@vuelidate/core';
-import { email, helpers, required } from '@vuelidate/validators';
+import { email, helpers, maxLength, required } from '@vuelidate/validators';
 import { db } from '@/db';
 
 // 2. Controllers / Composables
@@ -515,6 +515,22 @@ const messageError = {
 const rules = {
   event: {
     name: {
+      required: helpers.withMessage(messageError.required, required),
+      maxLength: helpers.withMessage('Máximo 255 caracteres', maxLength(255)),
+    },
+    reminders: {
+      start: {
+        required: helpers.withMessage(messageError.required, required),
+      },
+      end: {
+        required: helpers.withMessage(messageError.required, required),
+      },
+    },
+    timeZone: {
+      required: helpers.withMessage(messageError.required, required),
+      maxLength: helpers.withMessage('Máximo 100 caracteres', maxLength(100)),
+    },
+    availability: {
       required: helpers.withMessage(messageError.required, required),
     },
   },

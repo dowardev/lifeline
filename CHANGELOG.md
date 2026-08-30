@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **front:** Persist widget drag/resize positions after grid drags (GridStack events previously carried empty payloads)
 - **front:** Hydrate the WakaTime API key from IndexedDB and restore a functional "Configurar API Key" modal on the home widget
 
+- **front:** Add vuelidate client-side validation aligned with the Laravel backend `$request->validate` rules for Task, Event, WakaTime and Document forms; submit is blocked when input is invalid (LBDS-70)
 ## [0.15.0] - 2026-08-10
 
 ### Added

@@ -16,7 +16,7 @@
         <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="end">
-          <ion-button @click="save()"
+          <ion-button :disabled="v$.$invalid" @click="save()"
             ><ion-icon :icon="saveOutline"></ion-icon
           ></ion-button>
         </ion-buttons>
@@ -35,11 +35,22 @@
             <ion-row class="ion-padding">
               <ion-col>
                 <ion-input
+                  ref="inputName"
                   label="Titulo"
                   label-placement="floating"
                   fill="solid"
+                  :error-text="v$.task.name.$errors[0]?.$message as string"
+                  :class="[
+                    v$.task.name.$errors.length == 0
+                      ? 'ion-valid'
+                      : 'ion-invalid',
+                  ]"
                   :value="task.name.value"
                   @ion-input="task.name.value = $event.target.value as string"
+                  @ion-focus="
+                    ($refs.inputName as any).$el.classList.add('ion-touched');
+                    v$.task.name.$touch();
+                  "
                 ></ion-input>
 
                 <br />
@@ -399,7 +410,7 @@ import {
   trashOutline,
 } from "ionicons/icons";
 import { onMounted, ref } from "vue";
-import { email, helpers, required } from "@vuelidate/validators";
+import { email, helpers, maxLength, required } from "@vuelidate/validators";
 import useVuelidate from "@vuelidate/core";
 
 // 2. Controllers / Composables
@@ -460,6 +471,7 @@ const showButtonsOptionSubtask = ref(-1);
 const messageError = {
   email: "Correo electrónico no valido",
   required: "Campo requerido",
+  maxLength: "Máximo 255 caracteres",
 };
 const rulesGuest = {
   emailGuest: {
@@ -468,6 +480,17 @@ const rulesGuest = {
   },
 };
 const v2$ = useVuelidate(rulesGuest, { emailGuest });
+
+const rules = {
+  task: {
+    name: {
+      required: helpers.withMessage(messageError.required, required),
+      maxLength: helpers.withMessage(messageError.maxLength, maxLength(255)),
+    },
+  },
+};
+const v$ = useVuelidate(rules, { task });
+const inputName = ref(null);
 
 // 7. Watch
 // (none)

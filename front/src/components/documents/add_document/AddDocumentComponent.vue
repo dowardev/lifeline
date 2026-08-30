@@ -58,11 +58,12 @@
               label="Titulo"
               label-placement="floating"
               placeholder="Nuevo documento"
-              :value="
-                documentComposable.getUserDocument({ documentId: documentUrl })
-                  ?.title
-              "
-              @ion-blur="updateTitle({ tltle: $event.target.value as string })"
+              :error-text="v$.titleValue.$errors[0]?.$message as string"
+              :class="v$.titleValue.$errors.length == 0 ? 'ion-valid' : 'ion-invalid'"
+              :value="titleValue"
+              @ion-input="titleValue = $event.detail.value as string"
+              @ion-blur="updateTitle()"
+              @ion-focus="($refs.inputTitle as any).$el.classList.add('ion-touched'); v$.titleValue.$touch();"
             ></ion-input>
           </ion-col>
         </ion-row>
@@ -232,6 +233,8 @@ import {
 
 } from "ionicons/icons";
 import { computed, ref } from "vue";
+import useVuelidate from "@vuelidate/core";
+import { helpers, maxLength, required } from "@vuelidate/validators";
 import { useRoute, useRouter } from "vue-router";
 // 2. Controllers / Composables
 import { useDocument } from "../../../composables/useDocument";
@@ -267,6 +270,8 @@ const toggleReorder = (): void => {
 const isReorderDisabled = isDisabled;
 let documentUrl = route.params.url as string;
 let documentId = "";
+const titleValue = ref("");
+const inputTitle = ref(null);
 
 const docElements = computed(() => {
   const doc = documentComposable.getUserDocument({ documentId: documentUrl })
@@ -282,7 +287,16 @@ const docElements = computed(() => {
 const start = async (): Promise<void> => {
   await documentComposable.loadDocuments();
   documentId = String(documentComposable.getUserDocument({ documentId: documentUrl })?.id ?? "");
+  titleValue.value = documentComposable.getUserDocument({ documentId: documentUrl })?.title ?? "";
 };
+
+const rules = {
+  titleValue: {
+    required: helpers.withMessage("Campo requerido", required),
+    maxLength: helpers.withMessage("Máximo 255 caracteres", maxLength(255)),
+  },
+};
+const v$ = useVuelidate(rules, { titleValue });
 
 // 9. OnMounted
 if (documentUrl) {
@@ -376,8 +390,9 @@ const reorderElements = (event: CustomEvent): void => {
   event.detail.complete();
 };
 
-const updateTitle = async (params: { tltle: string }): Promise<void> => {
-  const title = params.tltle;
+const updateTitle = async (): Promise<void> => {
+  if (v$.value.$invalid) return;
+  const title = titleValue.value;
   const document = documentComposable.getUserDocument({ documentId });
   const url = `${title.replace(" ", "-")}-${documentId}`;
 
