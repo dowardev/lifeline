@@ -321,8 +321,6 @@ import type { EventItem } from '@/store/eventStore';
 import type { ViewCalendar } from '@/store/calendarStore';
 import type { Event as CalendarEvent } from '@/utils/interfaces';
 
-// 5. Main (props, emits, etc.)
-defineExpose({ openModalAdd, reschedule, syncDataEvents });
 
 // 6. Vars and const
 const calendarRef = ref<InstanceType<typeof FullyCalendarVue3> | null>(null);
@@ -694,6 +692,8 @@ async function deleteEvent(params: { eventId: number }): Promise<void> {
     });
   }
 }
+// Expose methods for parent access
+defineExpose({ openModalAdd, reschedule, syncDataEvents });
 </script>
 
 <style scoped>

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **front:** Add `gridstack` dependency and extract `CalendarWidget` / `WakaTimeWidget` from the home page
 
 ### Changed
+- **front:** Harden + centralize the timezone list (feature guard + fallback for `Intl.supportedValuesOf`) and group the timezone picker by region in collapsible `ion-accordion`s with lazy/cached UTC offsets (non-regional zones reachable via search) — LBDS-206
 - **front:** Remove redundant type cast in `useAppVersion` composable (`chipClass` return type already declares the union).
 - **front:** Refactor: extract `useCalendarModals` composable from `CalendarPage.vue` (no user-facing change).
 - **front:** Remove dead `requiresAuth` meta from router and use static SSO client import
@@ -24,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **front:** Simplify the widget layout model to `lg`/`md` breakpoints only (`sm` slot removed); mobile order follows desktop drag order
 
 ### Fixed
+- **front:** Fix event reminder popover crashing on open (Temporal Dead Zone on `startDate`/`endDate` in `RemindersComponent`) — LBDS-206
+- **front:** Split the shared event reminders popover into dedicated popovers (Tiempo/Notificaciones/Repetir) and replace the `<ion-textarea>` read-only display with `ion-item`/`ion-label` rows — LBDS-206
+- **front:** Clear the timezone search on popover close so it reopens showing the full grouped list — LBDS-206
 - **front:** Persist widget drag/resize positions after grid drags (GridStack events previously carried empty payloads)
 - **front:** Hydrate the WakaTime API key from IndexedDB and restore a functional "Configurar API Key" modal on the home widget
 

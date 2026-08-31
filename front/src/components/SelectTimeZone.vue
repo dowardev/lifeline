@@ -26,23 +26,36 @@
     <ion-content :fullscreen="true">
       <div v-if="searchResult.length > 0">
         <ion-item
-          v-for="result in searchResult"
-          :key="result"
+          v-for="zone in searchResult"
+          :key="zone"
           button
-          @click="save({ timeZone: result })"
+          @click="save({ timeZone: zone })"
         >
-          <ion-label>{{ result }}</ion-label>
+          <ion-label>{{ getTimeZoneLabel(zone) }}</ion-label>
         </ion-item>
       </div>
       <div v-if="searchResult.length == 0">
-        <ion-item
-          v-for="result in [timeZones][0].names"
-          :key="result"
-          button
-          @click="save({ timeZone: result })"
-        >
-          <ion-label>{{ result }}</ion-label>
-        </ion-item>
+        <ion-accordion-group>
+          <ion-accordion
+            v-for="group in timeZoneGroups"
+            :key="group.header"
+            :value="group.header"
+          >
+            <ion-item slot="header">
+              <ion-label>{{ group.header }}</ion-label>
+            </ion-item>
+            <div slot="content">
+              <ion-item
+                v-for="zone in group.zones"
+                :key="zone"
+                button
+                @click="save({ timeZone: zone })"
+              >
+                <ion-label>{{ getTimeZoneLabel(zone) }}</ion-label>
+              </ion-item>
+            </div>
+          </ion-accordion>
+        </ion-accordion-group>
       </div>
     </ion-content>
   </ion-page>
@@ -56,7 +69,8 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
-  IonItem,
+  IonAccordion,
+  IonAccordionGroup,
   IonLabel,
   IonPage,
   IonSearchbar,
@@ -75,13 +89,14 @@ const systemController = new SystemController();
 // (none)
 
 // 4. Interface and types imports
-// (none)
 
 // 5. Main (props, emits)
 // (none)
 
 // 6. Vars and const
-const timeZones = systemController.getAllTimeZonesNames();
+const timeZoneNames = systemController.getTimeZoneNames();
+const timeZoneGroups = systemController.groupTimeZones(timeZoneNames);
+const getTimeZoneLabel = systemController.getTimeZoneLabel;
 const searchResult = ref([] as Array<string>);
 
 // 7. Watch
@@ -97,7 +112,7 @@ const searchResult = ref([] as Array<string>);
 function search(params: { word: string }): void {
   const { word } = params;
   searchResult.value = [];
-  [timeZones][0].names.forEach((element: string) => {
+  timeZoneNames.forEach((element: string) => {
     if (element.toLowerCase().indexOf(word.toLowerCase()) >= 0) {
       searchResult.value.push(element);
     }

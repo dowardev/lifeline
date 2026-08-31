@@ -100,55 +100,50 @@
 
                     <ion-card class="shadow1">
                       <!-- dates -->
-                      <ion-item class="transparent" lines="full">
-                        <ion-textarea
-                          label="Tiempo"
-                          label-placement="floating"
-                          :value="
-                            format(new Date(event.reminders.value.start), 'Pp') +
-                            '\n' +
-                            format(new Date(event.reminders.value.end), 'Pp')
-                          "
-                          @click="
-                            popoverRemindersSegment = 'date-start';
-                            isOpenPopoverReminders = true;
-                          "
-                        ></ion-textarea>
+                      <ion-item
+                        button
+                        class="transparent"
+                        lines="full"
+                        @click="isOpenPopoverTiempo = true"
+                      >
+                        <ion-label>Tiempo</ion-label>
+                        <ion-label slot="end" class="ion-text-wrap">
+                          {{ format(new Date(event.reminders.value.start), 'Pp') }}
+                          <br />
+                          {{ format(new Date(event.reminders.value.end), 'Pp') }}
+                        </ion-label>
                       </ion-item>
 
                       <!-- notifications -->
                       <ion-item
-                        v-if="event.reminders.value.notifications.length > 0"
+                        button
                         class="transparent"
                         lines="full"
+                        @click="isOpenPopoverNotifications = true"
                       >
-                        <ion-textarea
-                          label="Notificaciones"
-                          label-placement="floating"
-                          :value="formatTextNotifications()"
-                          @click="
-                            popoverRemindersSegment = 'reminders';
-                            isOpenPopoverReminders = true;
-                          "
-                        ></ion-textarea>
+                        <ion-label>Notificaciones</ion-label>
+                        <ion-label slot="end" class="ion-text-wrap">
+                          {{ formatTextNotifications() }}
+                        </ion-label>
                       </ion-item>
 
                       <!-- repeat -->
-                      <ion-item v-if="event.reminders.value.repeat" class="transparent">
-                        <ion-textarea
-                          label="Repetir"
-                          label-placement="floating"
-                          :value="formatTextRepeat()"
-                          @click="
-                            popoverRemindersSegment = 'repeats';
-                            isOpenPopoverReminders = true;
-                          "
-                        ></ion-textarea>
+                      <ion-item
+                        v-if="event.reminders.value.repeat"
+                        button
+                        class="transparent"
+                        @click="isOpenPopoverRepeat = true"
+                      >
+                        <ion-label>Repetir</ion-label>
+                        <ion-label slot="end" class="ion-text-wrap">
+                          {{ formatTextRepeat() }}
+                        </ion-label>
                       </ion-item>
 
                       <!-- time zone -->
                       <ion-item
                         class="transparent"
+                        button
                         lines="full"
                         @click="isOpenPopoverTimezones = true"
                       >
@@ -291,29 +286,62 @@
       <!-- popovers -->
       <!-- popover reminders -->
       <ion-popover
-        style="--width: 22rem"
-        :is-open="isOpenPopoverReminders"
+        style="--width: 24rem"
+        :is-open="isOpenPopoverTiempo"
         :backdrop-dismiss="false"
-        @will-dismiss="isOpenPopoverReminders = false"
+        @will-dismiss="isOpenPopoverTiempo = false"
       >
         <RemindersComponent
           :dates="{
             start: event.reminders.value.start,
             end: event.reminders.value.end,
           }"
-          :segment-option="popoverRemindersSegment"
+          :segment-option="'date-start'"
           :notifications="event.reminders.value.notifications"
           :repeat="event.reminders.value.repeat"
           :id-reminders="event.reminders.value.idReminders"
-          @update-data-reminders="
-            event.reminders.value = {
-              start: $event.data.start,
-              end: $event.data.end,
-              notifications: $event.data.remindersChecked,
-              repeat: $event.data.dateRepeat,
-              idReminders: $event.data.idReminders,
-            }
-          "
+          :dates-only="true"
+          @update-data-reminders="handleUpdateReminders($event)"
+        />
+      </ion-popover>
+
+      <ion-popover
+        style="--width: 24rem"
+        :is-open="isOpenPopoverNotifications"
+        :backdrop-dismiss="false"
+        @will-dismiss="isOpenPopoverNotifications = false"
+      >
+        <RemindersComponent
+          :dates="{
+            start: event.reminders.value.start,
+            end: event.reminders.value.end,
+          }"
+          :segment-option="'reminders'"
+          :notifications="event.reminders.value.notifications"
+          :repeat="event.reminders.value.repeat"
+          :id-reminders="event.reminders.value.idReminders"
+          :hide-segment="true"
+          @update-data-reminders="handleUpdateReminders($event)"
+        />
+      </ion-popover>
+
+      <ion-popover
+        style="--width: 24rem"
+        :is-open="isOpenPopoverRepeat"
+        :backdrop-dismiss="false"
+        @will-dismiss="isOpenPopoverRepeat = false"
+      >
+        <RemindersComponent
+          :dates="{
+            start: event.reminders.value.start,
+            end: event.reminders.value.end,
+          }"
+          :segment-option="'repeats'"
+          :notifications="event.reminders.value.notifications"
+          :repeat="event.reminders.value.repeat"
+          :id-reminders="event.reminders.value.idReminders"
+          :hide-segment="true"
+          @update-data-reminders="handleUpdateReminders($event)"
         />
       </ion-popover>
 
@@ -322,6 +350,7 @@
         style="--width: 22rem"
         :is-open="isOpenPopoverTimezones"
         :backdrop-dismiss="false"
+        @will-dismiss="resetTimeZones()"
       >
         <ion-header mode="ios">
           <ion-toolbar>
@@ -337,32 +366,42 @@
             <ion-searchbar
               :debounce="500"
               show-cancel-button="focus"
-              @ion-input="filterZones($event.target.value as string)"
-              @ion-cancel="filteredZones.length = 0"
-              @ion-clear="filteredZones.length = 0"
+              :value="searchTimeZone"
+              @ion-input="searchTimeZone = $event.target.value as string; filterZones(searchTimeZone)"
+              @ion-cancel="clearTimeZones()"
+              @ion-clear="clearTimeZones()"
             ></ion-searchbar>
           </ion-toolbar>
         </ion-header>
 
         <ion-content class="ion-padding">
           <div v-if="filteredZones.length == 0">
-            <ion-item
-              v-for="(timezoneElement, index) in timeZones"
-              :key="index"
-              button
-              @click="selectZone({ zone: timezoneElement as any })"
-              ><ion-label>{{ timezoneElement }}</ion-label></ion-item
-            >
+            <ion-accordion-group>
+              <ion-accordion
+                v-for="group in timeZoneGroups"
+                :key="group.header"
+                :value="group.header"
+              >
+                <ion-item slot="header">
+                  <ion-label>{{ group.header }}</ion-label>
+                </ion-item>
+                <div slot="content">
+                  <ion-item
+                    v-for="zone in group.zones"
+                    :key="zone"
+                    button
+                    @click="selectZone({ zone })"
+                    ><ion-label>{{ getTimeZoneLabel(zone) }}</ion-label></ion-item
+                  >
+                </div>
+              </ion-accordion>
+            </ion-accordion-group>
           </div>
 
           <!-- search time zone -->
           <div v-if="filteredZones.length > 0">
-            <ion-item
-              v-for="(timezoneElement, index) in filteredZones"
-              :key="index"
-              button
-              @click="selectZone({ zone: timezoneElement })"
-              ><ion-label>{{ timezoneElement }}</ion-label></ion-item
+            <ion-item v-for="zone in filteredZones" :key="zone" button @click="selectZone({ zone })"
+              ><ion-label>{{ getTimeZoneLabel(zone) }}</ion-label></ion-item
             >
           </div>
         </ion-content>
@@ -424,7 +463,8 @@ import {
   IonList,
   IonListHeader,
   isPlatform,
-  IonItem,
+  IonAccordion,
+  IonAccordionGroup,
   IonLabel,
   IonModal,
   modalController,
@@ -473,10 +513,15 @@ const props = defineProps({
 const emits = defineEmits(['create', 'update', 'delete']);
 
 // 6. Vars and const
-const isOpenPopoverReminders = ref(false);
-const timeZones = (Intl as any).supportedValuesOf('timeZone').map((timeZone: string) => timeZone);
+const isOpenPopoverTiempo = ref(false);
+const isOpenPopoverNotifications = ref(false);
+const isOpenPopoverRepeat = ref(false);
+const timeZoneNames = systemController.getTimeZoneNames();
+const timeZoneGroups = systemController.groupTimeZones(timeZoneNames);
+const getTimeZoneLabel = systemController.getTimeZoneLabel;
 const isOpenPopoverTimezones = ref(false);
 const filteredZones = ref(Array<string>());
+const searchTimeZone = ref('');
 const showButtonsOptionGuest = ref(-1);
 const emailGuest = ref('');
 const event = {
@@ -546,7 +591,24 @@ const v2$ = useVuelidate(rulesGuest, { emailGuest });
 const inputName = ref(null);
 const inputGuest = ref(null);
 const pageTitle = ref('Agregar evento');
-const popoverRemindersSegment = ref('date-start');
+const handleUpdateReminders = (params: {
+  data: {
+    start: Date;
+    end: Date;
+    remindersChecked: string[];
+    dateRepeat: any;
+    idReminders: any[];
+  };
+}): void => {
+  const { data } = params;
+  event.reminders.value = {
+    start: data.start,
+    end: data.end,
+    notifications: data.remindersChecked,
+    repeat: data.dateRepeat,
+    idReminders: data.idReminders,
+  };
+};
 
 // 7. Watch
 watch(
@@ -616,8 +678,8 @@ async function loadStoredEvents(): Promise<void> {
 }
 
 const filterZones = (query: string): void => {
-  filteredZones.value = timeZones.filter((zone: string) =>
-    zone.toLowerCase().includes(query.toLowerCase()),
+  filteredZones.value = timeZoneNames.filter((name: string) =>
+    name.toLowerCase().includes(query.toLowerCase()),
   );
 };
 
@@ -625,6 +687,16 @@ const selectZone = (params: { zone: string }): void => {
   const zone = params.zone;
   event.timezone.value = zone;
   isOpenPopoverTimezones.value = false;
+};
+
+const clearTimeZones = (): void => {
+  searchTimeZone.value = '';
+  filteredZones.value = [];
+};
+
+const resetTimeZones = (): void => {
+  isOpenPopoverTimezones.value = false;
+  clearTimeZones();
 };
 
 const addGuest = (): void => {

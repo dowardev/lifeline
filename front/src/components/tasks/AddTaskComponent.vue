@@ -337,6 +337,7 @@
         style="--width: 22rem"
         :is-open="isOpenPopoverTimezones"
         :backdrop-dismiss="false"
+        @will-dismiss="resetTimeZones()"
       >
         <ion-header mode="ios">
           <ion-toolbar>
@@ -352,32 +353,46 @@
             <ion-searchbar
               :debounce="500"
               show-cancel-button="focus"
-              @ion-input="filterZones({ query: $event.target.value as string })"
-              @ion-cancel="filteredZones.length = 0"
-              @ion-clear="filteredZones.length = 0"
+              :value="searchTimeZone"
+              @ion-input="searchTimeZone = $event.target.value as string; filterZones({ query: searchTimeZone })"
+              @ion-cancel="clearTimeZones()"
+              @ion-clear="clearTimeZones()"
             ></ion-searchbar>
           </ion-toolbar>
         </ion-header>
 
         <ion-content class="ion-padding">
           <div v-if="filteredZones.length == 0">
-            <ion-item
-              v-for="(timezoneElement, index) in timeZones"
-              :key="index"
-              button
-              @click="selectZone({ zone: timezoneElement as any })"
-              ><ion-label>{{ timezoneElement }}</ion-label></ion-item
-            >
+            <ion-accordion-group>
+              <ion-accordion
+                v-for="group in timeZoneGroups"
+                :key="group.header"
+                :value="group.header"
+              >
+                <ion-item slot="header">
+                  <ion-label>{{ group.header }}</ion-label>
+                </ion-item>
+                <div slot="content">
+                  <ion-item
+                    v-for="zone in group.zones"
+                    :key="zone"
+                    button
+                    @click="selectZone({ zone })"
+                    ><ion-label>{{ getTimeZoneLabel(zone) }}</ion-label></ion-item
+                  >
+                </div>
+              </ion-accordion>
+            </ion-accordion-group>
           </div>
 
           <!-- search time zone -->
           <div v-if="filteredZones.length > 0">
             <ion-item
-              v-for="(timezoneElement, index) in filteredZones"
-              :key="index"
+              v-for="zone in filteredZones"
+              :key="zone"
               button
-              @click="selectZone({ zone: timezoneElement })"
-              ><ion-label>{{ timezoneElement }}</ion-label></ion-item
+              @click="selectZone({ zone })"
+              ><ion-label>{{ getTimeZoneLabel(zone) }}</ion-label></ion-item
             >
           </div>
         </ion-content>
@@ -396,7 +411,8 @@ import {
   IonTitle,
   IonToolbar,
   IonInput,
-  IonItem,
+  IonAccordion,
+  IonAccordionGroup,
   IonTextarea,
   IonPopover,
   modalController,
@@ -460,9 +476,10 @@ const task = {
   subtasks: ref(Array<{ name: string; checked: boolean }>()),
 };
 const filteredZones = ref(Array<string>());
-const timeZones = (Intl as any)
-  .supportedValuesOf("timeZone")
-  .map((timeZone: string) => timeZone);
+const searchTimeZone = ref('');
+const timeZoneNames = systemController.getTimeZoneNames();
+const timeZoneGroups = systemController.groupTimeZones(timeZoneNames);
+const getTimeZoneLabel = systemController.getTimeZoneLabel;
 const emailGuest = ref("");
 const showButtonsOptionGuest = ref(-1);
 const subTask = ref("");
@@ -570,8 +587,8 @@ function translateRepeat(params: { repeat: string }): string {
 
 function filterZones(params: { query: string }): void {
   const { query } = params;
-  filteredZones.value = timeZones.filter((zone: string) =>
-    zone.toLowerCase().includes(query.toLowerCase()),
+  filteredZones.value = timeZoneNames.filter((name: string) =>
+    name.toLowerCase().includes(query.toLowerCase()),
   );
 }
 
@@ -579,6 +596,16 @@ function selectZone(params: { zone: string }): void {
   const zone = params.zone;
   task.timezone.value = zone;
   isOpenPopoverTimezones.value = false;
+}
+
+function clearTimeZones(): void {
+  searchTimeZone.value = '';
+  filteredZones.value = [];
+}
+
+function resetTimeZones(): void {
+  isOpenPopoverTimezones.value = false;
+  clearTimeZones();
 }
 
 function removeGuest(params: { index: number }): void {
