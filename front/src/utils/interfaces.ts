@@ -130,6 +130,16 @@ export interface NewEvent {
   description: string;
   availability: string;
 }
+export interface TimeZoneOption {
+  name: string;
+  label: string;
+}
+
+export interface TimeZoneGroup {
+  header: string;
+  zones: string[];
+}
+
 export interface GetCalendarsResponse {
   id: string;
   name: string;

@@ -22,7 +22,7 @@
       </ion-buttons>
     </ion-toolbar>
 
-    <ion-toolbar>
+    <ion-toolbar v-if="!hideSegment">
       <!-- segment buttons -->
       <ion-segment
         v-model="reminderSegment"
@@ -32,15 +32,15 @@
       >
         <ion-segment-button value="date-start">Inicio</ion-segment-button>
         <ion-segment-button value="date-end">Final</ion-segment-button>
-        <ion-segment-button value="reminders">Recordatorios</ion-segment-button>
-        <ion-segment-button value="repeats">Repetir</ion-segment-button>
+        <ion-segment-button v-if="!datesOnly" value="reminders">Recordatorios</ion-segment-button>
+        <ion-segment-button v-if="!datesOnly" value="repeats">Repetir</ion-segment-button>
       </ion-segment>
     </ion-toolbar>
   </ion-header>
 
-  <ion-content :fullscreen="true">
+  <ion-content>
     <!-- date start -->
-    <section v-if="reminderSegment == 'date-start'" class="ion-padding">
+    <section v-if="showDateStart" class="ion-padding">
       <div class="center">
         <ion-datetime
           ref="datetimeStart"
@@ -72,7 +72,7 @@
     </section>
 
     <!-- date end -->
-    <section v-if="reminderSegment == 'date-end'" class="ion-padding">
+    <section v-if="showDateEnd" class="ion-padding">
       <div style="center">
         <ion-datetime
           ref="datetimeEnd"
@@ -104,9 +104,8 @@
 
     <!-- notifications -->
     <section
-      v-if="reminderSegment == 'reminders'"
+      v-if="showReminders"
       class="ion-padding"
-      style="overflow: scroll; height: 70vh"
     >
       <ion-item v-for="reminder in notificationsData" :key="reminder.name">
         <ion-checkbox
@@ -120,9 +119,8 @@
 
     <!-- repeat component -->
     <section
-      v-if="reminderSegment == 'repeats'"
+      v-if="showRepeats"
       class="ion-padding"
-      style="overflow: scroll; height: 70vh"
     >
       <RepeatsComponent :data="dataRepeat" @update-data="dataRepeat = $event" />
     </section>
@@ -184,6 +182,8 @@ const props = defineProps({
     },
   },
   idReminders: { type: Array, default: () => [] },
+  hideSegment: { type: Boolean, default: false },
+  datesOnly: { type: Boolean, default: false },
 });
 
 const emitEvent = defineEmits(["updateDataReminders"]);
@@ -269,7 +269,27 @@ const dataRepeat = ref({ type: "daily", frecuency: 1 } as {
 });
 const currentLocale = navigator.language;
 
-// 7. Watch
+// 7. Computed
+const endDate = computed(() => {
+  return dates.value.end;
+});
+const startDate = computed(() => {
+  return dates.value.start;
+});
+const showDateStart = computed(
+  () => (props.hideSegment ? props.segmentOption === 'date-start' : reminderSegment.value === 'date-start')
+);
+const showDateEnd = computed(
+  () => (props.hideSegment ? ['date-start', 'date-end'].includes(props.segmentOption) : reminderSegment.value === 'date-end')
+);
+const showReminders = computed(
+  () => (props.hideSegment ? props.segmentOption === 'reminders' : reminderSegment.value === 'reminders')
+);
+const showRepeats = computed(
+  () => (props.hideSegment ? props.segmentOption === 'repeats' : reminderSegment.value === 'repeats')
+);
+
+// 8. Watch
 watch(startDate, (newValue) => {
   const dateStart = new Date(newValue);
   const dateEnd = new Date(dates.value.end);
@@ -279,14 +299,6 @@ watch(endDate, (newValue) => {
   const dateStart = new Date(dates.value.start);
   const dateEnd = new Date(newValue);
   if (dateEnd < dateStart) dates.value.start = dateEnd;
-});
-
-// 8. Computed
-const endDate = computed(() => {
-  return dates.value.end;
-});
-const startDate = computed(() => {
-  return dates.value.start;
 });
 
 // 9. OnMounted

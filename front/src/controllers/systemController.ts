@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
+import systemService from '@/services/system'
 import { storage } from '@/main'
 import { ViewMode } from '@/utils/types'
 import { Days, EventReminderNotification, EventReminderRepeat, Months } from '@/utils/interfaces'
 import { toastController } from '@ionic/vue'
+import type { TimeZoneGroup, TimeZoneOption } from '@/utils/interfaces'
 
 export class SystemController {
   async openToast(params: { message: string; color?: string; duration?: number }): Promise<void> {
@@ -43,11 +45,23 @@ export class SystemController {
   }
 
   getAllTimeZonesNames(): { names: string[] } {
-    try {
-      return { names: (Intl as any).supportedValuesOf('timeZone') || [] }
-    } catch {
-      return { names: [] }
-    }
+    return systemService.getAllTimeZonesNames()
+  }
+
+  getAllTimeZones(): TimeZoneOption[] {
+    return systemService.getAllTimeZones()
+  }
+
+  getTimeZoneNames(): string[] {
+    return systemService.getTimeZoneNames()
+  }
+
+  getTimeZoneLabel(name: string): string {
+    return systemService.getTimeZoneLabel(name)
+  }
+
+  groupTimeZones(zones: string[]): TimeZoneGroup[] {
+    return systemService.groupTimeZones(zones)
   }
 
   async copyToClipboard(params: { text: string }): Promise<boolean> {
