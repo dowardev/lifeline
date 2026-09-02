@@ -39,6 +39,7 @@ export interface EventItem {
   guests?: string
   description?: string
   availability?: string
+  id_reminders?: number[]
 }
 
 export const useEventStore = defineStore('event', () => {

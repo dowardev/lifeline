@@ -57,12 +57,22 @@
                           autocomplete="on"
                           autocorrect="on"
                           type="text"
-                          :error-text="v$.event.name.$errors[0]?.$message as string"
-                          :class="[v$.event.name.$errors.length == 0 ? 'ion-valid' : 'ion-invalid']"
+                          :error-text="
+                            v$.event.name.$errors[0]?.$message as string
+                          "
+                          :class="[
+                            v$.event.name.$errors.length == 0
+                              ? 'ion-valid'
+                              : 'ion-invalid',
+                          ]"
                           :value="event.name.value"
-                          @ion-input="event.name.value = $event.target.value as string"
+                          @ion-input="
+                            event.name.value = $event.detail.value as string
+                          "
                           @ion-focus="
-                            ($refs.inputName as any).$el.classList.add('ion-touched');
+                            ($refs.inputName as any).$el.classList.add(
+                              'ion-touched',
+                            );
                             v$.event.name.$touch();
                           "
                         ></ion-input>
@@ -79,7 +89,10 @@
                           autocorrect="on"
                           type="text"
                           :value="event.description.value"
-                          @ion-input="event.description.value = $event.target.value as string"
+                          @ion-input="
+                            event.description.value = $event.target
+                              .value as string
+                          "
                         ></ion-textarea>
                       </ion-item>
                     </ion-card>
@@ -93,7 +106,11 @@
                   <ion-list>
                     <ion-list-header>
                       <ion-label>Tiempo</ion-label>
-                      <ion-button v-if="isMobile" fill="clear" @click="showMobileCalendar = true">
+                      <ion-button
+                        v-if="isMobile"
+                        fill="clear"
+                        @click="showMobileCalendar = true"
+                      >
                         Disponibilidad
                       </ion-button>
                     </ion-list-header>
@@ -108,9 +125,13 @@
                       >
                         <ion-label>Tiempo</ion-label>
                         <ion-label slot="end" class="ion-text-wrap">
-                          {{ format(new Date(event.reminders.value.start), 'Pp') }}
+                          {{
+                            format(new Date(event.reminders.value.start), "Pp")
+                          }}
                           <br />
-                          {{ format(new Date(event.reminders.value.end), 'Pp') }}
+                          {{
+                            format(new Date(event.reminders.value.end), "Pp")
+                          }}
                         </ion-label>
                       </ion-item>
 
@@ -178,17 +199,27 @@
                               autocomplete="on"
                               autocorrect="on"
                               type="email"
-                              :error-text="v2$.emailGuest.$errors[0]?.$message as string"
+                              :error-text="
+                                v2$.emailGuest.$errors[0]?.$message as string
+                              "
                               :class="[
-                                v2$.emailGuest.$errors.length == 0 ? 'ion-valid' : 'ion-invalid',
+                                v2$.emailGuest.$errors.length == 0
+                                  ? 'ion-valid'
+                                  : 'ion-invalid',
                               ]"
                               :value="emailGuest"
-                              @ion-input="emailGuest = $event.target.value as string"
+                              @ion-input="
+                                emailGuest = $event.detail.value as string
+                              "
                               @ion-focus="
-                                ($refs.inputGuest as any).$el.classList.add('ion-touched')
+                                ($refs.inputGuest as any).$el.classList.add(
+                                  'ion-touched',
+                                )
                               "
                               @ion-blur="
-                                ($refs.inputGuest as any).$el.classList.remove('ion-touched');
+                                ($refs.inputGuest as any).$el.classList.remove(
+                                  'ion-touched',
+                                );
                                 v2$.emailGuest.$touch();
                               "
                             ></ion-input>
@@ -196,8 +227,17 @@
                         </div>
 
                         <div>
-                          <div style="display: flex; align-items: center; height: 50px">
-                            <ion-button fill="clear" :disabled="v2$.$invalid" @click="addGuest()"
+                          <div
+                            style="
+                              display: flex;
+                              align-items: center;
+                              height: 50px;
+                            "
+                          >
+                            <ion-button
+                              fill="clear"
+                              :disabled="emailGuest.trim() === ''"
+                              @click="addGuest()"
                               ><ion-icon :icon="addOutline"></ion-icon
                             ></ion-button>
                           </div>
@@ -227,11 +267,20 @@
                           ok-text="Confirmar"
                           cancel-text="Cancelar"
                           :value="event.availability.value"
-                          :interface="isPlatform('desktop') ? 'popover' : 'alert'"
-                          @ion-change="event.availability.value = $event.target.value as string"
+                          :interface="
+                            isPlatform('desktop') ? 'popover' : 'alert'
+                          "
+                          @ion-change="
+                            event.availability.value = $event.target
+                              .value as string
+                          "
                         >
-                          <ion-select-option value="available">Disponible</ion-select-option>
-                          <ion-select-option value="unavailable">Ocupado</ion-select-option>
+                          <ion-select-option value="available"
+                            >Disponible</ion-select-option
+                          >
+                          <ion-select-option value="unavailable"
+                            >Ocupado</ion-select-option
+                          >
                         </ion-select>
                       </ion-item>
                     </ion-card>
@@ -258,13 +307,19 @@
 
             <div class="center ion-padding-bottom">
               <ion-item lines="none">
-                <ion-button fill="clear" @click="currentDate = sub(currentDate, { days: 1 })"
+                <ion-button
+                  fill="clear"
+                  @click="currentDate = sub(currentDate, { days: 1 })"
                   ><ion-icon :icon="arrowBackOutline"></ion-icon
                 ></ion-button>
 
-                <ion-datetime-button datetime="datetime-availability"></ion-datetime-button>
+                <ion-datetime-button
+                  datetime="datetime-availability"
+                ></ion-datetime-button>
 
-                <ion-button fill="clear" @click="currentDate = add(currentDate, { days: 1 })"
+                <ion-button
+                  fill="clear"
+                  @click="currentDate = add(currentDate, { days: 1 })"
                   ><ion-icon :icon="arrowForwardOutline"></ion-icon
                 ></ion-button>
               </ion-item>
@@ -367,7 +422,10 @@
               :debounce="500"
               show-cancel-button="focus"
               :value="searchTimeZone"
-              @ion-input="searchTimeZone = $event.target.value as string; filterZones(searchTimeZone)"
+              @ion-input="
+                searchTimeZone = $event.detail.value as string;
+                filterZones(searchTimeZone);
+              "
               @ion-cancel="clearTimeZones()"
               @ion-clear="clearTimeZones()"
             ></ion-searchbar>
@@ -391,7 +449,9 @@
                     :key="zone"
                     button
                     @click="selectZone({ zone })"
-                    ><ion-label>{{ getTimeZoneLabel(zone) }}</ion-label></ion-item
+                    ><ion-label>{{
+                      getTimeZoneLabel(zone)
+                    }}</ion-label></ion-item
                   >
                 </div>
               </ion-accordion>
@@ -400,7 +460,11 @@
 
           <!-- search time zone -->
           <div v-if="filteredZones.length > 0">
-            <ion-item v-for="zone in filteredZones" :key="zone" button @click="selectZone({ zone })"
+            <ion-item
+              v-for="zone in filteredZones"
+              :key="zone"
+              button
+              @click="selectZone({ zone })"
               ><ion-label>{{ getTimeZoneLabel(zone) }}</ion-label></ion-item
             >
           </div>
@@ -411,7 +475,12 @@
       <!-- modals -->
       <ion-modal ref="modalDatetimeAvailability" :keep-contents-mounted="true">
         <ion-header :translucent="true" mode="ios" class="ion-no-border">
-          <ion-toolbar style="--background: var(--ion-background-light-color); --opacity: 1">
+          <ion-toolbar
+            style="
+              --background: var(--ion-background-light-color);
+              --opacity: 1;
+            "
+          >
             <ion-buttons slot="start">
               <ion-button @click="closeModalDatetimeAvailability()"
                 ><ion-icon :icon="closeOutline"></ion-icon
@@ -471,9 +540,9 @@ import {
   IonDatetime,
   IonDatetimeButton,
   IonIcon,
-} from '@ionic/vue';
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { add, format, sub } from 'date-fns';
+} from "@ionic/vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { add, format, sub } from "date-fns";
 import {
   addOutline,
   arrowBackOutline,
@@ -482,26 +551,30 @@ import {
   saveOutline,
   trashOutline,
   todayOutline,
-} from 'ionicons/icons';
-import useVuelidate from '@vuelidate/core';
-import { email, helpers, maxLength, required } from '@vuelidate/validators';
-import { db } from '@/db';
+} from "ionicons/icons";
+import useVuelidate from "@vuelidate/core";
+import { email, helpers, maxLength, required } from "@vuelidate/validators";
+import { db } from "@/db";
+import {
+  translateReminderOffset,
+  normalizeOffsetCodes,
+} from "@/utils/reminders";
 
 // 2. Controllers / Composables
-import { EventController } from '@/controllers/eventController';
-import { SystemController } from '@/controllers/systemController';
-import { CalendarController } from '@/controllers/calendarController';
+import { EventController } from "@/controllers/eventController";
+import { SystemController } from "@/controllers/systemController";
+import { CalendarController } from "@/controllers/calendarController";
 const eventController = new EventController();
 const systemController = new SystemController();
 const calendarController = new CalendarController();
 
 // 3. Components
-import FullyCalendarVue3 from '@/components/calendar/fullcalendar/FullyCalendarVue3.vue';
-import RemindersComponent from '../reminders/RemindersComponent.vue';
+import FullyCalendarVue3 from "@/components/calendar/fullcalendar/FullyCalendarVue3.vue";
+import RemindersComponent from "../reminders/RemindersComponent.vue";
 
 // 4. Interface and types imports
-import type { EventReminderNotification, EventReminderRepeat, Event } from '@/utils/interfaces';
-import type { EventItem } from '@/store/eventStore';
+import type { EventReminderRepeat, Event } from "@/utils/interfaces";
+import type { EventItem } from "@/store/eventStore";
 
 // 5. Main (props, emits)
 const props = defineProps({
@@ -510,7 +583,7 @@ const props = defineProps({
   initialEndDate: { type: Object as () => Date | null, default: () => null },
 });
 
-const emits = defineEmits(['create', 'update', 'delete']);
+const emits = defineEmits(["create", "update", "delete"]);
 
 // 6. Vars and const
 const isOpenPopoverTiempo = ref(false);
@@ -521,26 +594,26 @@ const timeZoneGroups = systemController.groupTimeZones(timeZoneNames);
 const getTimeZoneLabel = systemController.getTimeZoneLabel;
 const isOpenPopoverTimezones = ref(false);
 const filteredZones = ref(Array<string>());
-const searchTimeZone = ref('');
+const searchTimeZone = ref("");
 const showButtonsOptionGuest = ref(-1);
-const emailGuest = ref('');
+const emailGuest = ref("");
 const event = {
-  name: ref(''),
-  description: ref(''),
+  name: ref(""),
+  description: ref(""),
   reminders: ref({
     start: new Date() as Date,
-    end: new Date() as Date,
+    end: new Date(Date.now() + 60 * 60 * 1000) as Date,
     notifications: Array<string>(),
-    repeat: { type: 'daily', frecuency: 1 } as {
+    repeat: { type: "daily", frecuency: 1 } as {
       frecuency: number;
-      type: 'daily' | 'weekly' | 'monthly' | 'annually';
+      type: "daily" | "weekly" | "monthly" | "annually";
       daysWeek?: string[];
     },
-    idReminders: [],
+    idReminders: [] as number[],
   }),
   timezone: ref(Intl.DateTimeFormat().resolvedOptions().timeZone),
   guests: ref(Array<{ email: string }>()),
-  availability: ref('available'),
+  availability: ref("available"),
 };
 
 const currentDate = ref(
@@ -549,19 +622,20 @@ const currentDate = ref(
   }) ?? new Date(),
 );
 const modalDatetimeAvailability = ref();
-const closeModalDatetimeAvailability = (): void => modalDatetimeAvailability.value.$el.dismiss();
+const closeModalDatetimeAvailability = (): void =>
+  modalDatetimeAvailability.value.$el.dismiss();
 const isMobile = ref(window.innerWidth < 768);
 const showMobileCalendar = ref(false);
 const calendarEvents = computed<EventItem[]>(() => eventController.getEvents());
 const messageError = {
-  email: 'Correo electrónico no valido',
-  required: 'Campo requerido',
+  email: "Correo electrónico no valido",
+  required: "Campo requerido",
 };
 const rules = {
   event: {
     name: {
       required: helpers.withMessage(messageError.required, required),
-      maxLength: helpers.withMessage('Máximo 255 caracteres', maxLength(255)),
+      maxLength: helpers.withMessage("Máximo 255 caracteres", maxLength(255)),
     },
     reminders: {
       start: {
@@ -571,9 +645,9 @@ const rules = {
         required: helpers.withMessage(messageError.required, required),
       },
     },
-    timeZone: {
+    timezone: {
       required: helpers.withMessage(messageError.required, required),
-      maxLength: helpers.withMessage('Máximo 100 caracteres', maxLength(100)),
+      maxLength: helpers.withMessage("Máximo 100 caracteres", maxLength(100)),
     },
     availability: {
       required: helpers.withMessage(messageError.required, required),
@@ -590,7 +664,7 @@ const v$ = useVuelidate(rules, { event });
 const v2$ = useVuelidate(rulesGuest, { emailGuest });
 const inputName = ref(null);
 const inputGuest = ref(null);
-const pageTitle = ref('Agregar evento');
+const pageTitle = ref("Agregar evento");
 const handleUpdateReminders = (params: {
   data: {
     start: Date;
@@ -614,7 +688,7 @@ const handleUpdateReminders = (params: {
 watch(
   () => props.eventData,
   (val) => {
-    console.log('[AdminEventComponent] eventData received:', val);
+    console.log("[AdminEventComponent] eventData received:", val);
     if (val) setEvent({ event: val });
   },
   { immediate: true },
@@ -627,7 +701,7 @@ watch(
       event.reminders.value.start = val;
       event.reminders.value.end = props.initialEndDate
         ? props.initialEndDate
-        : new Date(val.getTime() + 30 * 60 * 1000);
+        : new Date(val.getTime() + 60 * 60 * 1000);
     }
   },
   { immediate: true },
@@ -636,7 +710,7 @@ watch(
 watch(showMobileCalendar, (val) => {
   if (val) {
     nextTick(() => {
-      window.dispatchEvent(new Event('resize'));
+      window.dispatchEvent(new Event("resize"));
     });
   }
 });
@@ -647,16 +721,16 @@ watch(showMobileCalendar, (val) => {
 // 9. OnMounted
 onMounted(async () => {
   isMobile.value = window.innerWidth < 768;
-  window.addEventListener('resize', onResize);
+  window.addEventListener("resize", onResize);
   if (props.eventData) {
-    pageTitle.value = 'Actualizar evento';
+    pageTitle.value = "Actualizar evento";
     setEvent({ event: props.eventData });
   }
   await loadStoredEvents();
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', onResize);
+  window.removeEventListener("resize", onResize);
 });
 
 // 10. Functions (named parameters pattern)
@@ -673,7 +747,7 @@ async function loadStoredEvents(): Promise<void> {
       eventController.setEvents({ events: localEvents as EventItem[] });
     }
   } catch (e) {
-    console.warn('[AdminEventComponent] No events in IndexedDB:', e);
+    console.warn("[AdminEventComponent] No events in IndexedDB:", e);
   }
 }
 
@@ -690,7 +764,7 @@ const selectZone = (params: { zone: string }): void => {
 };
 
 const clearTimeZones = (): void => {
-  searchTimeZone.value = '';
+  searchTimeZone.value = "";
   filteredZones.value = [];
 };
 
@@ -700,9 +774,11 @@ const resetTimeZones = (): void => {
 };
 
 const addGuest = (): void => {
-  const email = emailGuest.value;
+  const email = emailGuest.value.trim();
+  if (!email) return;
+  if (!Array.isArray(event.guests.value)) event.guests.value = [];
   event.guests.value.push({ email });
-  emailGuest.value = '';
+  emailGuest.value = "";
 };
 
 const removeGuest = (params: { index: number }): void => {
@@ -719,7 +795,7 @@ async function save(): Promise<void> {
     eventData.reminders = {
       start: new Date(event.reminders.value.start),
       end: new Date(event.reminders.value.end),
-      notifications: event.reminders.value.notifications,
+      notifications: normalizeOffsetCodes(event.reminders.value.notifications),
       repeat: event.reminders.value.repeat,
       idReminders: event.reminders.value.idReminders,
     };
@@ -728,9 +804,9 @@ async function save(): Promise<void> {
     eventData.timezone = event.timezone.value;
 
     if (!props.eventData) {
-      emits('create', { data: { event: eventData } });
+      emits("create", { data: { event: eventData } });
     } else {
-      emits('update', { data: { event: eventData } });
+      emits("update", { data: { event: eventData } });
     }
     closePage();
   } catch (error) {
@@ -739,12 +815,12 @@ async function save(): Promise<void> {
 }
 
 function formatTextNotifications(): string {
-  let text = '';
+  let text = "";
   const len = event.reminders.value.notifications.length - 1;
   let index = 0;
 
   event.reminders.value.notifications.forEach((notification) => {
-    if (len > index) text += translateNotifications({ notification }) + ', ';
+    if (len > index) text += translateNotifications({ notification }) + ", ";
     else text += translateNotifications({ notification });
     index++;
   });
@@ -758,14 +834,14 @@ function formatTextRepeat(): string {
   });
   const len = (event.reminders.value.repeat.daysWeek?.length ?? 0) - 1;
   let index = 0;
-  let days = '';
+  let days = "";
 
   event.reminders.value.repeat.daysWeek?.forEach((day) => {
-    if (len > index) days += translateDaysWeekRepear({ day }) + ', ';
+    if (len > index) days += translateDaysWeekRepear({ day }) + ", ";
     else days += translateDaysWeekRepear({ day });
     index++;
   });
-  if (days != '') text = `${text}(${days})`;
+  if (days != "") text = `${text}(${days})`;
 
   return text;
 }
@@ -791,12 +867,9 @@ function translateDaysWeekRepear(params: { day: string }): string {
 }
 
 function translateNotifications(params: { notification: string }): string {
-  const notification = params.notification as keyof EventReminderNotification;
+  const notification = params.notification;
 
-  const result = systemController.translateEventReminderNotification({
-    notificationName: notification,
-  });
-  return result;
+  return translateReminderOffset(notification);
 }
 
 async function closePage(): Promise<void> {
@@ -805,7 +878,8 @@ async function closePage(): Promise<void> {
 
 function onCalendarDateClick(params: { date: Date; endDate?: Date }): void {
   event.reminders.value.start = params.date;
-  event.reminders.value.end = params.endDate || new Date(params.date.getTime() + 30 * 60 * 1000);
+  event.reminders.value.end =
+    params.endDate || new Date(params.date.getTime() + 60 * 60 * 1000);
   showMobileCalendar.value = false;
 }
 
@@ -815,16 +889,18 @@ function setEvent(params: { event: Event }): void {
   event.description.value = eventData.description;
   event.reminders.value.start = eventData.reminders!.start;
   event.reminders.value.end = eventData.reminders!.end;
-  event.reminders.value.notifications = eventData.reminders!.notifications ?? [];
+  event.reminders.value.notifications =
+    eventData.reminders!.notifications ?? [];
+  event.reminders.value.idReminders = eventData.reminders!.idReminders ?? [];
   event.reminders.value.repeat = eventData.reminders!.repeat!;
   event.timezone.value = eventData.timezone!;
-  event.guests.value = eventData.guests!;
+  event.guests.value = Array.isArray(eventData.guests) ? eventData.guests : [];
   event.availability.value = eventData.availability!;
 }
 
 async function deleteEvent(): Promise<void> {
   const { id } = props.eventData;
-  emits('delete', { data: { id } });
+  emits("delete", { data: { id } });
   await closePage();
 }
 </script>

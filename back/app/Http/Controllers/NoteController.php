@@ -8,6 +8,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\NoteResource;
 use App\Models\Document;
 use App\Models\Note;
+use App\Support\ReminderOffsets;
 use Illuminate\Http\Request;
 
 class NoteController extends Controller
@@ -35,6 +36,10 @@ class NoteController extends Controller
             'content' => 'nullable|string',
             'document_id' => 'nullable|integer|exists:documents,id',
             'reminder' => 'nullable|date',
+            'notifications' => 'nullable|array',
+            'notifications.*' => 'string',
+            'id_reminders' => 'nullable|array',
+            'id_reminders.*' => 'integer',
         ]);
 
         if ($request->document_id) {
@@ -46,7 +51,10 @@ class NoteController extends Controller
             }
         }
 
-        $note = new Note($request->only(['title', 'content', 'document_id', 'reminder']));
+        $note = new Note($request->only(['title', 'content', 'document_id', 'reminder', 'notifications', 'id_reminders']));
+        if ($request->notifications !== null) {
+            $note->notifications = ReminderOffsets::normalize($request->notifications ?? []);
+        }
         $note->user_id = $request->user()->id;
         $note->save();
 
@@ -61,6 +69,10 @@ class NoteController extends Controller
             'content' => 'nullable|string',
             'document_id' => 'nullable|integer|exists:documents,id',
             'reminder' => 'nullable|date',
+            'notifications' => 'nullable|array',
+            'notifications.*' => 'string',
+            'id_reminders' => 'nullable|array',
+            'id_reminders.*' => 'integer',
         ]);
 
         if ($request->document_id) {
@@ -72,7 +84,11 @@ class NoteController extends Controller
             }
         }
 
-        $note->update($request->only(['title', 'content', 'document_id', 'reminder']));
+        $note->update($request->only(['title', 'content', 'document_id', 'reminder', 'notifications', 'id_reminders']));
+        if ($request->has('notifications') && $request->notifications !== null) {
+            $note->notifications = ReminderOffsets::normalize($request->notifications ?? []);
+            $note->save();
+        }
 
         return response()->json(['note' => new NoteResource($note)]);
     }

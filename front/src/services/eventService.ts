@@ -13,12 +13,13 @@ export const eventService = {
     dateStart: string
     dateEnd?: string
     calendar_id?: number
-    notifications?: string
+    notifications?: string[]
     repeat?: string
     timeZone?: string
-    guests?: string
+    guests?: string[]
     description?: string
     availability?: string
+    id_reminders?: number[]
   }): Promise<unknown> {
     return apiClient.executeMutation({ url: '/events', data: params })
   },
@@ -28,12 +29,13 @@ export const eventService = {
     name?: string
     dateStart?: string
     dateEnd?: string
-    notifications?: string
+    notifications?: string[]
     repeat?: string
     timeZone?: string
-    guests?: string
+    guests?: string[]
     description?: string
     availability?: string
+    id_reminders?: number[]
   }): Promise<unknown> {
     const { id, ...data } = params
     return apiClient.executeMutation({ url: `/events/${id}`, data, method: 'PUT' })

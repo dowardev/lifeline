@@ -11,6 +11,8 @@ export interface NoteItem {
   title: string
   content?: string
   reminder?: string
+  notifications?: string[]
+  id_reminders?: number[]
 }
 
 export const useNoteStore = defineStore('note', () => {

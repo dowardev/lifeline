@@ -15,10 +15,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content
-      :scroll-events="true"
-      @ion-scroll="handleScroll"
-    >
+    <ion-content :scroll-events="true" @ion-scroll="handleScroll">
       <ion-grid>
         <ion-row class="ion-justify-content-center">
           <ion-col size="12" size-md="10" size-lg="8" size-xl="6">
@@ -37,7 +34,9 @@
                         :fill="positionScroll > 10 ? 'outline' : 'solid'"
                         :value="inputTaskValue"
                         label-placement="floating"
-                        @ion-input="inputTaskValue = $event.detail.value as string"
+                        @ion-input="
+                          inputTaskValue = $event.detail.value as string
+                        "
                       ></ion-input>
                     </div>
 
@@ -61,8 +60,14 @@
                     <ion-card-content>
                       <ion-row>
                         <ion-col size-xs="12" size-md="9" size-lg="12">
-                          <ion-item lines="none" style="--background: transparent">
-                            <ion-select interface="popover" :value="listSelected">
+                          <ion-item
+                            lines="none"
+                            style="--background: transparent"
+                          >
+                            <ion-select
+                              interface="popover"
+                              :value="listSelected"
+                            >
                               <ion-select-option value="tray"
                                 >Bandeja de entrada</ion-select-option
                               >
@@ -76,7 +81,8 @@
                               <ion-button
                                 :fill="viewMode == 'list' ? 'clear' : 'solid'"
                                 @click="
-                                  viewMode = viewMode == 'list' ? 'kanban' : 'list';
+                                  viewMode =
+                                    viewMode == 'list' ? 'kanban' : 'list';
                                   setTasksViewMode({ viewMode });
                                 "
                                 ><ion-icon :icon="albumsOutline"></ion-icon
@@ -94,7 +100,9 @@
                             :task-data="taskController.getTasks()"
                             @update="updateTask({ idTask: $event.idTask })"
                             @remove="removeTask({ id: $event.idTask })"
-                            @toggle-check="toggleCheckTask({ id: $event.idTask })"
+                            @toggle-check="
+                              toggleCheckTask({ id: $event.idTask })
+                            "
                           />
                         </ion-col>
                       </ion-row>
@@ -106,7 +114,9 @@
                             :task-data="taskController.getTasks()"
                             @update="updateTask({ idTask: $event.idTask })"
                             @delete="removeTask({ id: $event.idTask })"
-                            @toggle-check="toggleCheckTask({ id: $event.idTask })"
+                            @toggle-check="
+                              toggleCheckTask({ id: $event.idTask })
+                            "
                             @kanban-update="
                               kanbanUpdate({
                                 columnName: $event.columnName,
@@ -143,7 +153,9 @@
         :is-open="isOpenModalUpdateTask"
         @did-dismiss="isOpenModalUpdateTask = false"
       >
-        <AddTaskComponent :task-data="taskController.getTask({ id: idTask }) ?? undefined" />
+        <AddTaskComponent
+          :task-data="taskController.getTask({ id: idTask }) ?? undefined"
+        />
       </ion-modal>
     </ion-content>
   </ion-page>
@@ -170,6 +182,7 @@ import { onMounted, ref } from "vue";
 // controllers
 import { TaskController } from "@/controllers/taskController";
 import { SystemController } from "@/controllers/systemController";
+import { useReminder } from "@/composables/useReminder";
 const taskController = new TaskController();
 const systemController = new SystemController();
 
@@ -208,6 +221,12 @@ async function addTask(params: { name: string }): Promise<void> {
 
 async function removeTask(params: { id: string }): Promise<void> {
   const { id } = params;
+  const task = taskController.getTask({ id });
+  try {
+    await useReminder().cancelTaskReminders({ ids: task?.id_reminders ?? [] });
+  } catch (error) {
+    console.error("[TasksPage] cancelTaskReminders best-effort:", error);
+  }
   await taskController.deleteTask({ id: Number(id) });
 }
 
@@ -223,7 +242,7 @@ function toggleCheckTask(params: { id: string }): void {
   if (!task) return;
 
   const newChecked = !task.checked;
-  const newStatus = newChecked ? 'completed' : 'pending';
+  const newStatus = newChecked ? "completed" : "pending";
   taskController.updateTaskStatus({ id: task.id, status: newStatus });
 }
 
@@ -243,13 +262,13 @@ async function kanbanUpdate(params: {
 }): Promise<void> {
   const { id, columnName, position } = params;
   const columnToStatus: Record<string, string> = {
-    pending: 'pending',
-    progress: 'in_progress',
-    finalized: 'completed',
+    pending: "pending",
+    progress: "in_progress",
+    finalized: "completed",
   };
   taskController.updateTask({
     id: Number(id),
-    status: columnToStatus[columnName] ?? 'pending',
+    status: columnToStatus[columnName] ?? "pending",
     order: position,
   });
 }

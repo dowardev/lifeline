@@ -46,7 +46,7 @@
                       : 'ion-invalid',
                   ]"
                   :value="task.name.value"
-                  @ion-input="task.name.value = $event.target.value as string"
+                  @ion-input="task.name.value = $event.detail.value as string"
                   @ion-focus="
                     ($refs.inputName as any).$el.classList.add('ion-touched');
                     v$.task.name.$touch();
@@ -61,7 +61,7 @@
                   fill="solid"
                   :value="task.description.value"
                   @ion-input="
-                    task.description.value = $event.target.value as string
+                    task.description.value = $event.detail.value as string
                   "
                 ></ion-textarea>
               </ion-col>
@@ -80,7 +80,7 @@
                       autocorrect="on"
                       type="text"
                       :value="subTask"
-                      @ion-input="subTask = $event.target.value as string"
+                      @ion-input="subTask = $event.detail.value as string"
                     ></ion-input>
 
                     <!-- list subtasks -->
@@ -253,7 +253,7 @@
                           : 'ion-invalid',
                       ]"
                       :value="emailGuest"
-                      @ion-input="emailGuest = $event.target.value as string"
+                      @ion-input="emailGuest = $event.detail.value as string"
                       @ion-focus="
                         ($refs.inputGuest as any).$el.classList.add(
                           'ion-touched',
@@ -292,7 +292,7 @@
                     >
                       <ion-button
                         fill="clear"
-                        :disabled="v2$.$invalid"
+                        :disabled="emailGuest.trim() === ''"
                         @click="addGuest()"
                         ><ion-icon :icon="addOutline"></ion-icon
                       ></ion-button>
@@ -354,7 +354,10 @@
               :debounce="500"
               show-cancel-button="focus"
               :value="searchTimeZone"
-              @ion-input="searchTimeZone = $event.target.value as string; filterZones({ query: searchTimeZone })"
+              @ion-input="
+                searchTimeZone = $event.detail.value as string;
+                filterZones({ query: searchTimeZone });
+              "
               @ion-cancel="clearTimeZones()"
               @ion-clear="clearTimeZones()"
             ></ion-searchbar>
@@ -378,7 +381,9 @@
                     :key="zone"
                     button
                     @click="selectZone({ zone })"
-                    ><ion-label>{{ getTimeZoneLabel(zone) }}</ion-label></ion-item
+                    ><ion-label>{{
+                      getTimeZoneLabel(zone)
+                    }}</ion-label></ion-item
                   >
                 </div>
               </ion-accordion>
@@ -432,21 +437,23 @@ import useVuelidate from "@vuelidate/core";
 // 2. Controllers / Composables
 import { SystemController } from "@/controllers/systemController";
 import { TaskController } from "@/controllers/taskController";
+import { useAuthStore } from "@/store/authStore";
 import { useReminder } from "@/composables/useReminder";
-import { removeElementSchedule } from "@/utils/schedule";
+import {
+  normalizeOffsetCodes,
+  translateReminderOffset,
+} from "@/utils/reminders";
+import { NotificationPermissionError } from "@/controllers/reminderController";
 const systemController = new SystemController();
 const taskController = new TaskController();
+const authStore = useAuthStore();
 
 // 3. Components
 import RemindersComponent from "./reminders/RemindersComponent.vue";
 
 // 4. Interface and types imports
-import type {
-  Schedule,
-  Task,
-  TaskReminderNotification,
-  TaskReminderRepeat,
-} from "@/utils/interfaces";
+import type { Task, TaskReminderRepeat } from "@/utils/interfaces";
+import type { TaskItem } from "@/store/taskStore";
 
 // 5. Main (props, emits)
 const props = defineProps({
@@ -476,7 +483,7 @@ const task = {
   subtasks: ref(Array<{ name: string; checked: boolean }>()),
 };
 const filteredZones = ref(Array<string>());
-const searchTimeZone = ref('');
+const searchTimeZone = ref("");
 const timeZoneNames = systemController.getTimeZoneNames();
 const timeZoneGroups = systemController.groupTimeZones(timeZoneNames);
 const getTimeZoneLabel = systemController.getTimeZoneLabel;
@@ -557,12 +564,7 @@ function formatTextRepeat(): string {
 }
 
 function translateNotifications(params: { notification: string }): string {
-  const notification = params.notification as keyof TaskReminderNotification;
-
-  const result = systemController.translateEventReminderNotification({
-    notificationName: notification,
-  });
-  return result;
+  return translateReminderOffset(params.notification);
 }
 
 function translateDaysWeekRepear(params: { day: string }): string {
@@ -599,7 +601,7 @@ function selectZone(params: { zone: string }): void {
 }
 
 function clearTimeZones(): void {
-  searchTimeZone.value = '';
+  searchTimeZone.value = "";
   filteredZones.value = [];
 }
 
@@ -614,11 +616,12 @@ function removeGuest(params: { index: number }): void {
 }
 
 function addGuest(): void {
-  const email = emailGuest.value;
+  const email = emailGuest.value.trim();
+  if (!email) return;
+  if (!Array.isArray(task.guests.value)) task.guests.value = [];
   task.guests.value.push({ email });
   emailGuest.value = "";
 }
-
 function addSubtask(): void {
   const taskElement = subTask.value;
   task.subtasks.value.push({ name: taskElement, checked: false });
@@ -639,31 +642,172 @@ function setTask(params: { task: Task }): void {
   task.reminders.value.notifications = taskData.reminders!.notifications ?? [];
   task.reminders.value.repeat = taskData.reminders!.repeat;
   task.timezone.value = taskData.timezone!;
-  task.guests.value = taskData.guests!;
+  task.guests.value = Array.isArray(taskData.guests) ? taskData.guests : [];
   task.subtasks.value = taskData.subtasks ?? Array<any>();
 }
 
 async function save(): Promise<void> {
-  const taskId = props.taskData?.id;
-  const schedule: Schedule =
-    ({} as Schedule);
-
   try {
-    await updateTask();
+    const canonical = normalizeOffsetCodes(task.reminders.value.notifications);
+    const dueDate = task.reminders.value.start
+      ? new Date(task.reminders.value.start)
+      : null;
+    const taskId = props.taskData?.id;
 
-    if (task.reminders.value.start)
-      await postCreateTask({ taskId: taskId, schedule });
+    // Anonymous mode: persist locally (server unavailable), schedule reminders.
+
+    // Request notification permission synchronously within the user gesture
+    // (before any network await below) or Capacitor/Chrome rejects it.
+    let notificationsGranted = true;
+    try {
+      notificationsGranted =
+        await useReminder().checkNotificationsPermissions();
+    } catch {
+      notificationsGranted = true;
+    }
+
+    if (authStore.isAnonymous) {
+      const editingId = props.taskData?.id ? Number(props.taskData.id) : null;
+      const localId = editingId ?? -Date.now();
+      const previousIds =
+        (props.taskData as unknown as { id_reminders?: number[] })
+          .id_reminders ?? [];
+
+      // Cancel any previously scheduled reminders for this local task
+      // BEFORE scheduling the new set (cancel-then-schedule).
+      try {
+        if (previousIds.length) {
+          await useReminder().cancelTaskReminders({ ids: previousIds });
+        }
+      } catch (error) {
+        if (!(error instanceof NotificationPermissionError)) throw error;
+      }
+
+      const localTask: TaskItem = {
+        id: localId,
+        user_id: authStore.localUser?.id ?? 0,
+        title: task.name.value,
+        name: task.name.value,
+        description: task.description.value,
+        status: "pending",
+        checked: false,
+        kanban: { columnName: "pending", position: 0 },
+        priority: 0,
+        due_date: dueDate ? dueDate.toISOString() : undefined,
+        subtasks: "",
+        notifications: canonical,
+        id_reminders: [] as number[],
+      };
+
+      let ids: number[] = [];
+      try {
+        const result = await useReminder().scheduleTaskReminders({
+          taskId: localId,
+          title: task.name.value,
+          message: task.description.value,
+          dueDate: dueDate ?? new Date(),
+          notifications: canonical,
+          existingIds: [],
+        });
+        ids = result.ids;
+      } catch (error) {
+        if (!(error instanceof NotificationPermissionError)) throw error;
+      }
+      localTask.id_reminders = ids;
+
+      if (editingId) {
+        await taskController.updateTask({ id: editingId, task: localTask });
+      } else {
+        await taskController.addLocalTask({ task: localTask });
+      }
+      closePage();
+      return;
+    }
+
+    if (!taskId) {
+      const serverTask = await taskController.createTask({
+        title: task.name.value,
+        description: task.description.value,
+        due_date: dueDate ? dueDate.toISOString() : undefined,
+        notifications: canonical,
+        id_reminders: [],
+      });
+      const serverId = serverTask.id;
+
+      let ids: number[] = [];
+      try {
+        const result = await useReminder().scheduleTaskReminders({
+          taskId: serverId,
+          title: task.name.value,
+          message: task.description.value,
+          dueDate: dueDate ?? new Date(),
+          notifications: canonical,
+          existingIds: [],
+        });
+        ids = result.ids;
+      } catch (error) {
+        if (!(error instanceof NotificationPermissionError)) throw error;
+      }
+
+      await taskController.updateTask({ id: serverId, id_reminders: ids });
+    } else {
+      const existingIds =
+        (props.taskData as unknown as { id_reminders?: number[] })
+          .id_reminders ?? [];
+
+      await updateTaskWithReminders({
+        dueDate,
+        notifications: canonical,
+        id_reminders: existingIds,
+      });
+
+      if (task.reminders.value.start) {
+        let ids: number[] = [];
+        try {
+          const result = await useReminder().scheduleTaskReminders({
+            taskId,
+            title: task.name.value,
+            message: task.description.value,
+            dueDate: dueDate ?? new Date(),
+            notifications: canonical,
+            existingIds,
+          });
+          ids = result.ids;
+        } catch (error) {
+          if (!(error instanceof NotificationPermissionError)) throw error;
+        }
+        await taskController.updateTask({
+          id: Number(taskId),
+          id_reminders: ids,
+        });
+      } else {
+        try {
+          await useReminder().cancelTaskReminders({ ids: existingIds });
+        } catch (error) {
+          if (!(error instanceof NotificationPermissionError)) throw error;
+        }
+        await taskController.updateTask({
+          id: Number(taskId),
+          id_reminders: [],
+        });
+      }
+    }
+
     closePage();
   } catch (error) {
     console.error(error);
   }
 }
 
-async function updateTask(): Promise<void> {
-  if (!props.taskData?.id) return
+async function updateTaskWithReminders(params: {
+  dueDate: Date | null;
+  notifications: string[];
+  id_reminders: number[];
+}): Promise<void> {
+  const { dueDate, notifications, id_reminders } = params;
 
   const taskFormated = {
-    id: props.taskData.id,
+    id: props.taskData?.id,
     title: task.name.value,
     guests: task.guests.value,
     reminders: {
@@ -675,39 +819,16 @@ async function updateTask(): Promise<void> {
     description: task.description.value,
     subtasks: task.subtasks.value,
     timezone: task.timezone.value,
+    due_date: dueDate ? dueDate.toISOString() : undefined,
+    notifications,
+    id_reminders,
   };
 
-  console.log(taskFormated);
   await taskController.updateTask({
+    id: props.taskData?.id ? Number(props.taskData.id) : undefined,
     task: JSON.parse(JSON.stringify(taskFormated)),
   });
 }
-
-async function postCreateTask(params: { taskId: string; schedule: Schedule }): Promise<void> {
-  const { taskId } = params;
-  let { schedule } = params;
-
-  if (taskId)
-    removeElementSchedule({
-      id: taskId,
-      schedule,
-    });
-
-  const notifications = useReminder().getEventReminders({
-    dateStart: task.reminders.value.start!,
-    notifications: task.reminders.value.notifications,
-  });
-
-  if (notifications) {
-    await Promise.all(
-      notifications.map(async (notification) => {
-        const { setReminder } = useReminder()
-        await setReminder({ title: task.name.value, message: task.description.value, extraInfo: String(taskId), reminder: notification })
-      }),
-    );
-  }
-}
-
 async function closePage(): Promise<void> {
   await modalController.dismiss();
 }

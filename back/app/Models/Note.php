@@ -14,10 +14,13 @@ class Note extends Model
 
     protected $fillable = [
         'document_id', 'title', 'content', 'reminder',
+        'notifications', 'id_reminders',
     ];
 
     protected $casts = [
         'reminder' => 'datetime',
+        'notifications' => 'array',
+        'id_reminders' => 'array',
     ];
 
     public function user()

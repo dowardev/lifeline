@@ -32,8 +32,12 @@
       >
         <ion-segment-button value="date-start">Inicio</ion-segment-button>
         <ion-segment-button value="date-end">Final</ion-segment-button>
-        <ion-segment-button v-if="!datesOnly" value="reminders">Recordatorios</ion-segment-button>
-        <ion-segment-button v-if="!datesOnly" value="repeats">Repetir</ion-segment-button>
+        <ion-segment-button v-if="!datesOnly" value="reminders"
+          >Recordatorios</ion-segment-button
+        >
+        <ion-segment-button v-if="!datesOnly" value="repeats"
+          >Repetir</ion-segment-button
+        >
       </ion-segment>
     </ion-toolbar>
   </ion-header>
@@ -103,10 +107,7 @@
     </section>
 
     <!-- notifications -->
-    <section
-      v-if="showReminders"
-      class="ion-padding"
-    >
+    <section v-if="showReminders" class="ion-padding">
       <ion-item v-for="reminder in notificationsData" :key="reminder.name">
         <ion-checkbox
           label-placement="start"
@@ -118,10 +119,7 @@
     </section>
 
     <!-- repeat component -->
-    <section
-      v-if="showRepeats"
-      class="ion-padding"
-    >
+    <section v-if="showRepeats" class="ion-padding">
       <RepeatsComponent :data="dataRepeat" @update-data="dataRepeat = $event" />
     </section>
   </ion-content>
@@ -145,6 +143,8 @@ import {
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { computed, onMounted, ref, watch } from "vue";
 import { add, formatISO } from "date-fns";
+import { REMINDER_OFFSETS, normalizeOffsetCodes } from "@/utils/reminders";
+import type { ReminderOffsetType } from "@/utils/interfaces";
 
 // 2. Controllers / Composables
 // (none for this component)
@@ -205,63 +205,13 @@ const dates = ref({
 
 const idReminders = props.idReminders;
 
-const notificationsData = ref([
-  {
-    name: "just",
-    text: "Justo a tiempo",
+const notificationsData = ref(
+  REMINDER_OFFSETS.map((offset) => ({
+    name: offset.code as ReminderOffsetType,
+    text: offset.label,
     checked: false,
-  },
-  {
-    name: "5mb",
-    text: "5 minutos antes",
-    checked: false,
-  },
-  {
-    name: "10mb",
-    text: "10 minutos antes",
-    checked: false,
-  },
-  {
-    name: "15mb",
-    text: "15 minutos antes",
-    checked: false,
-  },
-  {
-    name: "30mb",
-    text: "30 minutos antes",
-    checked: false,
-  },
-  {
-    name: "1hb",
-    text: "1 hora antes",
-    checked: false,
-  },
-  {
-    name: "2hb",
-    text: "2 horas antes",
-    checked: false,
-  },
-  {
-    name: "1db",
-    text: "1 dia antes",
-    checked: false,
-  },
-  {
-    name: "2db",
-    text: "2 dias antes",
-    checked: false,
-  },
-  {
-    name: "1wb",
-    text: "1 semana antes",
-    checked: false,
-  },
-  {
-    name: "1mtb",
-    text: "1 mes antes",
-    checked: false,
-  },
-]);
+  })),
+);
 const dataRepeat = ref({ type: "daily", frecuency: 1 } as {
   frecuency: number;
   type: "unique" | "daily" | "weekly" | "monthly" | "annually";
@@ -276,43 +226,60 @@ const endDate = computed(() => {
 const startDate = computed(() => {
   return dates.value.start;
 });
-const showDateStart = computed(
-  () => (props.hideSegment ? props.segmentOption === 'date-start' : reminderSegment.value === 'date-start')
+const showDateStart = computed(() =>
+  props.hideSegment
+    ? props.segmentOption === "date-start"
+    : reminderSegment.value === "date-start",
 );
-const showDateEnd = computed(
-  () => (props.hideSegment ? ['date-start', 'date-end'].includes(props.segmentOption) : reminderSegment.value === 'date-end')
+const showDateEnd = computed(() =>
+  props.hideSegment
+    ? ["date-start", "date-end"].includes(props.segmentOption)
+    : reminderSegment.value === "date-end",
 );
-const showReminders = computed(
-  () => (props.hideSegment ? props.segmentOption === 'reminders' : reminderSegment.value === 'reminders')
+const showReminders = computed(() =>
+  props.hideSegment
+    ? props.segmentOption === "reminders"
+    : reminderSegment.value === "reminders",
 );
-const showRepeats = computed(
-  () => (props.hideSegment ? props.segmentOption === 'repeats' : reminderSegment.value === 'repeats')
+const showRepeats = computed(() =>
+  props.hideSegment
+    ? props.segmentOption === "repeats"
+    : reminderSegment.value === "repeats",
 );
 
 // 8. Watch
 watch(startDate, (newValue) => {
   const dateStart = new Date(newValue);
-  const dateEnd = new Date(dates.value.end);
-  if (dateStart > dateEnd) dates.value.end = dateStart;
+  // end = siempre start + 1 hora (se recalcula al cambiar la hora inicial)
+  dates.value.end = new Date(dateStart.getTime() + 60 * 60 * 1000);
 });
 watch(endDate, (newValue) => {
   const dateStart = new Date(dates.value.start);
   const dateEnd = new Date(newValue);
   if (dateEnd < dateStart) dates.value.start = dateEnd;
 });
+watch(
+  () => props.notifications,
+  (notifications) => {
+    applyNotifications(notifications as string[]);
+  },
+);
 
 // 9. OnMounted
 onMounted(() => {
   reminderSegment.value = props.segmentOption as string;
-  notificationsData.value.forEach((notification) => {
-    if (props.notifications.includes(notification.name)) {
-      notification.checked = true;
-    }
-  });
+  applyNotifications(props.notifications as string[]);
   dataRepeat.value = props.repeat as any;
 });
 
 // 10. Functions (named parameters pattern)
+function applyNotifications(notifications: string[]): void {
+  const canonical = normalizeOffsetCodes(notifications ?? []);
+  notificationsData.value.forEach((notification) => {
+    notification.checked = canonical.includes(notification.name);
+  });
+}
+
 const closPage = async (): Promise<void> => {
   await popoverController.dismiss();
 };

@@ -14,7 +14,7 @@
             ok-text="Confirmar"
             cancel-text="Cancelar"
             @ion-change="
-              optionRepearSelected = $event.target.value;
+              optionRepearSelected = $event.detail.value;
               save();
             "
           >
@@ -53,7 +53,7 @@
               :value="formDaily.frecuency.value"
               @ion-input="
                 formDaily.frecuency.value = parseInt(
-                  $event.target.value as string
+                  $event.detail.value as string
                 );
                 save();
               "
@@ -98,7 +98,7 @@
               :value="formWeekly.frecuency.value"
               @ion-input="
                 formWeekly.frecuency.value = parseInt(
-                  $event.target.value as string
+                  $event.detail.value as string
                 );
                 save();
               "
@@ -179,7 +179,7 @@
               :value="formMontly.frecuency.value"
               @ion-input="
                 formMontly.frecuency.value = parseInt(
-                  $event.target.value as string
+                  $event.detail.value as string
                 );
                 save();
               "
@@ -224,7 +224,7 @@
               :value="formAnnualy.frecuency.value"
               @ion-input="
                 formAnnualy.frecuency.value = parseInt(
-                  $event.target.value as string
+                  $event.detail.value as string
                 );
                 save();
               "

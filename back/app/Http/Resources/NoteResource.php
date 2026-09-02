@@ -18,6 +18,8 @@ class NoteResource extends JsonResource
             'content' => $this->content,
             'document_id' => $this->document_id,
             'reminder' => $this->reminder,
+            'notifications' => $this->notifications,
+            'id_reminders' => $this->id_reminders,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

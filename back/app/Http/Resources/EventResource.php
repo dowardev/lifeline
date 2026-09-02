@@ -22,6 +22,7 @@ class EventResource extends JsonResource
             'notifications' => $this->notifications,
             'repeat' => $this->repeat,
             'guests' => $this->guests,
+            'id_reminders' => $this->id_reminders,
             'description' => $this->description,
             'calendar_id' => $this->calendar_id,
         ];

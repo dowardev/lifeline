@@ -238,7 +238,15 @@ import { helpers, maxLength, required } from "@vuelidate/validators";
 import { useRoute, useRouter } from "vue-router";
 // 2. Controllers / Composables
 import { useDocument } from "../../../composables/useDocument";
+import { useNote } from "../../../composables/useNote";
+import { useReminder } from "../../../composables/useReminder";
+import { useNoteStore } from "../../../store/noteStore";
+import { NotificationPermissionError } from "../../../controllers/reminderController";
+import { showToast } from "@/utils/toast";
 const documentComposable = useDocument();
+const noteComposable = useNote();
+const reminderComposable = useReminder();
+const noteStore = useNoteStore();
 const route = useRoute();
 const router = useRouter();
 
@@ -272,6 +280,7 @@ let documentUrl = route.params.url as string;
 let documentId = "";
 const titleValue = ref("");
 const inputTitle = ref(null);
+let hasShownNoteReminderToast = false;
 
 const docElements = computed(() => {
   const doc = documentComposable.getUserDocument({ documentId: documentUrl })
@@ -286,6 +295,8 @@ const docElements = computed(() => {
 
 const start = async (): Promise<void> => {
   await documentComposable.loadDocuments();
+  // Load notes for the document so a persisted note reminder can be found/upserted on reload.
+  await noteComposable.loadNotes();
   documentId = String(documentComposable.getUserDocument({ documentId: documentUrl })?.id ?? "");
   titleValue.value = documentComposable.getUserDocument({ documentId: documentUrl })?.title ?? "";
 };
@@ -309,7 +320,7 @@ const removeElement = (params: { index: number | string; documentId: string }): 
   const index = Number(params.index);
   const documentId = params.documentId;
 
-  documentComposable.deleteElement({ index, documentId });
+  documentComposable.removeElement({ index, documentId });
 };
 
 const openPopoverAddElement = async (params: { ev: Event }): Promise<void> => {
@@ -425,7 +436,81 @@ const setNoteReminders = async (params: {
   const data = params.data;
   const index = Number(params.index);
   const documentId = params.documentId;
+
+  // Store update (in-memory element reminder).
   await documentComposable.updateNoteReminder({ data, index, documentId });
+
+  const document = documentComposable.getUserDocument({ documentId });
+  const title = document?.title ?? "";
+
+  // Collapse all note-element reminders into a single note reminder: the EARLIEST
+  // dateStart wins (D2 / FR-27).
+  const elements = (document?.elements ?? []) as Array<{ reminders?: { dateStart?: string } }>;
+  const starts = elements
+    .map((element) => element.reminders?.dateStart)
+    .filter((value): value is string => Boolean(value && value.trim() !== ""))
+    .sort();
+
+  const note = noteStore.notes.find((n) => String(n.document_id) === documentId);
+
+  // Clear path: when the last element reminder is removed.
+  if (starts.length === 0) {
+    if (note?.id) {
+      const existingIds = note.id_reminders ?? [];
+      await reminderComposable
+        .cancelNoteReminders({ ids: existingIds })
+        .catch(() => undefined);
+      await noteComposable.updateNote({
+        id: note.id,
+        reminder: null as unknown as string,
+        id_reminders: [],
+      });
+    }
+    return;
+  }
+
+  const earliestStart = starts[0];
+
+  // Upsert the Note row for this document (create if absent, else update).
+  let noteId: number;
+  if (note?.id) {
+    noteId = note.id;
+    await noteComposable.updateNote({ id: noteId, reminder: earliestStart });
+  } else {
+    const created = await noteComposable.createNote({
+      title,
+      document_id: Number(documentId),
+      reminder: earliestStart,
+    });
+    noteId = created.id;
+  }
+
+  // Schedule the note reminder and persist the scheduled ids.
+  const existingIds = note?.id_reminders ?? [];
+  let ids: number[] = [];
+  try {
+    const result = await reminderComposable.scheduleNoteReminders({
+      noteId,
+      title,
+      message: "",
+      reminderDate: new Date(earliestStart),
+      notifications: [],
+      existingIds,
+    });
+    ids = result.ids;
+  } catch (error) {
+    if (!(error instanceof NotificationPermissionError)) throw error;
+  }
+  await noteComposable.updateNote({ id: noteId, id_reminders: ids });
+
+  // One-time local-only toast.
+  if (!hasShownNoteReminderToast) {
+    hasShownNoteReminderToast = true;
+    await showToast({
+      message:
+        "El recordatorio del elemento se guarda solo en este dispositivo; el recordatorio de la nota se sincroniza",
+    });
+  }
 };
 </script>
 

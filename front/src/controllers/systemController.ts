@@ -4,7 +4,7 @@
 import systemService from '@/services/system'
 import { storage } from '@/main'
 import { ViewMode } from '@/utils/types'
-import { Days, EventReminderNotification, EventReminderRepeat, Months } from '@/utils/interfaces'
+import { Days, EventReminderRepeat, Months } from '@/utils/interfaces'
 import { toastController } from '@ionic/vue'
 import type { TimeZoneGroup, TimeZoneOption } from '@/utils/interfaces'
 
@@ -23,11 +23,6 @@ export class SystemController {
   translateMonth(params: { monthName: keyof Months }): string {
     const months: Months = { january: 'enero', february: 'febrero', march: 'marzo', april: 'abril', may: 'mayo', june: 'junio', july: 'julio', august: 'agosto', september: 'septiembre', october: 'octubre', november: 'noviembre', december: 'diciembre' }
     return months[params.monthName]
-  }
-
-  translateEventReminderNotification(params: { notificationName: keyof EventReminderNotification }): string {
-    const names: EventReminderNotification = { just: 'A tiempo', '5mb': '5 minutos antes', '10mb': '10 minutos antes', '15mb': '15 minutos antes', '30mb': '30 minutos antes', '1hb': '1 hora antes', '2hb': '2 hora antes', '1db': '1 dia antes', '2db': '2 dia antes', '1wb': '1 semana antes', '1mtb': '1 mes antes' }
-    return names[params.notificationName]
   }
 
   translateEventReminderRepeat(params: { typeRepeat: keyof EventReminderRepeat }): string {

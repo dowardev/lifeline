@@ -8,11 +8,11 @@ export const noteService = {
     return apiClient.executeQuery({ url: '/notes' })
   },
 
-  createNote(params: { title: string; content?: string; document_id?: number; reminder?: string }): Promise<unknown> {
+  createNote(params: { title: string; content?: string; document_id?: number; reminder?: string; notifications?: string[]; id_reminders?: number[] }): Promise<unknown> {
     return apiClient.executeMutation({ url: '/notes', data: params })
   },
 
-  updateNote(params: { id: number; title?: string; content?: string; document_id?: number; reminder?: string }): Promise<unknown> {
+  updateNote(params: { id: number; title?: string; content?: string; document_id?: number; reminder?: string; notifications?: string[]; id_reminders?: number[] }): Promise<unknown> {
     return apiClient.executeMutation({ url: `/notes/${params.id}`, data: params, method: 'PUT' })
   },
 

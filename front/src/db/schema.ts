@@ -16,6 +16,7 @@ export interface EventRecord {
   guests?: string
   description?: string
   availability?: string
+  id_reminders?: number[]
 }
 
 export interface UserRecord {
@@ -54,6 +55,8 @@ export interface TaskRecord {
   due_date?: string
   subtasks?: string
   order?: number
+  notifications?: string[]
+  id_reminders?: number[]
 }
 
 export interface DocumentRecord {
@@ -63,6 +66,7 @@ export interface DocumentRecord {
   type: 'note' | 'list' | 'richtext' | 'todo'
   content?: string
   order?: number
+  elements?: unknown
 }
 
 export interface NoteRecord {
@@ -72,6 +76,8 @@ export interface NoteRecord {
   title: string
   content?: string
   reminder?: string
+  notifications?: string[]
+  id_reminders?: number[]
 }
 
 export class LifeLineDB extends Dexie {

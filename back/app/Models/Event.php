@@ -22,6 +22,7 @@ class Event extends Model
         'repeat',
         'time_zone',
         'guests',
+        'id_reminders',
         'description',
         'availability',
     ];
@@ -32,6 +33,7 @@ class Event extends Model
         'notifications' => 'array',
         'repeat' => 'array',
         'guests' => 'array',
+        'id_reminders' => 'array',
     ];
 
     public function tags()
