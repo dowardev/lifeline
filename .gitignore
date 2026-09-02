@@ -25,6 +25,7 @@ yarn-error.log
 !.vscode/extensions.json
 
 node_modules/
+openspec/
 vendor/
 coverage/
 dist/
