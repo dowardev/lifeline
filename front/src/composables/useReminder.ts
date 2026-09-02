@@ -4,16 +4,22 @@
 import { ReminderController } from '@/controllers/reminderController'
 
 export function useReminder(): {
-  getEventReminders: ReminderController['getEventReminders']
-  generatorReminder: ReminderController['generatorReminder']
-  setReminder: ReminderController['setReminder']
-  cancelReminder: ReminderController['cancelReminder']
+  scheduleEventReminders: ReminderController['scheduleEventReminders']
+  cancelEventReminders: ReminderController['cancelEventReminders']
+  scheduleTaskReminders: ReminderController['scheduleTaskReminders']
+  cancelTaskReminders: ReminderController['cancelTaskReminders']
+  scheduleNoteReminders: ReminderController['scheduleNoteReminders']
+  cancelNoteReminders: ReminderController['cancelNoteReminders']
+  checkNotificationsPermissions: ReminderController['checkNotificationsPermissions']
 } {
   const controller = new ReminderController()
   return {
-    getEventReminders: controller.getEventReminders.bind(controller),
-    generatorReminder: controller.generatorReminder.bind(controller),
-    setReminder: controller.setReminder.bind(controller),
-    cancelReminder: controller.cancelReminder.bind(controller),
+    scheduleEventReminders: controller.scheduleEventReminders.bind(controller),
+    cancelEventReminders: controller.cancelEventReminders.bind(controller),
+    scheduleTaskReminders: controller.scheduleTaskReminders.bind(controller),
+    cancelTaskReminders: controller.cancelTaskReminders.bind(controller),
+    scheduleNoteReminders: controller.scheduleNoteReminders.bind(controller),
+    cancelNoteReminders: controller.cancelNoteReminders.bind(controller),
+    checkNotificationsPermissions: controller.checkNotificationsPermissions.bind(controller),
   }
 }

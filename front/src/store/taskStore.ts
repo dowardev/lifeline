@@ -32,6 +32,8 @@ export interface TaskItem {
     }
   }
   timezone?: string
+  notifications?: string[]
+  id_reminders?: number[]
 }
 
 function mapTaskToItem(raw: unknown): TaskItem {

@@ -3,6 +3,20 @@
 
 import { DocumentElements, Theme, RepeatType } from "./types";
 
+export type ReminderOffsetType =
+  | "at_time"
+  | "5m"
+  | "10m"
+  | "15m"
+  | "30m"
+  | "1h"
+  | "2h"
+  | "1d"
+  | "2d"
+  | "1w"
+  | "1mo";
+
+
 // user
 export interface User {
   id: number;
@@ -95,7 +109,7 @@ export interface Event {
   reminders: {
     start: Date;
     end: Date;
-    notifications?: string[];
+    notifications?: ReminderOffsetType[];
     repeat?: {
       frecuency: number;
       type: RepeatType;
@@ -239,24 +253,6 @@ export interface NewTodo {
   position: number;
 }
 
-export interface ScheduleElement {
-  id: number;
-  title: string;
-  message: string;
-  date: string;
-  type: string;
-  reminder: boolean;
-  idElement?: string;
-}
-
-export interface Schedule {
-  [year: number]: {
-    [month: number]: {
-      [day: number]: ScheduleElement[];
-    };
-  };
-}
-
 export interface System {
   theme: {
     selected: Theme;
@@ -296,20 +292,6 @@ export interface EventReminderRepeat {
   annually: string;
 }
 
-export interface EventReminderNotification {
-  just: string;
-  "5mb": string;
-  "10mb": string;
-  "15mb": string;
-  "30mb": string;
-  "1hb": string;
-  "2hb": string;
-  "1db": string;
-  "2db": string;
-  "1wb": string;
-  "1mtb": string;
-}
-
 export interface Months {
   january: string;
   february: string;
@@ -323,20 +305,6 @@ export interface Months {
   october: string;
   november: string;
   december: string;
-}
-
-export interface TaskReminderNotification {
-  just: string;
-  "5mb": string;
-  "10mb": string;
-  "15mb": string;
-  "30mb": string;
-  "1hb": string;
-  "2hb": string;
-  "1db": string;
-  "2db": string;
-  "1wb": string;
-  "1mtb": string;
 }
 
 export interface TaskReminderRepeat {
@@ -355,7 +323,8 @@ export interface Task {
   reminders?: {
     start: Date;
     end: Date;
-    notifications: string[];
+    notifications: ReminderOffsetType[];
+    idReminders: number[];
     repeat: {
       frecuency: number;
       type: "daily" | "weekly" | "monthly" | "annually";

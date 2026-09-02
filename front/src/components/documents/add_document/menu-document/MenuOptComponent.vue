@@ -35,16 +35,6 @@
         </ion-list-header>
 
         <div style="display: flex; justify-content: space-evenly">
-          <!-- reminders -->
-          <ion-button
-            fill="clear"
-            class="mainButtons"
-            size="large"
-            @click="selectOption({ option: 'reminder' })"
-          >
-            <ion-icon :icon="timeOutline"></ion-icon>
-          </ion-button>
-
           <!-- order elements -->
           <ion-button
             fill="clear"
@@ -116,14 +106,6 @@
     />
   </section>
 
-  <section
-    v-if="optionSelected == 'reminder'"
-    :class="{
-      'ion-fade-in': optionSelected == 'reminder',
-    }"
-  >
-    <RemindersComponent @close-reminders="toggleReminderOption()" />
-  </section>
 </template>
 
 <script setup lang="ts">
@@ -150,7 +132,6 @@ import {
   closeOutline,
   moveOutline,
   shareSocialOutline,
-  timeOutline,
 } from "ionicons/icons";
 
 // 2. Controllers / Composables
@@ -159,7 +140,6 @@ const documentController = new DocumentController();
 
 // 3. Components
 import ShareComponent from "./share/ShareComponent.vue";
-import RemindersComponent from "./reminder/RemindersComponent.vue";
 
 // 4. Interface and types imports
 import type { OptionsMainMenuDocument } from "../../../../utils/types";
@@ -200,8 +180,7 @@ const selectOption = (params: { option: OptionsMainMenuDocument }): void => {
   if (option == "save") saveOption();
   if (option == "order") orderElementsOption();
   if (option == "share") toggleShareOption();
-  if (option == "reminder") toggleReminderOption();
-};
+    };
 
 const saveOption = async (): Promise<void> => {
   await closePage({ role: "confirm", data: { option: "save" } });
@@ -216,10 +195,6 @@ const toggleShareOption = (): void => {
   if (optionSelected == "share") optionSelected = "none";
 };
 
-const toggleReminderOption = (): void => {
-  if (optionSelected == "none") optionSelected = "reminder";
-  if (optionSelected == "reminder") optionSelected = "none";
-};
 </script>
 
 <style scoped>

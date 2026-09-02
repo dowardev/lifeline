@@ -15,10 +15,13 @@ class Task extends Model
     protected $fillable = [
         'title', 'description', 'status',
         'priority', 'due_date', 'subtasks', 'order',
+        'notifications', 'id_reminders',
     ];
 
     protected $casts = [
         'subtasks' => 'array',
+        'notifications' => 'array',
+        'id_reminders' => 'array',
         'due_date' => 'datetime',
     ];
 

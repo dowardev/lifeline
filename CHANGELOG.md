@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **front:** Centralize reminder scheduling/cancellation in a single `ReminderController` with one source-of-truth offset vocabulary (`utils/reminders.ts`); persist `id_reminders` through store/Dexie/API for cross-device cancellation; wire scheduling into calendar + task flows — LBDS-211
+- **front:** Guest invitation emails on event create/update (authenticated flow) with the inviter email — LBDS-211
+- **back:** Persist `id_reminders`/`notifications` on events/tasks/notes (reversible migration, casts, resources) and add `Support/ReminderOffsets` (canonical vocabulary + normalize) — LBDS-211
+- **back:** Guest invitation emails from `EventController::store/update` via `EventInvitations` + `EventInvitation` mailable (inviter email included) — LBDS-211
+- **front:** Unit tests for the reminder controller + offset utils (vitest) — LBDS-211
+
+### Changed
+- **front:** Rewrite reminders to `schedule*Reminders`/`cancel*Reminders` with bounded repeat expansion, weekly day selection + frequency honored, cancel-then-schedule, batch-unique ids; replace legacy offset codes with a canonical vocabulary (migrate-on-touch) — LBDS-211
+- **front:** Keep create/edit/delete working in anonymous offline-first mode (local Dexie) while authenticated flows persist to the server — LBDS-211
+- **back:** Normalize legacy offset codes on write and accept both string and `{ email }` guests — LBDS-211
+
+### Fixed
+- **front:** Event form save button never enabling (Vuelidate `timeZone`/`timezone` mismatch); Ionic inputs binding via `$event.detail.value`; editing restoring reminders/repeat; anonymous task edits no longer duplicating; notification permission requested within the user gesture — LBDS-211
+- **front:** HomePage calendar widget loads events on first mount; guests add on event edit; weekly repeat `frecuency` honored; notification-id collision prevention — LBDS-211
+- **front/back:** Event create/update flows work authenticated and anonymous (no 401, no dropped fields on edit) — LBDS-211
+
+### Added
 - **front:** Make authentication optional — the app boots to a usable anonymous mode with no SSO, backed by a persisted local profile (`lifeline_local_user`) anchored to a real `user_id` in IndexedDB (LBDS-199)
 - **front:** Soft router guard with opt-in `requiresAuth` meta; app-shell routes (home, calendar, tasks, documents, notes) are reachable anonymously
 - **front:** `AuthController` façade splitting always-available `LocalAuthController` from optional `SsoAuthController`; `apiClient` degrades to local Dexie when no SSO is available

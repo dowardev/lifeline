@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
+use App\Support\ReminderOffsets;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
@@ -37,8 +38,15 @@ class TaskController extends Controller
             'due_date' => 'nullable|date',
             'subtasks' => 'nullable|json',
             'order' => 'nullable|integer',
+            'notifications' => 'nullable|array',
+            'notifications.*' => 'string',
+            'id_reminders' => 'nullable|array',
+            'id_reminders.*' => 'integer',
         ]);
-        $task = new Task($request->only(['title', 'description', 'status', 'priority', 'due_date', 'subtasks', 'order']));
+        $task = new Task($request->only(['title', 'description', 'status', 'priority', 'due_date', 'subtasks', 'order', 'notifications', 'id_reminders']));
+        if ($request->notifications !== null) {
+            $task->notifications = ReminderOffsets::normalize($request->notifications ?? []);
+        }
         $task->user_id = $request->user()->id;
         $task->save();
 
@@ -56,8 +64,16 @@ class TaskController extends Controller
             'due_date' => 'nullable|date',
             'subtasks' => 'nullable|json',
             'order' => 'nullable|integer',
+            'notifications' => 'nullable|array',
+            'notifications.*' => 'string',
+            'id_reminders' => 'nullable|array',
+            'id_reminders.*' => 'integer',
         ]);
-        $task->update($request->only(['title', 'description', 'status', 'priority', 'due_date', 'subtasks', 'order']));
+        $task->update($request->only(['title', 'description', 'status', 'priority', 'due_date', 'subtasks', 'order', 'notifications', 'id_reminders']));
+        if ($request->has('notifications') && $request->notifications !== null) {
+            $task->notifications = ReminderOffsets::normalize($request->notifications ?? []);
+            $task->save();
+        }
 
         return response()->json(['task' => new TaskResource($task)]);
     }

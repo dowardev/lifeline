@@ -34,7 +34,7 @@ export class NoteController {
     }
   }
 
-  async createNote(params: { title: string; content?: string; document_id?: number; reminder?: string }): Promise<NoteItem> {
+  async createNote(params: { title: string; content?: string; document_id?: number; reminder?: string; notifications?: string[]; id_reminders?: number[] }): Promise<NoteItem> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -51,7 +51,7 @@ export class NoteController {
     }
   }
 
-  async updateNote(params: { id: number; title?: string; content?: string; reminder?: string }): Promise<void> {
+  async updateNote(params: { id: number; title?: string; content?: string; reminder?: string; notifications?: string[]; id_reminders?: number[] }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {

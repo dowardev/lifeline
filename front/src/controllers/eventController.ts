@@ -80,13 +80,14 @@ export class EventController {
     dateStart: string
     dateEnd?: string
     calendar_id?: number
-    notifications?: string
+    notifications?: string[]
     repeat?: string
     timeZone?: string
-    guests?: string
+    guests?: string[]
     description?: string
     availability?: string
-  }): Promise<void> {
+    id_reminders?: number[]
+  }): Promise<unknown> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -94,6 +95,7 @@ export class EventController {
       const newEvent = response.event || response
       this.store.addEvent({ event: newEvent })
       await db.events.put(newEvent)
+      return newEvent
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
       throw error
@@ -101,14 +103,18 @@ export class EventController {
       this.store.setLoading({ loading: false })
     }
   }
-
   async updateEvent(params: {
     id: number
     name?: string
     dateStart?: string
     dateEnd?: string
-    notifications?: string
+    notifications?: string[]
     repeat?: string
+    timeZone?: string
+    guests?: string[]
+    description?: string
+    availability?: string
+    id_reminders?: number[]
   }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()

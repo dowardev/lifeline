@@ -147,6 +147,8 @@ import {
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { computed, onMounted, ref, watch } from "vue";
 import { add, formatISO } from "date-fns";
+import { REMINDER_OFFSETS, normalizeOffsetCodes } from "@/utils/reminders";
+import type { ReminderOffsetType } from "@/utils/interfaces";
 
 // 2. Controllers / Composables
 // (none)
@@ -183,6 +185,10 @@ const props = defineProps({
       };
     },
   },
+  idReminders: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emitEvent = defineEmits(["updateDataReminders"]);
@@ -202,63 +208,13 @@ const dates = ref({
   end: props.dates.end,
 });
 
-const notificationsData = ref([
-  {
-    name: "just",
-    text: "Justo a tiempo",
+const notificationsData = ref(
+  REMINDER_OFFSETS.map((offset) => ({
+    name: offset.code as ReminderOffsetType,
+    text: offset.label,
     checked: false,
-  },
-  {
-    name: "5mb",
-    text: "5 minutos antes",
-    checked: false,
-  },
-  {
-    name: "10mb",
-    text: "10 minutos antes",
-    checked: false,
-  },
-  {
-    name: "15mb",
-    text: "15 minutos antes",
-    checked: false,
-  },
-  {
-    name: "30mb",
-    text: "30 minutos antes",
-    checked: false,
-  },
-  {
-    name: "1hb",
-    text: "1 hora antes",
-    checked: false,
-  },
-  {
-    name: "2hb",
-    text: "2 horas antes",
-    checked: false,
-  },
-  {
-    name: "1db",
-    text: "1 dia antes",
-    checked: false,
-  },
-  {
-    name: "2db",
-    text: "2 dias antes",
-    checked: false,
-  },
-  {
-    name: "1wb",
-    text: "1 semana antes",
-    checked: false,
-  },
-  {
-    name: "1mtb",
-    text: "1 mes antes",
-    checked: false,
-  },
-]);
+  })),
+);
 const dataRepeat = ref({ type: "daily", frecuency: 1 } as {
   frecuency: number;
   type: "unique" | "daily" | "weekly" | "monthly" | "annually";
@@ -277,27 +233,36 @@ const startDate = computed(() => {
 // 8. Watch
 watch(startDate, (newValue) => {
   const dateStart = new Date(newValue);
-  const dateEnd = new Date(dates.value.end);
-  if (dateStart > dateEnd) dates.value.end = dateStart;
+  // end = siempre start + 1 hora (se recalcula al cambiar la hora inicial)
+  dates.value.end = new Date(dateStart.getTime() + 60 * 60 * 1000);
 });
 watch(endDate, (newValue) => {
   const dateStart = new Date(dates.value.start);
   const dateEnd = new Date(newValue);
   if (dateEnd < dateStart) dates.value.start = dateEnd;
 });
+watch(
+  () => props.notifications,
+  (notifications) => {
+    applyNotifications(notifications as string[]);
+  },
+);
 
 // 9. OnMounted
 onMounted(() => {
   reminderSegment.value = props.segmentOption as string;
-  notificationsData.value.forEach((notification) => {
-    if (props.notifications.includes(notification.name)) {
-      notification.checked = true;
-    }
-  });
+  applyNotifications(props.notifications as string[]);
   dataRepeat.value = props.repeat as any;
 });
 
 // 10. Functions (named parameters pattern)
+function applyNotifications(notifications: string[]): void {
+  const canonical = normalizeOffsetCodes(notifications ?? []);
+  notificationsData.value.forEach((notification) => {
+    notification.checked = canonical.includes(notification.name);
+  });
+}
+
 const closPage = async (): Promise<void> => {
   await popoverController.dismiss();
 };
@@ -309,7 +274,13 @@ const saveReminder = async (): Promise<void> => {
   const dateRepeat = dataRepeat;
 
   emitEvent("updateDataReminders", {
-    data: { start: dateStart, end: dateEnd, remindersChecked, dateRepeat },
+    data: {
+      start: dateStart,
+      end: dateEnd,
+      remindersChecked,
+      dateRepeat,
+      idReminders: props.idReminders,
+    },
   });
   closPage();
 };

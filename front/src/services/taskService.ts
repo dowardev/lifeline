@@ -16,6 +16,8 @@ export const taskService = {
     due_date?: string
     subtasks?: string
     order?: number
+    notifications?: string[]
+    id_reminders?: number[]
   }): Promise<unknown> {
     return apiClient.executeMutation({ url: '/tasks', data: params })
   },
@@ -29,6 +31,8 @@ export const taskService = {
     due_date?: string
     subtasks?: string
     order?: number
+    notifications?: string[]
+    id_reminders?: number[]
   }): Promise<unknown> {
     return apiClient.executeMutation({ url: `/tasks/${params.id}`, data: params, method: 'PUT' })
   },

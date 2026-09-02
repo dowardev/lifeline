@@ -71,6 +71,8 @@ export class DocumentController {
       if (data.type !== undefined) updateFields.type = data.type
       if (data.content !== undefined) updateFields.content = data.content
       if (data.order !== undefined) updateFields.order = data.order
+      if (data.elements !== undefined) updateFields.elements = data.elements
+      // Persist elements locally (D2) so in-memory element reminders/content survive reload.
       await db.documents.update(docId, updateFields)
     } catch (error) {
       this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
