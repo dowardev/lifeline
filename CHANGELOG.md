@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **back:** Redesign the guest-invitation email as a branded HTML template — LifeLine logo served publicly as PNG (`back/public/assets/lifeline_v1.png`) for wide email-client support, accent event card with title/date/inviter, footer linking to https://lifeline.dowar.xyz — with the original content kept as a plain-text fallback — LBDS-219
+
+### Fixed
+- **back:** Hide the start-date line in the guest-invitation email when the event has no start date — LBDS-219
+
 ### Added
 - **front:** Centralize reminder scheduling/cancellation in a single `ReminderController` with one source-of-truth offset vocabulary (`utils/reminders.ts`); persist `id_reminders` through store/Dexie/API for cross-device cancellation; wire scheduling into calendar + task flows — LBDS-211
 - **front:** Guest invitation emails on event create/update (authenticated flow) with the inviter email — LBDS-211
