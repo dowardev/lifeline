@@ -75,6 +75,27 @@ cp .env.example .env
 php artisan key:generate
 ```
 
+> **Automated first-run:** instead of doing this (and steps 4–5) by hand,
+> run [`setup.sh`](setup.sh) on the server. `scripts/deploy/deploy.sh` uploads
+> it to the
+> app root when `SETUP_SCRIPT="setup.sh"` is configured in
+> `scripts/deploy/deploy.conf` (it never runs it automatically):
+>
+> ```bash
+> cd <app-root>   # dir containing back/
+> LIFELINE_APP_URL=https://api.yourdomain.com ./setup.sh --non-interactive
+> ```
+>
+> Idempotent — safe to re-run after any deploy (previous answers become
+> defaults, so re-runs are Enter-through). It configures the full backend
+> `.env` (APP_URL, CORS, DB, MAIL, SSO), proves the DB connection, links
+> `public/storage`, runs migrations + caches, and ends with health checks.
+> All values accept `LIFELINE_*` env-var overrides in `--non-interactive`
+> mode (see `./setup.sh --help`). Note that `APP_URL` must be the public
+> backend URL: the guest-invitation email logo is a public image served
+> from `{APP_URL}/assets/lifeline_v1.png` (the health check fails if it is
+> `localhost`/placeholder).
+
 Edit the following variables in `.env`:
 
 <!-- markdownlint-disable MD013 -->
