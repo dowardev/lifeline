@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Harden guest invitation abuse: per-user rate limit (100 invitations/hour via `RateLimiter`) and a 50-guest cap per event payload (`guests|max:50`); regression test asserting no unauthenticated invitation path exists — LBDS-220
+
+### Added
+- Persistent invitation sent-journal (`event_invitation_sends`, UNIQUE `(event_id, email)`) so each (event, guest email) is invited at most once, even under concurrent requests/retries; delete-and-re-add does not resend; journal errors stay fail-open and never block event save — LBDS-220
+
 ### Changed
 - Redesign the guest-invitation email (`EventInvitation` → `emails.event-invitation`) as a branded HTML template: table-based email-safe layout, public PNG logo at `/assets/lifeline_v1.png` resolved from `app.url` (Gmail/Outlook drop base64/webp), accent event card (left border with square left edge), footer linking to https://lifeline.dowar.xyz; original content preserved as plain-text fallback (`emails.event-invitation-text`) — LBDS-219
 
