@@ -199,6 +199,7 @@
                               autocomplete="on"
                               autocorrect="on"
                               type="email"
+                              :disabled="isAnonymous"
                               :error-text="
                                 v2$.emailGuest.$errors[0]?.$message as string
                               "
@@ -236,13 +237,24 @@
                           >
                             <ion-button
                               fill="clear"
-                              :disabled="emailGuest.trim() === ''"
+                              :disabled="
+                                isAnonymous || emailGuest.trim() === ''
+                              "
                               @click="addGuest()"
                               ><ion-icon :icon="addOutline"></ion-icon
                             ></ion-button>
                           </div>
                         </div>
                       </div>
+                      <ion-item
+                        v-if="isAnonymous"
+                        lines="none"
+                        class="transparent"
+                      >
+                        <ion-note class="ion-padding-vertical">
+                          Iniciá sesión para invitar por correo electrónico.
+                        </ion-note>
+                      </ion-item>
                       <ion-item
                         v-for="(guest, indexGuest) in event.guests.value"
                         :key="indexGuest"
@@ -252,7 +264,7 @@
                         <ion-label>{{ guest.email }}</ion-label>
 
                         <ion-button
-                          v-if="showButtonsOptionGuest === indexGuest"
+                          v-if="showButtonsOptionGuest === indexGuest && !isAnonymous"
                           fill="clear"
                           color="danger"
                           @click="removeGuest({ index: indexGuest })"
@@ -540,6 +552,8 @@ import {
   IonDatetime,
   IonDatetimeButton,
   IonIcon,
+  IonItem,
+  IonNote,
 } from "@ionic/vue";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { add, format, sub } from "date-fns";
@@ -564,9 +578,11 @@ import {
 import { EventController } from "@/controllers/eventController";
 import { SystemController } from "@/controllers/systemController";
 import { CalendarController } from "@/controllers/calendarController";
+import { AuthController } from "@/controllers/authController";
 const eventController = new EventController();
 const systemController = new SystemController();
 const calendarController = new CalendarController();
+const authController = new AuthController();
 
 // 3. Components
 import FullyCalendarVue3 from "@/components/calendar/fullcalendar/FullyCalendarVue3.vue";
@@ -717,6 +733,7 @@ watch(showMobileCalendar, (val) => {
 
 // 8. Computed
 // (calendarEvents computed defined above in vars/const)
+const isAnonymous = computed(() => authController.isAnonymous());
 
 // 9. OnMounted
 onMounted(async () => {

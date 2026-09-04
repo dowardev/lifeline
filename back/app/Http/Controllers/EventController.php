@@ -26,7 +26,7 @@ class EventController extends Controller
             'calendar_id' => 'integer|nullable',
             'notifications' => 'nullable|array',
             'repeat' => 'nullable|array',
-            'guests' => 'nullable|array',
+            'guests' => 'nullable|array|max:50',
             'id_reminders' => 'nullable|array',
             'id_reminders.*' => 'integer',
             'description' => 'nullable|string|max:65535',
@@ -57,7 +57,7 @@ class EventController extends Controller
         $event->user_id = $request->user()->id;
         $event->save();
 
-        EventInvitations::sendInvitationsFor($event, [], true);
+        EventInvitations::sendInvitationsFor($event, [], true, $request->user()->id);
 
         return response()->json(['event' => new EventResource($event)], 201);
     }
@@ -89,7 +89,7 @@ class EventController extends Controller
             'calendar_id' => 'sometimes|integer|nullable',
             'notifications' => 'sometimes|nullable|array',
             'repeat' => 'sometimes|nullable|array',
-            'guests' => 'sometimes|nullable|array',
+            'guests' => 'sometimes|nullable|array|max:50',
             'id_reminders' => 'sometimes|nullable|array',
             'id_reminders.*' => 'integer',
             'description' => 'sometimes|nullable|string|max:65535',
@@ -145,7 +145,7 @@ class EventController extends Controller
 
         $event->update($updates);
 
-        EventInvitations::sendInvitationsFor($event, $previousGuests, false);
+        EventInvitations::sendInvitationsFor($event, $previousGuests, false, $request->user()->id);
 
         return response()->json(['event' => new EventResource($event)]);
     }

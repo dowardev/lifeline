@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- In anonymous (no SSO session) mode, disable the guest-invitation input in the event form and show a hint to sign in before inviting by email; visible guests stay listed but cannot be removed — LBDS-220
+
 ### Added
 - Centralize reminder scheduling/cancellation in a single `ReminderController` and a single source of truth for offset codes/terminology (`utils/reminders.ts`), replacing duplicated/inconsistent label dictionaries — LBDS-211
 - Persist scheduled local-notification ids (`id_reminders`) through the store, Dexie schema and API for cross-device cancellation — LBDS-211
