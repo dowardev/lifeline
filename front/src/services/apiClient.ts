@@ -17,6 +17,7 @@ function requireHttp(): any {
 }
 
 const GUEST_ID_KEY = 'lifeline_guest_id';
+const GUEST_TOKEN_KEY = 'lifeline_guest_token';
 
 function getGuestId(): string {
   try {
@@ -32,15 +33,72 @@ function getGuestId(): string {
 }
 
 function guestHeaders(): Record<string, string> {
+  try {
+    const token = localStorage.getItem(GUEST_TOKEN_KEY);
+    if (token) return { 'X-Guest-Id': token };
+  } catch {
+    // Storage unavailable: fall through to the bootstrap UUID.
+  }
   const id = getGuestId();
   return id === '' ? {} : { 'X-Guest-Id': id };
+}
+
+let guestTokenRequest: Promise<string | null> | null = null;
+
+/**
+ * Fetches the HMAC-signed guest token once per page load (cached in
+ * localStorage afterwards). The SSO HttpClient wrapper strips response
+ * headers, so the token travels in the body of a dedicated endpoint instead
+ * of relying on the `X-Guest-Token` response header.
+ */
+async function ensureGuestToken(params: { http: any }): Promise<string | null> {
+  const { http } = params;
+  try {
+    const stored = localStorage.getItem(GUEST_TOKEN_KEY);
+    if (stored) return stored;
+  } catch {
+    // Storage unavailable: fall through to a fresh fetch.
+  }
+  if (!guestTokenRequest) {
+    guestTokenRequest = http
+      .get('/calendar-sources/guest-token', { headers: guestHeaders() })
+      .then((response: unknown) => {
+        const token = (response as { token?: unknown } | null)?.token;
+        if (typeof token === 'string' && token !== '') {
+          try {
+            localStorage.setItem(GUEST_TOKEN_KEY, token);
+          } catch {
+            // Storage unavailable: use it for this page load only.
+          }
+          return token;
+        }
+        return null;
+      })
+      .catch(() => {
+        guestTokenRequest = null;
+        return null;
+      });
+  }
+  return guestTokenRequest;
+}
+
+async function withGuestToken(params: {
+  http: any;
+  run: (headers: Record<string, string>) => Promise<unknown>;
+}): Promise<unknown> {
+  const { http, run } = params;
+  await ensureGuestToken({ http });
+  return run(guestHeaders());
 }
 
 export const apiClient = {
   async executeQuery(params: { url: string; params?: Record<string, unknown> }): Promise<unknown> {
     const { url, params: queryParams } = params;
     const http = requireHttp();
-    return http.get(url, { params: queryParams, headers: guestHeaders() });
+    return withGuestToken({
+      http,
+      run: (headers) => http.get(url, { params: queryParams, headers }),
+    });
   },
 
   async executeMutation(params: {
@@ -51,14 +109,23 @@ export const apiClient = {
     const { url, data, method = 'POST' } = params;
     const http = requireHttp();
     if (method === 'PUT') {
-      return http.put(url, data, { headers: guestHeaders() });
+      return withGuestToken({
+        http,
+        run: (headers) => http.put(url, data, { headers }),
+      });
     }
-    return http.post(url, data, { headers: guestHeaders() });
+    return withGuestToken({
+      http,
+      run: (headers) => http.post(url, data, { headers }),
+    });
   },
 
   async executeDelete(params: { url: string }): Promise<unknown> {
     const { url } = params;
     const http = requireHttp();
-    return http.delete(url, { headers: guestHeaders() });
+    return withGuestToken({
+      http,
+      run: (headers) => http.delete(url, { headers }),
+    });
   },
 };

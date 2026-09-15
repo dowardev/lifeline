@@ -10,7 +10,7 @@ use App\Http\Resources\EventResource;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use TuOrg\SsoServer\Facades\SsoAuth;
+use Dowardev\SsoServer\Facades\SsoAuth;
 
 class AuthController extends Controller
 {

@@ -10,13 +10,14 @@ use App\Models\ExternalEvent;
 use App\Services\CaldavDiscoveryService;
 use App\Services\GoogleCalendarService;
 use App\Services\CalendarSyncService;
+use App\Support\GuestToken;
 use App\Traits\ValidatesPublicUrl;
 use Illuminate\Http\Request;
 
 class CalendarSourceController extends Controller
 {
     use ValidatesPublicUrl;
-{
+
     public function index(Request $request)
     {
         $sources = CalendarSource::where('sso_sub', $this->ssoSub($request))
@@ -175,6 +176,20 @@ class CalendarSourceController extends Controller
             'upserted' => $result['stats']['upserted'],
             'pruned' => $result['stats']['pruned'],
         ]);
+    }
+
+    public function guestToken(Request $request)
+    {
+        // The guest UUID is resolved server-side by the calendar.owner
+        // middleware (signed token, encrypted cookie, or fresh UUID). The
+        // frontend cannot read response headers through the SSO HttpClient
+        // wrapper, so the signed token is also delivered in the body here.
+        $owner = (string) ($request->get('calendar_owner') ?? '');
+        if (! str_starts_with($owner, 'guest:')) {
+            return response()->json(['token' => null]);
+        }
+
+        return response()->json(['token' => GuestToken::issue(substr($owner, strlen('guest:')))]);
     }
 
     public function discover(Request $request, $id)

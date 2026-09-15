@@ -10,9 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- Require an HMAC-signed guest token for the `X-Guest-Id` header (`App\Support\GuestToken`, `ResolveCalendarOwner`, `GET calendar-sources/guest-token` body endpoint, `X-Guest-Token` CORS exposure): raw UUIDs no longer resolve to another guest's sources — LBDS-230
 - Harden guest invitation abuse: per-user rate limit (100 invitations/hour via `RateLimiter`) and a 50-guest cap per event payload (`guests|max:50`); regression test asserting no unauthenticated invitation path exists — LBDS-220
 
 ### Added
+- Remodel local identity on the SSO `sub` claim: `sso_sub` nullable-unique migration, `ResolveSsoUser` auto-provisions with or without email (no more 404 for advanced-encryption accounts), pre-remodel rows adopted by verified email only, concurrent first-logins retried instead of 500 — LBDS-230
 - Persistent invitation sent-journal (`event_invitation_sends`, UNIQUE `(event_id, email)`) so each (event, guest email) is invited at most once, even under concurrent requests/retries; delete-and-re-add does not resend; journal errors stay fail-open and never block event save — LBDS-220
 
 ### Changed
@@ -20,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Hide the start-date line in the guest-invitation email (HTML and plain-text) when the event has no start date — LBDS-219
+- Fix a stray `{` parse error in `CalendarSourceController` that 500'd every `calendar-sources` route since LBDS-224 (pre-existing drive-by found while adding the guest-token endpoint) — LBDS-230
 
 ### Added
 - Persist scheduled local-notification ids on events/tasks/notes (`id_reminders`) and reminder selection (`notifications`) via new JSON columns, model casts and API resources; reversible migration `2026_09_01_000001_add_reminder_persistence_columns` — LBDS-211

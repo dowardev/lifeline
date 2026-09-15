@@ -11,11 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **front/back:** Add external calendar support — Google Calendar (OAuth + ICS), generic CalDAV and plain `.ics` subscriptions — with discoverable collections, per-calendar subscribe/hidden toggles, guest-mode (no login) and read-only agenda overlay with source color and lock badge — LBDS-224
 - **root:** Server first-run `setup.sh` — idempotent backend provisioning (env from `.env.production.example`, APP_URL/DB/MAIL/SSO config, DB check, storage link, migrate + caches, health checks; `LIFELINE_*` non-interactive overrides) uploaded by `deploy.sh` via `SETUP_SCRIPT`; documented in README + DEPLOY
 
+- **back:** Remodel local identity on the SSO `sub` claim (`sso_sub` unique key, nullable profile fields): advanced-encryption accounts without email auto-provision on first call instead of 404; pre-remodel rows adopted by verified email only — LBDS-230
+- **back/front:** HMAC-signed guest token (`{uuid}.{hmac}`): the `X-Guest-Id` header is honored only when signed, raw UUIDs are ignored, and the token is delivered via the `X-Guest-Token` response header plus a `GET calendar-sources/guest-token` body endpoint (the SSO HttpClient wrapper strips headers) — LBDS-230
 ### Changed
 - **back:** Redesign the guest-invitation email as a branded HTML template — LifeLine logo served publicly as PNG (`back/public/assets/lifeline_v1.png`) for wide email-client support, accent event card with title/date/inviter, footer linking to https://lifeline.dowar.xyz — with the original content kept as a plain-text fallback — LBDS-219
 
 ### Fixed
 - **back:** Hide the start-date line in the guest-invitation email when the event has no start date — LBDS-219
+
+### Security
+- **back:** Guest identity can no longer be assumed by sending another guest's raw UUID in `X-Guest-Id` (unsigned values resolve to a fresh guest; login-time source adoption requires the signed token or the encrypted cookie) — LBDS-230
 
 ### Added
 - **front:** Centralize reminder scheduling/cancellation in a single `ReminderController` with one source-of-truth offset vocabulary (`utils/reminders.ts`); persist `id_reminders` through store/Dexie/API for cross-device cancellation; wire scheduling into calendar + task flows — LBDS-211
