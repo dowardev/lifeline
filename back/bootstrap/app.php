@@ -3,6 +3,7 @@
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\ResolveSsoUser;
+use App\Http\Middleware\ResolveCalendarOwner;
 use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
@@ -38,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'password.confirm' => RequirePassword::class,
             'signed' => ValidateSignature::class,
             'sso.user' => ResolveSsoUser::class,
+                'calendar.owner' => ResolveCalendarOwner::class,
             'throttle' => ThrottleRequests::class,
             'verified' => EnsureEmailIsVerified::class,
         ]);

@@ -1,0 +1,74 @@
+<?php
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
+
+
+namespace App\Http\Controllers;
+
+use App\Models\ExternalEvent;
+use App\Models\CalendarSource;
+use Illuminate\Http\Request;
+
+class ExternalEventController extends Controller
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            'from' => 'nullable|date',
+            'to' => 'nullable|date',
+            'limit' => 'nullable|integer|min:1|max:2000',
+        ]);
+
+        $owner = (string) ($request->get('calendar_owner') ?? $request->get('sso_user_id'));
+        $query = ExternalEvent::where('sso_sub', $owner)
+            ->with('source:id,name,color')
+            ->orderBy('date_start');
+        $hiddenBySource = [];
+        foreach (CalendarSource::where('sso_sub', $owner)->get(['id', 'collections']) as $src) {
+            foreach ($src->collections ?? [] as $collection) {
+                if (($collection['hidden'] ?? false) && isset($collection['href'])) {
+                    $hiddenBySource[$src->id][] = $collection['href'];
+                }
+            }
+        }
+        if (! empty($hiddenBySource)) {
+            $query->where(function ($q) use ($hiddenBySource) {
+                foreach ($hiddenBySource as $sourceId => $hrefs) {
+                    $q->where(function ($qq) use ($sourceId, $hrefs) {
+                        $qq->where('calendar_source_id', '!=', $sourceId)
+                            ->orWhereNull('collection_href')
+                            ->orWhereNotIn('collection_href', $hrefs);
+                    });
+                }
+            });
+        }
+
+        if ($request->filled('from')) {
+            $query->where(function ($q) use ($request) {
+                $q->whereNull('date_end')
+                    ->orWhere('date_end', '>=', $request->input('from'));
+            });
+        }
+        if ($request->filled('to')) {
+            $query->where(function ($q) use ($request) {
+                $q->whereNull('date_start')
+                    ->orWhere('date_start', '<=', $request->input('to'));
+            });
+        }
+
+        $events = $query->limit((int) $request->input('limit', 500))->get();
+
+        return response()->json([
+            'events' => $events->map(fn (ExternalEvent $e) => [
+                'id' => $e->id,
+                'title' => $e->title,
+                'date_start' => $e->date_start?->toIso8601String(),
+                'date_end' => $e->date_end?->toIso8601String(),
+                'time_zone' => $e->time_zone,
+                'description' => $e->description,
+                'source_name' => $e->source?->name,
+                'source_color' => $e->source?->color ?? '#3880ff',
+            ]),
+        ]);
+    }
+}
