@@ -11,17 +11,17 @@
 
 <script lang="ts" setup>
 // 1. Imports (ionic/vue/ionicons)
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import interactionPlugin from '@fullcalendar/interaction'
-import listPlugin from '@fullcalendar/list'
-import esLocale from '@fullcalendar/core/locales/es'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+import esLocale from '@fullcalendar/core/locales/es';
 
 // 2. Controllers / Composables
 // (none)
 
 // 3. Components
-import FullCalendar from '@fullcalendar/vue3'
+import FullCalendar from '@fullcalendar/vue3';
 
 // 4. Interface and types imports
 import type {
@@ -30,43 +30,52 @@ import type {
   EventDropArg,
   EventContentArg,
   EventInput,
-} from '@fullcalendar/core'
-import type { EventItem } from '@/store/eventStore'
+} from '@fullcalendar/core';
+import type { EventItem } from '@/store/eventStore';
+import type { ExternalCalendarEvent } from '@/services/externalEventService';
 
 // 5. Main (props, emits)
-const props = withDefaults(defineProps<{
-  events: EventItem[]
-  currentView: string
-  currentDate: Date
-  locale?: string
-  isMobile?: boolean
-}>(), {
-  locale: 'es',
-})
+const props = withDefaults(
+  defineProps<{
+    events: EventItem[];
+    externalEvents?: ExternalCalendarEvent[];
+    currentView: string;
+    currentDate: Date;
+    locale?: string;
+    isMobile?: boolean;
+  }>(),
+  {
+    locale: 'es',
+    externalEvents: () => [],
+  },
+);
 
 const emit = defineEmits<{
-  (e: 'dateClick', value: { date: Date; endDate?: Date; allDay: boolean; jsEvent: MouseEvent | TouchEvent | null }): void
-  (e: 'eventClick', value: { event: { id: string | number } }): void
-  (e: 'eventUpdate', value: { id: number; dateStart: string; dateEnd?: string }): void
-  (e: 'viewChange', value: string): void
-  (e: 'dateChange', value: Date): void
-}>()
+  (
+    e: 'dateClick',
+    value: { date: Date; endDate?: Date; allDay: boolean; jsEvent: MouseEvent | TouchEvent | null },
+  ): void;
+  (e: 'eventClick', value: { event: { id: string | number } }): void;
+  (e: 'eventUpdate', value: { id: number; dateStart: string; dateEnd?: string }): void;
+  (e: 'viewChange', value: string): void;
+  (e: 'dateChange', value: Date): void;
+}>();
 
 // 6. Vars and const
-const fullCalendarRef = ref<InstanceType<typeof FullCalendar> | null>(null)
-const nowSlotInterval = ref<number | null>(null)
-const detectedIsMobile = ref(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+const fullCalendarRef = ref<InstanceType<typeof FullCalendar> | null>(null);
+const nowSlotInterval = ref<number | null>(null);
+const detectedIsMobile = ref(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 
-const resolvedIsMobile = computed(() => props.isMobile ?? detectedIsMobile.value)
+const resolvedIsMobile = computed(() => props.isMobile ?? detectedIsMobile.value);
 
 const viewMapping: Record<string, string> = {
   day: 'timeGridDay',
   week: 'timeGridWeek',
   diary: 'listWeek',
-}
+};
 
 const mapEventsToFullCalendar = computed<EventInput[]>(() => {
-  return props.events.map((event) => ({
+  const local = props.events.map((event) => ({
     id: String(event.id),
     title: event.title,
     start: event.date_start || '',
@@ -79,8 +88,26 @@ const mapEventsToFullCalendar = computed<EventInput[]>(() => {
       availability: event.availability,
       calendarId: event.calendar_id,
     },
-  }))
-})
+  }));
+  const external = (props.externalEvents ?? []).map((event) => ({
+    id: event.key,
+    title: event.title,
+    start: event.date_start || '',
+    end: event.date_end || undefined,
+    allDay: !event.date_start?.includes(':'),
+    color: event.sourceColor,
+    textColor: '#ffffff',
+    editable: false,
+    startEditable: false,
+    durationEditable: false,
+    extendedProps: {
+      description: event.description,
+      isExternal: true,
+      sourceName: event.sourceName,
+    },
+  }));
+  return [...local, ...external];
+});
 
 const calendarOptions = computed(() => ({
   plugins: [timeGridPlugin, interactionPlugin, listPlugin],
@@ -104,208 +131,243 @@ const calendarOptions = computed(() => ({
   height: '100%',
   editable: !resolvedIsMobile.value,
   touch: true,
-  dateClick: (info: { date: Date; dateStr: string; allDay: boolean; jsEvent: MouseEvent | TouchEvent | null }): void => {
+  dateClick: (info: {
+    date: Date;
+    dateStr: string;
+    allDay: boolean;
+    jsEvent: MouseEvent | TouchEvent | null;
+  }): void => {
     emit('dateClick', {
       date: info.date,
       endDate: info.allDay ? info.date : new Date(info.date.getTime() + 30 * 60 * 1000),
       allDay: info.allDay,
       jsEvent: info.jsEvent,
-    })
+    });
   },
   select: (info: DateSelectArg): void => {
-    const isDrag = info.end.getTime() - info.start.getTime() > 30 * 60 * 1000
+    const isDrag = info.end.getTime() - info.start.getTime() > 30 * 60 * 1000;
     if (resolvedIsMobile.value && isDrag) {
-      fullCalendarRef.value?.getApi().unselect()
-      return
+      fullCalendarRef.value?.getApi().unselect();
+      return;
     }
-    let endDate = info.end
+    let endDate = info.end;
     if (!info.allDay) {
-      endDate = new Date(info.end.getTime() - 30 * 60 * 1000)
+      endDate = new Date(info.end.getTime() - 30 * 60 * 1000);
     }
     emit('dateClick', {
       date: info.start,
       endDate,
       allDay: info.allDay,
       jsEvent: info.jsEvent,
-    })
+    });
   },
   eventClick: (info: EventClickArg): void => {
     emit('eventClick', {
       event: { id: info.event.id },
-    })
+    });
   },
   eventDrop: (info: EventDropArg): void => {
-    const id = typeof info.event.id === 'string' ? parseInt(info.event.id, 10) : info.event.id
+    const id = typeof info.event.id === 'string' ? parseInt(info.event.id, 10) : info.event.id;
     emit('eventUpdate', {
       id,
       dateStart: info.event.start?.toISOString() || '',
       dateEnd: info.event.end?.toISOString() || undefined,
-    })
+    });
   },
-  eventResize: (info: { event: { id: string | number; start: Date | null; end: Date | null } }): void => {
-    const ev = info.event
-    const id = typeof ev.id === 'string' ? parseInt(ev.id, 10) : ev.id
+  eventResize: (info: {
+    event: { id: string | number; start: Date | null; end: Date | null };
+  }): void => {
+    const ev = info.event;
+    const id = typeof ev.id === 'string' ? parseInt(ev.id, 10) : ev.id;
     emit('eventUpdate', {
       id,
       dateStart: ev.start?.toISOString() || '',
       dateEnd: ev.end?.toISOString() || undefined,
-    })
+    });
   },
   eventContent: (arg: EventContentArg): { html: string } => {
     if (arg.event.allDay) {
-      return { html: `<span class="fc-event-title">${arg.event.title}</span>` }
+      return { html: `<span class="fc-event-title">${arg.event.title}</span>` };
     }
     const startStr = arg.event.start
       ? arg.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      : ''
+      : '';
     return {
       html: `<div class="fc-event-custom"><div class="fc-event-time">${startStr}</div><div class="fc-event-title">${arg.event.title}</div></div>`,
-    }
+    };
   },
   viewDidMount: ({ view }: { view: { type: string } }): void => {
-    emit('viewChange', view.type)
+    emit('viewChange', view.type);
   },
   datesSet: (info: { start: Date }): void => {
-    emit('dateChange', info.start)
+    emit('dateChange', info.start);
   },
-}))
+}));
 
 // 7. Watch
-watch(() => props.currentView, (newView) => {
-  if (!fullCalendarRef.value) return
-  const api = fullCalendarRef.value.getApi()
-  const currentFcView = api.view.type
-  const targetFcView = viewMapping[newView] || newView
-  if (currentFcView !== targetFcView) {
-    api.changeView(targetFcView)
-    refreshNowHighlight()
-  }
-})
+watch(
+  () => props.currentView,
+  (newView) => {
+    if (!fullCalendarRef.value) return;
+    const api = fullCalendarRef.value.getApi();
+    const currentFcView = api.view.type;
+    const targetFcView = viewMapping[newView] || newView;
+    if (currentFcView !== targetFcView) {
+      api.changeView(targetFcView);
+      refreshNowHighlight();
+    }
+  },
+);
 
-watch(() => props.currentDate, (newDate) => {
-  if (!fullCalendarRef.value) return
-  const api = fullCalendarRef.value.getApi()
-  const currentDate = api.getDate()
-  const diffMs = Math.abs(newDate.getTime() - currentDate.getTime())
-  if (diffMs > 60000) {
-    api.gotoDate(newDate)
-    refreshNowHighlight()
-  }
-})
+watch(
+  () => props.currentDate,
+  (newDate) => {
+    if (!fullCalendarRef.value) return;
+    const api = fullCalendarRef.value.getApi();
+    const currentDate = api.getDate();
+    const diffMs = Math.abs(newDate.getTime() - currentDate.getTime());
+    if (diffMs > 60000) {
+      api.gotoDate(newDate);
+      refreshNowHighlight();
+    }
+  },
+);
 
-watch(() => props.events, () => {
-  if (!fullCalendarRef.value) return
-  const api = fullCalendarRef.value.getApi()
-  api.setOption('events', mapEventsToFullCalendar.value)
-}, { deep: true })
+watch(
+  mapEventsToFullCalendar,
+  () => {
+    if (!fullCalendarRef.value) return;
+    const api = fullCalendarRef.value.getApi();
+    api.removeAllEvents();
+    api.addEventSource(mapEventsToFullCalendar.value);
+  },
+);
 
 // 8. Computed
 // (defined above)
 
 // 9. OnMounted
 onMounted(() => {
-  detectedIsMobile.value = window.innerWidth < 768
-  window.addEventListener('resize', onResize)
-  startNowSlotHighlighting()
+  detectedIsMobile.value = window.innerWidth < 768;
+  window.addEventListener('resize', onResize);
+  startNowSlotHighlighting();
   setTimeout(() => {
-    if (!fullCalendarRef.value) return
-    const api = fullCalendarRef.value.getApi()
-    api.setOption('events', mapEventsToFullCalendar.value)
-    api.render()
-  }, 100)
-})
+    if (!fullCalendarRef.value) return;
+    const api = fullCalendarRef.value.getApi();
+    api.setOption('events', mapEventsToFullCalendar.value);
+    api.render();
+  }, 100);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('resize', onResize)
-  stopNowSlotHighlighting()
-})
+  window.removeEventListener('resize', onResize);
+  stopNowSlotHighlighting();
+});
 
 // 10. Functions (named parameters pattern)
 function gotoDate(params: { date: Date }): void {
-  const { date } = params
-  fullCalendarRef.value?.getApi().gotoDate(date)
-  refreshNowHighlight()
+  const { date } = params;
+  fullCalendarRef.value?.getApi().gotoDate(date);
+  refreshNowHighlight();
 }
 
 function changeView(params: { view: string }): void {
-  const { view } = params
-  const fcView = viewMapping[view] || view
-  fullCalendarRef.value?.getApi().changeView(fcView)
-  refreshNowHighlight()
+  const { view } = params;
+  const fcView = viewMapping[view] || view;
+  fullCalendarRef.value?.getApi().changeView(fcView);
+  refreshNowHighlight();
 }
 
 function today(): void {
-  fullCalendarRef.value?.getApi().today()
-  refreshNowHighlight()
+  fullCalendarRef.value?.getApi().today();
+  refreshNowHighlight();
 }
 
 function refresh(): void {
-  fullCalendarRef.value?.getApi().refetchEvents()
+  fullCalendarRef.value?.getApi().refetchEvents();
 }
 
 function updateNowSlotHighlight(): void {
-  const api = fullCalendarRef.value?.getApi()
-  if (!api) return
+  const api = fullCalendarRef.value?.getApi();
+  if (!api) return;
 
-  document.querySelectorAll('.fc-timegrid-slot.highlight-now-slot')
-    .forEach(el => el.classList.remove('highlight-now-slot'))
+  document
+    .querySelectorAll('.fc-timegrid-slot.highlight-now-slot')
+    .forEach((el) => el.classList.remove('highlight-now-slot'));
 
-  const now = new Date()
-  const viewType = api.view.type
+  const now = new Date();
+  const viewType = api.view.type;
 
   if (viewType === 'timeGridDay' || viewType === 'timeGridWeek') {
-    const slots = document.querySelectorAll('.fc-timegrid-slot')
-    slots.forEach(slot => {
-      const label = slot.querySelector('.fc-timegrid-slot-label')
+    const slots = document.querySelectorAll('.fc-timegrid-slot');
+    slots.forEach((slot) => {
+      const label = slot.querySelector('.fc-timegrid-slot-label');
       if (label) {
-        const timeText = label.textContent?.trim()
+        const timeText = label.textContent?.trim();
         if (timeText) {
-          const timeMatch = timeText.match(/(\d+):(\d+)\s*(AM|PM)/)
+          const timeMatch = timeText.match(/(\d+):(\d+)\s*(AM|PM)/);
           if (timeMatch) {
-            let hours = parseInt(timeMatch[1])
-            const minutes = parseInt(timeMatch[2])
-            const ampm = timeMatch[3]
+            let hours = parseInt(timeMatch[1]);
+            const minutes = parseInt(timeMatch[2]);
+            const ampm = timeMatch[3];
 
-            if (ampm === 'PM' && hours !== 12) hours += 12
-            if (ampm === 'AM' && hours === 12) hours = 0
+            if (ampm === 'PM' && hours !== 12) hours += 12;
+            if (ampm === 'AM' && hours === 12) hours = 0;
 
-            const slotStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0, 0)
-            const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000)
+            const slotStart = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              hours,
+              minutes,
+              0,
+              0,
+            );
+            const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
 
             if (now >= slotStart && now < slotEnd) {
-              slot.classList.add('highlight-now-slot')
+              slot.classList.add('highlight-now-slot');
             }
           }
         }
       }
-    })
+    });
   }
 }
 
 function startNowSlotHighlighting(): void {
-  if (nowSlotInterval.value !== null) return
-  updateNowSlotHighlight()
-  nowSlotInterval.value = window.setInterval(updateNowSlotHighlight, 1000)
+  if (nowSlotInterval.value !== null) return;
+  updateNowSlotHighlight();
+  nowSlotInterval.value = window.setInterval(updateNowSlotHighlight, 1000);
 }
 
 function refreshNowHighlight(): void {
-  updateNowSlotHighlight()
+  updateNowSlotHighlight();
 }
 
 function onResize(): void {
-  detectedIsMobile.value = window.innerWidth < 768
+  detectedIsMobile.value = window.innerWidth < 768;
 }
 
 function stopNowSlotHighlighting(): void {
   if (nowSlotInterval.value !== null) {
-    clearInterval(nowSlotInterval.value)
-    nowSlotInterval.value = null
+    clearInterval(nowSlotInterval.value);
+    nowSlotInterval.value = null;
   }
-  document.querySelectorAll('.fc-timegrid-slot.highlight-now-slot')
-    .forEach(el => el.classList.remove('highlight-now-slot'))
+  document
+    .querySelectorAll('.fc-timegrid-slot.highlight-now-slot')
+    .forEach((el) => el.classList.remove('highlight-now-slot'));
 }
 
-defineExpose({ gotoDate, changeView, today, refresh, startNowSlotHighlighting, stopNowSlotHighlighting, refreshNowHighlight })
+defineExpose({
+  gotoDate,
+  changeView,
+  today,
+  refresh,
+  startNowSlotHighlighting,
+  stopNowSlotHighlighting,
+  refreshNowHighlight,
+});
 </script>
 
 <style scoped>
@@ -367,7 +429,9 @@ defineExpose({ gotoDate, changeView, today, refresh, startNowSlotHighlighting, s
   padding: 2px 4px;
   font-size: 0.8rem;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .fullcalendar-wrapper :deep(.fc-event:hover) {
@@ -411,13 +475,13 @@ defineExpose({ gotoDate, changeView, today, refresh, startNowSlotHighlighting, s
 }
 
 .fullcalendar-wrapper :deep(.fc-list-event-title) {
-   font-weight: 500;
+  font-weight: 500;
 }
 
 .fullcalendar-wrapper :deep(.fc-toolbar),
 .fullcalendar-wrapper :deep(.fc-header-toolbar),
 .fullcalendar-wrapper :deep(.fc .fc-toolbar) {
-   display: none !important;
+  display: none !important;
 }
 
 .fullcalendar-wrapper :deep(.fc-event-custom) {
@@ -428,9 +492,9 @@ defineExpose({ gotoDate, changeView, today, refresh, startNowSlotHighlighting, s
 }
 
 .fullcalendar-wrapper :deep(.fc-event-time) {
-   font-size: 0.7rem;
-   font-weight: 500;
-   opacity: 0.9;
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.9;
 }
 </style>
 

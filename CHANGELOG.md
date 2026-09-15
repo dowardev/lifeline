@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **front/back:** Add external calendar support — Google Calendar (OAuth + ICS), generic CalDAV and plain `.ics` subscriptions — with discoverable collections, per-calendar subscribe/hidden toggles, guest-mode (no login) and read-only agenda overlay with source color and lock badge — LBDS-224
 - **root:** Server first-run `setup.sh` — idempotent backend provisioning (env from `.env.production.example`, APP_URL/DB/MAIL/SSO config, DB check, storage link, migrate + caches, health checks; `LIFELINE_*` non-interactive overrides) uploaded by `deploy.sh` via `SETUP_SCRIPT`; documented in README + DEPLOY
 
 ### Changed

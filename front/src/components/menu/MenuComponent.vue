@@ -43,12 +43,7 @@
         <div class="user-info">
           <ion-icon :icon="personCircleOutline" class="user-avatar"></ion-icon>
           <ion-label class="user-name">{{ userName }}</ion-label>
-          <ion-button
-            fill="clear"
-            size="small"
-            class="logout-button"
-            @click="handleLogout"
-          >
+          <ion-button fill="clear" size="small" class="logout-button" @click="handleLogout">
             <ion-icon :icon="logOutOutline"></ion-icon>
           </ion-button>
         </div>
@@ -125,6 +120,17 @@
         <ion-item
           button
           lines="none"
+          :class="{ 'menu-active': isSettings }"
+          :aria-current="isSettings ? 'page' : undefined"
+          @click="navigate({ route: '/settings' })"
+        >
+          <ion-icon slot="start" :icon="settingsOutline"></ion-icon>
+          <ion-label>Configuración</ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          lines="none"
           :class="{ 'menu-active': isPolicies }"
           :aria-current="isPolicies ? 'page' : undefined"
           @click="navigate({ route: '/policies' })"
@@ -144,11 +150,7 @@
           <ion-label>Acerca de</ion-label>
         </ion-item>
 
-        <ion-item
-          button
-          lines="none"
-          @click="openThemeModal()"
-        >
+        <ion-item button lines="none" @click="openThemeModal()">
           <ion-icon slot="start" :icon="colorPaletteOutline"></ion-icon>
           <ion-label>Tema</ion-label>
         </ion-item>
@@ -174,10 +176,10 @@ import {
   alertController,
   menuController,
   modalController,
-} from '@ionic/vue'
-import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+} from '@ionic/vue';
+import { computed, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import {
   calendarOutline,
   checkboxOutline,
@@ -190,18 +192,19 @@ import {
   logOutOutline,
   personAddOutline,
   personCircleOutline,
+  settingsOutline,
   shieldCheckmarkOutline,
-} from 'ionicons/icons'
+} from 'ionicons/icons';
 
 // 2. Controllers / Composables
-import { AuthController } from '@/controllers/authController'
-import { useAppVersion } from '@/composables/useAppVersion'
+import { AuthController } from '@/controllers/authController';
+import { useAppVersion } from '@/composables/useAppVersion';
 
-const authController = new AuthController()
-const { label: versionLabel, chipClass } = useAppVersion()
+const authController = new AuthController();
+const { label: versionLabel, chipClass } = useAppVersion();
 
 // 3. Components
-import ThemeSelectorComponent from './theme/ThemeMenuComponent.vue'
+import ThemeSelectorComponent from './theme/ThemeMenuComponent.vue';
 
 // 4. Interface and types imports
 // (none)
@@ -210,27 +213,28 @@ import ThemeSelectorComponent from './theme/ThemeMenuComponent.vue'
 // (none)
 
 // 6. Vars and const
-const menuRef = ref()
-const route = useRoute()
-const router = useRouter()
+const menuRef = ref();
+const route = useRoute();
+const router = useRouter();
 
 // 7. Watch
 // (none)
 
 // 8. Computed
-const { t } = useI18n()
-const isAnonymous = computed(() => authController.isAnonymous())
-const userName = computed(() => authController.getCurrentUser().name || 'Usuario')
+const { t } = useI18n();
+const isAnonymous = computed(() => authController.isAnonymous());
+const userName = computed(() => authController.getCurrentUser().name || 'Usuario');
 
-const isHome = computed(() => route.path === '/')
-const isCalendar = computed(() => route.path === '/calendar')
-const isTasks = computed(() => route.path.startsWith('/tasks'))
-const isDocuments = computed(() => route.path.startsWith('/documents'))
-const isWakatime = computed(() => route.path === '/integrations')
-const isPolicies = computed(() => route.path === '/policies')
-const isAbout = computed(() => route.path === '/about')
-const isLogin = computed(() => route.path === '/login')
-const isRegister = computed(() => route.path === '/register')
+const isHome = computed(() => route.path === '/');
+const isCalendar = computed(() => route.path === '/calendar');
+const isTasks = computed(() => route.path.startsWith('/tasks'));
+const isDocuments = computed(() => route.path.startsWith('/documents'));
+const isWakatime = computed(() => route.path === '/integrations');
+const isSettings = computed(() => route.path.startsWith('/settings'));
+const isPolicies = computed(() => route.path === '/policies');
+const isAbout = computed(() => route.path === '/about');
+const isLogin = computed(() => route.path === '/login');
+const isRegister = computed(() => route.path === '/register');
 
 // 9. OnMounted
 // none
@@ -238,17 +242,17 @@ const isRegister = computed(() => route.path === '/register')
 // 10. Functions (named parameters pattern)
 async function navigate(params: { route: string }): Promise<void> {
   try {
-    await menuController.close('main-menu')
+    await menuController.close('main-menu');
   } catch {
     try {
       if (menuRef.value?.$el?.close) {
-        await menuRef.value.$el.close()
+        await menuRef.value.$el.close();
       }
     } catch {
       // fallback
     }
   }
-  router.push(params.route)
+  router.push(params.route);
 }
 
 async function handleLogout(): Promise<void> {
@@ -264,13 +268,13 @@ async function handleLogout(): Promise<void> {
         text: t('message.menu.logout'),
         role: 'confirm',
         handler: async (): Promise<void> => {
-          await authController.logout()
-          location.reload()
+          await authController.logout();
+          location.reload();
         },
       },
     ],
-  })
-  await alert.present()
+  });
+  await alert.present();
 }
 
 async function openThemeModal(): Promise<void> {
@@ -278,8 +282,8 @@ async function openThemeModal(): Promise<void> {
     component: ThemeSelectorComponent,
     initialBreakpoint: 0.5,
     breakpoints: [0, 0.5, 1],
-  })
-  await modal.present()
+  });
+  await modal.present();
 }
 </script>
 

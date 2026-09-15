@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
-import { createRouter, createWebHistory } from '@ionic/vue-router'
-import type { RouteRecordRaw } from 'vue-router'
-import { getSSOClientOrNull } from '@/ssoClientAccessor'
+import { createRouter, createWebHistory } from '@ionic/vue-router';
+import type { RouteRecordRaw } from 'vue-router';
+import { getSSOClientOrNull } from '@/ssoClientAccessor';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -65,6 +65,16 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/integrations/IntegrationsPage.vue'),
   },
   {
+    path: '/settings/calendar',
+    name: 'CalendarSettingsPage',
+    component: () => import('@/views/settings/CalendarSettingsPage.vue'),
+  },
+  {
+    path: '/settings',
+    name: 'SettingsPage',
+    component: () => import('@/views/settings/SettingsPage.vue'),
+  },
+  {
     path: '/about',
     name: 'AboutPage',
     component: () => import('@/views/about/AboutPage.vue'),
@@ -80,31 +90,31 @@ const routes: Array<RouteRecordRaw> = [
     path: '/:pathMatch(.*)*',
     redirect: '/home',
   },
-]
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-})
+});
 
 router.beforeEach(async (to, _from, next) => {
   // Only opt-in privileged routes require auth. Public and app-shell routes
   // are reachable anonymously so the app stays usable without SSO.
-  const requiresAuth = to.meta?.requiresAuth === true
-  if (!requiresAuth) return next()
+  const requiresAuth = to.meta?.requiresAuth === true;
+  if (!requiresAuth) return next();
 
   // Test-only escape hatch so E2E can exercise guarded routes offline.
-  const e2eBypass = import.meta.env.VITE_E2E_BYPASS_AUTH === '1'
-  if (e2eBypass) return next()
+  const e2eBypass = import.meta.env.VITE_E2E_BYPASS_AUTH === '1';
+  if (e2eBypass) return next();
 
-  const ssoClient = getSSOClientOrNull()
-  if (!ssoClient) return next()
-  if (ssoClient.isAuthenticated) return next()
+  const ssoClient = getSSOClientOrNull();
+  if (!ssoClient) return next();
+  if (ssoClient.isAuthenticated) return next();
 
   await ssoClient.loginWithRedirect({
     redirectUri: `${window.location.origin}/auth/callback`,
-  })
-  return next(false)
-})
+  });
+  return next(false);
+});
 
-export default router
+export default router;
