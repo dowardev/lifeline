@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Fetch the HMAC-signed guest token once per page load from `GET calendar-sources/guest-token` and replay it as `X-Guest-Id` (response headers are invisible through the SSO HttpClient wrapper); bootstrap UUID kept for first contact — LBDS-230
 - In anonymous (no SSO session) mode, disable the guest-invitation input in the event form and show a hint to sign in before inviting by email; visible guests stay listed but cannot be removed — LBDS-220
 
 ### Added

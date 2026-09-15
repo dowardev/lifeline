@@ -27,7 +27,8 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware(['calendar.owner', 'throttle:api'])->group(function () {
         // Stateless SSO (sub-based, no local users row required).
-        Route::apiResource('calendar-sources', CalendarSourceController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::get('calendar-sources/guest-token', [CalendarSourceController::class, 'guestToken'])->middleware('throttle:30,1');
+                Route::apiResource('calendar-sources', CalendarSourceController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::post('calendar-sources/test', CalendarSourceTestController::class)->middleware('throttle:6,1');
         Route::post('calendar-sources/{id}/discover', [CalendarSourceController::class, 'discover'])->middleware('throttle:6,1');
         Route::post('calendar-sources/{id}/sync', [CalendarSourceController::class, 'sync'])->middleware('throttle:6,1');

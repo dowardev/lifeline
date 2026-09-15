@@ -6,7 +6,7 @@ return [
     'allowed_origins' => array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:8100'))),
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['Content-Type', 'X-Requested-With', 'Authorization', 'Accept', 'dpop', 'x-guest-id'],
-    'exposed_headers' => [],
+    'exposed_headers' => ['X-Guest-Token'],
     'max_age' => 86400,
     'supports_credentials' => true,
 ];

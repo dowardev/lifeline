@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 
 use App\Models\CalendarSource;
 use App\Models\ExternalEvent;
+use App\Support\GuestToken;
 use Closure;
 use Dowardev\SsoServer\Middleware\SsoAuthMiddleware;
 use Illuminate\Http\Request;
@@ -38,13 +39,12 @@ class ResolveCalendarOwner
             return $next($request);
         }
 
-        $guestId = (string) $request->header('X-Guest-Id', '');
-        if (! self::isValidUuid($guestId)) {
-            $guestId = (string) $request->cookie(self::COOKIE, '');
-        }
-        if (! self::isValidUuid($guestId)) {
-            $guestId = (string) Str::uuid();
-        }
+        // The X-Guest-Id header is accepted only when it carries a
+        // server-issued HMAC signature (see GuestToken). A raw UUID in the
+        // header is untrusted and never resolves to another guest's data.
+        $guestId = GuestToken::verify((string) $request->header(GuestToken::HEADER, ''))
+            ?? $this->cookieGuestId($request)
+            ?? (string) Str::uuid();
         $request->merge(['calendar_owner' => 'guest:' . $guestId]);
 
         /** @var Response $response */
@@ -62,8 +62,21 @@ class ResolveCalendarOwner
                 'Lax'
             ));
         }
+        if ($response instanceof Response) {
+            $response->headers->set(GuestToken::TOKEN_HEADER, GuestToken::issue($guestId));
+        }
 
         return $response;
+    }
+
+    private function cookieGuestId(Request $request): ?string
+    {
+        $cookie = (string) $request->cookie(self::COOKIE, '');
+        if (! self::isValidUuid($cookie)) {
+            return null;
+        }
+
+        return $cookie;
     }
 
     private static function isValidUuid(string $value): bool
@@ -73,11 +86,9 @@ class ResolveCalendarOwner
 
     private function adoptGuestSources(Request $request, string $sub): void
     {
-        $guestId = (string) $request->header('X-Guest-Id', '');
-        if (! self::isValidUuid($guestId)) {
-            $guestId = (string) $request->cookie(self::COOKIE, '');
-        }
-        if (! self::isValidUuid($guestId)) {
+        $guestId = GuestToken::verify((string) $request->header(GuestToken::HEADER, ''))
+            ?? $this->cookieGuestId($request);
+        if ($guestId === null) {
             return;
         }
         $guestOwner = 'guest:' . $guestId;
