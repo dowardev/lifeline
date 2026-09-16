@@ -719,7 +719,23 @@ async function refreshConnection(params: {
 }
 
 async function discoverGoogleConnection(params: { connection: GoogleConnection }): Promise<void> {
-  await refreshConnection({ connection: params.connection });
+  const { connection } = params;
+  if (!connection.isOAuth) {
+    if (connection.serverId === null) {
+      showToast({ message: 'Guardá la conexión antes de refrescar' });
+      return;
+    }
+    if (connection.discovering) return;
+    connection.discovering = true;
+    try {
+      const synced = await calendarSourceController.syncSource({ serverId: connection.serverId });
+      await reportOutcome({ outcome: synced });
+    } finally {
+      connection.discovering = false;
+    }
+    return;
+  }
+  await refreshConnection({ connection });
 }
 
 async function discoverCaldavConnection(params: { connection: CaldavConnection }): Promise<void> {

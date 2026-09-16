@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **back:** Hide the start-date line in the guest-invitation email when the event has no start date — LBDS-219
+- **back:** Guard CalDAV prune against unreadable responses: unparseable REPORT bodies throw instead of pruning everything, each collection syncs in isolation, and unconfirmed collections are never pruned (genuinely-empty calendars still prune) — LBDS-264
+- **front:** Refresh on Google ICS-URL connections skips undiscoverable collections and syncs directly (no more 422), with a re-entrancy guard — LBDS-264
 
 ### Security
 - **back:** Guest identity can no longer be assumed by sending another guest's raw UUID in `X-Guest-Id` (unsigned values resolve to a fresh guest; login-time source adoption requires the signed token or the encrypted cookie) — LBDS-230

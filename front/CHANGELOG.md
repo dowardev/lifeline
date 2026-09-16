@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix the event form save button never enabling (Vuelidate `timeZone` rule key vs `timezone` field mismatch) — LBDS-211
+- Fix Refresh on Google ICS-URL connections (persisted as `type: 'ics'`, undiscoverable): non-OAuth connections skip `discoverCollections` and sync directly, with a `discovering` re-entrancy guard — LBDS-264
 - Fix Ionic inputs using `$event.target.value` instead of `$event.detail.value` (name, description, availability, guest email, repeat frequency, timezone search) so form values bind correctly — LBDS-211
 - Fix editing an event/task not restoring reminders/repeat and duplicating anonymous task edits (cancel old + update instead of always creating) — LBDS-211
 - Request notification permission synchronously within the user gesture (before network awaits) so Capacitor/Chrome accept it — LBDS-211

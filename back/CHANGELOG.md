@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Hide the start-date line in the guest-invitation email (HTML and plain-text) when the event has no start date — LBDS-219
 - Fix a stray `{` parse error in `CalendarSourceController` that 500'd every `calendar-sources` route since LBDS-224 (pre-existing drive-by found while adding the guest-token endpoint) — LBDS-230
+- Guard CalDAV prune against unreadable responses (`extractCalendarData` throws with a body snippet, per-collection isolation with `$confirmed`/`$skipped`, prune skips unconfirmed; total failure still reports `ok: false`); regression test `CalendarSyncPruneGuardTest` — LBDS-264
 
 ### Added
 - Persist scheduled local-notification ids on events/tasks/notes (`id_reminders`) and reminder selection (`notifications`) via new JSON columns, model casts and API resources; reversible migration `2026_09_01_000001_add_reminder_persistence_columns` — LBDS-211

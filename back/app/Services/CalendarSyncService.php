@@ -20,29 +20,59 @@ class CalendarSyncService
     {
         $stats = ['upserted' => 0, 'pruned' => 0];
         $seen = [];
+        $confirmed = [];
+        $skipped = [];
 
         try {
             $url = decrypt($source->url);
             $this->assertPublicHttpUrl($url);
             $password = $source->password !== null ? decrypt($source->password) : null;
 
+            // Each collection is isolated: a fetch failure marks that
+            // collection unconfirmed (never pruned) without aborting the
+            // siblings. pruneUnseen() only touches confirmed collections.
             if ($source->type === 'google') {
                 foreach ($this->targetCollections($source, $onlyHref) as $collection) {
                     $href = $collection['href'];
-                    $seen[$href] = $this->syncGoogleCalendar($source, $href, $stats);
+                    try {
+                        $seen[$href] = $this->syncGoogleCalendar($source, $href, $stats);
+                        $confirmed[] = $href;
+                    } catch (\Exception $e) {
+                        $skipped[$href] = $e->getMessage();
+                    }
                 }
             } elseif ($source->type === 'ics') {
-                $seen[null] = $this->syncIcs($source, $url, $stats);
+                try {
+                    $seen[null] = $this->syncIcs($source, $url, $stats);
+                    $confirmed[] = null;
+                } catch (\Exception $e) {
+                    $skipped['ics'] = $e->getMessage();
+                }
             } else {
                 foreach ($this->targetCollections($source, $onlyHref) as $collection) {
                     $href = $collection['href'];
-                    $seen[$href] = $this->syncCaldavCollection(
-                        $source, $url, $source->username, $password, $href, $stats
-                    );
+                    try {
+                        $seen[$href] = $this->syncCaldavCollection(
+                            $source, $url, $source->username, $password, $href, $stats
+                        );
+                        $confirmed[] = $href;
+                    } catch (\Exception $e) {
+                        $skipped[$href] = $e->getMessage();
+                    }
                 }
             }
 
-            $stats['pruned'] = $this->pruneUnseen($source, $seen);
+            if ($skipped !== [] && $confirmed === []) {
+                throw new \RuntimeException('Sync failed: ' . implode('; ', $skipped));
+            }
+            if ($skipped !== []) {
+                \Illuminate\Support\Facades\Log::warning('Calendar sync partially skipped', [
+                    'source' => $source->id,
+                    'skipped' => $skipped,
+                ]);
+            }
+
+            $stats['pruned'] = $this->pruneUnseen($source, $seen, $confirmed);
             $source->last_synced_at = now();
             $source->last_error = null;
             $source->save();
@@ -169,17 +199,23 @@ class CalendarSyncService
         return $seen;
     }
 
-    private function pruneUnseen(CalendarSource $source, array $seenByCollection): int
+    private function pruneUnseen(CalendarSource $source, array $seenByCollection, array $confirmed): int
     {
         $pruned = 0;
         $query = ExternalEvent::where('calendar_source_id', $source->id);
         if ($source->type === 'ics') {
+            if (! in_array(null, $confirmed, true)) {
+                return 0;
+            }
             $seen = $seenByCollection[null] ?? [];
             $pruned += (clone $query)->whereNull('collection_href')
                 ->whereNotIn('external_uid', $seen)->delete();
             return $pruned;
         }
         foreach ($seenByCollection as $href => $seen) {
+            if (! in_array($href, $confirmed, true)) {
+                continue;
+            }
             $pruned += (clone $query)->where('collection_href', $href)
                 ->whereNotIn('external_uid', $seen)->delete();
         }
@@ -278,7 +314,11 @@ class CalendarSyncService
         try {
             $doc = new \SimpleXMLElement($xml);
         } catch (\Exception $e) {
-            return [];
+            throw new \RuntimeException(
+                'Invalid CalDAV multistatus response (' . $e->getMessage() . '): ' . mb_substr(trim($xml), 0, 200),
+                0,
+                $e
+            );
         }
         $doc->registerXPathNamespace('d', 'DAV:');
         $doc->registerXPathNamespace('c', 'urn:ietf:params:xml:ns:caldav');
