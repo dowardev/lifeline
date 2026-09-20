@@ -65,9 +65,17 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/integrations/IntegrationsPage.vue'),
   },
   {
+    path: '/calendars',
+    redirect: '/settings/accounts',
+  },
+  {
     path: '/settings/calendar',
-    name: 'CalendarSettingsPage',
-    component: () => import('@/views/settings/CalendarSettingsPage.vue'),
+    redirect: '/settings/accounts',
+  },
+  {
+    path: '/settings/accounts',
+    name: 'AccountsPage',
+    component: () => import('@/views/settings/AccountsPage.vue'),
   },
   {
     path: '/settings',

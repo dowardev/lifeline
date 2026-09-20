@@ -15,7 +15,7 @@ export interface ConnectionTestOutcome {
 }
 
 interface HttpError {
-  response?: { status?: number; data?: { message?: unknown } };
+  response?: { status?: number; data?: { message?: unknown; discovery_errors?: unknown } };
   message?: unknown;
 }
 
@@ -23,6 +23,17 @@ function serverMessage(params: { error: unknown }): string | null {
   if (typeof params.error !== 'object' || params.error === null) return null;
   const message = (params.error as HttpError).response?.data?.message;
   return typeof message === 'string' && message !== '' ? message : null;
+}
+
+function serverDiscoveryErrors(params: { error: unknown }): Record<string, string> | undefined {
+  if (typeof params.error !== 'object' || params.error === null) return undefined;
+  const raw = (params.error as HttpError).response?.data?.discovery_errors;
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [kind, detail] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof detail === 'string') out[kind] = detail;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 function errorStatus(error: unknown): number | null {
@@ -145,14 +156,22 @@ export class CalendarSourceController {
 
   async discoverCollections(params: {
     serverId: number;
-  }): Promise<ConnectionTestOutcome & { collections?: DiscoveredCollection[] }> {
+  }): Promise<
+    ConnectionTestOutcome & {
+      collections?: DiscoveredCollection[];
+      discoveryErrors?: Record<string, string>;
+    }
+  > {
     try {
-      const collections = await calendarSourceService.discoverCollections({ id: params.serverId });
+      const { collections, discoveryErrors } = await calendarSourceService.discoverCollections({
+        id: params.serverId,
+      });
       if (collections.length === 0) {
         return {
           ok: false,
           kind: 'connection',
-          message: 'No se encontraron calendarios en el servidor',
+          message: 'No se encontraron colecciones en el servidor',
+          discoveryErrors,
         };
       }
       return {
@@ -160,6 +179,7 @@ export class CalendarSourceController {
         kind: 'connection',
         message: `${collections.length} colecciones encontradas`,
         collections,
+        discoveryErrors,
       };
     } catch (error) {
       console.error('[calendarSource]', error);
@@ -170,6 +190,7 @@ export class CalendarSourceController {
         ok: false,
         kind: 'connection',
         message: 'No se pudieron descubrir calendarios',
+        discoveryErrors: serverDiscoveryErrors({ error }),
       };
     }
   }
@@ -186,7 +207,7 @@ export class CalendarSourceController {
       return {
         ok: true,
         kind: 'connection',
-        message: `Sincronizados ${result.upserted} eventos (${result.pruned} eliminados)`,
+        message: `Sincronizados ${result.upserted} elementos (${result.pruned} eliminados)`,
       };
     } catch (error) {
       console.error('[calendarSource]', error);

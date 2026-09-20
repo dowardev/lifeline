@@ -6,7 +6,9 @@
 namespace Tests\Feature;
 
 use App\Models\CalendarSource;
+use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
+use App\Models\ExternalTask;
 use App\Services\CalendarSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -90,5 +92,43 @@ class CalendarSyncPruneGuardTest extends TestCase
 
         $this->assertSame(1, $pruned);
         $this->assertSame(0, ExternalEvent::where('calendar_source_id', $source->id)->count());
+    }
+
+    public function testPruneUnseenForKeepsContactsOnUnconfirmedCollection(): void
+    {
+        $source = $this->makeSource();
+        ExternalContact::create([
+            'sso_sub' => 'test:sub',
+            'calendar_source_id' => $source->id,
+            'collection_href' => self::HREF,
+            'external_uid' => 'contact-9',
+            'display_name' => 'Grace',
+        ]);
+
+        $pruned = $this->callPrivate(
+            new CalendarSyncService, 'pruneUnseenFor', [ExternalContact::class, $source, [self::HREF => []], []]
+        );
+
+        $this->assertSame(0, $pruned);
+        $this->assertSame(1, ExternalContact::where('calendar_source_id', $source->id)->count());
+    }
+
+    public function testPruneUnseenForPrunesTasksOnConfirmedCollection(): void
+    {
+        $source = $this->makeSource();
+        ExternalTask::create([
+            'sso_sub' => 'test:sub',
+            'calendar_source_id' => $source->id,
+            'collection_href' => self::HREF,
+            'external_uid' => 'task-9',
+            'title' => 'Todo',
+        ]);
+
+        $pruned = $this->callPrivate(
+            new CalendarSyncService, 'pruneUnseenFor', [ExternalTask::class, $source, [self::HREF => []], [self::HREF]]
+        );
+
+        $this->assertSame(1, $pruned);
+        $this->assertSame(0, ExternalTask::where('calendar_source_id', $source->id)->count());
     }
 }

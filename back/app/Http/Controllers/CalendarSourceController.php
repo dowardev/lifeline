@@ -6,7 +6,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\CalendarSource;
+use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
+use App\Models\ExternalTask;
 use App\Services\CaldavDiscoveryService;
 use App\Services\GoogleCalendarService;
 use App\Services\CalendarSyncService;
@@ -109,9 +111,11 @@ class CalendarSourceController extends Controller
                 }
             }
             $byHref = [];
+            $storedFlags = [];
             foreach ($stored as $c) {
                 if (isset($c['href'])) {
                     $byHref[$c['href']] = $c;
+                    $storedFlags[$c['href']] = (bool) ($c['subscribed'] ?? false);
                 }
             }
             foreach ($data['collections'] as $item) {
@@ -131,13 +135,27 @@ class CalendarSourceController extends Controller
                 ];
             }
             $source->collections = array_values($merged);
-            $storedHrefs = array_map(fn ($c) => $c['href'] ?? null, $stored);
+            // Only a real subscribed -> unsubscribed transition drops the
+            // rows already stored for that collection. Comparing against the
+            // previous state (instead of every unsubscribed entry in the
+            // payload) keeps the delete off collections the caller is not
+            // changing and keeps this update free of destructive writes it
+            // was never asked to perform.
             foreach ($source->collections as $collection) {
                 $href = $collection['href'] ?? null;
-                if ($href !== null && ($collection['subscribed'] ?? true) === false
-                    && in_array($href, $storedHrefs, true)
-                    && array_key_exists($href, $flags)) {
+                if ($href === null) {
+                    continue;
+                }
+                $wasSubscribed = $storedFlags[$href] ?? false;
+                $nowSubscribed = (bool) ($collection['subscribed'] ?? false);
+                if ($wasSubscribed && ! $nowSubscribed) {
                     ExternalEvent::where('calendar_source_id', $source->id)
+                        ->where('collection_href', $href)
+                        ->delete();
+                    ExternalContact::where('calendar_source_id', $source->id)
+                        ->where('collection_href', $href)
+                        ->delete();
+                    ExternalTask::where('calendar_source_id', $source->id)
                         ->where('collection_href', $href)
                         ->delete();
                 }
@@ -158,7 +176,7 @@ class CalendarSourceController extends Controller
     public function sync(Request $request, $id)
     {
         $source = $this->owned($request, $id);
-        $this->assertPublicHttpUrl(decrypt($source->url));
+        $this->assertSourceUrlIsPublic($source);
         if (! $source->is_active) {
             return response()->json(['message' => 'La fuente está desactivada.'], 422);
         }
@@ -195,14 +213,46 @@ class CalendarSourceController extends Controller
     public function discover(Request $request, $id)
     {
         $source = $this->owned($request, $id);
-        $this->assertPublicHttpUrl(decrypt($source->url));
+        $this->assertSourceUrlIsPublic($source);
+        $found = [];
+        $failed = [];
+        // Kinds whose provider actually answered. Only those may drop stored
+        // collections the server no longer lists.
+        $refreshedKinds = [];
         try {
             if ($source->type === 'google') {
-                $found = (new GoogleCalendarService())->listCalendars($source);
+                $google = new GoogleCalendarService();
+                // Each Google API is isolated: a missing OAuth scope (403) or
+                // any other API error only marks that kind undiscovered and
+                // must never hide the kinds that did answer.
+                $fetchers = [
+                    'calendar' => fn () => $google->listCalendars($source),
+                    'tasks' => fn () => $google->listTaskLists($source),
+                    'contacts' => fn () => $google->listContactGroups($source),
+                ];
+                foreach ($fetchers as $kind => $fetch) {
+                    try {
+                        $found = array_merge($found, $fetch());
+                        $refreshedKinds[] = $kind;
+                    } catch (\Exception $e) {
+                        $failed[$kind] = mb_substr($e->getMessage(), 0, 200);
+                    }
+                }
             } elseif ($source->type === 'caldav') {
                 $url = decrypt($source->url);
                 $password = $source->password !== null ? decrypt($source->password) : null;
-                $found = (new CaldavDiscoveryService())->discover($url, $source->username, $password);
+                $discovery = (new CaldavDiscoveryService())->discoverAll($url, $source->username, $password);
+                $found = $discovery['found'];
+                // Only kinds whose sub-discovery actually answered may refresh
+                // stored entries. Tasks share the calendar PROPFIND, so they
+                // ride on the calendar result.
+                if (! ($discovery['failed']['calendar'] ?? false)) {
+                    $refreshedKinds[] = 'calendar';
+                    $refreshedKinds[] = 'tasks';
+                }
+                if (! ($discovery['failed']['contacts'] ?? false)) {
+                    $refreshedKinds[] = 'contacts';
+                }
             } else {
                 return response()->json(['message' => 'Tipo de fuente no soportado.'], 422);
             }
@@ -210,32 +260,93 @@ class CalendarSourceController extends Controller
             return response()->json(['message' => 'No se pudo descubrir: ' . mb_substr($e->getMessage(), 0, 300)], 422);
         }
         if (empty($found)) {
-            return response()->json(['message' => 'No se encontraron calendarios en el servidor.'], 422);
+            if ($failed === []) {
+                return response()->json(['message' => 'No se encontraron calendarios en el servidor.'], 422);
+            }
+            return response()->json([
+                'message' => 'No se pudo descubrir: ' . $this->describeFailures($failed),
+                'discovery_errors' => $failed,
+            ], 422);
         }
         $stored = $source->collections ?? [];
         $subscribed = [];
+        $hidden = [];
+        $storedTypes = [];
         foreach ($stored as $item) {
             if (isset($item['href'])) {
                 $subscribed[$item['href']] = (bool) ($item['subscribed'] ?? false);
+                $hidden[$item['href']] = (bool) ($item['hidden'] ?? false);
+                $storedTypes[$item['href']] = $item['type'] ?? 'calendar';
             }
         }
-        $kept = [];
+        $merged = [];
+        $seenHrefs = [];
+        foreach ($found as $c) {
+            if (! isset($c['href'])) {
+                continue;
+            }
+            $seenHrefs[$c['href']] = true;
+            $type = $c['type'] ?? 'calendar';
+            $storedType = $storedTypes[$c['href']] ?? null;
+            if (
+                $type === 'calendar'
+                && ($storedType === 'tasks' || $storedType === 'contacts')
+            ) {
+                // A server that omits supported-calendar-component-set must
+                // not downgrade a stored tasks/contacts collection.
+                $type = $storedType;
+            }
+            $merged[] = [
+                'href' => $c['href'],
+                'name' => $c['name'] ?? '',
+                'type' => $type,
+                'subscribed' => $subscribed[$c['href']] ?? false,
+                'hidden' => $hidden[$c['href']] ?? false,
+            ];
+        }
+        // A collection is dropped only when its own kind was refreshed and the
+        // server stopped listing it. Kinds that failed keep their stored
+        // entries so a scope/permission problem cannot erase them.
         foreach ($stored as $item) {
-            if (isset($item['href'])) {
-                $kept[$item['href']] = (bool) ($item['hidden'] ?? false);
+            $href = $item['href'] ?? null;
+            if ($href === null || isset($seenHrefs[$href])) {
+                continue;
             }
+            if (in_array($this->collectionKind($item['type'] ?? 'calendar'), $refreshedKinds, true)) {
+                continue;
+            }
+            $merged[] = $item;
         }
-        $merged = array_map(fn (array $c) => [
-            'href' => $c['href'],
-            'name' => $c['name'],
-            'type' => $c['type'],
-            'subscribed' => $subscribed[$c['href']] ?? false,
-            'hidden' => $kept[$c['href']] ?? false,
-        ], $found);
-        $source->collections = $merged;
+        $source->collections = array_values($merged);
         $source->save();
 
-        return response()->json(['collections' => $merged]);
+        return response()->json([
+            'collections' => $source->collections,
+            'discovery_errors' => $failed,
+        ]);
+    }
+
+    /**
+     * @param  array<string, string>  $failed
+     */
+    private function describeFailures(array $failed): string
+    {
+        $labels = ['calendar' => 'Calendarios', 'tasks' => 'Tareas', 'contacts' => 'Contactos'];
+        $parts = [];
+        foreach ($failed as $kind => $detail) {
+            $parts[] = ($labels[$kind] ?? $kind) . ': ' . $detail;
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    private function collectionKind(string $type): string
+    {
+        if ($type === 'tasks' || $type === 'contacts') {
+            return $type;
+        }
+
+        return 'calendar';
     }
 
     private function owned(Request $request, $id): CalendarSource

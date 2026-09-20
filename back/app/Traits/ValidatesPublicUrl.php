@@ -4,10 +4,26 @@
 
 namespace App\Traits;
 
+use App\Models\CalendarSource;
 use GuzzleHttp\Exception\RequestException;
 
 trait ValidatesPublicUrl
 {
+    /**
+     * SSRF guard for a source's stored URL. OAuth sources (Google) keep a
+     * sentinel there instead of a URL because nothing user-supplied gets
+     * fetched, so the guard must not run for them.
+     *
+     * @throws \Illuminate\Http\Exceptions\HttpResponseException 422 if validation fails
+     */
+    protected function assertSourceUrlIsPublic(CalendarSource $source): void
+    {
+        if ($source->type === 'google') {
+            return;
+        }
+        $this->assertPublicHttpUrl(decrypt($source->url));
+    }
+
     /**
      * Validate that a URL is a public HTTP/HTTPS URL (no localhost, no private IPs).
      *

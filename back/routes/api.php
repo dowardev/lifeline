@@ -34,6 +34,8 @@ Route::prefix('v1')->group(function () {
         Route::post('calendar-sources/{id}/sync', [CalendarSourceController::class, 'sync'])->middleware('throttle:6,1');
         Route::get('calendar-sources/google/authorize', [GoogleOAuthController::class, 'start'])->middleware('throttle:6,1');
         Route::get('external-events', [ExternalEventController::class, 'index']);
+            Route::get('external-contacts', [ExternalEventController::class, 'contacts']);
+            Route::get('external-tasks', [ExternalEventController::class, 'tasks']);
     });
 
     Route::middleware(['sso.auth', 'sso.user', 'throttle:api'])->group(function () {

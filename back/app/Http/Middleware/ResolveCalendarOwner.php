@@ -6,7 +6,9 @@
 namespace App\Http\Middleware;
 
 use App\Models\CalendarSource;
+use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
+use App\Models\ExternalTask;
 use App\Support\GuestToken;
 use Closure;
 use Dowardev\SsoServer\Middleware\SsoAuthMiddleware;
@@ -94,6 +96,8 @@ class ResolveCalendarOwner
         $guestOwner = 'guest:' . $guestId;
         CalendarSource::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
         ExternalEvent::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
+        ExternalContact::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
+        ExternalTask::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
         \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget(self::COOKIE));
     }
 }
