@@ -46,11 +46,11 @@
           <ion-label>Calendarios</ion-label>
         </ion-segment-button>
 
-        <ion-segment-button value="tareas" :disabled="true">
+        <ion-segment-button value="tareas">
           <ion-label>Tareas</ion-label>
         </ion-segment-button>
 
-        <ion-segment-button value="contactos" :disabled="true">
+        <ion-segment-button value="contactos">
           <ion-label>Contactos</ion-label>
         </ion-segment-button>
       </ion-segment>
@@ -93,9 +93,9 @@
       </ion-accordion-group>
 
       <ion-alert
-        :is-open="connection.discovering"
-        header="Obteniendo calendarios"
-        message="Descubriendo calendarios disponibles…"
+        :is-open="progressAlert.isOpen"
+        :header="progressAlert.header"
+        :message="progressAlert.message"
         :backdrop-dismiss="false"
       ></ion-alert>
 
@@ -104,7 +104,35 @@
         :server-id="connection.serverId"
         :discovering="connection.discovering"
         :collections="connection.collections"
-        @refresh="emit('refresh')"
+        title="Calendarios"
+        kind="calendar"
+        @refresh="onRefresh({ kind: 'calendar' })"
+        @toggle-subscription="emit('toggle-subscription', $event)"
+        @toggle-hidden="emit('toggle-hidden', $event)"
+        @sync-collection="emit('sync-collection', $event)"
+      />
+
+      <CollectionList
+        v-if="activeSegment === 'tareas'"
+        :server-id="connection.serverId"
+        :discovering="connection.discovering"
+        :collections="connection.collections"
+        title="Listas de tareas"
+        kind="tasks"
+        @refresh="onRefresh({ kind: 'tasks' })"
+        @toggle-subscription="emit('toggle-subscription', $event)"
+        @toggle-hidden="emit('toggle-hidden', $event)"
+        @sync-collection="emit('sync-collection', $event)"
+      />
+
+      <CollectionList
+        v-if="activeSegment === 'contactos'"
+        :server-id="connection.serverId"
+        :discovering="connection.discovering"
+        :collections="connection.collections"
+        title="Libretas de contactos"
+        kind="contacts"
+        @refresh="onRefresh({ kind: 'contacts' })"
         @toggle-subscription="emit('toggle-subscription', $event)"
         @toggle-hidden="emit('toggle-hidden', $event)"
         @sync-collection="emit('sync-collection', $event)"
@@ -136,6 +164,7 @@ import {
 } from '@ionic/vue';
 import { computed, ref, watch } from 'vue';
 import { closeOutline, saveOutline, trashOutline } from 'ionicons/icons';
+import { collectionKindOf } from '@/components/settings/connectionModels';
 
 // 2. Controllers / Composables
 // (none — presentational, the page owns the logic)
@@ -147,7 +176,12 @@ import GoogleIcsForm from '@/components/settings/forms/GoogleIcsForm.vue';
 import GoogleOAuthForm from '@/components/settings/forms/GoogleOAuthForm.vue';
 
 // 4. Interface and types imports
-import type { CaldavConnection, GoogleConnection } from '@/components/settings/connectionModels';
+import type {
+  CaldavConnection,
+  CollectionKind,
+  ConnectionCollection,
+  GoogleConnection,
+} from '@/components/settings/connectionModels';
 
 // 5. Main (props, emits, etc.)
 const props = defineProps<{
@@ -169,9 +203,18 @@ const emit = defineEmits<{
 }>();
 
 // 6. Vars and const
-const activeSegment = ref<'config' | 'calendarios'>('config');
+const activeSegment = ref<'config' | 'calendarios' | 'tareas' | 'contactos'>('config');
+const refreshingKind = ref<CollectionKind | null>(null);
 
 // 7. Watch
+watch(
+  () => props.connection.discovering,
+  (discovering, wasDiscovering) => {
+    // Drop the section-derived label once the batch discovery finishes.
+    if (wasDiscovering && !discovering) refreshingKind.value = null;
+  },
+);
+
 watch(
   () => props.isNew,
   (isNew, wasNew) => {
@@ -187,14 +230,64 @@ const formComponent = computed(() => {
   return google.isOAuth ? GoogleOAuthForm : GoogleIcsForm;
 });
 
+// The single collection currently downloading, when the user syncs one row.
+const syncingCollection = computed<ConnectionCollection | null>(
+  () => props.connection.collections.find((item) => item.syncing) ?? null,
+);
+
+const progressAlert = computed(() => {
+  const collection = syncingCollection.value;
+  if (collection !== null) {
+    const kind = collectionKindOf({ type: collection.type });
+    return {
+      isOpen: true,
+      header: `Obteniendo ${kindLabel({ kind, plural: true })}`,
+      message: `Descargando “${collection.name}”…`,
+    };
+  }
+
+  if (props.connection.discovering) {
+    const kind = refreshingKind.value;
+    if (kind === null) {
+      return {
+        isOpen: true,
+        header: 'Obteniendo contenido de la cuenta',
+        message: 'Descubriendo contenido disponible…',
+      };
+    }
+    return {
+      isOpen: true,
+      // The header stays personalized per section, but the message must not
+      // claim only that kind is fetched: refreshConnection discovers the
+      // whole account.
+      header: `Obteniendo ${kindLabel({ kind, plural: true })}`,
+      message: 'Buscando todo el contenido disponible de la cuenta…',
+    };
+  }
+
+  return { isOpen: false, header: '', message: '' };
+});
+
 // 9. OnMounted
 // (none)
 
 // 10. Functions (named parameters pattern)
 function onSegmentChange(params: { detail: { value?: string | number | null } }): void {
   const value = params.detail.value;
-  if (value === 'config' || value === 'calendarios') {
+  if (value === 'config' || value === 'calendarios' || value === 'tareas' || value === 'contactos') {
     activeSegment.value = value;
   }
+}
+
+function kindLabel(params: { kind: CollectionKind; plural?: boolean }): string {
+  const { kind, plural = false } = params;
+  if (kind === 'tasks') return plural ? 'tareas' : 'tarea';
+  if (kind === 'contacts') return plural ? 'contactos' : 'contacto';
+  return plural ? 'calendarios' : 'calendario';
+}
+
+function onRefresh(params: { kind: CollectionKind }): void {
+  refreshingKind.value = params.kind;
+  emit('refresh');
 }
 </script>

@@ -25,8 +25,18 @@ import { SystemController } from "@/controllers/systemController";
 import { AuthController } from "@/controllers/authController";
 import { ThemeController } from "@/controllers/themeController";
 import { isSSOAvailable } from "@/ssoClientAccessor";
+
+// composables
+import { useExternalSync } from "@/composables/useExternalSync";
+
 const systemController = new SystemController();
 const themeController = new ThemeController();
+
+// Sync external sources on launch and on every return to the foreground,
+// gated by a minimum interval so this cannot hammer the providers. Runs in
+// guest mode too: the API layer handles the guest token, so it must not sit
+// behind the SSO check below.
+useExternalSync();
 
 // mounted
 onMounted(async () => {

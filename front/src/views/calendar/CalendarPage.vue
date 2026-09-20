@@ -324,6 +324,7 @@ import { CalendarController } from '@/controllers/calendarController';
 import { EventController } from '@/controllers/eventController';
 import { SystemController } from '@/controllers/systemController';
 import { useCalendarModals } from '@/composables/useCalendarModals';
+import { useExternalSyncOnEnter } from '@/composables/useExternalSync';
 import { useAuthStore } from '@/store/authStore';
 import { useReminder } from '@/composables/useReminder';
 import { NotificationPermissionError } from '@/controllers/reminderController';
@@ -333,6 +334,11 @@ import type { RepeatType } from '@/utils/types';
 const calendarController = new CalendarController();
 const eventController = new EventController();
 const systemController = new SystemController();
+
+// Syncs when this page opens (TTL-gated) and notifies when a background sync
+// finishes, so the external overlay can be re-read instead of staying on the
+// pre-sync snapshot.
+const { lastSyncedAt } = useExternalSyncOnEnter();
 const authStore = useAuthStore();
 
 // 3. Components
@@ -383,6 +389,10 @@ watch(
   },
   { immediate: true, deep: true },
 );
+
+watch(lastSyncedAt, () => {
+  void loadStoredEvents();
+});
 
 // 8. Computed
 const currentView = computed(() => calendarController.getCalendarModeView());

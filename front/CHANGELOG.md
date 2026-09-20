@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In anonymous (no SSO session) mode, disable the guest-invitation input in the event form and show a hint to sign in before inviting by email; visible guests stay listed but cannot be removed — LBDS-220
 
 ### Added
+- First-class accounts panel in Settings (Cuentas, `/settings/accounts`) managing Google (OAuth) and CalDAV connections; old `/settings/calendar` and `/calendars` routes redirect — LBDS-266
+- Tareas and Contactos sections in the connection modal with per-kind filtering, plus a personalized sync/discovery alert per section kind — LBDS-266
+- One external-source sync per visible data surface (app launch, foreground return, entering the calendar page), gated by a 10-minute TTL so navigation cannot hammer providers — LBDS-266
 - Centralize reminder scheduling/cancellation in a single `ReminderController` and a single source of truth for offset codes/terminology (`utils/reminders.ts`), replacing duplicated/inconsistent label dictionaries — LBDS-211
 - Persist scheduled local-notification ids (`id_reminders`) through the store, Dexie schema and API for cross-device cancellation — LBDS-211
 - Wire event reminder scheduling into the calendar flows (CalendarPage + CalendarWidget) and persist returned notification ids — LBDS-211
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reminder option lists in the events/tasks RemindersComponents derive from the single module and carry `id_reminders` — LBDS-211
 
 ### Fixed
+- Google discovery no longer fails wholesale when one collection kind is refused: the kind is reported in the toast with its reason and activation link — LBDS-266
 - Fix the event form save button never enabling (Vuelidate `timeZone` rule key vs `timezone` field mismatch) — LBDS-211
 - Fix Refresh on Google ICS-URL connections (persisted as `type: 'ics'`, undiscoverable): non-OAuth connections skip `discoverCollections` and sync directly, with a `discovering` re-entrancy guard — LBDS-264
 - Fix Ionic inputs using `$event.target.value` instead of `$event.detail.value` (name, description, availability, guest email, repeat frequency, timezone search) so form values bind correctly — LBDS-211
@@ -40,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Harden and centralize the timezone list (feature guard + fallback for `Intl.supportedValuesOf`) and group the timezone picker by region in collapsible `ion-accordion`s with lazy/cached UTC offsets (non-regional zones reachable via search) — LBDS-206
 
 ### Fixed
+- Google discovery no longer fails wholesale when one collection kind is refused: the kind is reported in the toast with its reason and activation link — LBDS-266
 - Fix event reminder popover crashing on open (Temporal Dead Zone on `startDate`/`endDate` in `RemindersComponent`) — LBDS-206
 - Split the shared event reminders popover into dedicated popovers (Tiempo / Notificaciones / Repetir) and replace the `<ion-textarea>` read-only display with `ion-item`/`ion-label` rows — LBDS-206
 - Clear the timezone search on popover close so it reopens showing the full grouped list — LBDS-206

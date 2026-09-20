@@ -20,10 +20,11 @@
         <ion-row class="ion-justify-content-center">
           <ion-col size="12" size-md="10" size-lg="8" size-xl="6">
             <ion-list class="transparent">
-              <ion-item button lines="full" class="transparent" @click="goToCalendarSettings()">
-                <ion-icon slot="start" :icon="calendarOutline"></ion-icon>
+              <ion-item button lines="full" class="transparent" @click="goToAccounts()">
+                <ion-icon slot="start" :icon="peopleOutline"></ion-icon>
 
-                <ion-label>Calendario</ion-label>
+                <ion-label>Cuentas</ion-label>
+                <p>Google y CalDAV</p>
 
                 <ion-icon slot="end" :icon="chevronForwardOutline"></ion-icon>
               </ion-item>
@@ -54,7 +55,7 @@ import {
   IonToolbar,
 } from '@ionic/vue';
 import { useRouter } from 'vue-router';
-import { calendarOutline, chevronForwardOutline } from 'ionicons/icons';
+import { chevronForwardOutline, peopleOutline } from 'ionicons/icons';
 
 // 2. Controllers / Composables
 // (none)
@@ -81,7 +82,7 @@ const router = useRouter();
 // (none)
 
 // 10. Functions (named parameters pattern)
-function goToCalendarSettings(): void {
-  router.push('/settings/calendar');
+function goToAccounts(): void {
+  router.push('/settings/accounts');
 }
 </script>

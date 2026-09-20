@@ -44,3 +44,11 @@ export interface CaldavConnection {
   testResult: string | null
   errorDetail: string | null
 }
+
+export type CollectionKind = 'calendar' | 'tasks' | 'contacts'
+
+export function collectionKindOf(params: { type: string }): CollectionKind {
+  const { type } = params
+  if (type === 'tasks' || type === 'contacts') return type
+  return 'calendar'
+}

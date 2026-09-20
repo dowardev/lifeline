@@ -6,7 +6,7 @@
 <template>
   <ion-list v-if="serverId !== null" class="transparent">
     <ion-list-header>
-      <ion-label>Calendarios</ion-label>
+      <ion-label>{{ title ?? 'Calendarios' }}</ion-label>
 
       <ion-button fill="clear" size="small" :disabled="discovering" @click="emit('refresh')">
         Refrescar
@@ -14,7 +14,7 @@
     </ion-list-header>
 
     <ion-item
-      v-for="collection in collections"
+      v-for="collection in visibleCollections"
       :key="collection.href"
       lines="full"
       button
@@ -69,6 +69,7 @@ import {
   IonList,
   IonListHeader,
 } from '@ionic/vue';
+import { computed } from 'vue';
 import { eyeOffOutline, eyeOutline, syncOutline } from 'ionicons/icons';
 
 // 2. Controllers / Composables
@@ -81,10 +82,12 @@ import { eyeOffOutline, eyeOutline, syncOutline } from 'ionicons/icons';
 import type { ConnectionCollection } from '@/components/settings/connectionModels';
 
 // 5. Main (props, emits, etc.)
-defineProps<{
+const props = defineProps<{
   serverId: number | null;
   discovering: boolean;
   collections: ConnectionCollection[];
+  title?: string;
+  kind?: 'calendar' | 'tasks' | 'contacts';
 }>();
 
 const emit = defineEmits<{
@@ -101,13 +104,21 @@ const emit = defineEmits<{
 // (none)
 
 // 8. Computed
-// (none)
+const visibleCollections = computed(() => {
+  if (!props.kind) return props.collections;
+  if (props.kind === 'calendar') {
+    return props.collections.filter((item) => item.type !== 'tasks' && item.type !== 'contacts');
+  }
+  return props.collections.filter((item) => item.type === props.kind);
+});
 
 // 9. OnMounted
 // (none)
 
 // 10. Functions (named parameters pattern)
 function collectionIcon(params: { type: string }): string {
-  return params.type === 'tasks' ? '☑️' : '📅';
+  if (params.type === 'tasks') return '☑️';
+  if (params.type === 'contacts') return '👥';
+  return '📅';
 }
 </script>

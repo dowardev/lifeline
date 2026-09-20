@@ -11,7 +11,7 @@
           <ion-back-button default-href="/settings"></ion-back-button>
         </ion-buttons>
 
-        <ion-title>Calendario</ion-title>
+        <ion-title>Cuentas</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -29,13 +29,8 @@
                   :disabled="connectingGoogle"
                   @click="connectGoogle()"
                 >
-                  <ion-icon slot="start" :icon="logoGoogle"></ion-icon>
-                  {{ connectingGoogle ? 'Conectando…' : 'Conectar' }}
-                </ion-button>
-
-                <ion-button fill="clear" size="small" @click="addGoogleConnection()">
                   <ion-icon slot="start" :icon="addOutline"></ion-icon>
-                  Agregar
+                  {{ connectingGoogle ? 'Conectando…' : 'Agregar' }}
                 </ion-button>
               </ion-list-header>
 
@@ -263,28 +258,6 @@ function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function addGoogleConnection(): void {
-  const connection: GoogleConnection = {
-    id: newId(),
-    serverId: null,
-    isOAuth: false,
-    name: '',
-    icsUrl: '',
-    color: '#3880ff',
-    testing: false,
-    saving: false,
-    syncing: false,
-    discovering: false,
-    collections: [],
-    testOk: null,
-    testResult: null,
-    errorDetail: null,
-  };
-  selected.value = { connectionType: 'google', id: connection.id };
-  draft.value = { connectionType: 'google', connection };
-  isNewDraft.value = true;
-}
-
 function findGoogleConnection(params: { id: string }): GoogleConnection | undefined {
   return googleConnections.value.find((item) => item.id === params.id);
 }
@@ -293,11 +266,10 @@ function addCaldavConnection(): void {
   const connection: CaldavConnection = {
     id: newId(),
     serverId: null,
-        name: '',
-        url: '',
-        username: '',
-    // TODO(LBDS-224): credencial de prueba — rotarla y quitarla antes del merge.
-        password: '',
+    name: '',
+    url: '',
+    username: '',
+    password: '',
     color: '#3880ff',
     testing: false,
     saving: false,
@@ -346,11 +318,27 @@ function selectedCaldav(): CaldavConnection | undefined {
   return draftCaldav();
 }
 
-function showToast(params: { message: string }): void {
+/**
+ * Renders the collection kinds the provider refused. The backend already
+ * returns an actionable sentence per kind (disabled Google API, missing
+ * scope, …), so this only labels which kind each message belongs to.
+ */
+function discoveryWarning(params: { errors?: Record<string, string> }): string | null {
+  const entries = Object.entries(params.errors ?? {});
+  if (entries.length === 0) return null;
+  const labels: Record<string, string> = {
+    calendar: 'Calendarios',
+    tasks: 'Tareas',
+    contacts: 'Contactos',
+  };
+  return entries.map(([kind, detail]) => `${labels[kind] ?? kind}: ${detail}`).join(' · ');
+}
+
+function showToast(params: { message: string; duration?: number }): void {
   void toastController
     .create({
       message: params.message,
-      duration: 2500,
+      duration: params.duration ?? 2500,
       position: 'bottom',
     })
     .then((toast) => toast.present());
@@ -480,7 +468,6 @@ async function testGoogleConnection(params: { connection: GoogleConnection }): P
       url: connection.icsUrl,
     });
     await reportCardResult({ connection, outcome });
-
   } finally {
     connection.testing = false;
   }
@@ -505,7 +492,6 @@ async function testCaldavConnection(params: { connection: CaldavConnection }): P
       password: connection.password,
     });
     await reportCardResult({ connection, outcome });
-
   } finally {
     connection.testing = false;
   }
@@ -680,7 +666,13 @@ async function refreshConnection(params: {
       serverId: connection.serverId,
     });
     if (!discovered.ok || !discovered.collections) {
-      await reportOutcome({ outcome: discovered });
+      const failureWarning = discoveryWarning({ errors: discovered.discoveryErrors });
+      await reportOutcome({
+        outcome:
+          failureWarning === null
+            ? discovered
+            : { ...discovered, message: `${discovered.message} — ${failureWarning}` },
+      });
       return;
     }
     const localFlags = new Map(
@@ -699,16 +691,21 @@ async function refreshConnection(params: {
       };
     });
     const subscribed = connection.collections.filter((item) => item.subscribed);
+    const warning = discoveryWarning({ errors: discovered.discoveryErrors });
     if (subscribed.length === 0) {
+      const count = `${discovered.collections.length} colecciones, ninguna suscripta`;
       showToast({
-        message: `${discovered.collections.length} calendarios, ninguno suscripto`,
+        message: warning === null ? count : `${count} — ${warning}`,
+        duration: warning === null ? undefined : 8000,
       });
       return;
     }
     const synced = await calendarSourceController.syncSource({ serverId: connection.serverId });
     if (synced.ok) {
+      const summary = `${discovered.collections.length} colecciones, ${subscribed.length} sincronizadas`;
       showToast({
-        message: `${discovered.collections.length} calendarios, ${subscribed.length} sincronizados`,
+        message: warning === null ? summary : `${summary} — ${warning}`,
+        duration: warning === null ? undefined : 8000,
       });
       return;
     }
@@ -791,7 +788,6 @@ async function persistConnectionState(params: {
     await reportOutcome({ outcome });
     return;
   }
-  // sync draft collections to real store so reopen shows updated state
   const real =
     draftGoogle()?.id === (connection as any).id
       ? findGoogleConnection({ id: (connection as any).id })
@@ -850,8 +846,8 @@ async function removeConnection(params: {
 }
 
 function isFormDisabled(): boolean {
-  const connection = selectedGoogle() ?? selectedCaldav()
-  return connection ? connection.testing || connection.saving : false
+  const connection = selectedGoogle() ?? selectedCaldav();
+  return connection ? connection.testing || connection.saving : false;
 }
 
 function onModalSave(): void {
@@ -924,7 +920,7 @@ async function onModalRemove(): Promise<void> {
         text: 'Eliminar',
         role: 'destructive',
         cssClass: 'alert-button-danger',
-        handler: () => {
+        handler: (): void => {
           void removeConnection({ connectionType: current.connectionType, id: current.id });
         },
       },

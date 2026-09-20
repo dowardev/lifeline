@@ -18,7 +18,55 @@ class CaldavDiscoveryService
         $principal = $this->findPrincipal($client, $url, $auth) ?? $url;
         $home = $this->findHomeSet($client, $principal, $auth) ?? $url;
 
-        return $this->listCollections($client, $home, $auth);
+        return $this->listCollections($client, $home, $auth) ?? [];
+    }
+
+    /**
+     * Discover calendar + addressbook + task collections (LBDS-266).
+     *
+     * `failed[kind]` is true only when that sub-discovery actually failed
+     * (transport error or unparseable answer), never when the server answers
+     * with a valid empty collection. Tasks ride on the calendar discovery:
+     * a VTODO-capable calendar comes from the same PROPFIND.
+     *
+     * @return array{found: array<int, array{href: string, name: string, type: string}>, failed: array{calendar: bool, contacts: bool}}
+     */
+    public function discoverAll(string $url, ?string $username, ?string $password): array
+    {
+        $client = new Client(['timeout' => 15, 'allow_redirects' => ['max' => 3]]);
+        $auth = ($username !== null && $username !== '') ? [$username, (string) $password] : null;
+        $principal = $this->findPrincipal($client, $url, $auth) ?? $url;
+        $home = $this->findHomeSet($client, $principal, $auth) ?? $url;
+
+        $failed = ['calendar' => false, 'contacts' => false];
+        $found = [];
+
+        $calendars = $this->listCollections($client, $home, $auth);
+        if ($calendars === null) {
+            $failed['calendar'] = true;
+        } else {
+            $found = $calendars;
+        }
+
+        $addressbooks = $this->listAddressbooks($client, $principal, $auth);
+        if ($addressbooks === null) {
+            $failed['contacts'] = true;
+        } else {
+            foreach ($addressbooks as $book) {
+                $exists = false;
+                foreach ($found as $item) {
+                    if (($item['href'] ?? null) === ($book['href'] ?? null)) {
+                        $exists = true;
+                        break;
+                    }
+                }
+                if (! $exists) {
+                    $found[] = $book;
+                }
+            }
+        }
+
+        return ['found' => $found, 'failed' => $failed];
     }
 
     private function propfind(Client $client, string $url, string $body, string $depth, ?array $auth): ?string
@@ -68,7 +116,7 @@ class CaldavDiscoveryService
         return $href !== null ? $this->absoluteUrl($principalUrl, $href) : null;
     }
 
-    private function listCollections(Client $client, string $homeUrl, ?array $auth): array
+    private function listCollections(Client $client, string $homeUrl, ?array $auth): ?array
     {
         $xml = $this->propfind($client, $homeUrl,
             '<?xml version="1.0" encoding="utf-8" ?>'
@@ -77,13 +125,13 @@ class CaldavDiscoveryService
             . '<C:supported-calendar-component-set/></D:prop></D:propfind>',
             '1', $auth);
         if ($xml === null) {
-            return [];
+            return null;
         }
 
         $collections = [];
         $doc = $this->parseXml($xml);
         if ($doc === null) {
-            return [];
+            return null;
         }
         $doc->registerXPathNamespace('d', 'DAV:');
         $doc->registerXPathNamespace('c', 'urn:ietf:params:xml:ns:caldav');
@@ -97,6 +145,16 @@ class CaldavDiscoveryService
             $isCalendar = count($response->xpath(
                 './/d:resourcetype/c:calendar'
             )) > 0;
+            $isAddressbook = count($response->xpath('.//d:resourcetype/*[local-name()=\'addressbook\']')) > 0;
+            if ($isAddressbook) {
+                $addrName = trim((string) ($response->xpath('.//d:displayname')[0] ?? ''));
+                $collections[] = [
+                    'href' => $href,
+                    'name' => $addrName !== '' ? $addrName : basename(rtrim($href, '/')),
+                    'type' => 'contacts',
+                ];
+                continue;
+            }
             if (! $isCalendar) {
                 continue;
             }
@@ -120,6 +178,57 @@ class CaldavDiscoveryService
         }
 
         return $collections;
+    }
+
+    private function listAddressbooks(Client $client, string $principalUrl, ?array $auth): ?array
+    {
+        $home = $this->findAddressbookHomeSet($client, $principalUrl, $auth) ?? $principalUrl;
+        $xml = $this->propfind($client, $home,
+            '<?xml version="1.0" encoding="utf-8" ?>'
+            . '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
+            . '<D:prop><D:displayname/><D:resourcetype/></D:prop></D:propfind>',
+            '1', $auth);
+        if ($xml === null) {
+            return null;
+        }
+        $doc = $this->parseXml($xml);
+        if ($doc === null) {
+            return null;
+        }
+        $doc->registerXPathNamespace('d', 'DAV:');
+        $out = [];
+        foreach ($doc->xpath('//d:response') as $response) {
+            $response->registerXPathNamespace('d', 'DAV:');
+            $href = trim((string) ($response->xpath('d:href')[0] ?? ''));
+            if ($href === '') {
+                continue;
+            }
+            if (count($response->xpath('.//d:resourcetype/*[local-name()=\'addressbook\']')) === 0) {
+                continue;
+            }
+            $name = trim((string) ($response->xpath('.//d:displayname')[0] ?? ''));
+            $out[] = [
+                'href' => $href,
+                'name' => $name !== '' ? $name : basename(rtrim($href, '/')),
+                'type' => 'contacts',
+            ];
+        }
+
+        return $out;
+    }
+
+    private function findAddressbookHomeSet(Client $client, string $principalUrl, ?array $auth): ?string
+    {
+        $xml = $this->propfind($client, $principalUrl,
+            '<?xml version="1.0" encoding="utf-8" ?>'
+            . '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
+            . '<D:prop><C:addressbook-home-set/></D:prop></D:propfind>',
+            '0', $auth);
+        if ($xml === null) {
+            return null;
+        }
+        $href = $this->firstHref($xml, 'addressbook-home-set');
+        return $href !== null ? $this->absoluteUrl($principalUrl, $href) : null;
     }
 
     private function firstHref(string $xml, string $prop): ?string

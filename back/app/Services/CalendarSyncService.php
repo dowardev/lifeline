@@ -6,7 +6,9 @@
 namespace App\Services;
 
 use App\Models\CalendarSource;
+use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
+use App\Models\ExternalTask;
 use App\Traits\ValidatesPublicUrl;
 use GuzzleHttp\Client;
 use Sabre\VObject\Component\VCalendar;
@@ -25,7 +27,7 @@ class CalendarSyncService
 
         try {
             $url = decrypt($source->url);
-            $this->assertPublicHttpUrl($url);
+            $this->assertSourceUrlIsPublic($source);
             $password = $source->password !== null ? decrypt($source->password) : null;
 
             // Each collection is isolated: a fetch failure marks that
@@ -35,7 +37,7 @@ class CalendarSyncService
                 foreach ($this->targetCollections($source, $onlyHref) as $collection) {
                     $href = $collection['href'];
                     try {
-                        $seen[$href] = $this->syncGoogleCalendar($source, $href, $stats);
+                        $seen[$href] = $this->syncKind($source, $collection, $href, $stats);
                         $confirmed[] = $href;
                     } catch (\Exception $e) {
                         $skipped[$href] = $e->getMessage();
@@ -52,9 +54,7 @@ class CalendarSyncService
                 foreach ($this->targetCollections($source, $onlyHref) as $collection) {
                     $href = $collection['href'];
                     try {
-                        $seen[$href] = $this->syncCaldavCollection(
-                            $source, $url, $source->username, $password, $href, $stats
-                        );
+                        $seen[$href] = $this->syncCaldavKind($source, $url, $source->username, $password, $collection, $href, $stats);
                         $confirmed[] = $href;
                     } catch (\Exception $e) {
                         $skipped[$href] = $e->getMessage();
@@ -73,6 +73,8 @@ class CalendarSyncService
             }
 
             $stats['pruned'] = $this->pruneUnseen($source, $seen, $confirmed);
+            $stats['pruned'] += $this->pruneUnseenFor(ExternalContact::class, $source, $seen, $confirmed);
+            $stats['pruned'] += $this->pruneUnseenFor(ExternalTask::class, $source, $seen, $confirmed);
             $source->last_synced_at = now();
             $source->last_error = null;
             $source->save();
@@ -197,6 +199,279 @@ class CalendarSyncService
         }
 
         return $seen;
+    }
+
+    private function syncKind(CalendarSource $source, array $collection, string $href, array &$stats): array
+    {
+        $kind = $collection['type'] ?? 'calendar';
+        if ($kind === 'tasks') {
+            return $this->syncGoogleTasks($source, $href, $stats);
+        }
+        if ($kind === 'contacts') {
+            return $this->syncGoogleContacts($source, $href, $stats);
+        }
+
+        return $this->syncGoogleCalendar($source, $href, $stats);
+    }
+
+    private function syncCaldavKind(
+        CalendarSource $source,
+        string $baseUrl,
+        ?string $username,
+        ?string $password,
+        array $collection,
+        string $href,
+        array &$stats
+    ): array {
+        $kind = $collection['type'] ?? 'calendar';
+        if ($kind === 'tasks') {
+            return $this->syncCaldavTasks($source, $baseUrl, $username, $password, $href, $stats);
+        }
+        if ($kind === 'contacts') {
+            return $this->syncCaldavContacts($source, $baseUrl, $username, $password, $href, $stats);
+        }
+
+        return $this->syncCaldavCollection($source, $baseUrl, $username, $password, $href, $stats);
+    }
+
+    private function syncGoogleTasks(CalendarSource $source, string $href, array &$stats): array
+    {
+        $items = (new GoogleCalendarService())->listTasks($source, $href);
+        $seen = [];
+        foreach ($items as $item) {
+            $uid = $item['uid'];
+            $seen[] = $uid;
+            ExternalTask::updateOrCreate(
+                [
+                    'calendar_source_id' => $source->id,
+                    'collection_href' => $href,
+                    'external_uid' => $uid,
+                ],
+                [
+                    'sso_sub' => $source->sso_sub,
+                    'title' => $item['title'],
+                    'status' => $item['status'],
+                    'due_at' => $item['due'],
+                    'description' => $item['notes'],
+                ]
+            );
+            $stats['upserted']++;
+        }
+
+        return $seen;
+    }
+
+    private function syncGoogleContacts(CalendarSource $source, string $href, array &$stats): array
+    {
+        $items = (new GoogleCalendarService())->listContacts($source);
+        $seen = [];
+        foreach ($items as $item) {
+            $uid = $item['uid'];
+            $seen[] = $uid;
+            ExternalContact::updateOrCreate(
+                [
+                    'calendar_source_id' => $source->id,
+                    'collection_href' => $href,
+                    'external_uid' => $uid,
+                ],
+                [
+                    'sso_sub' => $source->sso_sub,
+                    'display_name' => $item['displayName'],
+                    'email' => $item['email'],
+                    'phone' => $item['phone'],
+                ]
+            );
+            $stats['upserted']++;
+        }
+
+        return $seen;
+    }
+
+    private function syncCaldavTasks(
+        CalendarSource $source,
+        string $baseUrl,
+        ?string $username,
+        ?string $password,
+        string $collectionHref,
+        array &$stats
+    ): array {
+        $collectionUrl = $this->absoluteUrl($baseUrl, $collectionHref);
+        $this->assertPublicHttpUrl($collectionUrl);
+        $body = '<?xml version="1.0" encoding="utf-8" ?>'
+            . '<C:calendar-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
+            . '<D:prop><D:getetag/><C:calendar-data/></D:prop>'
+            . '<C:filter><C:comp-filter name="VCALENDAR">'
+            . '<C:comp-filter name="VTODO"/>'
+            . '</C:comp-filter></C:filter>'
+            . '</C:calendar-query>';
+        $options = [
+            'headers' => ['Content-Type' => 'application/xml; charset=utf-8', 'Depth' => '1'],
+            'body' => $body,
+        ];
+        if ($username !== null && $username !== '') {
+            $options['auth'] = [$username, (string) $password];
+        }
+        $xml = (string) $this->httpClient()->request('REPORT', $collectionUrl, $options)->getBody();
+        $seen = [];
+        foreach ($this->extractCalendarData($xml) as $ics) {
+            try {
+                $vcalendar = Reader::read($ics);
+            } catch (\Exception $e) {
+                continue;
+            }
+            foreach ($vcalendar->VTODO ?? [] as $todo) {
+                $uid = trim((string) ($todo->UID ?? ''));
+                if ($uid === '') {
+                    continue;
+                }
+                $seen[] = $uid;
+                $due = null;
+                if (isset($todo->DUE)) {
+                    try {
+                        $due = $todo->DUE->getDateTime();
+                    } catch (\Exception $e) {
+                        $due = null;
+                    }
+                }
+                ExternalTask::updateOrCreate(
+                    [
+                        'calendar_source_id' => $source->id,
+                        'collection_href' => $collectionHref,
+                        'external_uid' => $uid,
+                    ],
+                    [
+                        'sso_sub' => $source->sso_sub,
+                        'title' => trim((string) ($todo->SUMMARY ?? '(sin título)')),
+                        'status' => isset($todo->STATUS) ? trim((string) $todo->STATUS) : null,
+                        'due_at' => $due,
+                        'description' => isset($todo->DESCRIPTION) ? trim((string) $todo->DESCRIPTION) : null,
+                    ]
+                );
+                $stats['upserted']++;
+            }
+        }
+
+        return $seen;
+    }
+
+    private function syncCaldavContacts(
+        CalendarSource $source,
+        string $baseUrl,
+        ?string $username,
+        ?string $password,
+        string $collectionHref,
+        array &$stats
+    ): array {
+        $collectionUrl = $this->absoluteUrl($baseUrl, $collectionHref);
+        $this->assertPublicHttpUrl($collectionUrl);
+        $body = '<?xml version="1.0" encoding="utf-8" ?>'
+            . '<C:addressbook-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
+            . '<D:prop><D:getetag/><C:address-data/></D:prop>'
+            . '</C:addressbook-query>';
+        $options = [
+            'headers' => ['Content-Type' => 'application/xml; charset=utf-8', 'Depth' => '1'],
+            'body' => $body,
+        ];
+        if ($username !== null && $username !== '') {
+            $options['auth'] = [$username, (string) $password];
+        }
+        $xml = (string) $this->httpClient()->request('REPORT', $collectionUrl, $options)->getBody();
+        $seen = [];
+        foreach ($this->extractAddressData($xml) as $entry) {
+            try {
+                $parsed = Reader::read($entry['data']);
+            } catch (\Exception $e) {
+                continue;
+            }
+            $card = $parsed->VCARD ?? $parsed;
+            $uid = trim((string) ($card->UID ?? ''));
+            if ($uid === '') {
+                // The DAV resource href is the stable server identity for a
+                // card that carries no UID; md5($vcard) moved on every edit.
+                $uid = md5($entry['href']);
+            }
+            $seen[] = $uid;
+            ExternalContact::updateOrCreate(
+                [
+                    'calendar_source_id' => $source->id,
+                    'collection_href' => $collectionHref,
+                    'external_uid' => $uid,
+                ],
+                [
+                    'sso_sub' => $source->sso_sub,
+                    'display_name' => trim((string) ($card->FN ?? $uid)),
+                    'email' => isset($card->EMAIL) ? trim((string) $card->EMAIL) : null,
+                    'phone' => isset($card->TEL) ? trim((string) $card->TEL) : null,
+                ]
+            );
+            $stats['upserted']++;
+        }
+
+        return $seen;
+    }
+
+    private function extractAddressData(string $xml): array
+    {
+        $out = [];
+        try {
+            $doc = new \SimpleXMLElement($xml);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Invalid CardDAV multistatus response: ' . mb_substr(trim($xml), 0, 200), 0, $e);
+        }
+        $doc->registerXPathNamespace('d', 'DAV:');
+        $doc->registerXPathNamespace('c', 'urn:ietf:params:xml:ns:carddav');
+        foreach ($doc->xpath('//d:response') as $response) {
+            $response->registerXPathNamespace('d', 'DAV:');
+            $response->registerXPathNamespace('c', 'urn:ietf:params:xml:ns:carddav');
+            $status = $this->responseStatusCode($response);
+            if ($status !== null && $status >= 400) {
+                throw new \RuntimeException("CardDAV server returned HTTP {$status} for a resource; the collection cannot be confirmed.");
+            }
+            $nodes = $response->xpath('.//c:address-data');
+            if (! empty($nodes)) {
+                $href = trim((string) ($response->xpath('d:href')[0] ?? ''));
+                $out[] = ['href' => $href, 'data' => trim((string) $nodes[0])];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The HTTP status a 207 Multi-Status entry reports for its own resource,
+     * or null when it declares none. Per-resource errors inside a 207 must
+     * fail the fetch: otherwise a denied collection looks like an empty
+     * confirmed one and the prune guards wipe its stored rows.
+     */
+    private function responseStatusCode(\SimpleXMLElement $response): ?int
+    {
+        $statuses = $response->xpath('d:status');
+        if (empty($statuses)) {
+            return null;
+        }
+        if (preg_match('/(\d{3})/', trim((string) $statuses[0]), $m) !== 1) {
+            return null;
+        }
+
+        return (int) $m[1];
+    }
+
+    /**
+     * Prune guard shared by contacts/tasks (LBDS-264): only confirmed collections.
+     */
+    private function pruneUnseenFor(string $model, CalendarSource $source, array $seenByCollection, array $confirmed): int
+    {
+        $pruned = 0;
+        $query = $model::where('calendar_source_id', $source->id);
+        foreach ($seenByCollection as $href => $seen) {
+            if (! in_array($href, $confirmed, true)) {
+                continue;
+            }
+            $pruned += (clone $query)->where('collection_href', $href)
+                ->whereNotIn('external_uid', $seen)->delete();
+        }
+
+        return $pruned;
     }
 
     private function pruneUnseen(CalendarSource $source, array $seenByCollection, array $confirmed): int
@@ -325,6 +600,10 @@ class CalendarSyncService
         foreach ($doc->xpath('//d:response') as $response) {
             $response->registerXPathNamespace('d', 'DAV:');
             $response->registerXPathNamespace('c', 'urn:ietf:params:xml:ns:caldav');
+            $status = $this->responseStatusCode($response);
+            if ($status !== null && $status >= 400) {
+                throw new \RuntimeException("CalDAV server returned HTTP {$status} for a resource; the collection cannot be confirmed.");
+            }
             $nodes = $response->xpath('.//c:calendar-data');
             if (! empty($nodes)) {
                 $out[] = trim((string) $nodes[0]);
@@ -351,7 +630,7 @@ class CalendarSyncService
         return rtrim($base, '/') . '/' . $href;
     }
 
-    private function httpClient(): Client
+    protected function httpClient(): Client
     {
         return new Client(['timeout' => 30, 'allow_redirects' => ['max' => 3]]);
     }

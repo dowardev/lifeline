@@ -106,10 +106,17 @@ export const calendarSourceService = {
     return (unwrapData(response).url ?? '') as string;
   },
 
-  async discoverCollections(params: { id: number }): Promise<DiscoveredCollection[]> {
+  async discoverCollections(params: { id: number }): Promise<{
+    collections: DiscoveredCollection[];
+    discoveryErrors: Record<string, string>;
+  }> {
     const response = await apiClient.executeMutation({
       url: `/calendar-sources/${params.id}/discover`,
     });
-    return (unwrapData(response).collections ?? []) as DiscoveredCollection[];
+    const body = unwrapData(response);
+    return {
+      collections: (body.collections ?? []) as DiscoveredCollection[],
+      discoveryErrors: (body.discovery_errors ?? {}) as Record<string, string>,
+    };
   },
 };

@@ -5,7 +5,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
+use App\Models\ExternalTask;
 use App\Models\CalendarSource;
 use Illuminate\Http\Request;
 
@@ -23,25 +25,7 @@ class ExternalEventController extends Controller
         $query = ExternalEvent::where('sso_sub', $owner)
             ->with('source:id,name,color')
             ->orderBy('date_start');
-        $hiddenBySource = [];
-        foreach (CalendarSource::where('sso_sub', $owner)->get(['id', 'collections']) as $src) {
-            foreach ($src->collections ?? [] as $collection) {
-                if (($collection['hidden'] ?? false) && isset($collection['href'])) {
-                    $hiddenBySource[$src->id][] = $collection['href'];
-                }
-            }
-        }
-        if (! empty($hiddenBySource)) {
-            $query->where(function ($q) use ($hiddenBySource) {
-                foreach ($hiddenBySource as $sourceId => $hrefs) {
-                    $q->where(function ($qq) use ($sourceId, $hrefs) {
-                        $qq->where('calendar_source_id', '!=', $sourceId)
-                            ->orWhereNull('collection_href')
-                            ->orWhereNotIn('collection_href', $hrefs);
-                    });
-                }
-            });
-        }
+        $this->excludeHiddenCollections($query, $owner);
 
         if ($request->filled('from')) {
             $query->where(function ($q) use ($request) {
@@ -70,5 +54,79 @@ class ExternalEventController extends Controller
                 'source_color' => $e->source?->color ?? '#3880ff',
             ]),
         ]);
+    }
+
+    public function contacts(Request $request)
+    {
+        $request->validate(['limit' => 'nullable|integer|min:1|max:2000']);
+        $owner = (string) ($request->get('calendar_owner') ?? $request->get('sso_user_id'));
+        $query = ExternalContact::where('sso_sub', $owner)
+            ->with('source:id,name,color')
+            ->orderBy('display_name');
+        $this->excludeHiddenCollections($query, $owner);
+        $contacts = $query
+            ->limit((int) $request->input('limit', 500))
+            ->get();
+
+        return response()->json([
+            'contacts' => $contacts->map(fn (ExternalContact $c) => [
+                'id' => $c->id,
+                'display_name' => $c->display_name,
+                'email' => $c->email,
+                'phone' => $c->phone,
+                'source_name' => $c->source?->name,
+            ]),
+        ]);
+    }
+
+    public function tasks(Request $request)
+    {
+        $request->validate(['limit' => 'nullable|integer|min:1|max:2000']);
+        $owner = (string) ($request->get('calendar_owner') ?? $request->get('sso_user_id'));
+        $query = ExternalTask::where('sso_sub', $owner)
+            ->with('source:id,name,color')
+            ->orderBy('due_at');
+        $this->excludeHiddenCollections($query, $owner);
+        $tasks = $query
+            ->limit((int) $request->input('limit', 500))
+            ->get();
+
+        return response()->json([
+            'tasks' => $tasks->map(fn (ExternalTask $item) => [
+                'id' => $item->id,
+                'title' => $item->title,
+                'status' => $item->status,
+                'due_at' => $item->due_at?->toIso8601String(),
+                'description' => $item->description,
+                'source_name' => $item->source?->name,
+            ]),
+        ]);
+    }
+
+    /**
+     * Collections flagged `hidden` on their source must vanish from every
+     * external listing (events, contacts, tasks), not only from the calendar.
+     */
+    private function excludeHiddenCollections(\Illuminate\Database\Eloquent\Builder $query, string $owner): void
+    {
+        $hiddenBySource = [];
+        foreach (CalendarSource::where('sso_sub', $owner)->get(['id', 'collections']) as $src) {
+            foreach ($src->collections ?? [] as $collection) {
+                if (($collection['hidden'] ?? false) && isset($collection['href'])) {
+                    $hiddenBySource[$src->id][] = $collection['href'];
+                }
+            }
+        }
+        if (! empty($hiddenBySource)) {
+            $query->where(function ($q) use ($hiddenBySource) {
+                foreach ($hiddenBySource as $sourceId => $hrefs) {
+                    $q->where(function ($qq) use ($sourceId, $hrefs) {
+                        $qq->where('calendar_source_id', '!=', $sourceId)
+                            ->orWhereNull('collection_href')
+                            ->orWhereNotIn('collection_href', $hrefs);
+                    });
+                }
+            });
+        }
     }
 }

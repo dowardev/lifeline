@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **front/back:** Contacts and task lists sync for CalDAV (CardDAV address books, VTODO task lists) and Google (People API, Tasks API), with subscribe/hidden toggles and the same destructive-prune guards as events — LBDS-266
+- **front:** Calendar account management moved to its own place in Settings (Ajustes, Cuentas) with the panel for linking Google and CalDAV accounts — LBDS-266
+- **front:** External calendar data refreshes automatically when the app opens, returns to the foreground, or you enter the calendar page (at most every 10 minutes) — LBDS-266
 - **front/back:** Add external calendar support — Google Calendar (OAuth + ICS), generic CalDAV and plain `.ics` subscriptions — with discoverable collections, per-calendar subscribe/hidden toggles, guest-mode (no login) and read-only agenda overlay with source color and lock badge — LBDS-224
 - **root:** Server first-run `setup.sh` — idempotent backend provisioning (env from `.env.production.example`, APP_URL/DB/MAIL/SSO config, DB check, storage link, migrate + caches, health checks; `LIFELINE_*` non-interactive overrides) uploaded by `deploy.sh` via `SETUP_SCRIPT`; documented in README + DEPLOY
 
@@ -17,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **back:** Redesign the guest-invitation email as a branded HTML template — LifeLine logo served publicly as PNG (`back/public/assets/lifeline_v1.png`) for wide email-client support, accent event card with title/date/inviter, footer linking to https://lifeline.dowar.xyz — with the original content kept as a plain-text fallback — LBDS-219
 
 ### Fixed
+- **back:** Google OAuth sources could never refresh (SSRF guard rejected the `google-oauth` sentinel URL before any API call) — LBDS-266
+- **back:** Google Tasks and People API requests lacked their scopes and used the wrong contacts endpoint, so tasks and contacts never synced — LBDS-266
 - **back:** Hide the start-date line in the guest-invitation email when the event has no start date — LBDS-219
 - **back:** Guard CalDAV prune against unreadable responses: unparseable REPORT bodies throw instead of pruning everything, each collection syncs in isolation, and unconfirmed collections are never pruned (genuinely-empty calendars still prune) — LBDS-264
 - **front:** Refresh on Google ICS-URL connections skips undiscoverable collections and syncs directly (no more 422), with a re-entrancy guard — LBDS-264
@@ -25,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **back:** Guest identity can no longer be assumed by sending another guest's raw UUID in `X-Guest-Id` (unsigned values resolve to a fresh guest; login-time source adoption requires the signed token or the encrypted cookie) — LBDS-230
 
 ### Added
+- **front/back:** Contacts and task lists sync for CalDAV (CardDAV address books, VTODO task lists) and Google (People API, Tasks API), with subscribe/hidden toggles and the same destructive-prune guards as events — LBDS-266
+- **front:** Calendar account management moved to its own place in Settings (Ajustes, Cuentas) with the panel for linking Google and CalDAV accounts — LBDS-266
+- **front:** External calendar data refreshes automatically when the app opens, returns to the foreground, or you enter the calendar page (at most every 10 minutes) — LBDS-266
 - **front:** Centralize reminder scheduling/cancellation in a single `ReminderController` with one source-of-truth offset vocabulary (`utils/reminders.ts`); persist `id_reminders` through store/Dexie/API for cross-device cancellation; wire scheduling into calendar + task flows — LBDS-211
 - **front:** Guest invitation emails on event create/update (authenticated flow) with the inviter email — LBDS-211
 - **back:** Persist `id_reminders`/`notifications` on events/tasks/notes (reversible migration, casts, resources) and add `Support/ReminderOffsets` (canonical vocabulary + normalize) — LBDS-211
@@ -37,11 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **back:** Normalize legacy offset codes on write and accept both string and `{ email }` guests — LBDS-211
 
 ### Fixed
+- **back:** Google OAuth sources could never refresh (SSRF guard rejected the `google-oauth` sentinel URL before any API call) — LBDS-266
+- **back:** Google Tasks and People API requests lacked their scopes and used the wrong contacts endpoint, so tasks and contacts never synced — LBDS-266
 - **front:** Event form save button never enabling (Vuelidate `timeZone`/`timezone` mismatch); Ionic inputs binding via `$event.detail.value`; editing restoring reminders/repeat; anonymous task edits no longer duplicating; notification permission requested within the user gesture — LBDS-211
 - **front:** HomePage calendar widget loads events on first mount; guests add on event edit; weekly repeat `frecuency` honored; notification-id collision prevention — LBDS-211
 - **front/back:** Event create/update flows work authenticated and anonymous (no 401, no dropped fields on edit) — LBDS-211
 
 ### Added
+- **front/back:** Contacts and task lists sync for CalDAV (CardDAV address books, VTODO task lists) and Google (People API, Tasks API), with subscribe/hidden toggles and the same destructive-prune guards as events — LBDS-266
+- **front:** Calendar account management moved to its own place in Settings (Ajustes, Cuentas) with the panel for linking Google and CalDAV accounts — LBDS-266
+- **front:** External calendar data refreshes automatically when the app opens, returns to the foreground, or you enter the calendar page (at most every 10 minutes) — LBDS-266
 - **front:** Make authentication optional — the app boots to a usable anonymous mode with no SSO, backed by a persisted local profile (`lifeline_local_user`) anchored to a real `user_id` in IndexedDB (LBDS-199)
 - **front:** Soft router guard with opt-in `requiresAuth` meta; app-shell routes (home, calendar, tasks, documents, notes) are reachable anonymously
 - **front:** `AuthController` façade splitting always-available `LocalAuthController` from optional `SsoAuthController`; `apiClient` degrades to local Dexie when no SSO is available
@@ -59,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **front:** Simplify the widget layout model to `lg`/`md` breakpoints only (`sm` slot removed); mobile order follows desktop drag order
 
 ### Fixed
+- **back:** Google OAuth sources could never refresh (SSRF guard rejected the `google-oauth` sentinel URL before any API call) — LBDS-266
+- **back:** Google Tasks and People API requests lacked their scopes and used the wrong contacts endpoint, so tasks and contacts never synced — LBDS-266
 - **front:** Fix event reminder popover crashing on open (Temporal Dead Zone on `startDate`/`endDate` in `RemindersComponent`) — LBDS-206
 - **front:** Split the shared event reminders popover into dedicated popovers (Tiempo/Notificaciones/Repetir) and replace the `<ion-textarea>` read-only display with `ion-item`/`ion-label` rows — LBDS-206
 - **front:** Clear the timezone search on popover close so it reopens showing the full grouped list — LBDS-206
