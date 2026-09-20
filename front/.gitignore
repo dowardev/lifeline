@@ -36,3 +36,5 @@ npm-debug.log*
 .env
 .env.*
 !.env.*.example
+# Local Pi runtime state
+.atl/
