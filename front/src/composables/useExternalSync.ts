@@ -6,7 +6,9 @@ import type { Ref } from 'vue';
 import { App as CapacitorApp } from '@capacitor/app';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { CalendarSourceController } from '@/controllers/calendarSourceController';
+import { ReminderController } from '@/controllers/reminderController';
 import type { CalendarSourceDto } from '@/services/calendarSourceService';
+import { externalEventService } from '@/services/externalEventService';
 
 /**
  * External sources (Google / CalDAV / ICS) live outside the app, so what is on
@@ -17,8 +19,11 @@ import type { CalendarSourceDto } from '@/services/calendarSourceService';
  * every client fresh, which matters on the web where a tab can stay open for
  * days, and when the same account is used from several devices.
  *
- * There is still no server-side scheduler, so a change made in Google Calendar
- * while the app is closed stays invisible until the app runs again.
+ * External reminders are now scheduled as local notifications after each
+ * successful sync, so they fire on every device (including degoogled ones)
+ * without push infrastructure. There is still no server-side scheduler and no
+ * push delivery, so a change made in Google Calendar while the app is closed
+ * stays invisible — and un-notified — until the app runs again.
  */
 
 /** Minimum time between two sync attempts. */
@@ -49,6 +54,33 @@ async function syncSources(params: { controller: CalendarSourceController }): Pr
 }
 
 /**
+ * Turns freshly synced external events into local notifications. Best-effort:
+ * the controller owns all `LocalNotifications` access, so this only maps DTOs
+ * and never lets a notification problem change the sync outcome.
+ */
+async function scheduleExternalReminders(): Promise<void> {
+  try {
+    const events = await externalEventService.listExternalEvents();
+    const controller = new ReminderController();
+    await controller.syncExternalReminders({
+      items: events.map((event) => ({
+        key: event.key,
+        title: event.title,
+        // Empty body falls back to the title inside the controller.
+        message: event.description ?? '',
+        start: new Date(event.date_start as string),
+        offsetsSeconds: event.reminderOffsetsSeconds ?? [],
+      })),
+    });
+  } catch (error) {
+    console.warn(
+      '[externalSync] no se pudieron programar los recordatorios externos',
+      error,
+    );
+  }
+}
+
+/**
  * Syncs every active source unless an attempt already happened within the TTL.
  * Concurrent calls collapse into the single in-flight run.
  *
@@ -67,7 +99,11 @@ export async function runExternalSync(): Promise<void> {
     const controller = new CalendarSourceController();
     try {
       const finished = await syncSources({ controller });
-      if (finished) lastSyncedAt.value = Date.now();
+      if (finished) {
+        lastSyncedAt.value = Date.now();
+        // Scheduling follows a successful sync only, and is fully best-effort.
+        await scheduleExternalReminders();
+      }
     } catch (error) {
       // Offline, no session, expired token… The next attempt is TTL-gated.
       console.warn('[externalSync] no se pudo sincronizar', error);

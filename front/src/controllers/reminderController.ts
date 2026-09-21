@@ -59,6 +59,23 @@ function nextNotificationId(): number {
   return base + notificationCounter;
 }
 
+/**
+ * FNV-1a with 32-bit multiply, folded to a positive 31-bit integer. Non-crypto
+ * and stable across runs: the same input always yields the same id, so
+ * re-scheduling an external reminder replaces its previous notification
+ * instead of piling up a new one. Collisions within a batch are resolved by
+ * linear probing (see syncExternalReminders).
+ */
+function fnv1a31(input: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    // Math.imul keeps multiplication in 32-bit space (no float precision loss).
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0) & 0x7fffffff;
+}
+
 export class ReminderController {
   async #assertPermission(): Promise<void> {
     const granted = await this.checkNotificationsPermissions();
@@ -343,6 +360,126 @@ export class ReminderController {
   async cancelNoteReminders(params: { ids: number[] }): Promise<void> {
     for (const id of params.ids ?? []) {
       if (Number.isFinite(id)) await this.#cancelOne({ id });
+    }
+  }
+
+  /**
+   * Schedules local notifications for external (Google/CalDAV/ICS) reminders.
+   * This is the app-local counterpart to push/server scheduling: it runs on
+   * every device, including degoogled ones, and needs no push infrastructure.
+   *
+   * Best-effort by design: a denied permission only means no external
+   * reminders (no throw, no toast), and a plugin failure is logged without
+   * aborting the remaining work.
+   */
+  async syncExternalReminders(params: {
+    items: {
+      key: string;
+      title: string;
+      message: string;
+      start: Date;
+      offsetsSeconds: number[];
+    }[];
+  }): Promise<void> {
+    const { items } = params;
+    const now = Date.now();
+
+    // (1) Build the desired set. Each offset is seconds before `start`, so a
+    // larger (more positive) offset fires earlier. Skip past/non-finite fires.
+    const desired: {
+      key: string;
+      title: string;
+      body: string;
+      fireAt: Date;
+      offsetSeconds: number;
+    }[] = [];
+    for (const item of items ?? []) {
+      for (const offsetSeconds of item.offsetsSeconds ?? []) {
+        if (!Number.isFinite(offsetSeconds)) continue;
+        const fireAt = new Date(item.start.getTime() - offsetSeconds * 1000);
+        if (!Number.isFinite(fireAt.getTime())) continue;
+        if (fireAt.getTime() <= now) continue;
+        desired.push({
+          key: item.key,
+          title: item.title,
+          body: item.message || item.title,
+          fireAt,
+          offsetSeconds,
+        });
+      }
+    }
+
+    // (2) Canonical order (by key, then offset descending) makes id assignment
+    // deterministic, so an identical run produces identical ids and the plugin
+    // replaces instead of duplicating. Collisions probe linearly.
+    desired.sort((a, b) =>
+      a.key < b.key ? -1 : a.key > b.key ? 1 : b.offsetSeconds - a.offsetSeconds,
+    );
+    const usedIds = new Set<number>();
+    const notifications = desired.map((entry) => {
+      let id = fnv1a31(`${entry.key}|${entry.offsetSeconds}`);
+      while (usedIds.has(id)) id = (id + 1) % 2 ** 31;
+      usedIds.add(id);
+      return { ...entry, id };
+    });
+
+    // (3) Permission is best-effort: no local entity is being persisted here,
+    // so denial only disables external reminders.
+    let granted = false;
+    try {
+      granted = await this.checkNotificationsPermissions();
+    } catch (error) {
+      console.warn(
+        "[ReminderController] permission check failed (best-effort):",
+        error,
+      );
+    }
+    if (!granted) {
+      console.warn(
+        "[ReminderController] notification permission denied; external reminders skipped",
+      );
+      return;
+    }
+
+    // (4) Reconcile: cancel previously scheduled external notifications whose
+    // key no longer has a desired fire time. Non-`ext:` pending notifications
+    // belong to local events/tasks/notes and are left untouched.
+    try {
+      const pending = await LocalNotifications.getPending();
+      for (const notification of pending.notifications ?? []) {
+        const extra =
+          typeof notification.extra === "string" ? notification.extra : "";
+        if (!extra.startsWith("ext:")) continue;
+        if (usedIds.has(notification.id)) continue;
+        await this.#cancelOne({ id: notification.id });
+      }
+    } catch (error) {
+      console.error(
+        "[ReminderController] getPending failed (best-effort):",
+        error,
+      );
+    }
+
+    // (5) Schedule every desired notification with its deterministic id and an
+    // `ext:` marker so the next run can recognize it during reconciliation.
+    for (const notification of notifications) {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: notification.title,
+            body: notification.body,
+            id: notification.id,
+            schedule: { at: notification.fireAt },
+            actionTypeId: "",
+            extra: `ext:${notification.key}`,
+          },
+        ],
+      }).catch((error) => {
+        console.error(
+          "[ReminderController] external schedule failed (best-effort):",
+          error,
+        );
+      });
     }
   }
 
