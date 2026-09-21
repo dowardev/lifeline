@@ -64,6 +64,22 @@ T9 no commitea: es review + triage.
 ## Estado
 
 - [x] Gate In-Progress (webhook movio el ticket, no el agente)
-- [ ] U1 backend
-- [ ] U2 frontend
+- [x] U1 backend — commit `7b2711c`
+- [x] U2 frontend — commit `da90c61`
 - [ ] T9 review + triage
+
+## Incidencias
+
+- El worker backend corrio Pint sobre directorios completos (`app/Services`, `app/Models`, `tests`, ...)
+  y genero churn cosmetico en 51 archivos (414 inserciones) ajeno a la feature. Se revirtio todo
+  lo que era solo formato y se reaplicaron los cambios reales a mano. Diff final de U1: 143
+  inserciones / 1 borrado en 7 archivos + 4 archivos nuevos.
+- Valvula para U2: `pnpm run lint` ejecuta `oxlint --fix && eslint --fix` y repetiria el mismo
+  problema. La verificacion de lint debe correr sin `--fix` y solo sobre los archivos tocados.
+- Verificacion U1: suite backend completa exit 0; subconjunto `ExternalReminder|ReminderOffsets`
+  9 + 11 + 2 tests OK. La deprecacion `PDO::MYSQL_ATTR_SSL_CA` (PHP 8.5) en `config/database.php`
+  es preexistente y no la toca este cambio.
+- Verificacion U2: `pnpm run test:unit` 67/67 OK; oxlint y eslint (sin `--fix`) limpios sobre los
+  archivos tocados. `npx vue-tsc --noEmit` falla con 20 errores **preexistentes** en archivos no
+  tocados (WakaTimeToday.vue, documentController.ts, eventController.ts, noteController.ts,
+  tagController.ts, taskController.ts, wakaTimeController.ts, UserFactory.ts, TasksPage.vue).
