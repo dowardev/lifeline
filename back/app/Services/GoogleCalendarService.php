@@ -10,9 +10,19 @@ use App\Support\ExternalReminderParser;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Log;
 
 class GoogleCalendarService
 {
+    /**
+     * Calendar default reminders already fetched during this sync run, keyed
+     * by calendar id. A miss is cached as [] too, so a failing calendarList
+     * call is made at most once per calendar per run.
+     *
+     * @var array<string, int[]>
+     */
+    private array $calendarDefaultReminders = [];
+
     /**
      * Read-only scopes for every collection kind this service syncs: the
      * calendar list/events, Google Tasks, and the People connections used as
@@ -385,7 +395,7 @@ class GoogleCalendarService
                 'end' => $end,
                 'description' => isset($item['description']) ? (string) $item['description'] : null,
                 'timeZone' => isset($item['start']['timeZone']) ? (string) $item['start']['timeZone'] : null,
-                'reminders' => $this->reminderOffsets($item['reminders'] ?? null),
+                'reminders' => $this->reminderOffsets($item['reminders'] ?? null, $source, $calendarId),
             ];
         }
 
@@ -394,20 +404,41 @@ class GoogleCalendarService
 
     /**
      * Google expresses reminders as minutes before the start. Only `popup`
-     * overrides can become a local notification; `useDefault` without a usable
-     * override contributes nothing, because the server-side defaults are not
-     * knowable from here. Descending and capped like the ICS path.
+     * overrides can become a local notification. When an event relies on the
+     * calendar defaults (`useDefault` true, no usable popup overrides), the
+     * defaults are read from the calendarList endpoint so the reminder the
+     * user sees in Google Calendar also reaches this app. Descending, capped
+     * to the offsets closest to the anchor, like the ICS path.
      *
      * @return int[]
      */
-    private function reminderOffsets(mixed $reminders): array
+    private function reminderOffsets(mixed $reminders, CalendarSource $source, string $calendarId): array
     {
         if (! is_array($reminders)) {
             return [];
         }
 
+        $seconds = $this->popupSeconds($reminders['overrides'] ?? null);
+
+        $useDefault = ($reminders['useDefault'] ?? false) === true;
+        if ($useDefault && $seconds === []) {
+            $seconds = $this->calendarDefaultOffsetSeconds($source, $calendarId);
+        }
+
+        return $this->finalizeOffsets($seconds);
+    }
+
+    /**
+     * @return int[]
+     */
+    private function popupSeconds(mixed $overrides): array
+    {
+        if (! is_array($overrides)) {
+            return [];
+        }
+
         $seconds = [];
-        foreach ($reminders['overrides'] ?? [] as $override) {
+        foreach ($overrides as $override) {
             if (! is_array($override) || ($override['method'] ?? null) !== 'popup') {
                 continue;
             }
@@ -417,13 +448,61 @@ class GoogleCalendarService
             $seconds[] = (int) $override['minutes'] * 60;
         }
 
-        $seconds = array_values(array_unique($seconds));
-        rsort($seconds);
-
-        return array_slice($seconds, 0, ExternalReminderParser::MAX_OFFSETS);
+        return $seconds;
     }
 
-    private function httpClient(): Client
+    /**
+     * The calendar's `defaultReminders` as seconds before start. A failure is
+     * logged and contributes nothing: a broken defaults call must never fail
+     * the sync. The result (including a failure) is cached per calendar for
+     * the lifetime of this service instance.
+     *
+     * @return int[]
+     */
+    private function calendarDefaultOffsetSeconds(CalendarSource $source, string $calendarId): array
+    {
+        if (array_key_exists($calendarId, $this->calendarDefaultReminders)) {
+            return $this->calendarDefaultReminders[$calendarId];
+        }
+
+        $this->calendarDefaultReminders[$calendarId] = [];
+        try {
+            $data = $this->getJson(
+                'https://www.googleapis.com/calendar/v3/users/me/calendarList/' . rawurlencode($calendarId),
+                ['headers' => ['Authorization' => 'Bearer ' . $this->accessToken($source)]],
+                'los recordatorios predeterminados del calendario'
+            );
+            $this->calendarDefaultReminders[$calendarId] = $this->popupSeconds($data['defaultReminders'] ?? null);
+        } catch (\Throwable $e) {
+            Log::warning('Google calendar default reminders could not be read', [
+                'calendar' => $calendarId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $this->calendarDefaultReminders[$calendarId];
+    }
+
+    /**
+     * Dedupe, keep the ten offsets closest to the anchor (smallest absolute
+     * distance to 0), then store descending.
+     *
+     * @param  int[]  $seconds
+     * @return int[]
+     */
+    private function finalizeOffsets(array $seconds): array
+    {
+        $seconds = array_values(array_unique($seconds));
+
+        usort($seconds, static fn ($a, $b) => abs($a) <=> abs($b));
+        $seconds = array_slice($seconds, 0, ExternalReminderParser::MAX_OFFSETS);
+
+        rsort($seconds);
+
+        return $seconds;
+    }
+
+    protected function httpClient(): Client
     {
         return new Client(['timeout' => 20]);
     }

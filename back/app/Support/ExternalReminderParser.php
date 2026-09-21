@@ -7,6 +7,7 @@ namespace App\Support;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
 use Illuminate\Support\Facades\Log;
 use Sabre\VObject\Component\VAlarm;
 use Sabre\VObject\Component\VEvent;
@@ -15,12 +16,31 @@ use Sabre\VObject\DateTimeParser;
 
 /**
  * Extracts the VALARM reminders of an external component as a list of
- * seconds before the component's anchor. The anchor is DTSTART for a VEVENT
- * and DUE for a VTODO. Positive = before the anchor, negative = after it.
+ * seconds before the component's client scheduling anchor. Positive = before
+ * the anchor, negative = after it.
+ *
+ * The persisted `reminder_offsets_seconds` value always means "seconds before
+ * the anchor the client schedules from": `date_start` for events and `due_at`
+ * for tasks. To produce it, this parser first derives the RFC 5545-correct
+ * absolute fire time using the proper reference and `RELATED`:
+ *
+ *  - VEVENT: `RELATED=START` (the default) is relative to DTSTART and
+ *    `RELATED=END` to DTEND/DURATION-derived end.
+ *  - VTODO: `RELATED=START` (the default) is relative to DTSTART, falling
+ *    back to DUE when DTSTART is absent; `RELATED=END` is relative to DUE.
+ *
+ * The fire time is then converted to seconds before that client anchor. For a
+ * VTODO the anchor is DUE, so a VTODO without DUE has nothing the client can
+ * schedule from and yields no offsets.
  *
  * Only ACTION:DISPLAY alarms are considered; EMAIL (and any other action)
  * carries no notification this app can schedule. A malformed alarm never
  * aborts a sync run: it is skipped and logged.
+ *
+ * RFC 5545 `dur-value` supports only W/D/H/M/S, where `M` is minutes:
+ * `P1M`/`P1Y` are not valid durations, so an alarm using them is skipped and
+ * logged. Absolute `VALUE=DATE-TIME` triggers are knowable regardless of any
+ * reference, so a missing reference only drops duration triggers.
  */
 class ExternalReminderParser
 {
@@ -32,25 +52,28 @@ class ExternalReminderParser
      */
     public static function forVEvent(VEvent $event, ?DateTimeInterface $start, ?DateTimeInterface $end): array
     {
-        return self::parse($event, $start, $end);
+        return self::parse($event, $start, $start, $end);
     }
 
     /**
-     * A VTODO has no separate end here: its anchor is DUE, so a RELATED=END
-     * alarm has no resolvable reference and is skipped.
-     *
      * @return int[] seconds before DUE
      */
-    public static function forVTodo(VTodo $todo, ?DateTimeInterface $due): array
+    public static function forVTodo(VTodo $todo, ?DateTimeInterface $start, ?DateTimeInterface $due): array
     {
-        return self::parse($todo, $due, null);
+        // RELATED=START resolves against DTSTART when present, otherwise DUE;
+        // RELATED=END always resolves against DUE. The client anchor is DUE.
+        return self::parse($todo, $due, $start ?? $due, $due);
     }
 
     /**
      * @return int[]
      */
-    private static function parse(object $component, ?DateTimeInterface $anchor, ?DateTimeInterface $end): array
-    {
+    private static function parse(
+        object $component,
+        ?DateTimeInterface $anchor,
+        ?DateTimeInterface $startRef,
+        ?DateTimeInterface $endRef
+    ): array {
         if ($anchor === null) {
             return [];
         }
@@ -58,7 +81,7 @@ class ExternalReminderParser
         $offsets = [];
         foreach ($component->VALARM ?? [] as $alarm) {
             try {
-                $offset = self::offsetFor($alarm, $anchor, $end);
+                $offset = self::offsetFor($alarm, $anchor, $startRef, $endRef);
                 if ($offset !== null) {
                     $offsets[] = $offset;
                 }
@@ -72,8 +95,12 @@ class ExternalReminderParser
         return self::finalize($offsets);
     }
 
-    private static function offsetFor(VAlarm $alarm, DateTimeInterface $anchor, ?DateTimeInterface $end): ?int
-    {
+    private static function offsetFor(
+        VAlarm $alarm,
+        DateTimeInterface $anchor,
+        ?DateTimeInterface $startRef,
+        ?DateTimeInterface $endRef
+    ): ?int {
         if (strtoupper(trim((string) ($alarm->ACTION ?? ''))) !== 'DISPLAY') {
             return null;
         }
@@ -83,18 +110,11 @@ class ExternalReminderParser
 
         $trigger = $alarm->TRIGGER;
         $related = strtoupper(trim((string) ($trigger['RELATED'] ?? 'START')));
-        $reference = $anchor;
-        if ($related === 'END') {
-            if ($end === null) {
-                // Mis-timing a reminder is worse than dropping it.
-                Log::warning('External reminder with RELATED=END skipped: event end unknown');
 
-                return null;
-            }
-            $reference = $end;
-        }
-
-        $fire = self::fireTime($trigger, $reference);
+        // Decide the trigger kind before requiring a reference: an absolute
+        // VALUE=DATE-TIME trigger is knowable even when the reference is
+        // unknown. fireTime() only demands a reference for durations.
+        $fire = self::fireTime($trigger, $related === 'END' ? $endRef : $startRef);
         if ($fire === null) {
             return null;
         }
@@ -102,24 +122,32 @@ class ExternalReminderParser
         return (int) round($anchor->getTimestamp() - $fire->getTimestamp());
     }
 
-    private static function fireTime(mixed $trigger, DateTimeInterface $reference): ?DateTimeInterface
+    private static function fireTime(mixed $trigger, ?DateTimeInterface $reference): ?DateTimeInterface
     {
         if ($trigger->getValueType() === 'DURATION') {
-            // add() respects the interval sign, so a negative trigger moves the
-            // fire time back in time. Month/year intervals resolve with the
-            // real calendar length.
+            if ($reference === null) {
+                // Mis-timing a reminder is worse than dropping it.
+                Log::warning('External reminder with a duration trigger skipped: reference time unknown');
+
+                return null;
+            }
+
+            // RFC 5545 dur-value has only W/D/H/M/S: M is minutes. P1M/P1Y
+            // are not valid dur-values, so parseDuration rejects them and the
+            // caller skips and logs the alarm.
             return DateTimeImmutable::createFromInterface($reference)
                 ->add(DateTimeParser::parseDuration((string) $trigger));
         }
 
         return DateTimeParser::parseDateTime(
             trim((string) $trigger),
-            $reference->getTimezone()
+            $reference?->getTimezone() ?? new DateTimeZone('UTC')
         );
     }
 
     /**
-     * Dedupe, sort descending (largest offset first) and cap.
+     * Dedupe, keep the ten offsets closest to the anchor (smallest absolute
+     * distance to 0), then sort descending (largest offset first).
      *
      * @param  int[]  $offsets
      * @return int[]
@@ -127,8 +155,12 @@ class ExternalReminderParser
     private static function finalize(array $offsets): array
     {
         $offsets = array_values(array_unique(array_map(static fn ($v) => (int) $v, $offsets)));
+
+        usort($offsets, static fn ($a, $b) => abs($a) <=> abs($b));
+        $offsets = array_slice($offsets, 0, self::MAX_OFFSETS);
+
         rsort($offsets);
 
-        return array_slice($offsets, 0, self::MAX_OFFSETS);
+        return $offsets;
     }
 }

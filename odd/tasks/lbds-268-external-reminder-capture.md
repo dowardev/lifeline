@@ -83,3 +83,42 @@ T9 no commitea: es review + triage.
   archivos tocados. `npx vue-tsc --noEmit` falla con 20 errores **preexistentes** en archivos no
   tocados (WakaTimeToday.vue, documentController.ts, eventController.ts, noteController.ts,
   tagController.ts, taskController.ts, wakaTimeController.ts, UserFactory.ts, TasksPage.vue).
+
+## Review pre-merge y round de fixes
+
+Review nativa (`gentle_review`): lineage `review-d687a5193d067ab5`, tier medium, lens
+`review-reliability`, 16 archivos, 1160 lineas. El relay del reviewer fallo **403 sin body** tres
+veces (`pi-host-relay-transport-failure`), sin mutacion y sin acknowledgement: la via nativa quedo
+abierta y sin veredicto. Se corrio la review fresca obligatoria del skill via `gentle-ai-verify`,
+partida en backend y frontend. Hallazgos introducidos: 8 backend/parser + 7 frontend (14 filas en
+el triage).
+
+Decision del usuario: **fix a los 14**. Un solo commit de fix.
+
+| id | fix | cubierto por |
+|---|---|---|
+| F1 | marcador `extra` como objeto (`{ ext: key }`) + guarda de tipo | test de round-trip y de string no-externo (RED observado) |
+| F2 | la sync usa `checkPermissions()` (silencioso); nunca consulta si no hay trabajo | 3 tests (RED observado con `requestPermissions`) |
+| F3 | mock fiel: `extra` no-objeto se convierte a `null` como hace la plataforma | bloquea F1 si se reintroduce |
+| F4 | `getPending` una vez, delta por contenido, **una sola** llamada a `schedule` | test de delta (RED observado) |
+| F5 | el delta por contenido hace inocuo el corrimiento de ids; cancelacion de ids abandonados | test de id corrido (RED observado) |
+| F6 | probe para no ocupar ids de notificaciones locales (esquema local intacto) | test de no-pisado (RED observado) |
+| F7 | `externalTaskService` + tareas externas agendadas desde `due_at` con namespace `ext-task-` | 2 tests (RED observado) |
+| B1 | `forVTodo(todo, start, due)`; referencia START = `start ?? due`, ancla = `due` | unit + feature CalDAV |
+| B2 | VTODO pasa `due` como referencia de END | unit + feature (RED observado) |
+| B3 | tipo de trigger (duracion vs absoluto) se decide antes de exigir referencia | unit (RED observado) |
+| B4 | docblock corregido: `M` = minutos; `P1M`/`P1Y` no son `dur-value` validos | comentario (sin RED observable) |
+| B5 | el cap conserva los 10 offsets **mas cercanos** al ancla, luego orden desc | unit + feature (RED observado) |
+| B6 | guarda `is_array` + lectura de `defaultReminders` de Google con cache por instancia | nuevo `ExternalReminderGoogleTest` (RED observado) |
+| B7 | tests del camino Google, VTODO `DTSTART`+`DUE`, `RELATED=END`, fin por `DURATION`, TRIGGER malformado | archivos nuevos/extendidos |
+
+Contrato del valor persistido (documentado en el parser): `reminder_offsets_seconds` son segundos
+antes del **ancla del cliente** (`date_start` en eventos, `due_at` en tareas); el parser deriva el
+fire time RFC 5545 correcto y recien despues normaliza contra esa ancla.
+
+Verificacion del round: suite backend `0 failed` (82 deprecaciones PHP 8.5 preexistentes);
+`ExternalReminder|ReminderOffsets` 37 tests, 0 failed; frontend `pnpm run test:unit` 73/73.
+
+**Sin verificar**: nada en dispositivo (Android/iOS). El fetch HTTP de ICS/CalDAV en los tests va
+con `MockHandler`; la unica prueba que responde "la notificacion suena con la app cerrada" requiere
+telefono o emulador y la tiene que hacer el usuario.

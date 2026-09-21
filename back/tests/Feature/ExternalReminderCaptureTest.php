@@ -75,6 +75,85 @@ class ExternalReminderCaptureTest extends TestCase
         $this->assertSame([2700, 900], $event->reminder_offsets_seconds);
     }
 
+    public function test_event_end_derived_from_duration_is_used_for_related_end(): void
+    {
+        $source = $this->makeIcsSource();
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\n"
+            ."BEGIN:VEVENT\r\nUID:evt-duration@example.com\r\n"
+            ."DTSTART:20260920T120000Z\r\nDURATION:PT2H\r\n"
+            ."SUMMARY:Workshop\r\n"
+            ."BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER;RELATED=END:-PT30M\r\nEND:VALARM\r\n"
+            ."END:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $result = $this->serviceWithIcs($ics)->syncSource($source);
+
+        $this->assertTrue($result['ok'], (string) json_encode($result));
+        $event = ExternalEvent::where('title', 'Workshop')->firstOrFail();
+        // DURATION:PT2H ends at 14:00, so the alarm fires at 13:30, which is
+        // 5400s after the 12:00 anchor (negative).
+        $this->assertSame([-5400], $event->reminder_offsets_seconds);
+    }
+
+    private function makeCaldavTasksSource(): CalendarSource
+    {
+        $source = new CalendarSource;
+        $source->forceFill([
+            'sso_sub' => self::OWNER,
+            'type' => 'caldav',
+            'name' => 'Tasks',
+            'url' => encrypt('https://cal.example.com/remote.php/dav'),
+            'collections' => [[
+                'href' => '/calendars/user/tasks/',
+                'name' => 'Tasks',
+                'type' => 'tasks',
+                'subscribed' => true,
+                'hidden' => false,
+            ]],
+        ])->save();
+
+        return $source;
+    }
+
+    private function tasksMultistatus(string $ics): string
+    {
+        return '<?xml version="1.0" encoding="utf-8"?>'
+            .'<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
+            .'<D:response><D:href>/calendars/user/tasks/todo.ics</D:href>'
+            .'<D:propstat><D:prop><C:calendar-data><![CDATA['.$ics.']]></C:calendar-data></D:prop>'
+            .'<D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>'
+            .'</D:multistatus>';
+    }
+
+    public function test_caldav_todo_start_trigger_uses_dtstart_and_stores_seconds_before_due(): void
+    {
+        $source = $this->makeCaldavTasksSource();
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:todo-1@example.com\r\n"
+            ."DTSTART:20260920T090000Z\r\nDUE:20260920T170000Z\r\nSUMMARY:Task\r\n"
+            ."BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT30M\r\nEND:VALARM\r\n"
+            ."END:VTODO\r\nEND:VCALENDAR\r\n";
+
+        $result = $this->serviceWithIcs($this->tasksMultistatus($ics))->syncSource($source);
+
+        $this->assertTrue($result['ok'], (string) json_encode($result));
+        $task = ExternalTask::where('title', 'Task')->firstOrFail();
+        $this->assertSame([30600], $task->reminder_offsets_seconds);
+    }
+
+    public function test_caldav_todo_related_end_trigger_is_kept_and_measured_against_due(): void
+    {
+        $source = $this->makeCaldavTasksSource();
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:todo-2@example.com\r\n"
+            ."DUE:20260920T170000Z\r\nSUMMARY:Task\r\n"
+            ."BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER;RELATED=END:-PT10M\r\nEND:VALARM\r\n"
+            ."END:VTODO\r\nEND:VCALENDAR\r\n";
+
+        $result = $this->serviceWithIcs($this->tasksMultistatus($ics))->syncSource($source);
+
+        $this->assertTrue($result['ok'], (string) json_encode($result));
+        $task = ExternalTask::where('title', 'Task')->firstOrFail();
+        $this->assertSame([600], $task->reminder_offsets_seconds);
+    }
+
     public function test_api_exposes_raw_offsets_and_derived_codes(): void
     {
         $source = new CalendarSource;

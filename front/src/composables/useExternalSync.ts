@@ -9,6 +9,7 @@ import { CalendarSourceController } from '@/controllers/calendarSourceController
 import { ReminderController } from '@/controllers/reminderController';
 import type { CalendarSourceDto } from '@/services/calendarSourceService';
 import { externalEventService } from '@/services/externalEventService';
+import { externalTaskService } from '@/services/externalTaskService';
 
 /**
  * External sources (Google / CalDAV / ICS) live outside the app, so what is on
@@ -54,23 +55,38 @@ async function syncSources(params: { controller: CalendarSourceController }): Pr
 }
 
 /**
- * Turns freshly synced external events into local notifications. Best-effort:
- * the controller owns all `LocalNotifications` access, so this only maps DTOs
- * and never lets a notification problem change the sync outcome.
+ * Turns freshly synced external events and tasks into local notifications.
+ * Best-effort: the controller owns all `LocalNotifications` access, so this
+ * only maps DTOs and never lets a notification problem change the sync outcome.
+ *
+ * Exported for focused tests; not part of the public app surface.
  */
-async function scheduleExternalReminders(): Promise<void> {
+export async function scheduleExternalReminders(): Promise<void> {
   try {
-    const events = await externalEventService.listExternalEvents();
+    const [events, tasks] = await Promise.all([
+      externalEventService.listExternalEvents(),
+      externalTaskService.listExternalTasks(),
+    ]);
     const controller = new ReminderController();
     await controller.syncExternalReminders({
-      items: events.map((event) => ({
-        key: event.key,
-        title: event.title,
-        // Empty body falls back to the title inside the controller.
-        message: event.description ?? '',
-        start: new Date(event.date_start as string),
-        offsetsSeconds: event.reminderOffsetsSeconds ?? [],
-      })),
+      items: [
+        ...events.map((event) => ({
+          key: event.key,
+          title: event.title,
+          // Empty body falls back to the title inside the controller.
+          message: event.description ?? '',
+          start: new Date(event.date_start as string),
+          offsetsSeconds: event.reminderOffsetsSeconds ?? [],
+        })),
+        // VTODO reminders are anchored on the task due date.
+        ...tasks.map((task) => ({
+          key: task.key,
+          title: task.title,
+          message: task.description ?? '',
+          start: new Date(task.due_at as string),
+          offsetsSeconds: task.reminderOffsetsSeconds ?? [],
+        })),
+      ],
     });
   } catch (error) {
     console.warn(

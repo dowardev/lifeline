@@ -129,8 +129,10 @@ class ExternalReminderParserTest extends TestCase
 
         $event = $this->event("DTSTART:20260920T120000Z\r\n".$alarms);
 
+        // The ten offsets CLOSEST to the anchor survive (1m..10m), stored
+        // descending: the 11m and 12m alarms are furthest out and get dropped.
         $this->assertSame(
-            [720, 660, 600, 540, 480, 420, 360, 300, 240, 180],
+            [600, 540, 480, 420, 360, 300, 240, 180, 120, 60],
             ExternalReminderParser::forVEvent($event, $event->DTSTART->getDateTime(), null)
         );
     }
@@ -147,7 +149,69 @@ class ExternalReminderParserTest extends TestCase
 
         $this->assertSame(
             [600],
-            ExternalReminderParser::forVTodo($todo, $todo->DUE->getDateTime())
+            ExternalReminderParser::forVTodo($todo, null, $todo->DUE->getDateTime())
+        );
+    }
+
+    public function test_todo_start_trigger_anchors_on_dtstart_not_due(): void
+    {
+        $calendar = Reader::read(
+            "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:todo@example.com\r\n"
+            ."DTSTART:20260920T090000Z\r\nDUE:20260920T170000Z\r\n"
+            ."BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT30M\r\nEND:VALARM\r\n"
+            ."END:VTODO\r\nEND:VCALENDAR\r\n"
+        );
+        $todo = $calendar->VTODO;
+
+        // Fires at 08:30 against DTSTART; the stored value is seconds before
+        // the client anchor DUE (17:00), i.e. 8h30m.
+        $this->assertSame(
+            [30600],
+            ExternalReminderParser::forVTodo($todo, $todo->DTSTART->getDateTime(), $todo->DUE->getDateTime())
+        );
+    }
+
+    public function test_todo_related_end_anchors_on_due(): void
+    {
+        $calendar = Reader::read(
+            "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:todo@example.com\r\n"
+            ."DUE:20260920T170000Z\r\n"
+            ."BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER;RELATED=END:-PT10M\r\nEND:VALARM\r\n"
+            ."END:VTODO\r\nEND:VCALENDAR\r\n"
+        );
+        $todo = $calendar->VTODO;
+
+        $this->assertSame(
+            [600],
+            ExternalReminderParser::forVTodo($todo, null, $todo->DUE->getDateTime())
+        );
+    }
+
+    public function test_absolute_related_end_trigger_without_dtend_is_kept(): void
+    {
+        $event = $this->event(
+            "DTSTART:20260920T120000Z\r\n"
+            ."BEGIN:VALARM\r\nACTION:DISPLAY\r\n"
+            ."TRIGGER;VALUE=DATE-TIME;RELATED=END:20260920T114500Z\r\nEND:VALARM\r\n"
+        );
+
+        $this->assertSame(
+            [900],
+            ExternalReminderParser::forVEvent($event, $event->DTSTART->getDateTime(), null)
+        );
+    }
+
+    public function test_malformed_and_empty_triggers_are_skipped(): void
+    {
+        $event = $this->event(
+            "DTSTART:20260920T120000Z\r\n"
+            ."BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-P1M\r\nEND:VALARM\r\n"
+            ."BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:\r\nEND:VALARM\r\n"
+        );
+
+        $this->assertSame(
+            [],
+            ExternalReminderParser::forVEvent($event, $event->DTSTART->getDateTime(), null)
         );
     }
 }

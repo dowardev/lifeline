@@ -329,6 +329,14 @@ class CalendarSyncService
                     continue;
                 }
                 $seen[] = $uid;
+                $start = null;
+                if (isset($todo->DTSTART)) {
+                    try {
+                        $start = $todo->DTSTART->getDateTime();
+                    } catch (\Exception $e) {
+                        $start = null;
+                    }
+                }
                 $due = null;
                 if (isset($todo->DUE)) {
                     try {
@@ -349,7 +357,7 @@ class CalendarSyncService
                         'status' => isset($todo->STATUS) ? trim((string) $todo->STATUS) : null,
                         'due_at' => $due,
                         'description' => isset($todo->DESCRIPTION) ? trim((string) $todo->DESCRIPTION) : null,
-                        'reminder_offsets_seconds' => ExternalReminderParser::forVTodo($todo, $due),
+                        'reminder_offsets_seconds' => ExternalReminderParser::forVTodo($todo, $start, $due),
                     ]
                 );
                 $stats['upserted']++;
