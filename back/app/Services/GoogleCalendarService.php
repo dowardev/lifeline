@@ -6,6 +6,7 @@
 namespace App\Services;
 
 use App\Models\CalendarSource;
+use App\Support\ExternalReminderParser;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -384,10 +385,42 @@ class GoogleCalendarService
                 'end' => $end,
                 'description' => isset($item['description']) ? (string) $item['description'] : null,
                 'timeZone' => isset($item['start']['timeZone']) ? (string) $item['start']['timeZone'] : null,
+                'reminders' => $this->reminderOffsets($item['reminders'] ?? null),
             ];
         }
 
         return $out;
+    }
+
+    /**
+     * Google expresses reminders as minutes before the start. Only `popup`
+     * overrides can become a local notification; `useDefault` without a usable
+     * override contributes nothing, because the server-side defaults are not
+     * knowable from here. Descending and capped like the ICS path.
+     *
+     * @return int[]
+     */
+    private function reminderOffsets(mixed $reminders): array
+    {
+        if (! is_array($reminders)) {
+            return [];
+        }
+
+        $seconds = [];
+        foreach ($reminders['overrides'] ?? [] as $override) {
+            if (! is_array($override) || ($override['method'] ?? null) !== 'popup') {
+                continue;
+            }
+            if (! is_numeric($override['minutes'] ?? null)) {
+                continue;
+            }
+            $seconds[] = (int) $override['minutes'] * 60;
+        }
+
+        $seconds = array_values(array_unique($seconds));
+        rsort($seconds);
+
+        return array_slice($seconds, 0, ExternalReminderParser::MAX_OFFSETS);
     }
 
     private function httpClient(): Client

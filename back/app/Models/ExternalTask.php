@@ -18,10 +18,12 @@ class ExternalTask extends Model
         'status',
         'due_at',
         'description',
+        'reminder_offsets_seconds',
     ];
 
     protected $casts = [
         'due_at' => 'datetime',
+        'reminder_offsets_seconds' => 'array',
     ];
 
     public function source()

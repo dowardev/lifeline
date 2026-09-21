@@ -65,4 +65,43 @@ class ReminderOffsetsTest extends TestCase
         $this->assertFalse(ReminderOffsets::isValid('1smn'));
         $this->assertFalse(ReminderOffsets::isValid(''));
     }
+
+    public function testCodeForSecondsMapsEveryFixedOffset(): void
+    {
+        $this->assertSame('at_time', ReminderOffsets::codeForSeconds(0));
+        $this->assertSame('5m', ReminderOffsets::codeForSeconds(300));
+        $this->assertSame('10m', ReminderOffsets::codeForSeconds(600));
+        $this->assertSame('15m', ReminderOffsets::codeForSeconds(900));
+        $this->assertSame('30m', ReminderOffsets::codeForSeconds(1800));
+        $this->assertSame('1h', ReminderOffsets::codeForSeconds(3600));
+        $this->assertSame('2h', ReminderOffsets::codeForSeconds(7200));
+        $this->assertSame('1d', ReminderOffsets::codeForSeconds(86400));
+        $this->assertSame('2d', ReminderOffsets::codeForSeconds(172800));
+        $this->assertSame('1w', ReminderOffsets::codeForSeconds(604800));
+    }
+
+    public function testCodeForSecondsNeverDerivesMonthOrNonCanonicalOffsets(): void
+    {
+        // 1mo has no fixed second count: a real month varies in length.
+        $this->assertNull(ReminderOffsets::codeForSeconds(2592000));
+        $this->assertNull(ReminderOffsets::codeForSeconds(2700));
+        $this->assertNull(ReminderOffsets::codeForSeconds(-5400));
+    }
+
+    public function testCodesForSecondsDropsUnknownDedupesAndOrders(): void
+    {
+        $this->assertSame(
+            ['15m', '1h'],
+            ReminderOffsets::codesForSeconds([3600, 900, 2700, 900, '3600'])
+        );
+        $this->assertSame(
+            ['at_time', '5m', '1w'],
+            ReminderOffsets::codesForSeconds([604800, 0, 300])
+        );
+    }
+
+    public function testCodesForSecondsIgnoresNonNumericValues(): void
+    {
+        $this->assertSame([], ReminderOffsets::codesForSeconds(['nonsense', '', null, ['x']]));
+    }
 }
