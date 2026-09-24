@@ -195,6 +195,65 @@ describe('ReminderController scheduleEventReminders (FR-12, FR-15..FR-19)', () =
     expect(fire).toBeGreaterThan(Date.now())
   })
 
+  test('at_time fires within the 10s lead-time window are bumped to now + 10s (MIN_LEAD_TIME_MS)', async () => {
+    // Reproduces the on-device bug: an event created "right now" with at_time
+    // would lose its alarm because the Capacitor Android plugin drops any
+    // schedule whose `at` is `< now` by the time the native side runs.
+    vi.useFakeTimers()
+    // Pin the clock 5s before a minute boundary so `start = now + 5s` lands
+    // exactly on the next minute — #expandOccurrences zeros seconds, so a
+    // start within the same minute would slide back into the past.
+    vi.setSystemTime(new Date('2026-09-24T12:00:55.000Z'))
+    try {
+      const controller = newController()
+      const start = new Date(Date.now() + 5_000) // 12:01:00.000Z — 5s future, aligned
+      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      const { ids } = await controller.scheduleEventReminders({
+        entityId: 41,
+        title: 'Ahora',
+        message: 'x',
+        start,
+        end,
+        repeat: { frecuency: 1, type: 'unique' },
+        notifications: ['at_time'],
+        existingIds: [],
+      })
+      expect(ids).toHaveLength(1)
+      expect(state.scheduled).toHaveLength(1)
+      const fire = new Date(state.scheduled[0].schedule.at as string).getTime()
+      // Fake clock does not advance during the controller call, so the bump
+      // lands exactly at Date.now() + 10s.
+      expect(fire).toBe(Date.now() + 10_000)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('at_time fires beyond the 10s lead-time window keep their original time', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-24T12:00:00.000Z'))
+    try {
+      const controller = newController()
+      const start = new Date(Date.now() + 60_000) // 60s future, well beyond the 10s window
+      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      await controller.scheduleEventReminders({
+        entityId: 42,
+        title: 'Pronto',
+        message: 'x',
+        start,
+        end,
+        repeat: { frecuency: 1, type: 'unique' },
+        notifications: ['at_time'],
+        existingIds: [],
+      })
+      expect(state.scheduled).toHaveLength(1)
+      const fire = new Date(state.scheduled[0].schedule.at as string).getTime()
+      expect(fire).toBe(start.getTime())
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test('cancel-then-schedule: existing ids are cancelled first (FR-13)', async () => {
     const controller = newController()
     const start = futureDate(7)

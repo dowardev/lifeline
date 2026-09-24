@@ -22,6 +22,18 @@ export class NotificationPermissionError extends Error {
 /** Hard bound for repeat-occurrence expansion (FR-17). */
 const MAX_OCCURRENCES = 2000;
 
+/**
+ * Minimum lead time (ms) pushed onto every fire time before it reaches the
+ * native plugin. `@capacitor/local-notifications` 8.2.0 silently drops any
+ * schedule whose `at` is `< now` (its Java side does an early-return without
+ * throwing), so a JS-to-native roundtrip of a few hundred ms is enough to
+ * lose an "at_time" reminder for an event created right now. Bumping fires
+ * that fall within this window to `now + MIN_LEAD_TIME_MS` keeps the plugin
+ * happy while still firing the reminder essentially at the requested time.
+ * Truly past fires (i.e. start time itself is past) are still skipped above.
+ */
+const MIN_LEAD_TIME_MS = 10_000;
+
 interface RepeatParams {
   frecuency: number;
   type: RepeatType | "unique" | string;
@@ -274,6 +286,11 @@ export class ReminderController {
    * occurrences × notifications → fire times (occurrence − offset), skipping
    * any fire time already in the past (FR-19/FR-39). date-fns sub/add clamp
    * month edges deterministically (Jan 31 − 1 month → Dec 31, FR-40/AC-26).
+   *
+   * Fires that fall inside the `MIN_LEAD_TIME_MS` window (i.e. the computed
+   * fire is in the very-near future, e.g. an `at_time` reminder for an event
+   * created "right now") are bumped to `now + MIN_LEAD_TIME_MS` so the
+   * Capacitor Android plugin accepts them — see `MIN_LEAD_TIME_MS` above.
    */
   #computeTargets(params: {
     occurrences: Date[];
@@ -282,6 +299,7 @@ export class ReminderController {
     const { occurrences, notifications } = params;
     const canonicalNotifications = normalizeOffsetCodes(notifications ?? []);
     const now = Date.now();
+    const minLeadCutoff = now + MIN_LEAD_TIME_MS;
     const targets: Date[] = [];
     for (const occurrence of occurrences) {
       for (const code of canonicalNotifications) {
@@ -290,8 +308,10 @@ export class ReminderController {
           duration === null
             ? new Date(occurrence.getTime())
             : sub(occurrence, duration);
-        if (fire.getTime() <= now) continue;
-        targets.push(fire);
+        const fireMs = fire.getTime();
+        if (fireMs <= now) continue;
+        const scheduledMs = fireMs < minLeadCutoff ? minLeadCutoff : fireMs;
+        targets.push(new Date(scheduledMs));
       }
     }
     return targets;
