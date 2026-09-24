@@ -254,6 +254,32 @@ describe('ReminderController scheduleEventReminders (FR-12, FR-15..FR-19)', () =
     }
   })
 
+  test('notification ids stay within Java int range so the Capacitor Android plugin accepts them', async () => {
+    // Reproduces the on-device bug: Date.now() * 1000 is ~1.79e15 today,
+    // which the Capacitor Java plugin rejects with "The identifier should
+    // be a Java int" (max 2^31 - 1 = 2,147,483,647). The fix clamps the id.
+    const JAVA_INT_MAX = 2_147_483_647
+    const controller = newController()
+    const start = futureDate(30)
+    const end = addDays(start, 1)
+    const { ids } = await controller.scheduleEventReminders({
+      entityId: 43,
+      title: 'Ids válidos',
+      message: 'x',
+      start,
+      end,
+      repeat: { frecuency: 1, type: 'unique' },
+      notifications: ['at_time'],
+      existingIds: [],
+    })
+    expect(ids.length).toBeGreaterThan(0)
+    for (const id of ids) {
+      expect(Number.isInteger(id)).toBe(true)
+      expect(id).toBeGreaterThan(0)
+      expect(id).toBeLessThanOrEqual(JAVA_INT_MAX)
+    }
+  })
+
   test('cancel-then-schedule: existing ids are cancelled first (FR-13)', async () => {
     const controller = newController()
     const start = futureDate(7)

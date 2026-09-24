@@ -58,18 +58,28 @@ const WEEK_DAYS: Record<string, number> = {
  */
 // Module-level monotonic counter so ids stay unique across every ReminderController
 // instance (fresh instances are per call site and must not reset the counter).
+//
+// Java int range on Android is [-2^31, 2^31 - 1] = [-2147483648, 2147483647].
+// `@capacitor/local-notifications` 8.2.0 throws "The identifier should be a
+// Java int" for any value outside that range, which silently aborts every
+// schedule call — Capacitor's catch in `LocalNotificationManager.schedule`
+// swallows the failure and the JS-side `.catch` in `#scheduleOne` re-logs but
+// still returns the (rejected) id. We modulo down to the positive range and
+// fall back to 1 if the same-tick burst pushes the id past the limit.
+const JAVA_INT_MAX = 2_147_483_647;
 let notificationBase = 0;
 let notificationCounter = 0;
 
 function nextNotificationId(): number {
-  const base = Date.now() * 1_000;
+  const base = Date.now() % JAVA_INT_MAX;
   if (base === notificationBase) {
     notificationCounter += 1;
   } else {
     notificationBase = base;
     notificationCounter = 0;
   }
-  return base + notificationCounter;
+  const candidate = base + notificationCounter;
+  return candidate < JAVA_INT_MAX ? candidate : 1;
 }
 
 /**
