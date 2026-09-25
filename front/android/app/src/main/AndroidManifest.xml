@@ -38,4 +38,13 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+        Allows Capacitor's @capacitor/local-notifications plugin to schedule
+        exact alarms via AlarmManager.setExact/setExactAndAllowWhileIdle.
+        Without it the plugin falls back to AlarmManager.set, which Android
+        batches and delays by up to several seconds for battery optimization.
+        Google Play auto-grants this for calendar and alarm apps (which is
+        what LifeLine is); no user prompt required.
+    -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 </manifest>
