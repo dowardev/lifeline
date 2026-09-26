@@ -13,6 +13,7 @@ const state = vi.hoisted(() => ({
 vi.mock('@capacitor/local-notifications', () => ({
   LocalNotifications: {
     requestPermissions: vi.fn(async () => ({ display: state.granted ? 'granted' : 'denied' })),
+    checkPermissions: vi.fn(async () => ({ display: state.granted ? 'granted' : 'denied' })),
     schedule: vi.fn(async (params: { notifications: Array<Record<string, unknown>> }) => {
       state.scheduled.push(...params.notifications)
     }),
@@ -22,7 +23,7 @@ vi.mock('@capacitor/local-notifications', () => ({
   },
 }))
 
-import { ReminderController, NotificationPermissionError } from '@/controllers/reminderController'
+import { ReminderController, NotificationPermissionError, computeNextId } from '@/controllers/reminderController'
 
 function newController(): ReminderController {
   return new ReminderController()
@@ -257,6 +258,158 @@ describe('ReminderController scheduleEventReminders (FR-12, FR-15..FR-19)', () =
   })
 })
 
+describe('ReminderController Capacitor Android plugin acceptance guards', () => {
+  test('at_time fires within the 10s lead-time window are bumped to now + 10s (MIN_LEAD_TIME_MS)', async () => {
+    // Reproduces the on-device bug: an event created "right now" with at_time
+    // would lose its alarm because the Capacitor Android plugin drops any
+    // schedule whose `at` is `< now` by the time the native side runs.
+    vi.useFakeTimers()
+    // Pin the clock 5s before a minute boundary so `start = now + 5s` lands
+    // exactly on the next minute — #expandOccurrences zeros seconds, so a
+    // start within the same minute would slide back into the past.
+    vi.setSystemTime(new Date('2026-09-24T12:00:55.000Z'))
+    try {
+      const controller = newController()
+      const start = new Date(Date.now() + 5_000) // 12:01:00.000Z — 5s future, aligned
+      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      const { ids } = await controller.scheduleEventReminders({
+        entityId: 41,
+        title: 'Ahora',
+        message: 'x',
+        start,
+        end,
+        repeat: { frecuency: 1, type: 'unique' },
+        notifications: ['at_time'],
+        existingIds: [],
+      })
+      expect(ids).toHaveLength(1)
+      expect(state.scheduled).toHaveLength(1)
+      const fire = new Date(state.scheduled[0].schedule.at as string).getTime()
+      // Fake clock does not advance during the controller call, so the bump
+      // lands exactly at Date.now() + 10s.
+      expect(fire).toBe(Date.now() + 10_000)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('at_time fires beyond the 10s lead-time window keep their original time', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-24T12:00:00.000Z'))
+    try {
+      const controller = newController()
+      const start = new Date(Date.now() + 60_000) // 60s future, well beyond the 10s window
+      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      await controller.scheduleEventReminders({
+        entityId: 42,
+        title: 'Pronto',
+        message: 'x',
+        start,
+        end,
+        repeat: { frecuency: 1, type: 'unique' },
+        notifications: ['at_time'],
+        existingIds: [],
+      })
+      expect(state.scheduled).toHaveLength(1)
+      const fire = new Date(state.scheduled[0].schedule.at as string).getTime()
+      expect(fire).toBe(start.getTime())
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('notification ids stay within Java int range so the Capacitor Android plugin accepts them', async () => {
+    // Reproduces the on-device bug: Date.now() * 1000 is ~1.79e15 today,
+    // which the Capacitor Java plugin rejects with "The identifier should
+    // be a Java int" (max 2^31 - 1 = 2,147,483,647). The fix clamps the id.
+    const JAVA_INT_MAX = 2_147_483_647
+    const controller = newController()
+    const start = futureDate(30)
+    const end = addDays(start, 1)
+    const { ids } = await controller.scheduleEventReminders({
+      entityId: 43,
+      title: 'Ids válidos',
+      message: 'x',
+      start,
+      end,
+      repeat: { frecuency: 1, type: 'unique' },
+      notifications: ['at_time'],
+      existingIds: [],
+    })
+    expect(ids.length).toBeGreaterThan(0)
+    for (const id of ids) {
+      expect(Number.isInteger(id)).toBe(true)
+      expect(id).toBeGreaterThan(0)
+      expect(id).toBeLessThanOrEqual(JAVA_INT_MAX)
+    }
+  })
+
+  test('B1 regression guard: two consecutive saves at the modulo-wrap second get distinct ids', async () => {
+    // Math.floor(Date.now() / 1000) % JAVA_INT_MAX === 0 happens once every
+    // ~68 years (next: 2038-01-19). Before the fix, the first call in that
+    // second returned 1 (clamp of candidate=0) and the second returned 1 too
+    // (candidate = 0 + 1, in-range, no clamp) — silently overwriting the
+    // first scheduled notification (Capacitor dedupes by id). Pin the clock
+    // to the Unix epoch (1970-01-01T00:00:00Z) where the modulo lands at 0
+    // by construction.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(0))
+    try {
+      const controller = newController()
+      const start = futureDate(30)
+      const end = addDays(start, 1)
+      const { ids: ids1 } = await controller.scheduleEventReminders({
+        entityId: 100,
+        title: 'wrap-1',
+        message: 'x',
+        start,
+        end,
+        repeat: { frecuency: 1, type: 'unique' },
+        notifications: ['at_time'],
+        existingIds: [],
+      })
+      const { ids: ids2 } = await controller.scheduleEventReminders({
+        entityId: 101,
+        title: 'wrap-2',
+        message: 'x',
+        start,
+        end,
+        repeat: { frecuency: 1, type: 'unique' },
+        notifications: ['at_time'],
+        existingIds: [],
+      })
+      expect(ids1).toHaveLength(1)
+      expect(ids2).toHaveLength(1)
+      expect(ids1[0]).not.toBe(ids2[0])
+      // With the fix, base is shifted from 0 to 1 at the wrap, so the two
+      // ids land in [1, 2] deterministically.
+      expect(ids1[0]).toBeGreaterThanOrEqual(1)
+      expect(ids2[0]).toBeGreaterThanOrEqual(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('E2 regression guard: computeNextId falls back to a random id in [2, JAVA_INT_MAX-1] on overflow', () => {
+    // Pure-function test of the overflow branch. (We don't need the full
+    // ReminderController machinery for this — `computeNextId` is exported
+    // precisely so the random fallback can be tested directly.)
+    const JAVA_INT_MAX = 2_147_483_647
+    // In-range path: candidate < JAVA_INT_MAX returns directly.
+    expect(computeNextId(1, 0)).toBe(1)
+    expect(computeNextId(1, 1)).toBe(2)
+    expect(computeNextId(JAVA_INT_MAX - 2, 0)).toBe(JAVA_INT_MAX - 2)
+    // Overflow path: candidate >= JAVA_INT_MAX hits the random fallback.
+    // Drive 10000 calls and assert every result is in [2, JAVA_INT_MAX-1]
+    // and never lands on 1 (which would collide with the modulo-clamp path).
+    for (let i = 0; i < 10000; i += 1) {
+      const id = computeNextId(JAVA_INT_MAX - 1, JAVA_INT_MAX)
+      expect(id).toBeGreaterThanOrEqual(2)
+      expect(id).toBeLessThanOrEqual(JAVA_INT_MAX - 1)
+    }
+  })
+})
+
 describe('ReminderController task/note schedules (FR-20, FR-27)', () => {
   test('scheduleTaskReminders computes dueDate − offset once (no repeat, FR-20/FR-26)', async () => {
     const controller = newController()
@@ -276,7 +429,7 @@ describe('ReminderController task/note schedules (FR-20, FR-27)', () => {
 
   test('scheduleNoteReminders defaults to at_time (fires exactly at reminder date) when notifications omitted (D2/FR-27)', async () => {
     const controller = newController()
-    const reminderDate = at(25, 9, 2026, 8, 0)
+    const reminderDate = futureDate(30, 8, 0) // future-dated so the past-fire skip never bites (FR-19/FR-39)
     const { ids } = await controller.scheduleNoteReminders({
       noteId: 12,
       title: 'Nota',
@@ -291,7 +444,7 @@ describe('ReminderController task/note schedules (FR-20, FR-27)', () => {
 
   test('scheduleNoteReminders honors an explicit offset list', async () => {
     const controller = newController()
-    const reminderDate = at(25, 9, 2026, 8, 0)
+    const reminderDate = futureDate(30, 8, 0) // future-dated so the past-fire skip never bites (FR-19/FR-39)
     await controller.scheduleNoteReminders({
       noteId: 13,
       title: 'Nota',

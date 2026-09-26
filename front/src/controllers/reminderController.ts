@@ -3,6 +3,7 @@
 
 import { RepeatType } from "@/utils/types";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import type { PendingLocalNotificationSchema } from "@capacitor/local-notifications";
 import { add, sub, Duration } from "date-fns";
 import { normalizeOffsetCodes, offsetToDuration } from "@/utils/reminders";
 
@@ -20,6 +21,24 @@ export class NotificationPermissionError extends Error {
 
 /** Hard bound for repeat-occurrence expansion (FR-17). */
 const MAX_OCCURRENCES = 2000;
+
+/**
+ * Minimum lead time (ms) pushed onto every fire time before it reaches the
+ * native plugin. `@capacitor/local-notifications` 8.2.0 silently drops any
+ * schedule whose `at` is `< now` on the Android side (its Java side does an
+ * early-return without throwing), so a JS-to-native roundtrip of a few hundred
+ * ms is enough to lose an `at_time` reminder for an event created right now.
+ * Bumping fires that fall within this window to `now + MIN_LEAD_TIME_MS` keeps
+ * the plugin happy while still firing the reminder essentially at the requested
+ * time. Truly past fires (i.e. start time itself is past) are still skipped.
+ *
+ * Calibration: 10s was chosen as a comfortable bound over the typical Capacitor
+ * JS-to-native IPC budget on a warm app (a few hundred ms). On cold start or
+ * first plugin load, IPC can stretch to a couple of seconds; this value still
+ * leaves margin. Devices where IPC consistently exceeds 10s would still lose
+ * the schedule and would need this constant raised (or a retry path).
+ */
+const MIN_LEAD_TIME_MS = 10_000;
 
 interface RepeatParams {
   frecuency: number;
@@ -48,15 +67,107 @@ const WEEK_DAYS: Record<string, number> = {
 let notificationBase = 0;
 let notificationCounter = 0;
 
+/**
+ * Java int range on Android is [-2^31, 2^31 - 1] = [-2147483648, 2147483647].
+ * `@capacitor/local-notifications` 8.2.0 throws "The identifier should be a
+ * Java int" for any id outside that range, which silently aborts every
+ * schedule call — Capacitor's catch in `LocalNotificationManager.schedule`
+ * swallows the failure and the JS-side `.catch` in `#scheduleOne` re-logs but
+ * still returns the (rejected) id.
+ *
+ * Pre-fix (the version that lived on `main` before this commit):
+ *   `const base = Date.now() * 1_000;`
+ * Today's value: ~1.79e15. Monotonically increasing across sessions, but
+ * six orders of magnitude over the Java int limit. The plugin rejected
+ * every schedule call and the `.catch` swallowed the error, so the local
+ * event was saved with `id_reminders` populated but no alarm ever registered
+ * in AlarmManager.
+ *
+ * This implementation mods by `JAVA_INT_MAX` on wall-clock seconds
+ * (`Math.floor(Date.now() / 1000) % JAVA_INT_MAX`), which puts the id inside
+ * the safe range while pushing the modulo cycle from ~24.85 days (raw ms
+ * mod int) to ~68 years. Two saves in different sessions never collide
+ * unless they happen within the same second AND hit the same counter slot
+ * — a vanishingly small window in practice.
+ */
+const JAVA_INT_MAX = 2_147_483_647;
+
+/**
+ * Compute the next id from a (base, counter) pair. Pure function — exported
+ * for testability. Returns a positive 32-bit int. Behavior:
+ * - in-range candidate: returned directly.
+ * - out-of-range candidate (overflow): random in `[2, JAVA_INT_MAX-1]`
+ *   (Math.random() === 0 is representable, so we shift the floor by +2).
+ */
+export function computeNextId(base: number, counter: number): number {
+  const candidate = base + counter;
+  if (candidate < JAVA_INT_MAX) return candidate;
+  return 2 + Math.floor(Math.random() * (JAVA_INT_MAX - 2));
+}
+
 function nextNotificationId(): number {
-  const base = Date.now() * 1_000;
+  // Shift the modulo result away from 0. Wall-clock seconds `% JAVA_INT_MAX`
+  // produces 0 exactly once every ~68 years (the Y2038 boundary). If we let
+  // `base === 0` happen, two consecutive same-second calls would both return
+  // id=1 (the second's `candidate = 0 + 1` is in-range and matches the first
+  // call's clamp), silently overwriting the first scheduled notification
+  // (the Capacitor plugin dedupes by id). Bumping 0 to 1 keeps the cycle
+  // effectively unchanged while avoiding the degenerate id.
+  let base = Math.floor(Date.now() / 1000) % JAVA_INT_MAX;
+  if (base === 0) base = 1;
   if (base === notificationBase) {
     notificationCounter += 1;
   } else {
     notificationBase = base;
     notificationCounter = 0;
   }
-  return base + notificationCounter;
+  return computeNextId(base, notificationCounter);
+}
+
+/**
+ * FNV-1a with 32-bit multiply, folded to a positive 31-bit integer. Non-crypto
+ * and stable across runs: the same input always yields the same id, so
+ * re-scheduling an external reminder replaces its previous notification
+ * instead of piling up a new one. Collisions within a batch are resolved by
+ * linear probing (see syncExternalReminders).
+ */
+function fnv1a31(input: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    // Math.imul keeps multiplication in 32-bit space (no float precision loss).
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0) & 0x7fffffff;
+}
+
+/**
+ * The external-report marker travels as an **object** `{ ext: key }`.
+ * Non-object `extra` values do not survive the native round-trip: Android reads
+ * it via `JSObject.getJSObject` (a string becomes `null`) and iOS does
+ * `as? JSObject ?? [:]` (a string becomes `{}`). A string marker would therefore
+ * be unrecoverable from `getPending()`, silently disabling reconciliation.
+ *
+ * The local entity flows keep passing a plain string `extra`; this guard must
+ * never classify those as external, so it requires the object shape.
+ */
+function isExternalMarker(params: { extra: unknown }): boolean {
+  const { extra } = params;
+  return (
+    typeof extra === "object" &&
+    extra !== null &&
+    typeof (extra as { ext?: unknown }).ext === "string"
+  );
+}
+
+/** Fire time of a pending notification as epoch ms, or null when unavailable. */
+function pendingFireTime(params: {
+  schedule?: { at?: Date };
+}): number | null {
+  const { schedule } = params;
+  if (!schedule?.at) return null;
+  const time = new Date(schedule.at).getTime();
+  return Number.isFinite(time) ? time : null;
 }
 
 export class ReminderController {
@@ -227,6 +338,23 @@ export class ReminderController {
    * occurrences × notifications → fire times (occurrence − offset), skipping
    * any fire time already in the past (FR-19/FR-39). date-fns sub/add clamp
    * month edges deterministically (Jan 31 − 1 month → Dec 31, FR-40/AC-26).
+   *
+   * Fires that fall inside the `MIN_LEAD_TIME_MS` window (i.e. the computed
+   * fire is in the very-near future, e.g. an `at_time` reminder for an event
+   * created "right now") are bumped to `now + MIN_LEAD_TIME_MS` so the
+   * Capacitor Android plugin accepts them — see `MIN_LEAD_TIME_MS` above.
+   * The bump is **agnostic to which offset produced the fire**: any
+   * reminder whose computed fire is within `MIN_LEAD_TIME_MS` of now is
+   * bumped, not only `at_time`. In practice the smallest non-at_time offset
+   * in `utils/reminders.ts` is 5m, so an offset-based reminder is bumped
+   * only when the event starts within `(offset + MIN_LEAD_TIME_MS)` of now.
+   *
+   * Trade-off (B5 from the pre-merge review): for fires that fall inside
+   * the window, the bump pushes them to `now + MIN_LEAD_TIME_MS`, which can
+   * be AFTER the user-visible start (for `at_time`) or AFTER the intended
+   * pre-event time (for offsets). We accept this because the alternative
+   * is the Capacitor plugin's silent `at < now` early-return, which means
+   * NO notification at all.
    */
   #computeTargets(params: {
     occurrences: Date[];
@@ -235,6 +363,7 @@ export class ReminderController {
     const { occurrences, notifications } = params;
     const canonicalNotifications = normalizeOffsetCodes(notifications ?? []);
     const now = Date.now();
+    const minLeadCutoff = now + MIN_LEAD_TIME_MS;
     const targets: Date[] = [];
     for (const occurrence of occurrences) {
       for (const code of canonicalNotifications) {
@@ -243,8 +372,10 @@ export class ReminderController {
           duration === null
             ? new Date(occurrence.getTime())
             : sub(occurrence, duration);
-        if (fire.getTime() <= now) continue;
-        targets.push(fire);
+        const fireMs = fire.getTime();
+        if (fireMs <= now) continue;
+        const scheduledMs = fireMs < minLeadCutoff ? minLeadCutoff : fireMs;
+        targets.push(new Date(scheduledMs));
       }
     }
     return targets;
@@ -343,6 +474,191 @@ export class ReminderController {
   async cancelNoteReminders(params: { ids: number[] }): Promise<void> {
     for (const id of params.ids ?? []) {
       if (Number.isFinite(id)) await this.#cancelOne({ id });
+    }
+  }
+
+  /**
+   * Schedules local notifications for external (Google/CalDAV/ICS) reminders.
+   * This is the app-local counterpart to push/server scheduling: it runs on
+   * every device, including degoogled ones, and needs no push infrastructure.
+   *
+   * Best-effort by design: a denied permission only means no external
+   * reminders (no throw, no toast), and a plugin failure is logged without
+   * aborting the remaining work.
+   */
+  async syncExternalReminders(params: {
+    items: {
+      key: string;
+      title: string;
+      message: string;
+      start: Date;
+      offsetsSeconds: number[];
+    }[];
+  }): Promise<void> {
+    const { items } = params;
+    const now = Date.now();
+    const minLeadCutoff = now + MIN_LEAD_TIME_MS;
+
+    // (1) Build the desired set. Each offset is seconds before `start`, so a
+    // larger (more positive) offset fires earlier. Skip past/non-finite fires.
+    // Fires that fall inside MIN_LEAD_TIME_MS are bumped to that cutoff so
+    // the Capacitor Android plugin accepts them — the same constraint that
+    // #computeTargets enforces for the local-entity path. Without this,
+    // external events with `start` < 10s from now lose their reminders to
+    // the plugin's silent `at < now` early-return (B2 from the pre-merge
+    // review).
+    const desired: {
+      key: string;
+      title: string;
+      body: string;
+      fireAt: Date;
+      offsetSeconds: number;
+    }[] = [];
+    for (const item of items ?? []) {
+      for (const offsetSeconds of item.offsetsSeconds ?? []) {
+        if (!Number.isFinite(offsetSeconds)) continue;
+        const rawFireAtMs = item.start.getTime() - offsetSeconds * 1000;
+        if (!Number.isFinite(rawFireAtMs)) continue;
+        if (rawFireAtMs <= now) continue;
+        const scheduledMs = rawFireAtMs < minLeadCutoff ? minLeadCutoff : rawFireAtMs;
+        desired.push({
+          key: item.key,
+          title: item.title,
+          body: item.message || item.title,
+          fireAt: new Date(scheduledMs),
+          offsetSeconds,
+        });
+      }
+    }
+
+    // (2) Canonical order (by key, then offset descending) makes id assignment
+    // deterministic for identical input. Collisions probe linearly.
+    desired.sort((a, b) =>
+      a.key < b.key ? -1 : a.key > b.key ? 1 : b.offsetSeconds - a.offsetSeconds,
+    );
+
+    // (3) Fetch pending notifications ONCE per run. Reconciliation and
+    // cancellation need no permission, so this runs before any permission
+    // query (and even when the desired set is empty).
+    const pending = await this.#getPendingSafe();
+    const nonExternalPendingIds = new Set<number>();
+    const pendingById = new Map<number, PendingLocalNotificationSchema>();
+    for (const notification of pending) {
+      pendingById.set(notification.id, notification);
+      if (!isExternalMarker({ extra: notification.extra })) {
+        nonExternalPendingIds.add(notification.id);
+      }
+    }
+
+    // (4) Deterministic ids, but never an id already owned by a local entity.
+    // Both `nextNotificationId()` (local) and the FNV-1a hash here (external)
+    // produce ids in `[1, JAVA_INT_MAX-1]`, so the two spaces overlap by
+    // construction. Without this probe an external notification could
+    // silently overwrite an unrelated local one — the Capacitor plugin
+    // dedupes by id. We linearly probe to the next free id on collision.
+    const usedIds = new Set<number>();
+    const planned = desired.map((entry) => {
+      let id = fnv1a31(`${entry.key}|${entry.offsetSeconds}`);
+      while (usedIds.has(id) || nonExternalPendingIds.has(id)) {
+        id = (id + 1) % 2 ** 31;
+      }
+      usedIds.add(id);
+      return { ...entry, id };
+    });
+
+    // (5) Cancel every pending external notification that is no longer
+    // desired. The object marker is what makes this reliable: a string marker
+    // never round-trips, so this branch would be dead code without it. Local
+    // pending notifications are left untouched.
+    for (const notification of pending) {
+      if (!isExternalMarker({ extra: notification.extra })) continue;
+      if (usedIds.has(notification.id)) continue;
+      await this.#cancelOne({ id: notification.id });
+    }
+
+    // (6) Content comparison is what makes re-scheduling safe. Ids stay stable
+    // for identical input, but when the input set changes a probed id can
+    // shift; comparing id + title + body + fire time means a shifted id whose
+    // content differs is replaced, while an identical run schedules nothing.
+    // This also protects the web, where `schedule()` does NOT dedupe by id and
+    // re-scheduling the same id would accumulate duplicates.
+    const toSchedule = planned.filter((entry) => {
+      const existing = pendingById.get(entry.id);
+      if (!existing) return true;
+      if (!isExternalMarker({ extra: existing.extra })) return true;
+      return (
+        existing.title !== entry.title ||
+        existing.body !== entry.body ||
+        pendingFireTime({ schedule: existing.schedule }) !==
+          entry.fireAt.getTime()
+      );
+    });
+
+    // (7) Nothing to schedule means no permission query at all. This is what
+    // keeps the launch/foreground sync from prompting for notification
+    // permission: the prompting path only lives in the local entity flows.
+    if (toSchedule.length === 0) return;
+
+    // (8) Silent permission check. The sync path must never prompt, because it
+    // runs on every launch and foreground even when the user has no sources.
+    if (!(await this.#checkNotificationsPermissionsSilently())) {
+      console.warn(
+        "[ReminderController] notification permission denied; external reminders skipped",
+      );
+      return;
+    }
+
+    // (9) Cancel each replaced id first so the web plugin does not keep the old
+    // copy alongside the new one (no id dedupe there), then send every
+    // notification in ONE schedule call to minimise churn.
+    for (const entry of toSchedule) {
+      if (pendingById.has(entry.id)) await this.#cancelOne({ id: entry.id });
+    }
+    await LocalNotifications.schedule({
+      notifications: toSchedule.map((entry) => ({
+        title: entry.title,
+        body: entry.body,
+        id: entry.id,
+        schedule: { at: entry.fireAt },
+        actionTypeId: "",
+        extra: { ext: entry.key },
+      })),
+    }).catch((error) => {
+      console.error(
+        "[ReminderController] external schedule failed (best-effort):",
+        error,
+      );
+    });
+  }
+
+  /** Read pending notifications without ever touching permission. */
+  async #getPendingSafe(): Promise<PendingLocalNotificationSchema[]> {
+    try {
+      const pending = await LocalNotifications.getPending();
+      return pending.notifications ?? [];
+    } catch (error) {
+      console.error(
+        "[ReminderController] getPending failed (best-effort):",
+        error,
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Silent counterpart of `checkNotificationsPermissions()`: `checkPermissions`
+   * never prompts. Used by the background sync path.
+   */
+  async #checkNotificationsPermissionsSilently(): Promise<boolean> {
+    try {
+      const permission = await LocalNotifications.checkPermissions();
+      return permission.display === "granted";
+    } catch (error) {
+      console.warn(
+        "[ReminderController] permission check failed (best-effort):",
+        error,
+      );
+      return false;
     }
   }
 

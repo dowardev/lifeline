@@ -9,6 +9,7 @@ use App\Models\CalendarSource;
 use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
 use App\Models\ExternalTask;
+use App\Support\ExternalReminderParser;
 use App\Traits\ValidatesPublicUrl;
 use GuzzleHttp\Client;
 use Sabre\VObject\Component\VCalendar;
@@ -132,6 +133,7 @@ class CalendarSyncService
                     'date_end' => $item['end'],
                     'time_zone' => $item['timeZone'],
                     'description' => $item['description'],
+                    'reminder_offsets_seconds' => $item['reminders'] ?? [],
                 ]
             );
             $stats['upserted']++;
@@ -253,6 +255,8 @@ class CalendarSyncService
                     'status' => $item['status'],
                     'due_at' => $item['due'],
                     'description' => $item['notes'],
+                    // The Google Tasks API exposes no reminders at all.
+                    'reminder_offsets_seconds' => [],
                 ]
             );
             $stats['upserted']++;
@@ -325,6 +329,14 @@ class CalendarSyncService
                     continue;
                 }
                 $seen[] = $uid;
+                $start = null;
+                if (isset($todo->DTSTART)) {
+                    try {
+                        $start = $todo->DTSTART->getDateTime();
+                    } catch (\Exception $e) {
+                        $start = null;
+                    }
+                }
                 $due = null;
                 if (isset($todo->DUE)) {
                     try {
@@ -345,6 +357,7 @@ class CalendarSyncService
                         'status' => isset($todo->STATUS) ? trim((string) $todo->STATUS) : null,
                         'due_at' => $due,
                         'description' => isset($todo->DESCRIPTION) ? trim((string) $todo->DESCRIPTION) : null,
+                        'reminder_offsets_seconds' => ExternalReminderParser::forVTodo($todo, $start, $due),
                     ]
                 );
                 $stats['upserted']++;
@@ -522,6 +535,7 @@ class CalendarSyncService
                 'date_end' => $end,
                 'time_zone' => $start ? $start->getTimezone()->getName() : null,
                 'description' => isset($event->DESCRIPTION) ? trim((string) $event->DESCRIPTION) : null,
+                'reminder_offsets_seconds' => ExternalReminderParser::forVEvent($event, $start, $end),
             ]
         );
         $stats['upserted']++;
