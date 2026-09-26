@@ -9,6 +9,7 @@ use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
 use App\Models\ExternalTask;
 use App\Models\CalendarSource;
+use App\Support\ReminderOffsets;
 use Illuminate\Http\Request;
 
 class ExternalEventController extends Controller
@@ -52,6 +53,8 @@ class ExternalEventController extends Controller
                 'description' => $e->description,
                 'source_name' => $e->source?->name,
                 'source_color' => $e->source?->color ?? '#3880ff',
+                'reminder_offsets_seconds' => $e->reminder_offsets_seconds ?? [],
+                'reminders' => ReminderOffsets::codesForSeconds($e->reminder_offsets_seconds ?? []),
             ]),
         ]);
     }
@@ -99,6 +102,8 @@ class ExternalEventController extends Controller
                 'due_at' => $item->due_at?->toIso8601String(),
                 'description' => $item->description,
                 'source_name' => $item->source?->name,
+                'reminder_offsets_seconds' => $item->reminder_offsets_seconds ?? [],
+                'reminders' => ReminderOffsets::codesForSeconds($item->reminder_offsets_seconds ?? []),
             ]),
         ]);
     }

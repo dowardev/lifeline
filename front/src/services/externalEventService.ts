@@ -12,6 +12,7 @@ export interface ExternalEventDto {
   description?: string | null;
   source_name?: string | null;
   source_color?: string | null;
+  reminder_offsets_seconds?: number[] | null;
 }
 
 export interface ExternalCalendarEvent {
@@ -22,6 +23,21 @@ export interface ExternalCalendarEvent {
   description?: string;
   sourceName: string;
   sourceColor: string;
+  reminderOffsetsSeconds?: number[];
+}
+
+/**
+ * Backend offsets arrive as seconds before `date_start` (positive = before,
+ * negative = after), sorted descending and capped at 10. Normalize missing or
+ * malformed payloads to `[]` and keep only finite numeric entries so a single
+ * bad value cannot poison scheduling downstream.
+ */
+function normalizeOffsets(params: {
+  offsets: number[] | null | undefined;
+}): number[] {
+  const { offsets } = params;
+  if (!Array.isArray(offsets)) return [];
+  return offsets.filter((value) => Number.isFinite(value));
 }
 
 function toViewItem(params: { dto: ExternalEventDto }): ExternalCalendarEvent {
@@ -34,6 +50,9 @@ function toViewItem(params: { dto: ExternalEventDto }): ExternalCalendarEvent {
     description: dto.description ?? undefined,
     sourceName: dto.source_name ?? '',
     sourceColor: dto.source_color ?? '#3880ff',
+    reminderOffsetsSeconds: normalizeOffsets({
+      offsets: dto.reminder_offsets_seconds,
+    }),
   };
 }
 

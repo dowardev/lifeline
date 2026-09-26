@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `scheduleEventReminders`, `scheduleTaskReminders`, `scheduleNoteReminders` and `syncExternalReminders` now enforce a 10-second minimum lead time on near-future fires so the Capacitor Android plugin no longer silently drops them via its `at < now` early-return — LBDS-268
+- Local notification ids are now clamped to Java `int` range (max 2^31−1) so the `@capacitor/local-notifications` Android plugin no longer rejects them with "The identifier should be a Java int" — LBDS-268
+- Declare `android.permission.USE_EXACT_ALARM` (API 33+, auto-granted) and `SCHEDULE_EXACT_ALARM` (API 31-32, user-granted) in the Android manifest so the Capacitor plugin uses `AlarmManager.setExact` instead of the inexact `set`, eliminating the seconds-to-minute OS-batching drift — LBDS-268
+- Qualify `JvmTarget.JVM_21` to its fully-qualified `org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21` in `front/android/app/build.gradle` so the import-free reference resolves under the Kotlin Gradle DSL classpath — LBDS-268
+- Bump `androidxCoreVersion` from the non-existent `1.16.1` to `1.17.0` in `front/android/variables.gradle` (1.16.1 was never published to Google Maven; 1.17.0 is) — LBDS-268
+
 ### Changed
 - Fetch the HMAC-signed guest token once per page load from `GET calendar-sources/guest-token` and replay it as `X-Guest-Id` (response headers are invisible through the SSO HttpClient wrapper); bootstrap UUID kept for first contact — LBDS-230
 - In anonymous (no SSO session) mode, disable the guest-invitation input in the event form and show a hint to sign in before inviting by email; visible guests stay listed but cannot be removed — LBDS-220

@@ -19,11 +19,13 @@ class ExternalEvent extends Model
         'date_end',
         'time_zone',
         'description',
+        'reminder_offsets_seconds',
     ];
 
     protected $casts = [
         'date_start' => 'datetime',
         'date_end' => 'datetime',
+        'reminder_offsets_seconds' => 'array',
     ];
 
     public function source()

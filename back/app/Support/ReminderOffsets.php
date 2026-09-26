@@ -74,4 +74,59 @@ class ReminderOffsets
     {
         return in_array($code, self::CANONICAL, true);
     }
+
+    /**
+     * Exact seconds-before-the-anchor → canonical code (design D1). Returns
+     * null when there is no fixed-second equivalent. `1mo` is never returned:
+     * a real calendar month cannot be expressed as a constant number of
+     * seconds, so a month offset lives only in the raw seconds.
+     */
+    public static function codeForSeconds(int $seconds): ?string
+    {
+        return match ($seconds) {
+            0 => 'at_time',
+            300 => '5m',
+            600 => '10m',
+            900 => '15m',
+            1800 => '30m',
+            3600 => '1h',
+            7200 => '2h',
+            86400 => '1d',
+            172800 => '2d',
+            604800 => '1w',
+            default => null,
+        };
+    }
+
+    /**
+     * Canonical codes of a raw seconds list: unknown offsets and non-numeric
+     * values are dropped, duplicates collapsed, output in canonical table
+     * order. The raw seconds stay the source of truth; this is the UI-facing
+     * projection only.
+     *
+     * @param  array<int, mixed>  $seconds
+     * @return string[]
+     */
+    public static function codesForSeconds(array $seconds): array
+    {
+        $order = array_flip(self::CANONICAL);
+        $seen = [];
+        $result = [];
+
+        foreach ($seconds as $value) {
+            if (! is_int($value) && ! (is_string($value) && is_numeric($value))) {
+                continue;
+            }
+            $code = self::codeForSeconds((int) $value);
+            if ($code === null || isset($seen[$code])) {
+                continue;
+            }
+            $seen[$code] = true;
+            $result[] = $code;
+        }
+
+        usort($result, fn ($a, $b) => $order[$a] <=> $order[$b]);
+
+        return $result;
+    }
 }
