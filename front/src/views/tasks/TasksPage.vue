@@ -132,6 +132,27 @@
                 </ion-col>
               </ion-row>
             </section>
+
+            <section>
+              <ion-row :class="{ center: screenWidth >= 768 }">
+                <ion-col size-xs="12" size-lg="6">
+                  <ion-card class="card-main-content">
+                    <ion-card-header>
+                      <ion-card-subtitle>
+                        {{ $t('message.externalTasks.sectionTitle') }}
+                      </ion-card-subtitle>
+                      <ion-card-title class="ext-tasks-title">
+                        <ion-icon :icon="lockClosedOutline"></ion-icon>
+                        {{ $t('message.externalTasks.readOnlyBadge') }}
+                      </ion-card-title>
+                    </ion-card-header>
+                    <ion-card-content>
+                      <ExternalTaskListComponent />
+                    </ion-card-content>
+                  </ion-card>
+                </ion-col>
+              </ion-row>
+            </section>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -175,8 +196,14 @@ import {
   IonModal,
   IonButton,
   IonButtons,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardSubtitle,
+  IonCardTitle,
+  IonIcon,
 } from "@ionic/vue";
-import { addOutline, albumsOutline, appsOutline } from "ionicons/icons";
+import { addOutline, albumsOutline, appsOutline, lockClosedOutline } from "ionicons/icons";
 import { onMounted, ref } from "vue";
 
 // controllers
@@ -189,6 +216,7 @@ const systemController = new SystemController();
 // components
 import AddTaskComponent from "@/components/tasks/AddTaskComponent.vue";
 import listTasksComponent from "@/components/tasks/list/TaskListComponent.vue";
+import ExternalTaskListComponent from "@/components/tasks/list/ExternalTaskListComponent.vue";
 import kanbanComponent from "@/components/tasks/kanban/KanbanComponent.vue";
 import { ViewMode } from "@/utils/types";
 

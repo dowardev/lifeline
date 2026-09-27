@@ -55,3 +55,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix event reminder popover crashing on open (Temporal Dead Zone on `startDate`/`endDate` in `RemindersComponent`) — LBDS-206
 - Split the shared event reminders popover into dedicated popovers (Tiempo / Notificaciones / Repetir) and replace the `<ion-textarea>` read-only display with `ion-item`/`ion-label` rows — LBDS-206
 - Clear the timezone search on popover close so it reopens showing the full grouped list — LBDS-206
+
+### Added
+- Dedicated Contacts page (`/contacts`) listing synced Google People / CardDAV contacts with name/email/phone search and a read-only detail modal — LBDS-271
+- Side-menu entry "Contactos" between Tareas and Documentos with the `peopleOutline` icon and locale-aware active state — LBDS-271
+- Read-only external tasks section in `/tasks` (chip per source, due-date label, status text, lock + "Solo lectura" banner); local Dexie tasks stay fully editable — LBDS-271
+- `externalContactService` reader for `GET /external-contacts` with the `ext-contact-<id>` key namespace, distinct from events (`ext-<id>`) and tasks (`ext-task-<id>`) — LBDS-271
+- Thin `ExternalContactsController` and `ExternalTasksController` wrappers so pages do not call services directly — LBDS-271
+- `useExternalSyncOnEnter` hook wired into `/contacts` and the external tasks section of `/tasks` (TTL 10 min, same pattern as the calendar page) — LBDS-271
+- i18n keys under `message.contacts.*` and `message.externalTasks.*` (es + en) — LBDS-271
+
+### Fixed
+- External tasks "Vence" label honors the active i18n locale instead of being hardcoded to Spanish — LBDS-271
