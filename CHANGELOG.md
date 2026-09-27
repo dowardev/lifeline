@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **front:** Dedicated Contacts page (`/contacts`) for Google People / CardDAV contacts synced from external calendars, with search and a read-only detail view — LBDS-271
+- **front:** External tasks (Google Tasks / CalDAV VTODO) now surface in `/tasks` as a clearly separated read-only section next to the local editable tasks — LBDS-271
+- **front:** Both new surfaces refresh automatically when entering, matching the calendar page — LBDS-271
 - **front/back:** Contacts and task lists sync for CalDAV (CardDAV address books, VTODO task lists) and Google (People API, Tasks API), with subscribe/hidden toggles and the same destructive-prune guards as events — LBDS-266
 - **front:** Calendar account management moved to its own place in Settings (Ajustes, Cuentas) with the panel for linking Google and CalDAV accounts — LBDS-266
 - **front:** External calendar data refreshes automatically when the app opens, returns to the foreground, or you enter the calendar page (at most every 10 minutes) — LBDS-266

@@ -60,6 +60,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/tasks/TasksPage.vue'),
   },
   {
+    path: '/contacts',
+    name: 'ContactsPage',
+    component: () => import('@/views/contacts/ContactsPage.vue'),
+  },
+  {
     path: '/integrations',
     name: 'IntegrationsPage',
     component: () => import('@/views/integrations/IntegrationsPage.vue'),

@@ -86,6 +86,17 @@
         <ion-item
           button
           lines="none"
+          :class="{ 'menu-active': isContacts }"
+          :aria-current="isContacts ? 'page' : undefined"
+          @click="navigate({ route: '/contacts' })"
+        >
+          <ion-icon slot="start" :icon="peopleOutline"></ion-icon>
+          <ion-label>Contactos</ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          lines="none"
           :class="{ 'menu-active': isDocuments }"
           :aria-current="isDocuments ? 'page' : undefined"
           @click="navigate({ route: '/documents' })"
@@ -190,6 +201,7 @@ import {
   informationCircleOutline,
   logInOutline,
   logOutOutline,
+  peopleOutline,
   personAddOutline,
   personCircleOutline,
   settingsOutline,
@@ -228,6 +240,7 @@ const userName = computed(() => authController.getCurrentUser().name || 'Usuario
 const isHome = computed(() => route.path === '/');
 const isCalendar = computed(() => route.path === '/calendar');
 const isTasks = computed(() => route.path.startsWith('/tasks'));
+const isContacts = computed(() => route.path.startsWith('/contacts'));
 const isDocuments = computed(() => route.path.startsWith('/documents'));
 const isWakatime = computed(() => route.path === '/integrations');
 const isSettings = computed(() => route.path.startsWith('/settings'));
