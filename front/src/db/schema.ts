@@ -80,6 +80,49 @@ export interface NoteRecord {
   id_reminders?: number[]
 }
 
+/**
+ * Outbox op queued while offline or retrying. The processor drains the queue
+ * on reconnect, applies each mutation through the same service the controller
+ * would use online, and moves the row to `done` or `retrying` with backoff.
+ *
+ * `entityId` is the server id when known, or a client-side tempId (string)
+ * for create ops that have not yet round-tripped. The processor uses
+ * `entityId` + `entityType` to update the local Dexie mirror on success.
+ *
+ * `url` + `method` + `payload` are stored verbatim so a retry is just a
+ * replay — no controller-side state is needed to reconstruct the mutation.
+ */
+export type OutboxOp = 'create' | 'update' | 'delete'
+export type OutboxStatus = 'pending' | 'retrying' | 'done' | 'failed'
+
+export interface OutboxRecord {
+  id?: number
+  /** Domain of the mutation, e.g. 'events' | 'tasks' | 'documents'. */
+  entityType: string
+  /** Server id when known; tempId (string) for create ops not yet round-tripped. */
+  entityId: string | number
+  /** Operation kind. */
+  op: OutboxOp
+  /** Backend endpoint to call (relative to apiClient). */
+  url: string
+  /** HTTP method to use when replaying. */
+  method: 'POST' | 'PUT' | 'DELETE'
+  /** Body to send (omitted for DELETE). Stored as-is. */
+  payload?: Record<string, unknown>
+  /** Lifecycle state of this row. */
+  status: OutboxStatus
+  /** Number of attempts already made; backoff grows with this. */
+  attempts: number
+  /** Wall-clock timestamp of enqueue. */
+  createdAt: number
+  /** Last update (status change, retry tick). */
+  updatedAt: number
+  /** When to attempt next (ms epoch). Only meaningful when status === 'retrying'. */
+  nextRetryAt?: number
+  /** Last error message captured by the processor; cleared on success. */
+  lastError?: string
+}
+
 export class LifeLineDB extends Dexie {
   events!: EntityTable<EventRecord, 'id'>
   users!: EntityTable<UserRecord, 'id'>
@@ -89,6 +132,7 @@ export class LifeLineDB extends Dexie {
   tasks!: EntityTable<TaskRecord, 'id'>
   documents!: EntityTable<DocumentRecord, 'id'>
   notes!: EntityTable<NoteRecord, 'id'>
+  outbox!: EntityTable<OutboxRecord, 'id'>
 
   constructor() {
     super('LifeLineDB')
@@ -104,6 +148,11 @@ export class LifeLineDB extends Dexie {
     })
     this.version(2).stores({
       config: 'name',
+    })
+    // LBDS-231: outbox table for queued mutations while offline or retrying.
+    // Additive: existing rows in other tables are untouched.
+    this.version(3).stores({
+      outbox: '++id, entityType, entityId, status, nextRetryAt, createdAt',
     })
   }
 }
