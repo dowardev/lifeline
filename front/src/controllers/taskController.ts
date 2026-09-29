@@ -1,114 +1,254 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
-import { taskService } from "@/services/taskService";
-import { useTaskStore } from "@/store/taskStore";
-import { db } from "@/db";
-import type { TaskRecord } from "@/db/schema";
-import type { TaskItem } from "@/store/taskStore";
+import { taskService } from '@/services/taskService'
+import { useTaskStore } from '@/store/taskStore'
+import { db } from '@/db'
+import type { TaskRecord } from '@/db/schema'
+import type { TaskItem } from '@/store/taskStore'
+import {
+  createRepository,
+  type RepositoryHooks,
+} from '@/db/repository'
+import {
+  flush,
+  registerReconciler,
+  useOutboxProcessor,
+} from '@/db/outboxProcessor'
+
+/**
+ * LBDS-231 - TaskController is migrated onto the global offline-first data
+ * layer following the same pattern as EventController: server reads via
+ * the repository, writes through the outbox, and a reconciler that swaps
+ * the optimistic tempId for the real server id once the POST round-trips.
+ */
+
+interface ServerTaskDto {
+  id: number
+  user_id: number
+  title: string
+  description?: string
+  status?: string
+  priority?: number
+  due_date?: string
+  subtasks?: string
+  order?: number
+  notifications?: string[]
+  id_reminders?: number[]
+}
+
+function buildHooks(): RepositoryHooks<TaskItem> {
+  const store = (): ReturnType<typeof useTaskStore> => useTaskStore()
+  return {
+    setItems: ({ items }): void => store().setTasks({ tasks: items }),
+    addItem: ({ item }): void => store().addTask({ task: item }),
+    patchItem: ({ id, patch }): void =>
+      store().updateTask({ id: id as number, updates: patch }),
+    removeItem: ({ id }): void => store().removeTask({ id: id as number }),
+  }
+}
+
+let repositorySingleton: ReturnType<
+  typeof createRepository<ServerTaskDto, TaskItem>
+> | null = null
+
+function getRepository(): ReturnType<
+  typeof createRepository<ServerTaskDto, TaskItem>
+> {
+  if (!repositorySingleton) {
+    repositorySingleton = createRepository<ServerTaskDto, TaskItem>({
+      tableName: 'tasks',
+      urlBase: '/tasks',
+      service: {
+        async list(): Promise<ServerTaskDto[]> {
+          const response = (await taskService.getTasks()) as
+            | { tasks: ServerTaskDto[] }
+            | ServerTaskDto[]
+          return Array.isArray(response)
+            ? response
+            : Array.isArray(response?.tasks)
+              ? response.tasks
+              : []
+        },
+      },
+      fromServer: ({ server }) => ({ ...server }),
+      hooks: buildHooks(),
+    })
+
+    registerReconciler({
+      tableName: 'tasks',
+      reconciler: async ({ tempId, server }) => {
+        const response = server as
+          | { id?: number | string; task?: { id?: number } }
+          | undefined
+        const id =
+          typeof response?.id === 'number' || typeof response?.id === 'string'
+            ? response.id
+            : response?.task?.id
+        if (typeof id !== 'number' && typeof id !== 'string') return
+
+        const local = await db.tasks.get(tempId as string)
+        if (local) {
+          await db.tasks.delete(tempId as string)
+          await db.tasks.put({ ...(server as Record<string, unknown>), id })
+        }
+        const store = useTaskStore()
+        const temp = store.tasks.findIndex((t) => t.id === tempId)
+        if (temp !== -1) {
+          store.removeTask({ id: tempId as string })
+          store.addTask({ task: { ...(server as TaskItem), id } })
+        }
+      },
+    })
+  }
+  return repositorySingleton
+}
 
 export class TaskController {
   private get store(): ReturnType<typeof useTaskStore> {
-    return useTaskStore();
+    return useTaskStore()
   }
 
+  /** Mounts the outbox processor on the root component. */
+  useSync(): void {
+    useOutboxProcessor()
+  }
+
+  /** Forces a drain of the outbox right now. */
+  flushQueue(): Promise<void> {
+    return flush()
+  }
+
+  // --- Reads ------------------------------------------------------------
+
   async loadTasks(): Promise<void> {
-    this.store.setLoading({ loading: true });
-    this.store.clearError();
+    this.store.setLoading({ loading: true })
+    this.store.clearError()
     try {
-      const localTasks = await db.tasks.toArray();
-      this.store.setTasks({ tasks: localTasks as unknown as TaskItem[] });
-      try {
-        const response = await taskService.getTasks();
-        const serverTasks = Array.isArray(response.tasks)
-          ? response.tasks
-          : Array.isArray(response)
-            ? response
-            : [];
-        this.store.setTasks({ tasks: serverTasks });
-        await db.tasks.bulkPut(serverTasks);
-      } catch (error) {
-        console.error("[TaskController.loadTasks]", error);
-        this.store.setError({
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
+      await getRepository().fetchAll()
     } catch (error) {
       this.store.setError({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-      throw error;
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+      throw error
     } finally {
-      this.store.setLoading({ loading: false });
+      this.store.setLoading({ loading: false })
     }
   }
 
+  // --- Writes (online + offline) ----------------------------------------
+
   async createTask(params: {
-    title: string;
-    description?: string;
-    status?: string;
-    priority?: number;
-    due_date?: string;
-    subtasks?: string;
-    notifications?: string[];
-    id_reminders?: number[];
-  }): Promise<TaskItem> {
-    this.store.setLoading({ loading: true });
-    this.store.clearError();
+    title: string
+    description?: string
+    status?: string
+    priority?: number
+    due_date?: string
+    subtasks?: string
+    notifications?: string[]
+    id_reminders?: number[]
+  }): Promise<{ id: string | number }> {
+    this.store.setLoading({ loading: true })
+    this.store.clearError()
     try {
-      const response = await taskService.createTask(params);
-      const serverTask = response.task || response;
-      this.store.addTask({ task: serverTask });
-      await db.tasks.put(serverTask);
-      return serverTask;
-    } catch (error) {
-      this.store.setError({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-      throw error;
+      const { id } = await getRepository().create({
+        record: {
+          title: params.title,
+          description: params.description,
+          status: (params.status as TaskItem['status']) ?? 'pending',
+          priority: params.priority,
+          due_date: params.due_date,
+          subtasks: params.subtasks,
+          notifications: params.notifications,
+          id_reminders: params.id_reminders,
+          user_id: 0,
+        },
+      })
+      return { id }
     } finally {
-      this.store.setLoading({ loading: false });
+      this.store.setLoading({ loading: false })
     }
   }
 
   async updateTask(params: {
-    id?: number;
-    task?: any;
-    title?: string;
-    description?: string;
-    status?: string;
-    priority?: number;
-    due_date?: string;
-    order?: number;
-    notifications?: string[];
-    id_reminders?: number[];
+    id?: number
+    task?: Partial<TaskItem>
+    title?: string
+    description?: string
+    status?: string
+    priority?: number
+    due_date?: string
+    order?: number
+    notifications?: string[]
+    id_reminders?: number[]
   }): Promise<void> {
-    this.store.setLoading({ loading: true });
-    this.store.clearError();
+    this.store.setLoading({ loading: true })
+    this.store.clearError()
     try {
-      const data = params.task || params;
-      const taskId = params.id ?? data.id;
-      if (taskId < 0) {
-        // local-only task: skip server, just update local stores
-        this.store.updateTask({ id: taskId, updates: data });
-        await db.tasks.update(taskId, data);
-      } else {
-        await taskService.updateTask(data);
-        this.store.updateTask({ id: taskId, updates: data });
-        await db.tasks.update(taskId, data);
-      }
-    } catch (error) {
-      this.store.setError({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-      throw error;
+      const data = params.task || params
+      const id = params.id ?? data.id
+      if (id === undefined) return
+      const patch: Partial<TaskItem> = {}
+      if (params.title !== undefined) patch.title = params.title
+      if (params.description !== undefined) patch.description = params.description
+      if (params.status !== undefined) patch.status = params.status as TaskItem['status']
+      if (params.priority !== undefined) patch.priority = params.priority
+      if (params.due_date !== undefined) patch.due_date = params.due_date
+      if (params.order !== undefined) patch.order = params.order
+      if (params.notifications !== undefined) patch.notifications = params.notifications
+      if (params.id_reminders !== undefined) patch.id_reminders = params.id_reminders
+      if (data.title !== undefined && patch.title === undefined) patch.title = data.title as string
+      if (data.description !== undefined && patch.description === undefined)
+        patch.description = data.description as string
+      if (data.status !== undefined && patch.status === undefined)
+        patch.status = data.status as TaskItem['status']
+      if (data.priority !== undefined && patch.priority === undefined)
+        patch.priority = data.priority as number
+      if (data.due_date !== undefined && patch.due_date === undefined)
+        patch.due_date = data.due_date as string
+      if (data.subtasks !== undefined && (patch as { subtasks?: string }).subtasks === undefined)
+        ;(patch as { subtasks?: string }).subtasks = data.subtasks as string
+      if (data.order !== undefined && patch.order === undefined) patch.order = data.order as number
+      if (data.notifications !== undefined && patch.notifications === undefined)
+        patch.notifications = data.notifications as string[]
+      if (data.id_reminders !== undefined && patch.id_reminders === undefined)
+        patch.id_reminders = data.id_reminders as number[]
+      await getRepository().update({ id, patch })
     } finally {
-      this.store.setLoading({ loading: false });
+      this.store.setLoading({ loading: false })
     }
   }
 
+  async updateTaskStatus(params: {
+    id: number | string
+    status: string
+  }): Promise<void> {
+    this.store.setLoading({ loading: true })
+    this.store.clearError()
+    try {
+      const id = Number(params.id)
+      const safeStatus = params.status as 'pending' | 'in_progress' | 'completed'
+      await getRepository().update({ id, patch: { status: safeStatus } })
+    } finally {
+      this.store.setLoading({ loading: false })
+    }
+  }
+
+  async deleteTask(params: { id: number }): Promise<void> {
+    this.store.setLoading({ loading: true })
+    this.store.clearError()
+    try {
+      await getRepository().remove({ id: params.id })
+    } finally {
+      this.store.setLoading({ loading: false })
+    }
+  }
+
+  // --- Local-only helpers (kept for callers that need them) -------------
+
+  /** Stamps a row into Dexie + Pinia without touching the outbox. */
   async addLocalTask(params: { task: TaskItem }): Promise<void> {
-    this.store.addTask({ task: params.task });
+    this.store.addTask({ task: params.task })
     const record: TaskRecord = {
       id: params.task.id,
       user_id: params.task.user_id,
@@ -121,61 +261,18 @@ export class TaskController {
       order: params.task.order,
       notifications: params.task.notifications,
       id_reminders: params.task.id_reminders,
-    };
-    await db.tasks.put(record);
+    }
+    await db.tasks.put(record)
   }
 
-  async deleteTask(params: { id: number }): Promise<void> {
-    this.store.setLoading({ loading: true });
-    this.store.clearError();
-    try {
-      if (params.id < 0) {
-        this.store.removeTask({ id: params.id });
-        await db.tasks.delete(params.id);
-      } else {
-        await taskService.deleteTask({ id: params.id });
-        this.store.removeTask({ id: params.id });
-        await db.tasks.delete(params.id);
-      }
-    } catch (error) {
-      this.store.setError({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-      throw error;
-    } finally {
-      this.store.setLoading({ loading: false });
-    }
-  }
+  // --- Derived state (no I/O) -------------------------------------------
 
   getTasks(): TaskItem[] {
-    return this.store.tasks;
+    return this.store.tasks
   }
 
   getTask(params: { id: number | string }): TaskItem | null {
-    const id = Number(params.id);
-    return this.store.tasks.find((t) => t.id === id) || null;
-  }
-
-  async updateTaskStatus(params: {
-    id: number | string;
-    status: string;
-  }): Promise<void> {
-    this.store.setLoading({ loading: true });
-    this.store.clearError();
-    try {
-      const id = Number(params.id);
-      await taskService.updateTask({ id, status: params.status });
-      const safeStatus = params.status as
-        "pending" | "in_progress" | "completed";
-      this.store.updateTask({ id, updates: { status: safeStatus } });
-      await db.tasks.update(id, { status: safeStatus });
-    } catch (error) {
-      this.store.setError({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-      throw error;
-    } finally {
-      this.store.setLoading({ loading: false });
-    }
+    const id = Number(params.id)
+    return this.store.tasks.find((t) => t.id === id) || null
   }
 }

@@ -4,7 +4,25 @@
 import { documentService } from '@/services/documentService'
 import { useDocumentStore } from '@/store/documentStore'
 import { db } from '@/db'
+import type { DocumentRecord } from '@/db/schema'
 import type { DocumentItem } from '@/store/documentStore'
+import type { DocumentElement } from '@/controllers/documentController'
+import {
+  createRepository,
+  type RepositoryHooks,
+} from '@/db/repository'
+import {
+  flush,
+  registerReconciler,
+  useOutboxProcessor,
+} from '@/db/outboxProcessor'
+
+/**
+ * LBDS-231 - DocumentController is migrated onto the global offline-first
+ * data layer following the same pattern as EventController / TaskController.
+ * Notes (which are nested inside documents) keep their own per-document
+ * helpers because they are an in-memory-only layer on top of documents.
+ */
 
 export interface DocumentElement {
   type: string
@@ -13,70 +31,158 @@ export interface DocumentElement {
   [key: string]: unknown
 }
 
+interface ServerDocumentDto {
+  id: number
+  user_id: number
+  title: string
+  type?: string
+  content?: string
+  order?: number
+  elements?: unknown
+}
+
+function buildHooks(): RepositoryHooks<DocumentItem> {
+  const store = (): ReturnType<typeof useDocumentStore> => useDocumentStore()
+  return {
+    setItems: ({ items }): void => store().setDocuments({ documents: items }),
+    addItem: ({ item }): void => store().addDocument({ document: item }),
+    patchItem: ({ id, patch }): void =>
+      store().updateDocument({ id: id as number, updates: patch }),
+    removeItem: ({ id }): void => store().removeDocument({ id: id as number }),
+  }
+}
+
+let repositorySingleton: ReturnType<
+  typeof createRepository<ServerDocumentDto, DocumentItem>
+> | null = null
+
+function getRepository(): ReturnType<
+  typeof createRepository<ServerDocumentDto, DocumentItem>
+> {
+  if (!repositorySingleton) {
+    repositorySingleton = createRepository<ServerDocumentDto, DocumentItem>({
+      tableName: 'documents',
+      urlBase: '/documents',
+      service: {
+        async list(): Promise<ServerDocumentDto[]> {
+          const response = (await documentService.getDocuments()) as
+            | { documents: ServerDocumentDto[] }
+            | ServerDocumentDto[]
+          return Array.isArray(response)
+            ? response
+            : Array.isArray(response?.documents)
+              ? response.documents
+              : []
+        },
+      },
+      fromServer: ({ server }) => ({ ...server }),
+      hooks: buildHooks(),
+    })
+
+    registerReconciler({
+      tableName: 'documents',
+      reconciler: async ({ tempId, server }) => {
+        const response = server as
+          | { id?: number | string; document?: { id?: number } }
+          | undefined
+        const id =
+          typeof response?.id === 'number' || typeof response?.id === 'string'
+            ? response.id
+            : response?.document?.id
+        if (typeof id !== 'number' && typeof id !== 'string') return
+
+        const local = await db.documents.get(tempId as string)
+        if (local) {
+          await db.documents.delete(tempId as string)
+          await db.documents.put({ ...(server as Record<string, unknown>), id })
+        }
+        const store = useDocumentStore()
+        const temp = store.documents.findIndex((d) => d.id === tempId)
+        if (temp !== -1) {
+          store.removeDocument({ id: tempId as string })
+          store.addDocument({ document: { ...(server as DocumentItem), id } })
+        }
+      },
+    })
+  }
+  return repositorySingleton
+}
+
 export class DocumentController {
   private get store(): ReturnType<typeof useDocumentStore> {
     return useDocumentStore()
   }
 
+  /** Mounts the outbox processor on the root component. */
+  useSync(): void {
+    useOutboxProcessor()
+  }
+
+  /** Forces a drain of the outbox right now. */
+  flushQueue(): Promise<void> {
+    return flush()
+  }
+
+  // --- Reads ------------------------------------------------------------
+
   async loadDocuments(): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
-      const local = await db.documents.toArray()
-      this.store.setDocuments({ documents: local as unknown as DocumentItem[] })
-      try {
-        const response = await documentService.getDocuments()
-        const serverDocs = Array.isArray(response.documents) ? response.documents : Array.isArray(response) ? response : []
-        this.store.setDocuments({ documents: serverDocs })
-        await db.documents.bulkPut(serverDocs)
-      } catch (error) {
-        console.error('[DocumentController.loadDocuments]', error)
-        this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      }
+      await getRepository().fetchAll()
     } catch (error) {
-      this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
+      this.store.setError({
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
       throw error
     } finally {
       this.store.setLoading({ loading: false })
     }
   }
 
-  async createDocument(params: { title: string; type?: string; content?: string }): Promise<DocumentItem> {
+  // --- Writes (online + offline) ----------------------------------------
+
+  async createDocument(params: {
+    title: string
+    type?: string
+    content?: string
+  }): Promise<{ id: string | number }> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
-      const response = await documentService.createDocument(params)
-      const serverDoc = response.document || response
-      this.store.addDocument({ document: serverDoc })
-      await db.documents.put(serverDoc)
-      return serverDoc
-    } catch (error) {
-      this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      throw error
+      const { id } = await getRepository().create({
+        record: {
+          title: params.title,
+          type: (params.type as DocumentItem['type']) ?? 'note',
+          content: params.content,
+          user_id: 0,
+        },
+      })
+      return { id }
     } finally {
       this.store.setLoading({ loading: false })
     }
   }
 
-  async updateDocument(params: { id?: number; document?: any; title?: string; type?: string; content?: string }): Promise<void> {
+  async updateDocument(params: {
+    id: number
+    title?: string
+    type?: string
+    content?: string
+    order?: number
+    elements?: unknown
+  }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
-      const data = params.document || params
-      const docId = params.id ?? data.id
-      await documentService.updateDocument(data)
-      this.store.updateDocument({ id: docId, updates: data })
-      const updateFields: Partial<import('@/db/schema').DocumentRecord> = {}
-      if (data.title !== undefined) updateFields.title = data.title
-      if (data.type !== undefined) updateFields.type = data.type
-      if (data.content !== undefined) updateFields.content = data.content
-      if (data.order !== undefined) updateFields.order = data.order
-      if (data.elements !== undefined) updateFields.elements = data.elements
-      // Persist elements locally (D2) so in-memory element reminders/content survive reload.
-      await db.documents.update(docId, updateFields)
-    } catch (error) {
-      this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      throw error
+      const { id, ...rest } = params
+      const patch: Partial<DocumentItem> = {}
+      if (rest.title !== undefined) patch.title = rest.title
+      if (rest.type !== undefined) patch.type = rest.type as DocumentItem['type']
+      if (rest.content !== undefined) patch.content = rest.content
+      if (rest.order !== undefined) patch.order = rest.order
+      if (rest.elements !== undefined) (patch as { elements?: unknown }).elements = rest.elements
+      await getRepository().update({ id, patch })
     } finally {
       this.store.setLoading({ loading: false })
     }
@@ -86,24 +192,23 @@ export class DocumentController {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
-      await documentService.deleteDocument({ id: params.id })
-      this.store.removeDocument({ id: params.id })
-      await db.documents.delete(params.id)
-    } catch (error) {
-      this.store.setError({ error: error instanceof Error ? error.message : 'Unknown error' })
-      throw error
+      await getRepository().remove({ id: params.id })
     } finally {
       this.store.setLoading({ loading: false })
     }
   }
 
+  // --- Local-only helpers (kept for callers that need them) -------------
+
   getUserDocuments(): DocumentItem[] | undefined {
-    return this.store.getDocuments()
+    return this.store.documents
   }
 
   getUserDocument(params: { documentId: string }): DocumentItem | undefined {
     return this.store.getDocument({ elementSearch: params.documentId })
   }
+
+  // --- In-memory element helpers (notes live inside documents) ----------
 
   removeElement(params: { index: number | string; documentId: string }): void {
     const idx = Number(params.index)
@@ -111,7 +216,7 @@ export class DocumentController {
     if (doc && doc.elements) {
       const elements = [...doc.elements]
       elements.splice(idx, 1)
-      this.store.updateDocument({ id: doc.id, updates: { elements } })
+      this.store.updateDocument({ id: doc.id as number, updates: { elements } })
     }
   }
 
@@ -120,7 +225,7 @@ export class DocumentController {
     if (doc) {
       const elements = doc.elements ? [...doc.elements] : []
       elements.push(params.element)
-      this.store.updateDocument({ id: doc.id, updates: { elements } })
+      this.store.updateDocument({ id: doc.id as number, updates: { elements } })
     }
   }
 
@@ -130,8 +235,8 @@ export class DocumentController {
     if (doc && doc.elements && doc.elements[idx]) {
       const elements = [...(doc.elements as DocumentElement[])]
       elements[idx] = { ...elements[idx], data: params.data }
-      this.store.updateDocument({ id: doc.id, updates: { elements } })
-      this.updateDocument({ id: doc.id, document: { ...doc, elements } })
+      this.store.updateDocument({ id: doc.id as number, updates: { elements } })
+      void this.updateDocument({ id: doc.id as number, document: { ...doc, elements } })
     }
   }
 
@@ -141,8 +246,21 @@ export class DocumentController {
     if (doc && doc.elements && doc.elements[idx]) {
       const elements = [...(doc.elements as DocumentElement[])]
       elements[idx] = { ...elements[idx], reminders: params.data }
-      this.store.updateDocument({ id: doc.id, updates: { elements } })
-      this.updateDocument({ id: doc.id, document: { ...doc, elements } })
+      this.store.updateDocument({ id: doc.id as number, updates: { elements } })
+      void this.updateDocument({ id: doc.id as number, document: { ...doc, elements } })
     }
+  }
+
+  // --- Local-only persistence (writes through Dexie + outbox) -----------
+
+  /** Persists element changes locally; mirrors the in-memory store update. */
+  async persistElementsLocally(params: {
+    documentId: number
+    elements: unknown
+  }): Promise<void> {
+    const updateFields: Partial<DocumentRecord> = {
+      elements: params.elements as DocumentRecord['elements'],
+    }
+    await db.documents.update(params.documentId, updateFields)
   }
 }
