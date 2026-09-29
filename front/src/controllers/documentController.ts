@@ -92,15 +92,16 @@ function getRepository(): ReturnType<
         if (typeof id !== 'number' && typeof id !== 'string') return
 
         const local = await db.documents.get(tempId as string)
+        const merged = { ...local, ...(server as Record<string, unknown>), id }
         if (local) {
           await db.documents.delete(tempId as string)
-          await db.documents.put({ ...(server as Record<string, unknown>), id })
+          await db.documents.put(merged)
         }
         const store = useDocumentStore()
         const temp = store.documents.findIndex((d) => d.id === tempId)
         if (temp !== -1) {
           store.removeDocument({ id: tempId as string })
-          store.addDocument({ document: { ...(server as DocumentItem), id } })
+          store.addDocument({ document: merged as DocumentItem })
         }
       },
     })

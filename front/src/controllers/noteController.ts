@@ -84,15 +84,16 @@ function getRepository(): ReturnType<
         if (typeof id !== 'number' && typeof id !== 'string') return
 
         const local = await db.notes.get(tempId as string)
+        const merged = { ...local, ...(server as Record<string, unknown>), id }
         if (local) {
           await db.notes.delete(tempId as string)
-          await db.notes.put({ ...(server as Record<string, unknown>), id })
+          await db.notes.put(merged)
         }
         const store = useNoteStore()
         const temp = store.notes.findIndex((n) => n.id === tempId)
         if (temp !== -1) {
           store.removeNote({ id: tempId as string })
-          store.addNote({ note: { ...(server as NoteItem), id } })
+          store.addNote({ note: merged as NoteItem })
         }
       },
     })

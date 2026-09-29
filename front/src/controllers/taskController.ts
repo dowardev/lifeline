@@ -88,15 +88,16 @@ function getRepository(): ReturnType<
         if (typeof id !== 'number' && typeof id !== 'string') return
 
         const local = await db.tasks.get(tempId as string)
+        const merged = { ...local, ...(server as Record<string, unknown>), id }
         if (local) {
           await db.tasks.delete(tempId as string)
-          await db.tasks.put({ ...(server as Record<string, unknown>), id })
+          await db.tasks.put(merged)
         }
         const store = useTaskStore()
         const temp = store.tasks.findIndex((t) => t.id === tempId)
         if (temp !== -1) {
           store.removeTask({ id: tempId as string })
-          store.addTask({ task: { ...(server as TaskItem), id } })
+          store.addTask({ task: merged as TaskItem })
         }
       },
     })

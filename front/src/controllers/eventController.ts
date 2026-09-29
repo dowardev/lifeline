@@ -97,15 +97,16 @@ function getRepository(): ReturnType<
         if (typeof id !== 'number' && typeof id !== 'string') return
 
         const local = await db.events.get(tempId as string)
+        const merged = { ...local, ...(server as Record<string, unknown>), id }
         if (local) {
           await db.events.delete(tempId as string)
-          await db.events.put({ ...(server as Record<string, unknown>), id })
+          await db.events.put(merged)
         }
         const store = useEventStore()
         const temp = store.events.findIndex((e) => e.id === tempId)
         if (temp !== -1) {
           store.removeEvent({ id: tempId as string })
-          store.addEvent({ event: { ...(server as EventItem), id } })
+          store.addEvent({ event: merged as EventItem })
         }
       },
     })
