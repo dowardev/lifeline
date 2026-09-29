@@ -123,6 +123,54 @@ export interface OutboxRecord {
   lastError?: string
 }
 
+/**
+ * External data (LBDS-224) is read-only from the user's perspective: the
+ * sources (Google / CalDAV / ICS) own the write side. We mirror whatever
+ * the server last returned into Dexie so the calendar can render the
+ * previous sync when offline, and we let the sync layer replace the rows
+ * wholesale on each successful refresh.
+ *
+ * `key` is the stable composite id used everywhere in the UI
+ * (`ext-<id>` for events, `ext-contact-<id>` for contacts, `ext-task-<id>`
+ * for tasks). It is the primary key so a re-sync can do a `bulkPut` without
+ * juggling autoincrement collisions.
+ */
+export interface ExternalEventRecord {
+  key: string
+  sourceId?: number
+  sourceName: string
+  sourceColor: string
+  title: string
+  dateStart?: string
+  dateEnd?: string
+  description?: string
+  reminderOffsetsSeconds?: number[]
+  /** Wall-clock timestamp of the last sync that wrote this row. */
+  syncedAt: number
+}
+
+export interface ExternalContactRecord {
+  key: string
+  sourceId?: number
+  sourceName: string
+  displayName: string
+  email: string
+  phone: string
+  syncedAt: number
+}
+
+export interface ExternalTaskRecord {
+  key: string
+  sourceId?: number
+  sourceName: string
+  title: string
+  status?: string
+  dueAt?: string
+  description?: string
+  reminderOffsetsSeconds?: number[]
+  syncedAt: number
+}
+
 export class LifeLineDB extends Dexie {
   events!: EntityTable<EventRecord, 'id'>
   users!: EntityTable<UserRecord, 'id'>
@@ -133,6 +181,9 @@ export class LifeLineDB extends Dexie {
   documents!: EntityTable<DocumentRecord, 'id'>
   notes!: EntityTable<NoteRecord, 'id'>
   outbox!: EntityTable<OutboxRecord, 'id'>
+  externalEvents!: EntityTable<ExternalEventRecord, 'key'>
+  externalContacts!: EntityTable<ExternalContactRecord, 'key'>
+  externalTasks!: EntityTable<ExternalTaskRecord, 'key'>
 
   constructor() {
     super('LifeLineDB')
@@ -153,6 +204,13 @@ export class LifeLineDB extends Dexie {
     // Additive: existing rows in other tables are untouched.
     this.version(3).stores({
       outbox: '++id, entityType, entityId, status, nextRetryAt, createdAt',
+    })
+    // LBDS-231 v4: external data mirrors (read-only offline cache for
+    // Google/CalDAV/ICS sources exposed via the shared composable).
+    this.version(4).stores({
+      externalEvents: 'key, sourceName, dateStart, syncedAt',
+      externalContacts: 'key, sourceName, displayName, syncedAt',
+      externalTasks: 'key, sourceName, dueAt, syncedAt',
     })
   }
 }
