@@ -3,6 +3,8 @@
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { db } from '@/db'
+import type { AuthUser } from '@/store/authStore'
 
 export interface AuthUser {
   id: number
@@ -14,6 +16,7 @@ export interface AuthUser {
 
 const LOCAL_USER_STORAGE_KEY = 'lifeline_local_user'
 const LOCAL_DISPLAY_NAME = 'Usuario local'
+const TOKEN_DEDICATED_KEY = 'auth_cached_token'
 
 function generateLocalId(): number {
   // Positive integer id for the local profile. Unique per client and persisted,
@@ -39,6 +42,58 @@ function persistLocalUser(params: { user: AuthUser }): void {
     localStorage.setItem(LOCAL_USER_STORAGE_KEY, JSON.stringify(params.user))
   } catch (error) {
     console.warn('[authStore] failed to persist local user', error)
+  }
+}
+
+/**
+ * LBDS-231 - persists the SSO bearer token so a relaunch without network
+ * still lands on a logged-in session. The token is also kept in
+ * `db.tokens` so it follows the same offline-first guarantees as every
+ * other piece of user state. Logout wipes both copies.
+ */
+async function persistToken(params: { userId: number; token: string }): Promise<void> {
+  const { userId, token } = params
+  if (!token) return
+  try {
+    await db.tokens.put({ user_id: userId, name: 'sso', token })
+  } catch (error) {
+    console.warn('[authStore] failed to persist token', error)
+  }
+  try {
+    localStorage.setItem(TOKEN_DEDICATED_KEY, token)
+  } catch {
+    // ignore storage failures
+  }
+}
+
+async function loadCachedToken(): Promise<{ userId: number; token: string } | null> {
+  try {
+    const fromDb = await db.tokens.where('name').equals('sso').last()
+    if (fromDb?.token) {
+      return { userId: fromDb.user_id, token: fromDb.token }
+    }
+  } catch {
+    // fall through to localStorage
+  }
+  try {
+    const raw = localStorage.getItem(TOKEN_DEDICATED_KEY)
+    if (raw) return { userId: 0, token: raw }
+  } catch {
+    // ignore
+  }
+  return null
+}
+
+async function clearCachedToken(): Promise<void> {
+  try {
+    await db.tokens.where('name').equals('sso').delete()
+  } catch {
+    // ignore
+  }
+  try {
+    localStorage.removeItem(TOKEN_DEDICATED_KEY)
+  } catch {
+    // ignore
   }
 }
 
@@ -90,6 +145,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch {
       // ignore storage failures
     }
+    void clearCachedToken()
   }
 
   function setAuth(params: { userData: AuthUser; accessToken: string }): void {
@@ -97,6 +153,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = params.accessToken
     isLogged.value = true
     isAnonymous.value = false
+    void persistToken({ userId: params.userData.id, token: params.accessToken })
   }
 
   function setUser(params: { userData: AuthUser }): void {
@@ -107,6 +164,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   function setToken(params: { accessToken: string }): void {
     token.value = params.accessToken
+    // Persist under the active user; ensureLocalUser guarantees one exists.
+    const userId = user.value?.id ?? ensureLocalUser().id
+    void persistToken({ userId, token: params.accessToken })
   }
 
   function clearAuth(): void {
@@ -115,17 +175,50 @@ export const useAuthStore = defineStore('auth', () => {
     isAnonymous.value = true
     // Reset to a usable anonymous state (never a null dead-end).
     ensureLocalUser()
+    void clearCachedToken()
   }
 
   function setFromSso(params: { id: number; name: string; user: string; email: string }): void {
-    user.value = {
+    const next: AuthUser = {
       id: params.id,
       name: params.name,
       user_name: params.user,
       email: params.email,
     }
+    user.value = next
     isLogged.value = true
     isAnonymous.value = false
+    // Persist the local profile mirror so offline reads still anchor to a
+    // known id (the controllers stamp this id into Dexie rows they create
+    // while the server is unreachable).
+    persistLocalUser({ user: next })
+  }
+
+  /**
+   * LBDS-231 - hydrates the cached SSO token from Dexie / localStorage on
+   * app launch. Does NOT touch the SSO client itself: that layer owns its
+   * own storage and will pick up the same token once the SSO SDK
+   * initializes. Returning `false` means "no cached session, stay
+   * anonymous"; callers must NOT throw on `false` - anonymous is a valid
+   * state.
+   */
+  async function restoreCachedAuth(): Promise<boolean> {
+    const cached = await loadCachedToken()
+    if (!cached) return false
+    if (!cached.token) return false
+    token.value = cached.token
+    isLogged.value = true
+    isAnonymous.value = false
+    if (cached.userId > 0) {
+      user.value = {
+        id: cached.userId,
+        name: user.value?.name ?? '',
+        user_name: user.value?.user_name ?? '',
+        email: user.value?.email ?? '',
+        image_profile: user.value?.image_profile,
+      }
+    }
+    return true
   }
 
   return {
@@ -142,5 +235,6 @@ export const useAuthStore = defineStore('auth', () => {
     setToken,
     clearAuth,
     setFromSso,
+    restoreCachedAuth,
   }
 })

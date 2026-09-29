@@ -100,6 +100,20 @@ export class AuthController {
   async loadUser(_params?: any): Promise<any> {
     // Always materialize the local anonymous identity first. Never throws.
     this.local.ensureLocalUser()
+    // LBDS-231 - try the cached SSO token before contacting the server so
+    // a relaunch with no network still lands on a logged-in session.
+    const cached = await this.store.restoreCachedAuth()
+    if (cached) {
+      // We have a cached token; attempt to refresh from SSO. If it fails
+      // (offline, expired) we keep the cached session - the SSO layer will
+      // surface a 401 on the first request that needs fresh validation,
+      // and the outbox processor will park that op as `failed`.
+      try {
+        return await this.sso.loadUser()
+      } catch {
+        return null
+      }
+    }
     try {
       return await this.sso.loadUser()
     } catch {

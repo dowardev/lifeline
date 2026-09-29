@@ -171,6 +171,17 @@ export interface ExternalTaskRecord {
   syncedAt: number
 }
 
+/**
+ * Admin-defined tags (LBDS-231). Users can attach these to events but cannot
+ * create new ones from the app. The list is read-heavy, write-light, and
+ * small enough that we cache it locally instead of round-tripping every
+ * time a tag picker opens.
+ */
+export interface AdminTagRecord {
+  id: number
+  name: string
+}
+
 export class LifeLineDB extends Dexie {
   events!: EntityTable<EventRecord, 'id'>
   users!: EntityTable<UserRecord, 'id'>
@@ -184,6 +195,7 @@ export class LifeLineDB extends Dexie {
   externalEvents!: EntityTable<ExternalEventRecord, 'key'>
   externalContacts!: EntityTable<ExternalContactRecord, 'key'>
   externalTasks!: EntityTable<ExternalTaskRecord, 'key'>
+  adminTags!: EntityTable<AdminTagRecord, 'id'>
 
   constructor() {
     super('LifeLineDB')
@@ -211,6 +223,11 @@ export class LifeLineDB extends Dexie {
       externalEvents: 'key, sourceName, dateStart, syncedAt',
       externalContacts: 'key, sourceName, displayName, syncedAt',
       externalTasks: 'key, sourceName, dueAt, syncedAt',
+    })
+    // LBDS-231 v5: admin-defined tags cache. Read-only from the app's
+    // perspective; the admin tools own the create/update/delete side.
+    this.version(5).stores({
+      adminTags: '++id, name',
     })
   }
 }

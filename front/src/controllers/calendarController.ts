@@ -4,6 +4,19 @@
 import { useCalendarStore, type ViewCalendar, type CalendarDataStatus } from "@/store/calendarStore";
 import { storage } from "@/main";
 
+/**
+ * LBDS-231 - CalendarController is intentionally NOT migrated to the
+ * `createRepository` pattern. The "calendar" entity in this app is not a
+ * server-side resource users create and edit (calendars live on the user
+ * record and are managed server-side). What this controller actually owns
+ * is UI state for the calendar surface: the current view mode, the
+ * current date, and a coarse upload/download status flag. None of those
+ * need an outbox or an offline Dexie mirror - they are derived locally
+ * and persisted to `storage` (Ionic Storage) for reload resilience.
+ *
+ * Events that belong to a calendar are handled by `EventController`,
+ * which IS on the offline-first path.
+ */
 export class CalendarController {
   private get store(): ReturnType<typeof useCalendarStore> {
     return useCalendarStore()
