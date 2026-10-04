@@ -211,16 +211,20 @@ export class EventController {
     try {
       const { id } = await getRepository().create({
         record: {
+          // The Laravel backend's POST /events expects this exact shape
+          // (see App\Http\Controllers\EventController::store). Sending the
+          // local camelCase/snake_case keys returns 422 "field required".
           title: params.name,
           calendar_id: params.calendar_id ?? 1,
-          date_start: params.dateStart,
-          date_end: params.dateEnd,
-          notifications: params.notifications?.join(','),
+          name: params.name,
+          dateStart: params.dateStart,
+          dateEnd: params.dateEnd,
+          timeZone: params.timeZone ?? 'UTC',
+          availability: params.availability ?? 'available',
+          notifications: params.notifications,
           repeat: params.repeat,
-          time_zone: params.timeZone,
-          guests: params.guests?.join(','),
+          guests: params.guests,
           description: params.description,
-          availability: params.availability,
           id_reminders: params.id_reminders,
           user_id: 0, // server fills from auth; mirror stays until next fetchAll
         },
@@ -248,14 +252,31 @@ export class EventController {
     this.store.clearError()
     try {
       const { id, ...rest } = params
-      const patch: Partial<EventItem> = {}
-      if (rest.name !== undefined) patch.title = rest.name
-      if (rest.dateStart !== undefined) patch.date_start = rest.dateStart
-      if (rest.dateEnd !== undefined) patch.date_end = rest.dateEnd
-      if (rest.notifications !== undefined) patch.notifications = rest.notifications.join(',')
+      // The Laravel backend's PUT /events/{id} validates `name`,
+      // `dateStart`, `dateEnd`, `timeZone`, `availability` and accepts
+      // `notifications` / `guests` as arrays (see
+      // App\Http\Controllers\EventController::update). Sending the local
+      // mirror keys returns 422.
+      const patch: Record<string, unknown> = {}
+      if (rest.name !== undefined) {
+        patch.name = rest.name
+        patch.title = rest.name
+      }
+      if (rest.dateStart !== undefined) {
+        patch.dateStart = rest.dateStart
+        patch.date_start = rest.dateStart
+      }
+      if (rest.dateEnd !== undefined) {
+        patch.dateEnd = rest.dateEnd
+        patch.date_end = rest.dateEnd
+      }
+      if (rest.notifications !== undefined) patch.notifications = rest.notifications
       if (rest.repeat !== undefined) patch.repeat = rest.repeat
-      if (rest.timeZone !== undefined) patch.time_zone = rest.timeZone
-      if (rest.guests !== undefined) patch.guests = rest.guests.join(',')
+      if (rest.timeZone !== undefined) {
+        patch.timeZone = rest.timeZone
+        patch.time_zone = rest.timeZone
+      }
+      if (rest.guests !== undefined) patch.guests = rest.guests
       if (rest.description !== undefined) patch.description = rest.description
       if (rest.availability !== undefined) patch.availability = rest.availability
       if (rest.id_reminders !== undefined) patch.id_reminders = rest.id_reminders

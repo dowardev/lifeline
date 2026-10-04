@@ -88,12 +88,13 @@ Todo sync es del lado del cliente; **no se toca el backend**.
 - [x] Gate In-Progress (webhook movió el ticket, no el agente)
 - [x] Rama + MR draft creados
 - [x] Plan de tasks armado
-- [ ] U1 base layer
-- [ ] U2 events + external
-- [ ] U3 tasks + documents
-- [ ] U4 notes + calendars + tags + auth
-- [ ] U5 docs + integration test
+- [x] U1 base layer (`cdf3c3e`)
+- [x] U2 events + external (`4e29a76`)
+- [x] U3 tasks + documents (`09e81b5`)
+- [x] U4 notes + calendars + tags + auth (`bd2bf87`)
+- [x] U5 docs + integration test (`f5bce3d`)
 - [ ] Review pre-merge + triage
+- [ ] Implementación pausada para visto bueno del humano (Implementation Review Pause Gate)
 
 ## Follow-up tickets propuestos
 
