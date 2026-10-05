@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
-import { getSSOClientOrNull } from '@/ssoClientAccessor'
-
 /**
  * LBDS-231 - the LBDS-231 outbox processor needs to talk to the LifeLine
  * backend (not the SSO). Before this refactor, every request went through
@@ -84,19 +82,15 @@ async function ensureGuestToken(): Promise<string | null> {
 }
 
 /**
- * Reads the bearer token from the SSO client's token storage. The SSO
- * client keeps it there on successful login, so we do not need to round-
- * trip through the SSO HTTP layer.
+ * Reads the bearer token from the SSO client's storage. The SSO client
+ * persists it at `@dowardev/sso-client:token` (raw JWT, not JSON-wrapped).
+ * We do not need to round-trip through the SSO HTTP layer; we just read
+ * the same key the SSO client wrote.
  */
 function readAccessToken(): string | null {
-  const sso = getSSOClientOrNull()
-  if (!sso) return null
-  // The SSO client exposes the token via its configService or tokenStorage.
-  // We read from the raw `localStorage` mirror as a defensive fallback
-  // (the SSO package persists to localStorage with a known key).
   try {
-    const auth = JSON.parse(localStorage.getItem('lifeline_auth_user') ?? 'null')
-    if (auth && typeof auth.token === 'string') return auth.token
+    const raw = localStorage.getItem('@dowardev/sso-client:token')
+    if (raw && raw.length > 0) return raw
   } catch {
     // ignore
   }
