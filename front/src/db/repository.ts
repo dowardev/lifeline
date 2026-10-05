@@ -85,6 +85,16 @@ function buildUrl(urlBase: string, id: string | number | undefined): string {
 }
 
 /**
+ * True for ids that are still client-side placeholders waiting for the
+ * server-assigned id from a successful POST. Updates against these rows
+ * would otherwise hit a 405: `PUT /events` (no id) instead of
+ * `PUT /events/{serverId}`.
+ */
+export function isTempId(id: string | number | undefined): boolean {
+  return typeof id === 'string' && id.startsWith('tmp-')
+}
+
+/**
  * Build a repository bound to a single domain table. See the file header
  * for the contract; the returned object exposes the four operations every
  * domain needs plus `fetchAll`.
@@ -144,6 +154,21 @@ export function createRepository<T, R extends { id?: string | number }>(
 
     async update(params): Promise<void> {
       const { id, patch } = params
+      // LBDS-231 - skip enqueueing when the id is still a client-side
+      // tempId: the matching POST has not been round-tripped yet, so we
+      // have no real server id to PUT against. Without this guard, the
+      // processor hits `PUT /events` (no id) and gets 405.
+      if (isTempId(id)) {
+        // Mirror the patch to Dexie + Pinia so the UI stays consistent
+        // for the moment; the create op will reconcile the id once it
+        // succeeds, and the user can re-apply the change after.
+        const current = await db.table<R>(tableName).get(id as R['id'] & string)
+        if (current) {
+          await db.table(tableName).put({ ...current, ...patch } as R)
+        }
+        hooks.patchItem({ id, patch })
+        return
+      }
       const current = await db.table<R>(tableName).get(id as R['id'] & string)
       if (current) {
         await db.table(tableName).put({ ...current, ...patch } as R)
@@ -162,6 +187,15 @@ export function createRepository<T, R extends { id?: string | number }>(
 
     async remove(params): Promise<void> {
       const { id } = params
+      if (isTempId(id)) {
+        // The corresponding create has not been round-tripped yet; once
+        // it does, the server will reject the orphan delete anyway. Skip
+        // the enqueue so we do not flood the outbox with doomed DELETE
+        // calls against a server-side id we do not yet know.
+        await db.table(tableName).delete(id)
+        hooks.removeItem({ id })
+        return
+      }
       await db.table(tableName).delete(id)
       hooks.removeItem({ id })
 
