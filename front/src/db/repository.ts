@@ -7,6 +7,24 @@ import * as outbox from './outbox'
 import { getIsOnline } from '@/composables/useOnlineStatus'
 
 /**
+ * Best-effort hint to the outbox processor that a new row is ready. The
+ * processor already has a 30s interval + lifecycle triggers, but in this
+ * app most writes happen in response to a user tap and we want the round-
+ * trip to start immediately. We dynamic-import the processor to avoid a
+ * static circular dependency between `repository.ts` and
+ * `outboxProcessor.ts`. The `flush()` call is a no-op when offline or
+ * already in flight, so calling it from every write is safe.
+ */
+function hintProcessor(): void {
+  void import('./outboxProcessor')
+    .then((m) => m.flush())
+    .catch(() => {
+      // Processor module not loaded yet (or environment missing); the
+      // interval / lifecycle events will still pick the row up.
+    })
+}
+
+/**
  * LBDS-231 — generic repository that every domain (events, tasks,
  * documents, notes, calendars, tags) follows. The repository owns three
  * things:
@@ -148,6 +166,7 @@ export function createRepository<T, R extends { id?: string | number }>(
         method: 'POST',
         payload: { ...params.record } as Record<string, unknown>,
       })
+      hintProcessor()
 
       return { id: tempId }
     },
@@ -183,6 +202,7 @@ export function createRepository<T, R extends { id?: string | number }>(
         method: 'PUT',
         payload: { ...patch } as Record<string, unknown>,
       })
+      hintProcessor()
     },
 
     async remove(params): Promise<void> {
@@ -206,6 +226,7 @@ export function createRepository<T, R extends { id?: string | number }>(
         url: buildUrl(urlBase, id),
         method: 'DELETE',
       })
+      hintProcessor()
     },
   }
 }

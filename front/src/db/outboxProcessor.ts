@@ -98,12 +98,12 @@ export async function flush(): Promise<void> {
           await applySuccess({ row, response })
           done.push(row.id!)
         } catch (error) {
+          const message = error instanceof Error ? error.message : String(error)
           const handledId = await applyFailure({ row, error })
           if (handledId !== null) done.push(handledId)
           // Stop draining on the first auth failure; the rest will retry
           // after the user re-logs in. Avoids burning attempts while we
           // know the token is bad.
-          const message = error instanceof Error ? error.message : String(error)
           if (isAuthError(message)) {
             break
           }
@@ -122,6 +122,11 @@ export async function flush(): Promise<void> {
     }
   })()
   return inFlight
+}
+
+/** Test-only: surfaces the actionable row count without running the flush. */
+export async function peekCount(): Promise<number> {
+  return outbox.count()
 }
 
 /**
