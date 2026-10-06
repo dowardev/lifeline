@@ -215,7 +215,7 @@ export class EventController {
           // (see App\Http\Controllers\EventController::store). Sending the
           // local camelCase/snake_case keys returns 422 "field required".
           title: params.name,
-          calendar_id: params.calendar_id ?? 1,
+          calendar_id: params.calendar_id,
           name: params.name,
           dateStart: params.dateStart,
           dateEnd: params.dateEnd,
