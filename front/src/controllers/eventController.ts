@@ -89,15 +89,29 @@ function getRepository(): ReturnType<
     registerReconciler({
       tableName: 'events',
       reconciler: async ({ tempId, server }) => {
-        const response = server as { id?: number | string; event?: { id?: number } } | undefined
+        // LBDS-231 - backend wraps every event response as `{ event: {...} }`
+        // (see back/app/Http/Controllers/EventController::store / ::update).
+        // Spreading the wrapper shape would leave every domain key (`title`,
+        // `date_start`, `calendar_id`, ...) nested under `event.*` and the UI
+        // would render the optimistic tempId row as a blank entry. Unwrap here.
+        const response = server as
+          | { event?: Record<string, unknown>; id?: number | string }
+          | Record<string, unknown>
+          | undefined
+        const data = (response && typeof response === 'object' && 'event' in response
+          ? (response as { event: Record<string, unknown> }).event
+          : (response as Record<string, unknown> | undefined)) ?? {}
         const id =
-          typeof response?.id === 'number' || typeof response?.id === 'string'
-            ? response.id
-            : response?.event?.id
+          typeof data.id === 'number' || typeof data.id === 'string'
+            ? (data.id as number | string)
+            : typeof (response as { id?: number | string } | undefined)?.id === 'number' ||
+                typeof (response as { id?: number | string } | undefined)?.id === 'string'
+              ? ((response as { id: number | string }).id)
+              : undefined
         if (typeof id !== 'number' && typeof id !== 'string') return
 
         const local = await db.events.get(tempId as string)
-        const merged = { ...local, ...(server as Record<string, unknown>), id }
+        const merged = { ...local, ...data, id }
         if (local) {
           await db.events.delete(tempId as string)
           await db.events.put(merged)
