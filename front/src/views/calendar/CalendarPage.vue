@@ -326,6 +326,7 @@ import { SystemController } from '@/controllers/systemController';
 import { useCalendarModals } from '@/composables/useCalendarModals';
 import { useExternalSyncOnEnter } from '@/composables/useExternalSync';
 import { useAuthStore } from '@/store/authStore';
+import { useEventStore } from '@/store/eventStore';
 import { useReminder } from '@/composables/useReminder';
 import { NotificationPermissionError } from '@/controllers/reminderController';
 import { normalizeOffsetCodes } from '@/utils/reminders';
@@ -356,6 +357,7 @@ import type { ExternalCalendarEvent } from '@/services/externalEventService';
 // 6. Vars and const
 const calendarRef = ref<InstanceType<typeof FullyCalendarVue3> | null>(null);
 const events = ref<EventItem[]>([]);
+const eventStore = useEventStore();
 const externalEvents = ref<ExternalCalendarEvent[]>([]);
 const isOpenModalExternalEvent = ref(false);
 const selectedExternalEvent = ref<ExternalCalendarEvent | null>(null);
@@ -393,6 +395,17 @@ watch(
 watch(lastSyncedAt, () => {
   void loadStoredEvents();
 });
+
+// LBDS-231 - the outbox reconciler runs after the processor drains a
+// successful row. The CalendarPage only refreshes its local events
+// ref from the store on `lastSyncedAt` ticks, so the reconciler
+// bumps the shared clock and we mirror loadStoredEvents here too.
+watch(
+  () => eventStore.lastSyncedAt,
+  () => {
+    void loadStoredEvents();
+  },
+);
 
 // 8. Computed
 const currentView = computed(() => calendarController.getCalendarModeView());
@@ -505,6 +518,7 @@ async function loadStoredEvents(): Promise<void> {
     console.warn('[CalendarPage] No external events or error loading:', e);
   }
   const storeEvents = eventController.getEvents();
+  console.log('[CalendarPage] loadStoredEvents storeEvents.length=', storeEvents.length)
   if (storeEvents.length > 0) {
     events.value = normalizeEvents({ events: storeEvents });
     return;
@@ -532,7 +546,11 @@ function normalizeEvents(params: { events: EventItem[] }): EventItem[] {
     const wrapped = anyEvent.event as Record<string, unknown> | undefined
     const source: Record<string, unknown> =
       wrapped && typeof wrapped === 'object' ? { ...anyEvent, ...wrapped } : anyEvent
-    if (event.title && event.date_start) return event;
+    // No `if (title && date_start) return event` shortcut: the reconciler
+    // writes `dateStart` (camelCase, the local key) plus `dateStart` (also
+    // the server key after the unwrap fix), and never `date_start`. The
+    // shortcut skipped the `date_start` assignment and FullCalendar received
+    // `start: ''`. Always normalise.
     return {
       id: event.id,
       user_id:
@@ -543,14 +561,15 @@ function normalizeEvents(params: { events: EventItem[] }): EventItem[] {
       calendar_id: (source.calendar_id as number) || 1,
       date_start:
         event.date_start ||
+        (event.dateStart as string) ||
         ((source.reminders
           ? (source.reminders as Record<string, unknown>).start instanceof Date
             ? ((source.reminders as Record<string, unknown>).start as Date).toISOString()
             : ((source.reminders as Record<string, unknown>).start as string) || ''
           : '') as string),
       date_end:
-        event.date_start ||
         event.date_end ||
+        (event.dateEnd as string) ||
         ((source.reminders
           ? (source.reminders as Record<string, unknown>).end instanceof Date
             ? ((source.reminders as Record<string, unknown>).end as Date).toISOString()

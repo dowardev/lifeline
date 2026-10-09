@@ -48,6 +48,11 @@ export const useEventStore = defineStore('event', () => {
   const date = ref('')
   const loading = ref(false)
   const error = ref<string | null>(null)
+  // LBDS-231 - shared monotonic clock that the controller bumps on every
+  // server round-trip (loadEvents, the outbox reconciler). CalendarPage
+  // watches this and reloads from the store, so a successful sync flush
+  // reaches FullCalendar without a manual page refresh.
+  const lastSyncedAt = ref<number | null>(null)
 
   function setEvents(params: { events: EventItem[] }): void {
     events.value = params.events
@@ -89,5 +94,9 @@ export const useEventStore = defineStore('event', () => {
     error.value = null
   }
 
-  return { events, calendarSchedule, date, loading, error, setEvents, addEvent, updateEvent, removeEvent, setSchedule, setDate, setLoading, setError, clearError }
+  function markSynced(params: { at: number }): void {
+    lastSyncedAt.value = params.at
+  }
+
+  return { events, calendarSchedule, date, loading, error, lastSyncedAt, setEvents, addEvent, updateEvent, removeEvent, setSchedule, setDate, setLoading, setError, clearError, markSynced }
 })

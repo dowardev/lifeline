@@ -122,6 +122,13 @@ function getRepository(): ReturnType<
           store.removeEvent({ id: tempId as string })
           store.addEvent({ event: merged as EventItem })
         }
+        // LBDS-231 - the reconciler runs after the processor drains a row,
+        // not from `loadEvents()`. CalendarPage only refreshes its local
+        // `events.value` ref from the store when `lastSyncedAt` ticks, so
+        // without an explicit nudge the new row sits in the store but
+        // never reaches FullCalendar. Bump the shared ref here so the
+        // page reloads from the store via the same path loadEvents takes.
+        store.markSynced({ at: Date.now() })
       },
     })
   }
@@ -172,6 +179,9 @@ export class EventController {
     this.store.clearError()
     try {
       await getRepository().fetchAll()
+      // LBDS-231 - bump the shared sync clock so CalendarPage reloads from
+      // the store even when the page is already mounted.
+      this.store.markSynced({ at: Date.now() })
     } catch (error) {
       this.store.setError({
         error: error instanceof Error ? error.message : 'Unknown error',

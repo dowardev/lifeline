@@ -232,17 +232,6 @@ watch(
     }
   },
 );
-
-watch(
-  mapEventsToFullCalendar,
-  () => {
-    if (!fullCalendarRef.value) return;
-    const api = fullCalendarRef.value.getApi();
-    api.removeAllEvents();
-    api.addEventSource(mapEventsToFullCalendar.value);
-  },
-);
-
 // 8. Computed
 // (defined above)
 
@@ -251,12 +240,6 @@ onMounted(() => {
   detectedIsMobile.value = window.innerWidth < 768;
   window.addEventListener('resize', onResize);
   startNowSlotHighlighting();
-  setTimeout(() => {
-    if (!fullCalendarRef.value) return;
-    const api = fullCalendarRef.value.getApi();
-    api.setOption('events', mapEventsToFullCalendar.value);
-    api.render();
-  }, 100);
 });
 
 onUnmounted(() => {
