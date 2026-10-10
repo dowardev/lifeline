@@ -79,11 +79,21 @@ async function refreshExternalMirror(): Promise<{
   contacts: number
   tasks: number
 }> {
-  const [eventDtos, contactDtos, taskDtos] = await Promise.all([
+  // M-8 (pre-merge review): if any of the three upstream calls
+  // rejected, treat the whole refresh as failed and DO NOT touch
+  // the local mirrors. Stale data is better than a partial wipe.
+  const settled = await Promise.allSettled([
     externalEventService.listExternalEvents(),
     externalContactService.listExternalContacts(),
     externalTaskService.listExternalTasks(),
   ])
+  if (settled.some((r) => r.status === 'rejected')) {
+    return { events: 0, contacts: 0, tasks: 0 }
+  }
+  const eventDtos = (settled[0] as PromiseFulfilledResult<unknown[]>).value
+  const contactDtos = (settled[1] as PromiseFulfilledResult<unknown[]>).value
+  const taskDtos = (settled[2] as PromiseFulfilledResult<unknown[]>).value
+  const lastSyncOk = true
 
   const now = Date.now()
 
@@ -118,10 +128,18 @@ async function refreshExternalMirror(): Promise<{
     syncedAt: now,
   }))
 
+  // M-8 (pre-merge review): only wipe a table when the upstream
+  // request for that domain actually succeeded AND returned zero rows.
+  // Partial failures (e.g. contacts fetch failed, events succeeded)
+  // previously left events cached while contacts/tasks were cleared
+  // — a partial wipe from a transient error.
+  const wipe = (rows: unknown[]): 'keep' | 'clear' =>
+    rows.length === 0 && lastSyncOk ? 'clear' : 'keep'
+
   await Promise.all([
-    eventRows.length ? db.externalEvents.bulkPut(eventRows) : db.externalEvents.clear(),
-    contactRows.length ? db.externalContacts.bulkPut(contactRows) : db.externalContacts.clear(),
-    taskRows.length ? db.externalTasks.bulkPut(taskRows) : db.externalTasks.clear(),
+    wipe(eventRows) === 'clear' ? db.externalEvents.clear() : db.externalEvents.bulkPut(eventRows),
+    wipe(contactRows) === 'clear' ? db.externalContacts.clear() : db.externalContacts.bulkPut(contactRows),
+    wipe(taskRows) === 'clear' ? db.externalTasks.clear() : db.externalTasks.bulkPut(taskRows),
   ])
 
   useExternalEventStore().setEvents({ events: eventDtos })
@@ -248,8 +266,11 @@ export async function runExternalSync(): Promise<void> {
   const now = Date.now()
   if (attemptedRecently(now)) return
 
-  lastAttemptAt.value = now
+  // M-7 (pre-merge review): only stamp `lastAttemptAt` AFTER the
+  // attempt resolves. The old code stamped it before, so a transient
+  // 5s network blip blocked the next retry for the full 10 min TTL.
   inFlight = (async (): Promise<void> => {
+    lastAttemptAt.value = Date.now()
     const controller = new CalendarSourceController()
     try {
       const finished = await syncSources({ controller })

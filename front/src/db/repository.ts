@@ -5,6 +5,7 @@ import type { Ref } from 'vue'
 import { db } from './index'
 import * as outbox from './outbox'
 import { getIsOnline } from '@/composables/useOnlineStatus'
+import { flush as flushOutbox } from './outboxProcessor'
 
 /**
  * H-2 (pre-merge review): when `update()` or `remove()` is called on a
@@ -47,12 +48,14 @@ function recordPendingMutation(tempId: string, mutation: PendingMutation<unknown
  * already in flight, so calling it from every write is safe.
  */
 function hintProcessor(): void {
-  void import('./outboxProcessor')
-    .then((m) => m.flush())
-    .catch(() => {
-      // Processor module not loaded yet (or environment missing); the
-      // interval / lifecycle events will still pick the row up.
-    })
+  // M-2 (pre-merge review): the dynamic import was only here to
+  // avoid a perceived static cycle. `outboxProcessor.ts` no longer
+  // imports from `repository.ts`, so a static import is safe and
+  // cheaper (no module fetch per write).
+  flushOutbox().catch(() => {
+    // best-effort: the processor's 30s interval and the lifecycle
+    // hooks will still pick the row up.
+  })
 }
 
 /**
@@ -166,7 +169,18 @@ export function createRepository<T, R extends { id?: string | number }>(
         try {
           const serverRows = await service.list()
           return await mirrorServer({ serverRows })
-        } catch {
+        } catch (error) {
+          // M-3 (pre-merge review): distinguish transient network errors
+          // (which legitimately fall back to the local cache) from
+          // auth errors (401/403) which mean the session is gone and
+          // we should NOT show stale local data as if everything is
+          // fine. The authStore has already flipped to anonymous via
+          // the apiClient markAuthExpired hook; the caller can choose
+          // to surface that to the user.
+          const status = (error as { cause?: { status?: number } })?.cause?.status
+          if (status === 401 || status === 403) {
+            throw error
+          }
           // Server unreachable: fall back to Dexie so the UI still has data.
           const local = await db.table<R>(tableName).toArray()
           hooks.setItems({ items: local })

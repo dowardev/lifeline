@@ -75,12 +75,20 @@ export async function enqueue(params: {
  */
 export async function peek(params: { now?: number } = {}): Promise<OutboxRecord[]> {
   const now = params.now ?? Date.now()
-  const pending = await db.outbox.where('status').equals('pending').toArray()
-  const retrying = await db.outbox
-    .where('status')
-    .equals('retrying')
-    .filter((row) => (row.nextRetryAt ?? 0) <= now)
-    .toArray()
+  // M-1 (pre-merge review): index-driven queries. `status` and
+  // `nextRetryAt` are individual indexes, so the `where('nextRetryAt')
+  // .belowOrEqual(now)` line uses the index to fetch only the rows
+  // whose backoff has expired, then we JS-filter by status. This is
+  // cheaper than the old `where('status').equals('retrying')` which
+  // would have to pull every retrying row regardless of due-time.
+  const [pending, retrying] = await Promise.all([
+    db.outbox.where('status').equals('pending').toArray(),
+    db.outbox
+      .where('nextRetryAt')
+      .belowOrEqual(now)
+      .filter((row) => row.status === 'retrying')
+      .toArray(),
+  ])
   return [...pending, ...retrying].sort((a, b) => a.createdAt - b.createdAt)
 }
 

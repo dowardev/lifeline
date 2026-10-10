@@ -78,8 +78,14 @@ export async function markResolved(params: {
     (c) => c.entityType === params.entityType && c.syncId === params.syncId,
   )
   if (idx === -1) return
-  list[idx] = { ...list[idx]!, resolvedAt: Date.now() }
-  void params.resolution // resolution stored for telemetry; could be added later
+  // L-2 (pre-merge review): persist the resolution type so the future
+  // LBDS-238 conflict UI can show "kept server" / "kept client" / "merged"
+  // for each row instead of a generic "resolved" badge.
+  list[idx] = {
+    ...list[idx]!,
+    resolvedAt: Date.now(),
+    resolution: params.resolution,
+  }
   await db.config.put({ name: CONFIG_KEY, value: list } as never)
 }
 

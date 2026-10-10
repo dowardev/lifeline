@@ -5,6 +5,7 @@ import { eventService } from '@/services/eventService'
 import { externalEventService } from '@/services/externalEventService'
 import type { ExternalCalendarEvent } from '@/services/externalEventService'
 import { useEventStore } from '@/store/eventStore'
+import { useAuthStore } from '@/store/authStore'
 import type { EventItem } from '@/store/eventStore'
 import { db } from '@/db'
 import { getPendingMutations, clearPendingMutations } from '@/db/repository'
@@ -288,13 +289,20 @@ export class EventController {
       const { id } = await getRepository().create({
         record: {
           // The Laravel backend's POST /events expects this exact shape
-          // (see App\Http\Controllers\EventController::store). Sending the
-          // local camelCase/snake_case keys returns 422 "field required".
+          // (see App\Http\Controllers\EventController::store). The
+          // server validates `name` / `dateStart` / `dateEnd` / `timeZone`
+          // / `availability` as required (camelCase). We also send the
+          // `title` / snake_case mirrors so the local mirror and the
+          // `ServerEventDto` (which is snake_case) match without a
+          // remap step.
           title: params.name,
-          calendar_id: params.calendar_id,
           name: params.name,
+          calendar_id: params.calendar_id,
+          date_start: params.dateStart,
+          date_end: params.dateEnd,
           dateStart: params.dateStart,
           dateEnd: params.dateEnd,
+          time_zone: params.timeZone ?? 'UTC',
           timeZone: params.timeZone ?? 'UTC',
           availability: params.availability ?? 'available',
           notifications: params.notifications,
@@ -302,7 +310,10 @@ export class EventController {
           guests: params.guests,
           description: params.description,
           id_reminders: params.id_reminders,
-          user_id: 0, // server fills from auth; mirror stays until next fetchAll
+          // M-12 (pre-merge review): pull the real user id from the
+          // auth store so Dexie queries on `user_id` see the right
+          // value before the server-side fetchAll rewrites it.
+          user_id: useAuthStore().localUser?.id ?? 0,
         },
       })
       return { id }
@@ -333,6 +344,10 @@ export class EventController {
       // `notifications` / `guests` as arrays (see
       // App\Http\Controllers\EventController::update). Sending the local
       // mirror keys returns 422.
+      // The Laravel backend's PUT /events/{id} validates the same
+      // camelCase fields (`name` / `dateStart` / `dateEnd` /
+      // `timeZone` / `availability`). We also write the snake_case
+      // mirrors so the local mirror and `ServerEventDto` agree.
       const patch: Record<string, unknown> = {}
       if (rest.name !== undefined) {
         patch.name = rest.name

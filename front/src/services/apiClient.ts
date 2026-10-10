@@ -61,6 +61,12 @@ async function ensureGuestToken(): Promise<string | null> {
       { method: 'GET', headers: guestHeaders() },
     )
       .then(async (r) => {
+        // M-9 (pre-merge review): reset the in-flight promise on every
+        // rejection (network or HTTP), not just on a network error. A
+        // 401/403 from the guest-token endpoint otherwise leaves a
+        // resolved-to-null Promise cached and every subsequent caller
+        // gets null until a page reload.
+        guestTokenRequest = null
         if (!r.ok) return null
         const data = (await r.json().catch(() => null)) as { token?: string } | null
         if (data && typeof data.token === 'string' && data.token !== '') {
