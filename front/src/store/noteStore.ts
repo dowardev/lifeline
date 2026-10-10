@@ -36,8 +36,11 @@ export const useNoteStore = defineStore('note', () => {
     }
   }
 
-  function removeNote(params: { id: number }): void {
-    notes.value = notes.value.filter((n) => n.id !== params.id)
+  function removeNote(params: { id: string | number }): void {
+    // LBDS-231 - the reconciler passes the optimistic tempId (a string)
+    // here. Compare stringified so tempIds and server ids both work.
+    const target = String(params.id)
+    notes.value = notes.value.filter((n) => String(n.id) !== target)
   }
 
   function setLoading(params: { loading: boolean }): void {

@@ -51,7 +51,37 @@ function buildHooks(): RepositoryHooks<EventItem> {
     addItem: ({ item }): void => store().addEvent({ event: item }),
     patchItem: ({ id, patch }): void =>
       store().updateEvent({ id: id as number, updates: patch }),
-    removeItem: ({ id }): void => store().removeEvent({ id: id as number }),
+    removeItem: ({ id }): void => store().removeEvent({ id }),
+  }
+}
+
+/**
+ * LBDS-231 - normalises the Laravel EventResource response shape (camelCase
+ * `name` / `dateStart` / `dateEnd` / `timeZone` + snake_case `calendar_id`)
+ * into the snake_case `EventItem` shape the rest of the app consumes
+ * (`title` / `date_start` / `date_end` / `time_zone` / `calendar_id`). The
+ * reconciler and `fromServer` both go through this so the merged row
+ * never carries both spellings of the same field.
+ */
+function eventFromServer(params: { server: unknown }): Record<string, unknown> {
+  const raw = (params.server ?? {}) as Record<string, unknown>
+  const inner = raw.event && typeof raw.event === 'object'
+    ? (raw.event as Record<string, unknown>)
+    : raw
+  return {
+    id: typeof inner.id === 'number' || typeof inner.id === 'string' ? inner.id : undefined,
+    title: (inner.name as string) ?? (inner.title as string),
+    user_id: typeof inner.user_id === 'number' ? inner.user_id : undefined,
+    calendar_id: typeof inner.calendar_id === 'number' ? inner.calendar_id : undefined,
+    date_start: (inner.dateStart as string) ?? (inner.date_start as string),
+    date_end: (inner.dateEnd as string) ?? (inner.date_end as string),
+    time_zone: (inner.timeZone as string) ?? (inner.time_zone as string),
+    availability: inner.availability as string | undefined,
+    notifications: inner.notifications as string | string[] | undefined,
+    repeat: inner.repeat as string | string[] | undefined,
+    guests: inner.guests as string | string[] | undefined,
+    description: inner.description as string | undefined,
+    id_reminders: inner.id_reminders as number[] | undefined,
   }
 }
 
@@ -78,7 +108,7 @@ function getRepository(): ReturnType<
               : []
         },
       },
-      fromServer: ({ server }) => ({ ...server }),
+      fromServer: ({ server }) => eventFromServer({ server }),
       hooks: buildHooks(),
     })
 
@@ -110,8 +140,13 @@ function getRepository(): ReturnType<
               : undefined
         if (typeof id !== 'number' && typeof id !== 'string') return
 
+        // C-3 (pre-merge review): route the server response through
+        // `eventFromServer` so the merged row uses one canonical shape
+        // (snake_case EventItem). Spreading `data` directly would leave
+        // both `dateStart` and `date_start` in the row.
+        const fromServer = eventFromServer({ server: response })
         const local = await db.events.get(tempId as string)
-        const merged = { ...local, ...data, id }
+        const merged = { ...local, ...fromServer, id }
         if (local) {
           await db.events.delete(tempId as string)
           await db.events.put(merged)

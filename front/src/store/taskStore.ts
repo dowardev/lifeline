@@ -78,8 +78,11 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  function removeTask(params: { id: number }): void {
-    tasks.value = tasks.value.filter((t) => t.id !== params.id)
+  function removeTask(params: { id: string | number }): void {
+    // LBDS-231 - the reconciler passes the optimistic tempId (a string)
+    // here. Compare stringified so tempIds and server ids both work.
+    const target = String(params.id)
+    tasks.value = tasks.value.filter((t) => String(t.id) !== target)
   }
 
   function setLoading(params: { loading: boolean }): void {

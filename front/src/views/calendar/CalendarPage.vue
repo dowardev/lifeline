@@ -518,7 +518,6 @@ async function loadStoredEvents(): Promise<void> {
     console.warn('[CalendarPage] No external events or error loading:', e);
   }
   const storeEvents = eventController.getEvents();
-  console.log('[CalendarPage] loadStoredEvents storeEvents.length=', storeEvents.length)
   if (storeEvents.length > 0) {
     events.value = normalizeEvents({ events: storeEvents });
     return;

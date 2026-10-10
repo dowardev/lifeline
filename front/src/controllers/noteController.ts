@@ -40,7 +40,7 @@ function buildHooks(): RepositoryHooks<NoteItem> {
     addItem: ({ item }): void => store().addNote({ note: item }),
     patchItem: ({ id, patch }): void =>
       store().updateNote({ id: id as number, updates: patch }),
-    removeItem: ({ id }): void => store().removeNote({ id: id as number }),
+    removeItem: ({ id }): void => store().removeNote({ id }),
   }
 }
 
@@ -67,24 +67,42 @@ function getRepository(): ReturnType<
               : []
         },
       },
-      fromServer: ({ server }) => ({ ...server }),
+      fromServer: ({ server }) => {
+        // C-3 (pre-merge review): strip the `{ note: {...} }` wrapper.
+        const response = server as { note?: Record<string, unknown> } | Record<string, unknown> | undefined
+        if (response && typeof response === 'object' && 'note' in response) {
+          return (response as { note: Record<string, unknown> }).note
+        }
+        return (response as Record<string, unknown>) ?? {}
+      },
       hooks: buildHooks(),
     })
 
     registerReconciler({
       tableName: 'notes',
       reconciler: async ({ tempId, server }) => {
+        // C-3 / C-4 (pre-merge review): strip the `{ note: {...} }`
+        // wrapper; otherwise the row lands in Dexie under `note.*` and
+        // Pinia consumers never see the flat fields.
         const response = server as
-          | { id?: number | string; note?: { id?: number } }
+          | { id?: number | string; note?: Record<string, unknown> }
+          | Record<string, unknown>
           | undefined
+        const inner =
+          response && typeof response === 'object' && 'note' in response
+            ? ((response as { note: Record<string, unknown> }).note)
+            : (response as Record<string, unknown> | undefined) ?? {}
         const id =
-          typeof response?.id === 'number' || typeof response?.id === 'string'
-            ? response.id
-            : response?.note?.id
+          typeof inner.id === 'number' || typeof inner.id === 'string'
+            ? (inner.id as number | string)
+            : typeof (response as { id?: number | string } | undefined)?.id === 'number' ||
+                typeof (response as { id?: number | string } | undefined)?.id === 'string'
+              ? ((response as { id: number | string }).id)
+              : undefined
         if (typeof id !== 'number' && typeof id !== 'string') return
 
         const local = await db.notes.get(tempId as string)
-        const merged = { ...local, ...(server as Record<string, unknown>), id }
+        const merged = { ...local, ...inner, id }
         if (local) {
           await db.notes.delete(tempId as string)
           await db.notes.put(merged)

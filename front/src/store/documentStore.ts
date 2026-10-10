@@ -34,8 +34,11 @@ export const useDocumentStore = defineStore('document', () => {
     if (index !== -1) documents.value[index] = { ...documents.value[index], ...updates }
   }
 
-  function removeDocument(params: { id: number }): void {
-    documents.value = documents.value.filter((d) => d.id !== params.id)
+  function removeDocument(params: { id: string | number }): void {
+    // LBDS-231 - the reconciler passes the optimistic tempId (a string)
+    // here. Compare stringified so tempIds and server ids both work.
+    const target = String(params.id)
+    documents.value = documents.value.filter((d) => String(d.id) !== target)
   }
 
   function getDocuments(): DocumentItem[] | undefined {

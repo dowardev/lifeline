@@ -70,8 +70,14 @@ export const useEventStore = defineStore('event', () => {
     }
   }
 
-  function removeEvent(params: { id: number }): void {
-    events.value = events.value.filter((e) => e.id !== params.id)
+  function removeEvent(params: { id: string | number }): void {
+    // LBDS-231 - the reconciler passes the optimistic tempId (a string like
+    // 'tmp-uuid') as `id`. The Dexie rows in the local Pinia store can carry
+    // either a server number id or a tempId string until reconciliation,
+    // so we compare by stringified id rather than `!==` (which would
+    // always be true for number-vs-string).
+    const target = String(params.id)
+    events.value = events.value.filter((e) => String(e.id) !== target)
   }
 
   function setSchedule(params: { schedule: Schedule }): void {

@@ -48,7 +48,7 @@ function buildHooks(): RepositoryHooks<DocumentItem> {
     addItem: ({ item }): void => store().addDocument({ document: item }),
     patchItem: ({ id, patch }): void =>
       store().updateDocument({ id: id as number, updates: patch }),
-    removeItem: ({ id }): void => store().removeDocument({ id: id as number }),
+    removeItem: ({ id }): void => store().removeDocument({ id }),
   }
 }
 
@@ -75,24 +75,42 @@ function getRepository(): ReturnType<
               : []
         },
       },
-      fromServer: ({ server }) => ({ ...server }),
+      fromServer: ({ server }) => {
+        // C-3 (pre-merge review): strip the `{ document: {...} }` wrapper.
+        const response = server as { document?: Record<string, unknown> } | Record<string, unknown> | undefined
+        if (response && typeof response === 'object' && 'document' in response) {
+          return (response as { document: Record<string, unknown> }).document
+        }
+        return (response as Record<string, unknown>) ?? {}
+      },
       hooks: buildHooks(),
     })
 
     registerReconciler({
       tableName: 'documents',
       reconciler: async ({ tempId, server }) => {
+        // C-3 / C-4 (pre-merge review): strip the `{ document: {...} }`
+        // wrapper; otherwise the row lands in Dexie under `document.*`
+        // and Pinia consumers never see the flat fields.
         const response = server as
-          | { id?: number | string; document?: { id?: number } }
+          | { id?: number | string; document?: Record<string, unknown> }
+          | Record<string, unknown>
           | undefined
+        const inner =
+          response && typeof response === 'object' && 'document' in response
+            ? ((response as { document: Record<string, unknown> }).document)
+            : (response as Record<string, unknown> | undefined) ?? {}
         const id =
-          typeof response?.id === 'number' || typeof response?.id === 'string'
-            ? response.id
-            : response?.document?.id
+          typeof inner.id === 'number' || typeof inner.id === 'string'
+            ? (inner.id as number | string)
+            : typeof (response as { id?: number | string } | undefined)?.id === 'number' ||
+                typeof (response as { id?: number | string } | undefined)?.id === 'string'
+              ? ((response as { id: number | string }).id)
+              : undefined
         if (typeof id !== 'number' && typeof id !== 'string') return
 
         const local = await db.documents.get(tempId as string)
-        const merged = { ...local, ...(server as Record<string, unknown>), id }
+        const merged = { ...local, ...inner, id }
         if (local) {
           await db.documents.delete(tempId as string)
           await db.documents.put(merged)

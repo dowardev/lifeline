@@ -44,7 +44,7 @@ function buildHooks(): RepositoryHooks<TaskItem> {
     addItem: ({ item }): void => store().addTask({ task: item }),
     patchItem: ({ id, patch }): void =>
       store().updateTask({ id: id as number, updates: patch }),
-    removeItem: ({ id }): void => store().removeTask({ id: id as number }),
+    removeItem: ({ id }): void => store().removeTask({ id }),
   }
 }
 
@@ -71,24 +71,44 @@ function getRepository(): ReturnType<
               : []
         },
       },
-      fromServer: ({ server }) => ({ ...server }),
+      fromServer: ({ server }) => {
+        // C-3 (pre-merge review): strip the `{ task: {...} }` wrapper so
+        // the merged row carries the flat fields.
+        const response = server as { task?: Record<string, unknown> } | Record<string, unknown> | undefined
+        if (response && typeof response === 'object' && 'task' in response) {
+          return (response as { task: Record<string, unknown> }).task
+        }
+        return (response as Record<string, unknown>) ?? {}
+      },
       hooks: buildHooks(),
     })
 
     registerReconciler({
       tableName: 'tasks',
       reconciler: async ({ tempId, server }) => {
+        // C-3 / C-4 (pre-merge review): backend wraps the row as
+        // `{ task: {...} }`; spreading the wrapper would store the row
+        // under a `task.*` sub-object and Pinia consumers would never see
+        // the flat fields. Unwrap here.
         const response = server as
-          | { id?: number | string; task?: { id?: number } }
+          | { id?: number | string; task?: Record<string, unknown> }
+          | Record<string, unknown>
           | undefined
+        const inner =
+          response && typeof response === 'object' && 'task' in response
+            ? ((response as { task: Record<string, unknown> }).task)
+            : (response as Record<string, unknown> | undefined) ?? {}
         const id =
-          typeof response?.id === 'number' || typeof response?.id === 'string'
-            ? response.id
-            : response?.task?.id
+          typeof inner.id === 'number' || typeof inner.id === 'string'
+            ? (inner.id as number | string)
+            : typeof (response as { id?: number | string } | undefined)?.id === 'number' ||
+                typeof (response as { id?: number | string } | undefined)?.id === 'string'
+              ? ((response as { id: number | string }).id)
+              : undefined
         if (typeof id !== 'number' && typeof id !== 'string') return
 
         const local = await db.tasks.get(tempId as string)
-        const merged = { ...local, ...(server as Record<string, unknown>), id }
+        const merged = { ...local, ...inner, id }
         if (local) {
           await db.tasks.delete(tempId as string)
           await db.tasks.put(merged)

@@ -3,6 +3,8 @@
 
 import * as outbox from './outbox'
 import { db } from './index'
+// `isTempId` is imported dynamically below to avoid a static cycle
+// (`repository.ts` dynamically imports this module from `hintProcessor`).
 import { apiClient } from '@/services/apiClient'
 import { getIsOnline, useOnlineStatus } from '@/composables/useOnlineStatus'
 import { ref, onMounted, onUnmounted, type Ref } from 'vue'
@@ -167,15 +169,34 @@ async function applySuccess(params: {
     // Server returned the updated row — mirror it so Pinia/Dexie hold the
     // authoritative post-update state, not just the optimistic patch.
     const serverId = pickId(response)
-    if (serverId !== undefined) {
+    // C-2 (pre-merge review): the repository.update() path skips enqueueing
+    // when the id is a tempId, so this defensive guard is belt-and-braces,
+    // but it keeps the processor safe if that invariant is ever broken.
+    // `isTempId` is checked via inline shape because importing
+    // `./repository` statically would create a cycle (repository dynamic-
+    // imports this module from its `hintProcessor`).
+    const entityIdIsTemp = typeof row.entityId === 'string' && row.entityId.startsWith('tmp-')
+    if (
+      serverId !== undefined &&
+      !entityIdIsTemp
+    ) {
+      // C-3 (pre-merge review): unwrap the `{ event/task/document/note: {...} }`
+      // wrapper before spreading, otherwise Dexie would store the row under
+      // a wrapper key and the next read would not find the domain fields.
+      const raw = response as Record<string, unknown>
+      const wrapperKey = Object.keys(raw).find(
+        (k) => k !== 'id' && raw[k] && typeof raw[k] === 'object',
+      )
+      const inner = wrapperKey
+        ? (raw[wrapperKey] as Record<string, unknown>)
+        : raw
       const existing = await db.table(row.entityType).get(row.entityId as number)
       if (existing) {
         await db.table(row.entityType).put({
-          ...(response as Record<string, unknown>),
+          ...inner,
           id: serverId,
         })
       }
-      void serverId
     }
   }
 
