@@ -4,6 +4,7 @@
 import { taskService } from '@/services/taskService'
 import { useTaskStore } from '@/store/taskStore'
 import { db } from '@/db'
+import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import type { TaskRecord } from '@/db/schema'
 import type { TaskItem } from '@/store/taskStore'
 import {
@@ -118,6 +119,22 @@ function getRepository(): ReturnType<
         if (temp !== -1) {
           store.removeTask({ id: tempId as string })
           store.addTask({ task: merged as TaskItem })
+          // H-4 (pre-merge review): bump the shared sync clock so views
+          // that watch this store refresh from the outbox reconciler.
+          store.markSynced({ at: Date.now() })
+          // H-2 (pre-merge review): drain pending mutations stashed
+          // against the tempId (see repository.ts).
+          const pending = getPendingMutations(tempId)
+          if (pending.length > 0) {
+            clearPendingMutations(tempId)
+            for (const m of pending) {
+              if (m.kind === 'update') {
+                await getRepository().update({ id: serverId as number, patch: m.patch })
+              } else {
+                await getRepository().remove({ id: serverId as number })
+              }
+            }
+          }
         }
       },
     })

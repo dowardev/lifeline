@@ -7,6 +7,7 @@ import type { ExternalCalendarEvent } from '@/services/externalEventService'
 import { useEventStore } from '@/store/eventStore'
 import type { EventItem } from '@/store/eventStore'
 import { db } from '@/db'
+import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import {
   createRepository,
   type RepositoryHooks,
@@ -164,6 +165,22 @@ function getRepository(): ReturnType<
         // never reaches FullCalendar. Bump the shared ref here so the
         // page reloads from the store via the same path loadEvents takes.
         store.markSynced({ at: Date.now() })
+
+        // H-2 (pre-merge review): drain any mutations that were applied
+        // against the tempId while the create was still pending, now
+        // that we know the real server id. Re-enqueue each one with the
+        // server id so the processor picks them up on the next drain.
+        const pending = getPendingMutations<EventItem>(tempId)
+        if (pending.length > 0) {
+          clearPendingMutations(tempId)
+          for (const m of pending) {
+            if (m.kind === 'update') {
+              await getRepository().update({ id: serverId as number, patch: m.patch })
+            } else {
+              await getRepository().remove({ id: serverId as number })
+            }
+          }
+        }
       },
     })
   }

@@ -19,6 +19,8 @@ export const useNoteStore = defineStore('note', () => {
   const notes = ref<NoteItem[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  // H-4 (pre-merge review): shared sync clock.
+  const lastSyncedAt = ref<number | null>(null)
 
   function setNotes(params: { notes: NoteItem[] }): void {
     notes.value = params.notes
@@ -55,5 +57,9 @@ export const useNoteStore = defineStore('note', () => {
     error.value = null
   }
 
-  return { notes, loading, error, setNotes, addNote, updateNote, removeNote, setLoading, setError, clearError }
+  function markSynced(params: { at: number }): void {
+    lastSyncedAt.value = params.at
+  }
+
+  return { notes, loading, error, lastSyncedAt, setNotes, addNote, updateNote, removeNote, setLoading, setError, clearError, markSynced }
 })

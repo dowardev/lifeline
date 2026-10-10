@@ -4,6 +4,7 @@
 import { documentService } from '@/services/documentService'
 import { useDocumentStore } from '@/store/documentStore'
 import { db } from '@/db'
+import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import type { DocumentRecord } from '@/db/schema'
 import type { DocumentItem } from '@/store/documentStore'
 import type { DocumentElement } from '@/controllers/documentController'
@@ -120,6 +121,20 @@ function getRepository(): ReturnType<
         if (temp !== -1) {
           store.removeDocument({ id: tempId as string })
           store.addDocument({ document: merged as DocumentItem })
+          store.markSynced({ at: Date.now() })
+          // H-2 (pre-merge review): drain pending mutations stashed
+          // against the tempId (see repository.ts).
+          const pending = getPendingMutations(tempId)
+          if (pending.length > 0) {
+            clearPendingMutations(tempId)
+            for (const m of pending) {
+              if (m.kind === 'update') {
+                await getRepository().update({ id: serverId as number, patch: m.patch })
+              } else {
+                await getRepository().remove({ id: serverId as number })
+              }
+            }
+          }
         }
       },
     })

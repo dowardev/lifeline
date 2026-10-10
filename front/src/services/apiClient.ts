@@ -131,9 +131,28 @@ async function doFetch(params: {
   const res = await fetch(buildUrl(params.url), init)
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(
-      `Request failed with status code ${res.status}${text ? `: ${text.slice(0, 200)}` : ''}`,
-    )
+    // H-5 / H-8 (pre-merge review): surface a structured error so the
+    // outbox processor can match on `cause.status` directly instead of
+    // running a regex over a body slice (which produced false positives
+    // like "unauthorized access to this resource" triggering the
+    // auth-error path on a 5xx).
+    const err = new Error(
+      `Request failed with status code ${res.status}`,
+    ) as Error & { cause?: { status: number; body: string } }
+    err.cause = { status: res.status, body: text.slice(0, 200) }
+    if (res.status === 401 || res.status === 403) {
+      try {
+        // H-6 (pre-merge review): tell the auth store the session is
+        // gone so the UI can prompt for re-login instead of silently
+        // parking every subsequent write as `failed`.
+        const authMod = await import('@/store/authStore')
+        const store = authMod.useAuthStore()
+        store.markAuthExpired()
+      } catch {
+        // store not available yet (e.g., in tests) — no-op
+      }
+    }
+    throw err
   }
   const contentType = res.headers.get('content-type') ?? ''
   if (contentType.includes('application/json')) {

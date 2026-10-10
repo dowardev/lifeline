@@ -106,7 +106,7 @@ export async function flush(): Promise<void> {
           // Stop draining on the first auth failure; the rest will retry
           // after the user re-logs in. Avoids burning attempts while we
           // know the token is bad.
-          if (isAuthError(message)) {
+          if (isAuthError(error, message)) {
             break
           }
         }
@@ -209,14 +209,14 @@ async function applyFailure(params: {
 }): Promise<number | null> {
   const { row, error } = params
   const message = error instanceof Error ? error.message : String(error)
-  if (isAuthError(message)) {
+  if (isAuthError(error, message)) {
     await outbox.markFailed({ id: row.id!, error: message })
     return null
   }
   // 404 on DELETE means the server already lost the row (or it never
   // existed there). Treating that as success keeps the queue bounded
   // and lets the caller bulkDelete the row on the same pass.
-  if (row.op === 'delete' && isNotFound(message)) {
+  if (row.op === 'delete' && isNotFound(error, message)) {
     await outbox.markDone({ id: row.id! })
     return row.id!
   }
@@ -224,11 +224,27 @@ async function applyFailure(params: {
   return null
 }
 
-function isAuthError(message: string): boolean {
-  return /401|403|unauthori[sz]ed|forbidden/i.test(message)
+// H-5 / H-8 (pre-merge review): prefer the structured `cause.status`
+// from the apiClient (set in `services/apiClient.ts`). Falling back to
+// the regex keeps the old message-shape path working for callers that
+// throw plain errors.
+function statusFromError(error: unknown): number | undefined {
+  if (error && typeof error === 'object' && 'cause' in error) {
+    const cause = (error as { cause?: { status?: number } }).cause
+    if (cause && typeof cause.status === 'number') return cause.status
+  }
+  return undefined
 }
 
-function isNotFound(message: string): boolean {
+function isAuthError(error: unknown, message: string): boolean {
+  const status = statusFromError(error)
+  if (status === 401 || status === 403) return true
+  return /401|403/i.test(message)
+}
+
+function isNotFound(error: unknown, message: string): boolean {
+  const status = statusFromError(error)
+  if (status === 404) return true
   return /404|not\s*found/i.test(message)
 }
 

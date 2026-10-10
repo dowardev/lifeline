@@ -4,6 +4,7 @@
 import { noteService } from '@/services/noteService'
 import { useNoteStore } from '@/store/noteStore'
 import { db } from '@/db'
+import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import type { NoteItem } from '@/store/noteStore'
 import {
   createRepository,
@@ -112,6 +113,20 @@ function getRepository(): ReturnType<
         if (temp !== -1) {
           store.removeNote({ id: tempId as string })
           store.addNote({ note: merged as NoteItem })
+          store.markSynced({ at: Date.now() })
+          // H-2 (pre-merge review): drain pending mutations stashed
+          // against the tempId (see repository.ts).
+          const pending = getPendingMutations(tempId)
+          if (pending.length > 0) {
+            clearPendingMutations(tempId)
+            for (const m of pending) {
+              if (m.kind === 'update') {
+                await getRepository().update({ id: serverId as number, patch: m.patch })
+              } else {
+                await getRepository().remove({ id: serverId as number })
+              }
+            }
+          }
         }
       },
     })

@@ -7,6 +7,37 @@ import * as outbox from './outbox'
 import { getIsOnline } from '@/composables/useOnlineStatus'
 
 /**
+ * H-2 (pre-merge review): when `update()` or `remove()` is called on a
+ * row that still has a tempId (i.e. the create that produced it is
+ * queued but not yet reconciled), we cannot enqueue the mutation
+ * against the server because we have no server id yet. The old code
+ * dropped it silently. Instead we stash the mutation in this map;
+ * the reconciler drains it after the create succeeds, re-enqueuing
+ * each one with the real server id. If the create fails permanently
+ * the entries sit in this map until the user resolves the row
+ * manually (out of scope here).
+ */
+export type PendingMutation<R> =
+  | { kind: 'update'; patch: Partial<R> }
+  | { kind: 'delete' }
+
+const pendingMutations = new Map<string, Array<PendingMutation<unknown>>>()
+
+export function getPendingMutations<R = unknown>(tempId: string): Array<PendingMutation<R>> {
+  return (pendingMutations.get(tempId) ?? []) as Array<PendingMutation<R>>
+}
+
+export function clearPendingMutations(tempId: string): void {
+  pendingMutations.delete(tempId)
+}
+
+function recordPendingMutation(tempId: string, mutation: PendingMutation<unknown>): void {
+  const list = pendingMutations.get(tempId) ?? []
+  list.push(mutation)
+  pendingMutations.set(tempId, list)
+}
+
+/**
  * Best-effort hint to the outbox processor that a new row is ready. The
  * processor already has a 30s interval + lifecycle triggers, but in this
  * app most writes happen in response to a user tap and we want the round-
@@ -173,14 +204,14 @@ export function createRepository<T, R extends { id?: string | number }>(
 
     async update(params): Promise<void> {
       const { id, patch } = params
-      // LBDS-231 - skip enqueueing when the id is still a client-side
-      // tempId: the matching POST has not been round-tripped yet, so we
-      // have no real server id to PUT against. Without this guard, the
-      // processor hits `PUT /events` (no id) and gets 405.
+      // H-2 (pre-merge review): the create is still pending. Apply
+      // the patch to the local mirror so the UI stays in sync, and
+      // stash the mutation in the pending map so the reconciler
+      // re-enqueues it with the real server id after the create
+      // round-trips. If the create fails permanently the row sits
+      // in `failed` and the user can re-apply the change by hand.
       if (isTempId(id)) {
-        // Mirror the patch to Dexie + Pinia so the UI stays consistent
-        // for the moment; the create op will reconcile the id once it
-        // succeeds, and the user can re-apply the change after.
+        recordPendingMutation(String(id), { kind: 'update', patch: patch as Record<string, unknown> })
         const current = await db.table<R>(tableName).get(id as R['id'] & string)
         if (current) {
           await db.table(tableName).put({ ...current, ...patch } as R)
@@ -208,10 +239,10 @@ export function createRepository<T, R extends { id?: string | number }>(
     async remove(params): Promise<void> {
       const { id } = params
       if (isTempId(id)) {
-        // The corresponding create has not been round-tripped yet; once
-        // it does, the server will reject the orphan delete anyway. Skip
-        // the enqueue so we do not flood the outbox with doomed DELETE
-        // calls against a server-side id we do not yet know.
+        // H-2 (pre-merge review): stash the delete in the pending map;
+        // the reconciler drops the row locally AND enqueues the DELETE
+        // against the real server id once the create round-trips.
+        recordPendingMutation(String(id), { kind: 'delete' })
         await db.table(tableName).delete(id)
         hooks.removeItem({ id })
         return

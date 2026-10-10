@@ -19,6 +19,8 @@ export const useDocumentStore = defineStore('document', () => {
   const documents = ref<DocumentItem[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  // H-4 (pre-merge review): shared sync clock.
+  const lastSyncedAt = ref<number | null>(null)
 
   function setDocuments(params: { documents: DocumentItem[] }): void {
     documents.value = params.documents
@@ -62,5 +64,9 @@ export const useDocumentStore = defineStore('document', () => {
     error.value = null
   }
 
-  return { documents, loading, error, setDocuments, addDocument, updateDocument, removeDocument, getDocuments, getDocument, setLoading, setError, clearError }
+  function markSynced(params: { at: number }): void {
+    lastSyncedAt.value = params.at
+  }
+
+  return { documents, loading, error, lastSyncedAt, setDocuments, addDocument, updateDocument, removeDocument, getDocuments, getDocument, setLoading, setError, clearError, markSynced }
 })
