@@ -60,6 +60,9 @@ export const useTaskStore = defineStore('task', () => {
   const tasks = ref<TaskItem[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  // H-4 (pre-merge review): shared sync clock so views that watch the
+  // tasks table can react to the outbox reconciler.
+  const lastSyncedAt = ref<number | null>(null)
 
   function setTasks(params: { tasks: TaskItem[] }): void {
     tasks.value = params.tasks.map(mapTaskToItem)
@@ -78,8 +81,11 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  function removeTask(params: { id: number }): void {
-    tasks.value = tasks.value.filter((t) => t.id !== params.id)
+  function removeTask(params: { id: string | number }): void {
+    // LBDS-231 - the reconciler passes the optimistic tempId (a string)
+    // here. Compare stringified so tempIds and server ids both work.
+    const target = String(params.id)
+    tasks.value = tasks.value.filter((t) => String(t.id) !== target)
   }
 
   function setLoading(params: { loading: boolean }): void {
@@ -94,5 +100,9 @@ export const useTaskStore = defineStore('task', () => {
     error.value = null
   }
 
-  return { tasks, loading, error, setTasks, addTask, updateTask, removeTask, setLoading, setError, clearError }
+  function markSynced(params: { at: number }): void {
+    lastSyncedAt.value = params.at
+  }
+
+  return { tasks, loading, error, lastSyncedAt, setTasks, addTask, updateTask, removeTask, setLoading, setError, clearError, markSynced }
 })

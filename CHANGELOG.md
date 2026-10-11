@@ -85,6 +85,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **front:** Hydrate the WakaTime API key from IndexedDB and restore a functional "Configurar API Key" modal on the home widget
 
 - **front:** Add vuelidate client-side validation aligned with the Laravel backend `$request->validate` rules for Task, Event, WakaTime and Document forms; submit is blocked when input is invalid (LBDS-70)
+
+### Added
+- **front:** Global offline-first data layer — every domain (events, tasks, documents, notes) reads through one repository and queues writes to a persistent outbox that drains on reconnect, with a per-store `lastSyncedAt` clock so views can subscribe to sync events — LBDS-231
+
+### Fixed
+- **front:** Outbox entries with temporary ids no longer silently update the wrong local row; a `pendingMutations` map stashes the update/delete against the tempId and the reconciler drains and re-enqueues with the server id — LBDS-231
+
 ## [0.15.0] - 2026-08-10
 
 ### Added

@@ -19,6 +19,8 @@ export const useNoteStore = defineStore('note', () => {
   const notes = ref<NoteItem[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  // H-4 (pre-merge review): shared sync clock.
+  const lastSyncedAt = ref<number | null>(null)
 
   function setNotes(params: { notes: NoteItem[] }): void {
     notes.value = params.notes
@@ -36,8 +38,11 @@ export const useNoteStore = defineStore('note', () => {
     }
   }
 
-  function removeNote(params: { id: number }): void {
-    notes.value = notes.value.filter((n) => n.id !== params.id)
+  function removeNote(params: { id: string | number }): void {
+    // LBDS-231 - the reconciler passes the optimistic tempId (a string)
+    // here. Compare stringified so tempIds and server ids both work.
+    const target = String(params.id)
+    notes.value = notes.value.filter((n) => String(n.id) !== target)
   }
 
   function setLoading(params: { loading: boolean }): void {
@@ -52,5 +57,9 @@ export const useNoteStore = defineStore('note', () => {
     error.value = null
   }
 
-  return { notes, loading, error, setNotes, addNote, updateNote, removeNote, setLoading, setError, clearError }
+  function markSynced(params: { at: number }): void {
+    lastSyncedAt.value = params.at
+  }
+
+  return { notes, loading, error, lastSyncedAt, setNotes, addNote, updateNote, removeNote, setLoading, setError, clearError, markSynced }
 })

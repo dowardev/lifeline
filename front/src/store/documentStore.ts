@@ -19,6 +19,8 @@ export const useDocumentStore = defineStore('document', () => {
   const documents = ref<DocumentItem[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  // H-4 (pre-merge review): shared sync clock.
+  const lastSyncedAt = ref<number | null>(null)
 
   function setDocuments(params: { documents: DocumentItem[] }): void {
     documents.value = params.documents
@@ -34,8 +36,11 @@ export const useDocumentStore = defineStore('document', () => {
     if (index !== -1) documents.value[index] = { ...documents.value[index], ...updates }
   }
 
-  function removeDocument(params: { id: number }): void {
-    documents.value = documents.value.filter((d) => d.id !== params.id)
+  function removeDocument(params: { id: string | number }): void {
+    // LBDS-231 - the reconciler passes the optimistic tempId (a string)
+    // here. Compare stringified so tempIds and server ids both work.
+    const target = String(params.id)
+    documents.value = documents.value.filter((d) => String(d.id) !== target)
   }
 
   function getDocuments(): DocumentItem[] | undefined {
@@ -59,5 +64,9 @@ export const useDocumentStore = defineStore('document', () => {
     error.value = null
   }
 
-  return { documents, loading, error, setDocuments, addDocument, updateDocument, removeDocument, getDocuments, getDocument, setLoading, setError, clearError }
+  function markSynced(params: { at: number }): void {
+    lastSyncedAt.value = params.at
+  }
+
+  return { documents, loading, error, lastSyncedAt, setDocuments, addDocument, updateDocument, removeDocument, getDocuments, getDocument, setLoading, setError, clearError, markSynced }
 })

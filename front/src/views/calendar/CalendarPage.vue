@@ -326,6 +326,7 @@ import { SystemController } from '@/controllers/systemController';
 import { useCalendarModals } from '@/composables/useCalendarModals';
 import { useExternalSyncOnEnter } from '@/composables/useExternalSync';
 import { useAuthStore } from '@/store/authStore';
+import { useEventStore } from '@/store/eventStore';
 import { useReminder } from '@/composables/useReminder';
 import { NotificationPermissionError } from '@/controllers/reminderController';
 import { normalizeOffsetCodes } from '@/utils/reminders';
@@ -356,6 +357,7 @@ import type { ExternalCalendarEvent } from '@/services/externalEventService';
 // 6. Vars and const
 const calendarRef = ref<InstanceType<typeof FullyCalendarVue3> | null>(null);
 const events = ref<EventItem[]>([]);
+const eventStore = useEventStore();
 const externalEvents = ref<ExternalCalendarEvent[]>([]);
 const isOpenModalExternalEvent = ref(false);
 const selectedExternalEvent = ref<ExternalCalendarEvent | null>(null);
@@ -393,6 +395,17 @@ watch(
 watch(lastSyncedAt, () => {
   void loadStoredEvents();
 });
+
+// LBDS-231 - the outbox reconciler runs after the processor drains a
+// successful row. The CalendarPage only refreshes its local events
+// ref from the store on `lastSyncedAt` ticks, so the reconciler
+// bumps the shared clock and we mirror loadStoredEvents here too.
+watch(
+  () => eventStore.lastSyncedAt,
+  () => {
+    void loadStoredEvents();
+  },
+);
 
 // 8. Computed
 const currentView = computed(() => calendarController.getCalendarModeView());
@@ -524,38 +537,52 @@ async function loadStoredEvents(): Promise<void> {
 function normalizeEvents(params: { events: EventItem[] }): EventItem[] {
   return params.events.map((event) => {
     const anyEvent = event as unknown as Record<string, unknown>;
-    if (event.title && event.date_start) return event;
+    // LBDS-231 - defensive unwrap for rows that the old reconciler stored
+    // with the server's `{ event: {...} }` wrapper instead of flattening it.
+    // The new reconciler (`eventController.ts`) stores them at the row root,
+    // so this branch only matters for already-persisted rows from before the
+    // fix landed.
+    const wrapped = anyEvent.event as Record<string, unknown> | undefined
+    const source: Record<string, unknown> =
+      wrapped && typeof wrapped === 'object' ? { ...anyEvent, ...wrapped } : anyEvent
+    // No `if (title && date_start) return event` shortcut: the reconciler
+    // writes `dateStart` (camelCase, the local key) plus `dateStart` (also
+    // the server key after the unwrap fix), and never `date_start`. The
+    // shortcut skipped the `date_start` assignment and FullCalendar received
+    // `start: ''`. Always normalise.
     return {
       id: event.id,
       user_id:
-        (anyEvent.user_id as number) ||
-        (anyEvent.userId as number) ||
+        (source.user_id as number) ||
+        (source.userId as number) ||
         (authStore.localUser?.id ?? 0),
-      title: event.title || (anyEvent.name as string) || '',
-      calendar_id: (anyEvent.calendar_id as number) || 1,
+      title: event.title || (source.name as string) || '',
+      calendar_id: (source.calendar_id as number) || 1,
       date_start:
         event.date_start ||
-        ((anyEvent.reminders
-          ? (anyEvent.reminders as Record<string, unknown>).start instanceof Date
-            ? ((anyEvent.reminders as Record<string, unknown>).start as Date).toISOString()
-            : ((anyEvent.reminders as Record<string, unknown>).start as string) || ''
+        (event.dateStart as string) ||
+        ((source.reminders
+          ? (source.reminders as Record<string, unknown>).start instanceof Date
+            ? ((source.reminders as Record<string, unknown>).start as Date).toISOString()
+            : ((source.reminders as Record<string, unknown>).start as string) || ''
           : '') as string),
       date_end:
         event.date_end ||
-        ((anyEvent.reminders
-          ? (anyEvent.reminders as Record<string, unknown>).end instanceof Date
-            ? ((anyEvent.reminders as Record<string, unknown>).end as Date).toISOString()
-            : ((anyEvent.reminders as Record<string, unknown>).end as string) || undefined
+        (event.dateEnd as string) ||
+        ((source.reminders
+          ? (source.reminders as Record<string, unknown>).end instanceof Date
+            ? ((source.reminders as Record<string, unknown>).end as Date).toISOString()
+            : ((source.reminders as Record<string, unknown>).end as string) || undefined
           : undefined) as string | undefined),
-      notifications: event.notifications || (anyEvent.notifications as string) || '',
-      repeat: event.repeat || (anyEvent.repeat as string) || '',
-      time_zone: event.time_zone || (anyEvent.timezone as string) || '',
-      guests: event.guests || (anyEvent.guests as string) || '',
-      description: event.description || (anyEvent.description as string) || '',
-      availability: event.availability || (anyEvent.availability as string) || '',
+      notifications: event.notifications || (source.notifications as string) || '',
+      repeat: event.repeat || (source.repeat as string) || '',
+      time_zone: event.time_zone || (source.timezone as string) || '',
+      guests: event.guests || (source.guests as string) || '',
+      description: event.description || (source.description as string) || '',
+      availability: event.availability || (source.availability as string) || '',
       id_reminders:
         event.id_reminders ||
-        (anyEvent.id_reminders as number[]) ||
+        (source.id_reminders as number[]) ||
         (anyEvent.idReminders as number[]) ||
         [],
     } as EventItem;

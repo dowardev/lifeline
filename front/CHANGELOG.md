@@ -67,3 +67,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - External tasks "Vence" label honors the active i18n locale instead of being hardcoded to Spanish — LBDS-271
+
+### Added
+- Global offline-first data layer (server / Pinia / Dexie + outbox) for events, tasks, documents and notes: every domain read goes through one repository, writes enqueue in a persistent outbox (`db/outbox.ts`) and drain on reconnect, and a per-store `lastSyncedAt` clock lets views subscribe to sync events — LBDS-231
+- `db/repository.ts` — generic Dexie repository used by every domain controller (enqueue, peek, markSynced, `pendingMutations` map for tempId→serverId promotion) — LBDS-231
+- `db/outboxProcessor.ts` — drain loop with backoff (30s → 60s → 120s → 300s → 900s → 1800s → 3600s, MAX_ATTEMPTS=8), `useOutboxProcessor()` lifecycle composable, `getFlushStatus()` for UI badges, `hintProcessor()` triggers immediate flush after enqueue — LBDS-231
+- `db/conflictStore.ts` — tier 1 conflict storage (LWW by `updated_at`); tier 2/3 explicitly deferred to LBDS-238 — LBDS-231
+- `db/schema.ts` — Dexie schema v3 (events, tasks, documents, notes, tags + outbox + conflictStore + auth) — LBDS-231
+- `composables/useOnlineStatus.ts` — reactive `isOnline` ref driving the outbox flush — LBDS-231
+- `composables/useExternalSync.ts` — shared composable for external data refresh (replaces page-local refs; one TTL-gated sync per visible surface) — LBDS-231
+- `store/externalContactStore` / `store/externalEventStore` / `store/externalTaskStore` — Pinia state for the read-only Dexie mirror of external data (events/tasks/contacts) — LBDS-231
+- `front/src/db/README.md` — pattern documentation for adding new domains to the data layer — LBDS-231
+- 9 new unit-test specs (outbox, outboxProcessor, repository, conflictStore, useExternalSync, useOnlineStatus, eventRepository, taskDocumentRepository, notesTagsAuth, dataLayerIntegration) — 183 tests green, 1 pre-existing reminderController flaky in suite only — LBDS-231
+
+### Changed
+- `eventController` / `taskController` / `documentController` / `noteController` / `tagController` migrated to the repository pattern: writes go through `createRepository` + outbox, the reconciler unwraps server `{ event/task/document/note: {...} }` responses into the local mirror, and on success a `lastSyncedAt` clock bumps so views re-render — LBDS-231
+- `authController` restores the offline session on cold start, signals `markAuthExpired()` on 401/403 (no outbox enqueue for login; UI prompts re-login) — LBDS-231
+- `services/apiClient` uses `fetch` direct against `VITE_API_URL` (skipping the SSO `http` client URL confusion), reads the bearer from `localStorage["@dowardev/sso-client:token"]`, and throws with `error.cause = { status, body }` so the outbox can distinguish 401/403/404 from generic network errors — LBDS-231
+- `FullyCalendarVue3` no longer relies on manual `setOption` watches or `addEventSource` workarounds — newly reconciled events render through the reactive `:options` prop — LBDS-231
+- `CalendarPage.normalizeEvents` defensively unwraps server `{ event: {...} }` responses for old rows pre-reconciler — LBDS-231
+
+### Fixed
+- Outbox entries with `tempId` no longer silently update the wrong Dexie row — `pendingMutations` map stashes the update/delete against the tempId, and the reconciler drains and re-enqueues with the server id (CRITICAL C-1, C-2, C-3, C-4) — LBDS-231
+- Auto-mount `useOutboxProcessor()` in `App.vue` so the queue drains without a manual tap — LBDS-231
+- `apiClient` throws with `cause.status` so 401/403/404 are actionable by the outbox, instead of opaque fetch errors (HIGH H-5, H-8) — LBDS-231
+- New `useOutboxProcessor` consumers are deduped (singleton), preventing two parallel drain loops (MEDIUM M-6) — LBDS-231
+- Pre-merge review HIGH (7): H-1..H-6, H-8 — `pendingMutations` map, `lastSyncedAt` shared clock across 4 stores, auth-expired signal, regex false positives on 401 detection, 200-char body slice for error context — LBDS-231
+- Pre-merge review MEDIUM (8): M-1..M-3, M-7..M-10, M-12 — peek uses `nextRetryAt` index, static `flushOutbox` import, fetchAll re-throws 401/403, `lastAttemptAt` stamped after attempt, `Promise.allSettled` in refreshExternalMirror, guestTokenRequest resets on 401, payload keeps both camelCase (backend) and snake_case (local mirror), user_id from authStore — LBDS-231
+- Pre-merge review LOW (1): L-2 — `markResolved` persists the resolution to the conflictStore row — LBDS-231

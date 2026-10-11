@@ -28,6 +28,7 @@ import { isSSOAvailable } from "@/ssoClientAccessor";
 
 // composables
 import { useExternalSync } from "@/composables/useExternalSync";
+import { useOutboxProcessor } from "@/db/outboxProcessor";
 
 const systemController = new SystemController();
 const themeController = new ThemeController();
@@ -37,6 +38,10 @@ const themeController = new ThemeController();
 // guest mode too: the API layer handles the guest token, so it must not sit
 // behind the SSO check below.
 useExternalSync();
+
+// LBDS-231 - drain the outbox on launch + online / visibility events so
+// writes enqueued while offline flush as soon as connectivity returns.
+useOutboxProcessor();
 
 // mounted
 onMounted(async () => {
