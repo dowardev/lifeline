@@ -1,0 +1,117 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
+
+/**
+ * LBDS-298 - e2e test for the calendar picker in the event
+ * create/update modal. Drives the real Vue + Ionic + Pinia stack
+ * against the Vite dev server, with the backend endpoints stubbed
+ * via cy.intercept so the test does not depend on a running
+ * Laravel or a seeded DB.
+ *
+ * The project's e2e harness is Cypress (see cypress.config.ts and
+ * `pnpm run test:e2e`). The ticket's "Playwright" wording was a
+ * suggestion from the ticket author; the acceptance test is the
+ * end-to-end coverage, not the specific runner.
+ */
+
+const CALENDARS = [
+  { id: 1, user_id: 7, name: 'Personal', default: 1 },
+  { id: 2, user_id: 7, name: 'Trabajo', default: 0 },
+  { id: 3, user_id: 7, name: 'Side', default: 0 },
+]
+
+const CALENDARS_EMPTY: { id: number; user_id: number; name: string; default: number }[] = []
+
+function stubBackends(): void {
+  cy.intercept('GET', '**/api/v1/calendars*', (req) => {
+    // The test parametrises whether the user has calendars via
+    // an alias so each test can decide.
+    const url = new URL(req.url)
+    const empty = url.searchParams.get('__empty') === '1'
+    req.reply({
+      status: 200,
+      body: {
+        data: empty ? CALENDARS_EMPTY : CALENDARS,
+        links: { first: '...', last: '...', prev: null, next: null },
+        meta: { current_page: 1, from: 1, last_page: 1, per_page: 50, to: empty ? 0 : CALENDARS.length },
+      },
+    })
+  }).as('getCalendars')
+
+  // Stub the rest of the read endpoints so the page does not error
+  // before we get to the modal. Empty data is fine; the picker does
+  // not depend on it.
+  cy.intercept('GET', '**/api/v1/events*', { body: { data: [], links: {}, meta: {} } })
+  cy.intercept('GET', '**/api/v1/calendar-sources*', { body: { data: [], links: {}, meta: {} } })
+  cy.intercept('GET', '**/api/v1/external-events*', { body: [] })
+  cy.intercept('GET', '**/api/v1/external-contacts*', { body: [] })
+  cy.intercept('GET', '**/api/v1/external-tasks*', { body: [] })
+  cy.intercept('GET', '**/api/v1/wakatime-durations*', { body: {} })
+  cy.intercept('GET', '**/api/v1/admin-tags*', { body: [] })
+  cy.intercept('GET', '**/api/v1/notes*', { body: { data: [], links: {}, meta: {} } })
+  cy.intercept('GET', '**/api/v1/tasks*', { body: { data: [], links: {}, meta: {} } })
+  cy.intercept('GET', '**/api/v1/documents*', { body: { data: [], links: {}, meta: {} } })
+}
+
+describe('Calendar picker (LBDS-298)', () => {
+  beforeEach(() => {
+    // Force a fresh storage so the SSO/anonymous state from
+    // previous specs does not bleed into the picker's request.
+    cy.clearLocalStorage()
+    cy.clearCookies()
+    stubBackends()
+  })
+
+  it('renders the Calendario row when the user has at least one calendar', () => {
+    cy.visit('/calendar')
+    cy.get('ion-button:has-text("Añadir evento")').first().click({ force: true })
+
+    // The picker row sits inside the "Otros" card. It must be
+    // present AND enabled so the popover can open.
+    cy.get('ion-item').filter({ hasText: 'Calendario' }).should('exist')
+      .and('not.have.attr', 'disabled')
+    // Pre-selects the default:1 row.
+    cy.get('ion-item').filter({ hasText: 'Calendario' })
+      .find('ion-label[slot="end"]')
+      .invoke('text')
+      .should('match', /Personal/)
+  })
+
+  it('opens the popover with one ion-radio per calendar and closes after pick', () => {
+    cy.visit('/calendar')
+    cy.get('ion-button:has-text("Añadir evento")').first().click({ force: true })
+    cy.get('ion-item').filter({ hasText: 'Calendario' }).first().click({ force: true })
+
+    // The popover should render a radio per calendar.
+    cy.get('ion-popover').filter({ hasText: 'Calendario' }).should('exist')
+    cy.get('ion-popover').filter({ hasText: 'Calendario' })
+      .find('ion-radio')
+      .should('have.length', CALENDARS.length)
+
+    // Pick the second calendar. The popover closes and the row
+    // reflects the new selection.
+    cy.get('ion-popover').filter({ hasText: 'Calendario' })
+      .find('ion-item').filter({ hasText: 'Trabajo' }).first()
+      .click({ force: true })
+    cy.get('ion-item').filter({ hasText: 'Calendario' })
+      .find('ion-label[slot="end"]')
+      .invoke('text')
+      .should('match', /Trabajo/)
+  })
+
+  it('renders the Calendario row disabled with "Sin calendarios" when the user has zero', () => {
+    // Override the calendars stub for this test only.
+    cy.intercept('GET', '**/api/v1/calendars*', { body: { data: [], links: {}, meta: {} } }).as('getCalendarsEmpty')
+    cy.visit('/calendar')
+    cy.get('ion-button:has-text("Añadir evento")').first().click({ force: true })
+
+    // The row is rendered (so the user can see the picker exists)
+    // but disabled (the popover does not open on tap).
+    cy.get('ion-item').filter({ hasText: 'Calendario' }).should('exist')
+      .and('have.attr', 'disabled')
+    cy.get('ion-item').filter({ hasText: 'Calendario' })
+      .find('ion-label[slot="end"]')
+      .invoke('text')
+      .should('match', /Sin calendarios/)
+  })
+})

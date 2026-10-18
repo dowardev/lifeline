@@ -105,6 +105,11 @@ export interface Event {
   userId: number;
   name?: string;
   // calendar?: string;
+  // LBDS-298 - `calendar_id` is the id of the Calendar row this event
+  // belongs to. Optional in the shape because the create flow can
+  // omit it and let LBDS-292 auto-provision a default server-side;
+  // updates always set it once the picker has selected one.
+  calendar_id?: number | null;
   guests?: Array<{ email: string }>;
   reminders: {
     start: Date;
