@@ -604,7 +604,12 @@ function eventToEventItem(params: { event: CalendarEvent }): EventItem {
     id: event.id || 0,
     user_id: event.userId ?? authStore.localUser?.id ?? 0,
     title: event.name || '',
-    calendar_id: 1,
+    // LBDS-298 - mirror the picker selection into the local row so
+    // the optimistically inserted event lands in FullCalendar with
+    // the right calendar_id (instead of the previous hardcoded `1`,
+    // which sent the row to the wrong calendar on multi-calendar
+    // accounts).
+    calendar_id: event.calendar_id ?? 1,
     date_start: dateStart,
     date_end: dateEnd,
     notifications: event.reminders?.notifications?.join(',') || '',
@@ -862,6 +867,13 @@ async function saveEvent(params: { event: CalendarEvent }): Promise<void> {
       notifications: canonical,
       guests: (params.event.guests ?? []).map((g) => g.email),
       id_reminders: [],
+      // LBDS-298 - thread the picker selection through. `undefined` is
+      // omitted from the JSON payload, which is the path for users with
+      // 0 calendars (LBDS-292 auto-provisions server-side).
+      calendar_id:
+        params.event.calendar_id !== undefined && params.event.calendar_id !== null
+          ? params.event.calendar_id
+          : undefined,
     });
     const serverId = (created as EventItem).id;
 
@@ -950,6 +962,16 @@ async function updateEvent(params: { event: CalendarEvent }): Promise<void> {
         repeat: reminders?.repeat?.type,
         guests: (params.event.guests ?? []).map((g) => g.email),
         id_reminders: ids,
+        // LBDS-298 - picker changes reach the server. `undefined`
+        // means "the picker did not move for this update" (the value
+        // is omitted from the PATCH payload entirely so the row's
+        // existing `calendar_id` is preserved).
+        calendar_id:
+          params.event.calendar_id !== undefined && params.event.calendar_id !== null
+            ? params.event.calendar_id
+            : params.event.calendar_id === null
+              ? null
+              : undefined,
       });
       await eventController.updateLocalEvent({
         id: params.event.id ?? 0,

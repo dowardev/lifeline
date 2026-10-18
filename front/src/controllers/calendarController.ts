@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
-import { useCalendarStore, type ViewCalendar, type CalendarDataStatus } from "@/store/calendarStore";
+import { useCalendarStore, type ViewCalendar, type CalendarDataStatus, type CalendarItem } from "@/store/calendarStore";
 import { storage } from "@/main";
 
 /**
@@ -131,5 +131,32 @@ export class CalendarController {
   setCalendarDataStatus(params: { status: CalendarDataStatus }): void {
     const { status } = params;
     this.store.setDataStatus({ dataStatus: status });
+  }
+
+  /**
+   * LBDS-298 - fetches the user's calendar list (id, name, default) from
+   * `GET /api/v1/calendars` and populates the store. Components that need
+   * the list (event create/update picker) call this once on enter and
+   * then read `store.calendars` / `store.defaultCalendar` reactively.
+   *
+   * The endpoint already filters to `auth()->id()` server-side, so the
+   * returned list never crosses user boundaries even if the caller's
+   * token is wrong.
+   */
+  async getCalendars(): Promise<CalendarItem[]> {
+    return await this.store.getCalendars();
+  }
+
+  getCalendarList(): CalendarItem[] {
+    return this.store.calendars;
+  }
+
+  /**
+   * LBDS-298 - the calendar flagged `default: 1` on the server, or
+   * the first row if none is flagged. `null` when the user has zero
+   * calendars. The picker uses this on create to pre-select a row.
+   */
+  getDefaultCalendar(): CalendarItem | null {
+    return this.store.defaultCalendar;
   }
 }

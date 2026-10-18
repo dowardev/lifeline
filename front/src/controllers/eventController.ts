@@ -327,6 +327,7 @@ export class EventController {
     name?: string
     dateStart?: string
     dateEnd?: string
+    calendar_id?: number | null
     notifications?: string[]
     repeat?: string
     timeZone?: string
@@ -360,6 +361,14 @@ export class EventController {
       if (rest.dateEnd !== undefined) {
         patch.dateEnd = rest.dateEnd
         patch.date_end = rest.dateEnd
+      }
+      // LBDS-298 - propagate `calendar_id` so the picker changes
+      // reach the server. `undefined` means the picker did not move
+      // for this update (no-op); `null` is a deliberate clear; a
+      // number is the new selection. The backend scopes the value to
+      // `auth()->id()` and returns 404 if the calendar is not found.
+      if (rest.calendar_id !== undefined) {
+        patch.calendar_id = rest.calendar_id
       }
       if (rest.notifications !== undefined) patch.notifications = rest.notifications
       if (rest.repeat !== undefined) patch.repeat = rest.repeat

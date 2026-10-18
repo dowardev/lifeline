@@ -187,6 +187,20 @@
                     </ion-list-header>
 
                     <ion-card class="shadow1">
+                      <!-- calendar -->
+                      <ion-item
+                        button
+                        class="transparent"
+                        lines="full"
+                        :disabled="calendarList.length === 0"
+                        @click="isOpenPopoverCalendar = true"
+                      >
+                        <ion-label>Calendario</ion-label>
+                        <ion-label slot="end" class="ion-text-wrap">{{
+                          selectedCalendarName
+                        }}</ion-label>
+                      </ion-item>
+
                       <!-- guests -->
                       <div style="display: flex">
                         <div style="width: 100%">
@@ -482,6 +496,71 @@
           </div>
         </ion-content>
       </ion-popover>
+
+      <!-- popover calendar -->
+      <ion-popover
+        style="--width: 22rem"
+        :is-open="isOpenPopoverCalendar"
+        :backdrop-dismiss="false"
+        @will-dismiss="resetCalendar()"
+      >
+        <ion-header mode="ios">
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="isOpenPopoverCalendar = false">
+                <ion-icon :icon="closeOutline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+            <ion-title>Calendario</ion-title>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="ion-padding">
+          <div v-if="calendarList.length === 0" class="ion-padding">
+            <ion-note v-if="calendarLoadError" color="warning">
+              <ion-icon :icon="warningOutline" style="vertical-align: middle"></ion-icon>
+              No se pudo cargar la lista de calendarios: {{ calendarLoadError }}.
+              Probá cerrar y reabrir el modal.
+            </ion-note>
+            <ion-note v-else>
+              No tenés calendarios. El evento se creará con
+              <strong>calendar_id</strong> vacío; LBDS-292 lo
+              auto-provisionará en el primer sync.
+            </ion-note>
+          </div>
+          <ion-radio-group
+            v-else
+            :value="event.calendarId.value"
+            @ion-change="onCalendarRadioChange($event)"
+          >
+            <!--
+              LBDS-298 F5: a single tap fires both the @click on
+              the item AND the @ion-change on the radio group.
+              The earlier implementation had both handlers write
+              to `event.calendarId` independently, which created
+              two divergent code paths and a race on popover
+              dismissal. We now route BOTH paths through
+              `selectCalendar`: @click for pointer taps, and
+              @ion-change for keyboard navigation (arrow keys +
+              Enter/Space, required for WCAG 2.1 AA). The radio's
+              :value binding keeps the visual state in sync.
+            -->
+            <ion-item
+              v-for="cal in calendarList"
+              :key="cal.id"
+              button
+              @click="selectCalendar({ id: cal.id })"
+            >
+              <ion-radio
+                :value="cal.id"
+                label-placement="end"
+                justify="start"
+                >{{ cal.name }}</ion-radio
+              >
+            </ion-item>
+          </ion-radio-group>
+        </ion-content>
+      </ion-popover>
       <!-- end popovers -->
 
       <!-- modals -->
@@ -554,6 +633,8 @@ import {
   IonIcon,
   IonItem,
   IonNote,
+  IonRadio,
+  IonRadioGroup,
 } from "@ionic/vue";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { add, format, sub } from "date-fns";
@@ -565,6 +646,7 @@ import {
   saveOutline,
   trashOutline,
   todayOutline,
+  warningOutline,
 } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
 import { email, helpers, maxLength, required } from "@vuelidate/validators";
@@ -573,6 +655,7 @@ import {
   translateReminderOffset,
   normalizeOffsetCodes,
 } from "@/utils/reminders";
+import { useCalendarStore } from "@/store/calendarStore";
 
 // 2. Controllers / Composables
 import { EventController } from "@/controllers/eventController";
@@ -613,6 +696,10 @@ const filteredZones = ref(Array<string>());
 const searchTimeZone = ref("");
 const showButtonsOptionGuest = ref(-1);
 const emailGuest = ref("");
+// LBDS-298 - calendar picker state. The row is hidden when the user
+// has zero calendars; otherwise it shows the picked calendar's name
+// and opens a popover with one `ion-radio` per calendar.
+const isOpenPopoverCalendar = ref(false);
 const event = {
   name: ref(""),
   description: ref(""),
@@ -630,6 +717,11 @@ const event = {
   timezone: ref(Intl.DateTimeFormat().resolvedOptions().timeZone),
   guests: ref(Array<{ email: string }>()),
   availability: ref("available"),
+  // LBDS-298 - id of the calendar the new/edited event will belong
+  // to. `null` while the list is still loading OR when the user has
+  // zero calendars (the row is hidden, the create payload omits
+  // `calendar_id`, and LBDS-292's auto-provision takes over).
+  calendarId: ref<number | null>(null),
 };
 
 const currentDate = ref(
@@ -735,6 +827,38 @@ watch(showMobileCalendar, (val) => {
 // (calendarEvents computed defined above in vars/const)
 const isAnonymous = computed(() => authController.isAnonymous());
 
+// LBDS-298 - reactive view of the user's calendar list. The store is
+// populated by `loadCalendars()` on mount; the picker row + popover
+// both read from this computed.
+const calendarList = computed(() => calendarController.getCalendarList());
+
+// LBDS-298 - the calendar name shown in the "Calendario" row.
+// Returns "Sin calendarios" when the user has zero calendars (the
+// row stays rendered but disabled, so the user can see the picker
+// exists and LBDS-292's auto-provision will populate it on the
+// next sync). Falls back to "—" while the list is still loading.
+// When the load itself failed, "Error al cargar" makes the row
+// visually distinct from the "you have no calendars" case so the
+// user knows the picker is broken and not just empty.
+const selectedCalendarName = computed<string>(() => {
+  if (calendarList.value.length === 0) {
+    return calendarLoadError.value ? "Error al cargar" : "Sin calendarios";
+  }
+  const id = event.calendarId.value;
+  if (id === null || id === undefined) return "—";
+  const found = calendarList.value.find((c) => c.id === id);
+  return found?.name ?? "—";
+});
+
+// LBDS-298 F3 - reactive read of the store's load error. When the
+// `GET /calendars` request fails, the store sets `error`; the modal
+// surfaces it next to the picker so the user can tell "the list
+// failed to load" apart from "you have no calendars". The toast
+// the existing `loadCalendars` already logs is a redundant signal.
+const calendarLoadError = computed<string | null>(() => {
+  return useCalendarStore().error
+});
+
 // 9. OnMounted
 onMounted(async () => {
   isMobile.value = window.innerWidth < 768;
@@ -744,6 +868,12 @@ onMounted(async () => {
     setEvent({ event: props.eventData });
   }
   await loadStoredEvents();
+  // LBDS-298 - fetch the user's calendar list and pre-select the
+  // picker. Order matters: `loadCalendars` populates the store, then
+  // `preSelectCalendar` reads from it (the picker row depends on
+  // `calendarList` having loaded before it can render with a name).
+  await loadCalendars();
+  preSelectCalendar();
 });
 
 onUnmounted(() => {
@@ -767,6 +897,88 @@ async function loadStoredEvents(): Promise<void> {
     console.warn("[AdminEventComponent] No events in IndexedDB:", e);
   }
 }
+
+// LBDS-298 - fetches `GET /calendars` and populates the store. The
+// row is hidden when the list is empty; if the request fails we log
+// it and let the picker stay hidden rather than blocking the save
+// flow.
+async function loadCalendars(): Promise<void> {
+  try {
+    await calendarController.getCalendars();
+  } catch (e) {
+    console.warn("[AdminEventComponent] Failed to load calendars:", e);
+  }
+}
+
+// LBDS-298 - chooses which calendar id to pre-select when the modal
+// opens. For create flows, that's the default calendar (the one
+// flagged `default: 1` or the first row). For updates, that's the
+// event's existing `calendar_id` IF that calendar is still in the
+// user's list; otherwise we fall back to the default. With zero
+// calendars the field stays `null` and the picker row is hidden.
+//
+// `incoming === null` is an explicit state: the event was created
+// without a calendar (e.g. before LBDS-292 auto-provision, or
+// because the user deliberately cleared it). On edit we MUST
+// preserve that null - otherwise a no-touch save would silently
+// attach the user to the default calendar and break LBDS-292's
+// contract.
+function preSelectCalendar(): void {
+  const list = calendarList.value;
+  if (list.length === 0) {
+    event.calendarId.value = null;
+    return;
+  }
+  const incoming = props.eventData?.calendar_id;
+  if (incoming === null) {
+    // LBDS-298 F4: explicit null on the incoming event stays null
+    // on edit. The update path then sends `calendar_id: null`,
+    // which `EventController.updateEvent` serialises as the
+    // `null` clear-the-field case (different from the `undefined`
+    // no-op case).
+    event.calendarId.value = null;
+    return;
+  }
+  if (incoming !== undefined && list.some((c) => c.id === incoming)) {
+    event.calendarId.value = incoming;
+    return;
+  }
+  const def = calendarController.getDefaultCalendar();
+  event.calendarId.value = def?.id ?? null;
+}
+
+// LBDS-298 - tapping a row in the popover selects it and closes the
+// popover. Same UX pattern as the time-zone picker.
+const selectCalendar = (params: { id: number }): void => {
+  const { id } = params;
+  event.calendarId.value = id;
+  isOpenPopoverCalendar.value = false;
+};
+
+// LBDS-298 F5 - keyboard a11y path. `ion-radio-group` fires
+// `ion-change` when the user moves the selection via keyboard
+// (arrow keys to focus + Enter/Space to confirm) instead of
+// pointer. Without this handler the visual radio state would
+// change but `event.calendarId` would not, and the popover would
+// stay open - a WCAG 2.1 AA violation. We parse the value (the
+// radio passes the raw string from its `value` attribute, not
+// the typed JS value) and route it through `selectCalendar` so
+// pointer and keyboard paths share the same code.
+const onCalendarRadioChange = (ev: CustomEvent<{ value: number | string | null }>): void => {
+  const next = ev.detail?.value
+  if (typeof next === 'number') {
+    selectCalendar({ id: next })
+    return
+  }
+  if (typeof next === 'string' && next !== '') {
+    const parsed = Number(next)
+    if (!Number.isNaN(parsed)) selectCalendar({ id: parsed })
+  }
+}
+
+const resetCalendar = (): void => {
+  isOpenPopoverCalendar.value = false;
+};
 
 const filterZones = (query: string): void => {
   filteredZones.value = timeZoneNames.filter((name: string) =>
@@ -819,6 +1031,11 @@ async function save(): Promise<void> {
     eventData.description = event.description.value;
     eventData.availability = event.availability.value;
     eventData.timezone = event.timezone.value;
+    // LBDS-298 - propagate the picker selection to the parent so the
+    // controller call sends `calendar_id`. `null` (no calendar, row
+    // hidden) means "let LBDS-292 auto-provision" and is the only
+    // state where the field is omitted from the outgoing payload.
+    eventData.calendar_id = event.calendarId.value;
 
     if (!props.eventData) {
       emits("create", { data: { event: eventData } });
@@ -913,6 +1130,13 @@ function setEvent(params: { event: Event }): void {
   event.timezone.value = eventData.timezone!;
   event.guests.value = Array.isArray(eventData.guests) ? eventData.guests : [];
   event.availability.value = eventData.availability!;
+  // LBDS-298 - hydrate the picker from the existing event. The
+  // preSelectCalendar() pass that runs after `loadCalendars()` will
+  // reconcile this against the live calendar list (falling back to
+  // the default if the event's calendar was deleted).
+  if (eventData.calendar_id !== undefined && eventData.calendar_id !== null) {
+    event.calendarId.value = eventData.calendar_id;
+  }
 }
 
 async function deleteEvent(): Promise<void> {
