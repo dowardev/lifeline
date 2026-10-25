@@ -144,3 +144,18 @@ ion-accordion ion-item {
 ion-accordion > div[slot="content"] {
   background: var(--background-contrast) !important;
 }
+
+/*
+ * LBDS-305 - the calendar select's popover.
+ *
+ * `ion-select` presents its options in an `ion-popover` whose width
+ * defaults to 250px (MD) / 200px (iOS), which truncates the calendar
+ * name and hides the source account. The select passes a `cssClass` to
+ * the popover, so the width can be widened from here - the CSS custom
+ * property does NOT inherit from the `ion-select` element, because the
+ * overlay is rendered outside of it.
+ */
+ion-popover.calendar-select-popover {
+  --width: 24rem;
+  --max-width: 100%;
+}

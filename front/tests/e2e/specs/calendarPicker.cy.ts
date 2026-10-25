@@ -150,39 +150,38 @@ describe('Calendar picker (LBDS-298)', () => {
     stubBackends()
   })
 
-  it('renders the Calendario row when the user has at least one calendar', () => {
+  it('renders the Calendario select when the user has at least one calendar', () => {
     cy.visit('/calendar')
     openAddEventModal()
 
-    // The picker row sits inside the "Otros" card. It must be
-    // present AND enabled so the popover can open.
-    cy.get('ion-item').filter({ hasText: 'Calendario' }).should('exist')
+    // The picker is an `ion-select` inside the "Otros" card, the same
+    // control the availability select uses. It must be present AND
+    // enabled so its popover can open.
+    cy.get('ion-select.calendar-select').should('exist')
       .and('not.have.attr', 'disabled')
     // Pre-selects the default:1 row.
-    cy.get('ion-item').filter({ hasText: 'Calendario' })
-      .find('ion-label[slot="end"]')
+    cy.get('ion-select.calendar-select')
       .invoke('text')
       .should('match', /Personal/)
   })
 
-  it('opens the popover with one ion-radio per calendar and closes after pick', () => {
+  it('opens the select popover with one option per calendar and closes after pick', () => {
     cy.visit('/calendar')
     openAddEventModal()
-    cy.get('ion-item').filter({ hasText: 'Calendario' }).first().click({ force: true })
+    cy.get('ion-select.calendar-select').click({ force: true })
 
-    // The popover should render a radio per calendar.
-    cy.get('ion-popover').filter({ hasText: 'Calendario' }).should('exist')
-    cy.get('ion-popover').filter({ hasText: 'Calendario' })
-      .find('ion-radio')
+    // The select's popover renders one option per calendar.
+    cy.get('ion-select-popover').should('exist')
+    cy.get('ion-select-popover')
+      .find('.select-interface-option')
       .should('have.length', CALENDARS.length)
 
-    // Pick the second calendar. The popover closes and the row
+    // Pick the second calendar. The popover closes and the select
     // reflects the new selection.
-    cy.get('ion-popover').filter({ hasText: 'Calendario' })
-      .find('ion-item').filter({ hasText: 'Trabajo' }).first()
+    cy.get('ion-select-popover')
+      .find('.select-interface-option').filter({ hasText: 'Trabajo' }).first()
       .click({ force: true })
-    cy.get('ion-item').filter({ hasText: 'Calendario' })
-      .find('ion-label[slot="end"]')
+    cy.get('ion-select.calendar-select')
       .invoke('text')
       .should('match', /Trabajo/)
   })
@@ -193,12 +192,12 @@ describe('Calendar picker (LBDS-298)', () => {
     cy.visit('/calendar')
     openAddEventModal()
 
-    // The row is rendered (so the user can see the picker exists)
-    // but disabled (the popover does not open on tap).
-    cy.get('ion-item').filter({ hasText: 'Calendario' }).should('exist')
+    // The select is rendered (so the user can see the picker exists)
+    // but disabled (the popover does not open on tap), and it says
+    // there are no calendars.
+    cy.get('ion-select.calendar-select').should('exist')
       .and('have.attr', 'disabled')
-    cy.get('ion-item').filter({ hasText: 'Calendario' })
-      .find('ion-label[slot="end"]')
+    cy.get('ion-select.calendar-select')
       .invoke('text')
       .should('match', /Sin calendarios/)
   })
@@ -217,29 +216,37 @@ describe('Calendar picker (LBDS-298)', () => {
     }).as('getCalendarsWithSource')
     cy.visit('/calendar')
     openAddEventModal()
-    cy.get('ion-item').filter({ hasText: 'Calendario' }).first().click({ force: true })
+    cy.get('ion-select.calendar-select').click({ force: true })
 
-    // The popover renders one ion-radio per row: the local calendar
-    // AND the mirrored external sources, in the same list.
-    cy.get('ion-popover').filter({ hasText: 'Calendario' }).should('exist')
-    cy.get('ion-popover').filter({ hasText: 'Calendario' })
-      .find('ion-radio')
+    // The select's popover renders one option per row: the local
+    // calendar AND the mirrored external sources, in the same list.
+    cy.get('ion-select-popover').should('exist')
+    cy.get('ion-select-popover')
+      .find('.select-interface-option')
       .should('have.length', CALENDARS_WITH_SOURCE.length)
 
-    // The mirrored rows are selectable like any other row: the
-    // external calendars are offered to the user, not hidden.
-    cy.get('ion-popover').filter({ hasText: 'Calendario' })
-      .find('ion-item').filter({ hasText: 'Work' })
+    // A mirrored option carries the kind of its source and the
+    // account, so two Google accounts with the same calendar name
+    // are told apart.
+    cy.get('ion-select-popover')
+      .find('.select-interface-option').filter({ hasText: 'alice@gmail.com' })
       .should('exist')
-      .and('not.have.attr', 'disabled')
+    cy.get('ion-select-popover')
+      .find('.select-interface-option').filter({ hasText: 'Google' })
+      .should('exist')
 
-    // Picking a mirrored source closes the popover and the row
+    // The local option keeps just the calendar name.
+    cy.get('ion-select-popover')
+      .find('.select-interface-option').filter({ hasText: 'Personal' })
+      .invoke('text')
+      .should('not.match', /Google|CalDAV/)
+
+    // Picking a mirrored source closes the popover and the select
     // reflects the new selection.
-    cy.get('ion-popover').filter({ hasText: 'Calendario' })
-      .find('ion-item').filter({ hasText: 'Work' }).first()
+    cy.get('ion-select-popover')
+      .find('.select-interface-option').filter({ hasText: 'Work' }).first()
       .click({ force: true })
-    cy.get('ion-item').filter({ hasText: 'Calendario' })
-      .find('ion-label[slot="end"]')
+    cy.get('ion-select.calendar-select')
       .invoke('text')
       .should('match', /Work/)
   })
