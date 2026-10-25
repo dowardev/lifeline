@@ -5,6 +5,8 @@
 
 namespace App\Providers;
 
+use App\Models\CalendarSource;
+use App\Observers\CalendarSourceMirrorObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -19,6 +21,11 @@ class EventServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        // LBDS-305 - the mirror observer keeps `calendars` in sync
+        // with `calendar_sources` so the event modal's picker can
+        // show external sources alongside local calendars. Registered
+        // here (rather than in `AppServiceProvider`) because that is
+        // the Laravel-idiomatic place for Eloquent observer wiring.
+        CalendarSource::observe(CalendarSourceMirrorObserver::class);
     }
 }

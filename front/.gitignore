@@ -38,3 +38,7 @@ npm-debug.log*
 !.env.*.example
 # Local Pi runtime state
 .atl/
+
+# Cypress test failure artifacts
+tests/e2e/screenshots/
+tests/e2e/videos/

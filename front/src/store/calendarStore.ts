@@ -24,6 +24,28 @@ export interface CalendarItem {
   user_id: number
   name: string
   default: number
+  // LBDS-305 - mirror link to `calendar_sources.id`. Null for the
+  // legacy local rows; non-null for rows that mirror an external
+  // source. The lifecycle is driven server-side by
+  // `CalendarSourceMirrorObserver`.
+  source_id: number | null
+  // LBDS-305 - metadata of the source this row mirrors. Null for
+  // the local rows. `type` is the kind (google / caldav / ics) and
+  // `username` the account, so a consumer can tell two accounts
+  // apart when they share a calendar name. The events table and
+  // LBDS-293 read this; the picker does not need it to list them.
+  source: {
+    id: number
+    type: 'ics' | 'caldav' | 'google'
+    name: string
+    color: string
+    username: string | null
+  } | null
+  // LBDS-305 - ISO 8601 when the row's source was disconnected, null
+  // otherwise. The picker uses `selectable` (derived) as the single
+  // source of truth for whether the row should appear.
+  archived_at: string | null
+  selectable: boolean
 }
 
 /**
@@ -69,14 +91,19 @@ export const useCalendarStore = defineStore('calendar', () => {
    * calendars (the picker hides itself and the create payload omits
    * `calendar_id` so LBDS-292's auto-provision takes over server-side).
    *
+   * LBDS-305 - archived mirrors (`selectable: false`) are skipped so
+   * the picker does not pre-select a row that was disconnected on
+   * the server. Local rows are always selectable.
+   *
    * `default` arrives as a number from the JSON Resource (the
    * Eloquent `$casts` `default => boolean` is for the model's PHP
    * surface; the JSON shape is still `0|1`).
    */
   const defaultCalendar = computed<CalendarItem | null>(() => {
-    if (calendars.value.length === 0) return null
-    const flagged = calendars.value.find((c) => Number(c.default) === 1)
-    return flagged ?? calendars.value[0] ?? null
+    const selectable = calendars.value.filter((c) => c.selectable)
+    if (selectable.length === 0) return null
+    const flagged = selectable.find((c) => Number(c.default) === 1)
+    return flagged ?? selectable[0] ?? null
   })
 
   function setCalendars(params: { calendars: CalendarItem[] }): void {

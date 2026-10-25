@@ -20,8 +20,14 @@ class CalendarController extends Controller
 
         $perPage = $request->input('per_page', 50);
 
+        // LBDS-305 - `with('source')` so the resource can embed the
+        // source block (type / username / color) in one round-trip.
+        // Without eager-loading, every row in the picker would issue
+        // a separate SELECT against `calendar_sources`. The relation
+        // is `belongsTo`, so missing sources (legacy local rows) come
+        // back as null and the resource renders `source: null`.
         $calendars = Calendar::where('user_id', $request->user()->id)
-            ->select('id', 'name', 'default')
+            ->with('source:id,type,name,color,username')
             ->paginate($perPage);
 
         return CalendarResource::collection($calendars);

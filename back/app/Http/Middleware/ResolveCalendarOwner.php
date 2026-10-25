@@ -9,6 +9,7 @@ use App\Models\CalendarSource;
 use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
 use App\Models\ExternalTask;
+use App\Models\User;
 use App\Support\GuestToken;
 use Closure;
 use Dowardev\SsoServer\Middleware\SsoAuthMiddleware;
@@ -94,7 +95,24 @@ class ResolveCalendarOwner
             return;
         }
         $guestOwner = 'guest:' . $guestId;
-        CalendarSource::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
+
+        // LBDS-305 - the guest's sources become the user's sources, and
+        // they were created without a `user_id` (a guest has no `users`
+        // row, so the mirror could not be created for them). Link them
+        // now so the observer creates the picker row.
+        //
+        // The save is per model (not a mass `update()`) so the
+        // `CalendarSource` observer fires. The `users` row may not
+        // exist yet; when it does, `ResolveSsoUser` links the sources.
+        $userId = User::where('sso_sub', $sub)->value('id');
+        foreach (CalendarSource::where('sso_sub', $guestOwner)->get() as $source) {
+            $source->sso_sub = $sub;
+            if ($userId !== null) {
+                $source->user_id = $userId;
+            }
+            $source->save();
+        }
+
         ExternalEvent::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
         ExternalContact::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
         ExternalTask::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);

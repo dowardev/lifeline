@@ -516,7 +516,7 @@
         </ion-header>
 
         <ion-content class="ion-padding">
-          <div v-if="calendarList.length === 0" class="ion-padding">
+          <div v-if="selectableCalendarList.length === 0" class="ion-padding">
             <ion-note v-if="calendarLoadError" color="warning">
               <ion-icon :icon="warningOutline" style="vertical-align: middle"></ion-icon>
               No se pudo cargar la lista de calendarios: {{ calendarLoadError }}.
@@ -544,9 +544,15 @@
               @ion-change for keyboard navigation (arrow keys +
               Enter/Space, required for WCAG 2.1 AA). The radio's
               :value binding keeps the visual state in sync.
+
+              LBDS-305: the list mixes the local calendars with the
+              mirrored external sources (Google / CalDAV / ICS) in
+              one unified list. The source kind and account are
+              already in the API (`cal.source`), so showing them
+              inline is a pure design decision - tracked separately.
             -->
             <ion-item
-              v-for="cal in calendarList"
+              v-for="cal in selectableCalendarList"
               :key="cal.id"
               button
               @click="selectCalendar({ id: cal.id })"
@@ -557,12 +563,86 @@
                 justify="start"
                 >{{ cal.name }}</ion-radio
               >
+              <!--
+                LBDS-305: the source indicator. It is an ICON-ONLY
+                button (not a text badge): a text badge truncated the
+                calendar name ("Google C…"), because the picker is
+                only 22rem wide. The icon carries the same signal in
+                a fraction of the space, and the details (kind,
+                account) open in a popover on tap.
+              -->
+              <ion-button
+                v-if="cal.source"
+                slot="end"
+                fill="clear"
+                class="calendar-source-trigger"
+                :id="`source-trigger-${cal.id}`"
+                :aria-label="`Fuente de ${cal.name}`"
+                @click.stop="openSourcePopover({ id: cal.id, event: $event })"
+              >
+                <span
+                  class="calendar-source-trigger-dot"
+                  :style="{
+                    background: cal.source.color,
+                    color: pickForegroundColor(cal.source.color),
+                  }"
+                >
+                  <ion-icon :icon="sourceKindIcon({ type: cal.source.type })"></ion-icon>
+                </span>
+              </ion-button>
             </ion-item>
           </ion-radio-group>
         </ion-content>
       </ion-popover>
-      <!-- end popovers -->
 
+      <!--
+        LBDS-305 - the source detail popover. It is a SIBLING of the
+        calendar picker popover (not nested inside it) so the two
+        overlays stack cleanly: the picker stays open behind it and
+        the user can dismiss the detail and keep browsing.
+      -->
+      <ion-popover
+        class="calendar-source-popover"
+        style="--width: 17rem"
+        :is-open="openSourceId !== null"
+        :event="sourcePopoverEvent"
+        side="bottom"
+        alignment="start"
+        :backdrop-dismiss="true"
+        @will-dismiss="closeSourcePopover()"
+      >
+        <ion-content class="ion-padding">
+          <div v-if="openSource && openSource.source" class="calendar-source-card">
+            <div class="calendar-source-card-head">
+              <span
+                class="calendar-source-card-icon"
+                :style="{
+                  background: openSource.source.color,
+                  color: pickForegroundColor(openSource.source.color),
+                }"
+              >
+                <ion-icon :icon="sourceKindIcon({ type: openSource.source.type })"></ion-icon>
+              </span>
+              <div class="calendar-source-card-titles">
+                <div class="calendar-source-card-kind">
+                  {{ sourceKindLabel({ type: openSource.source.type }) }}
+                </div>
+                <div class="calendar-source-card-name">{{ openSource.name }}</div>
+              </div>
+            </div>
+
+            <div v-if="openSource.source.username" class="calendar-source-card-account">
+              <ion-icon :icon="personCircleOutline"></ion-icon>
+              <span>{{ openSource.source.username }}</span>
+            </div>
+
+            <p class="calendar-source-card-note">
+              {{ sourceKindNote({ type: openSource.source.type }) }}
+            </p>
+          </div>
+        </ion-content>
+      </ion-popover>
+      <!-- end popovers -->
       <!-- modals -->
       <ion-modal ref="modalDatetimeAvailability" :keep-contents-mounted="true">
         <ion-header :translucent="true" mode="ios" class="ion-no-border">
@@ -643,6 +723,10 @@ import {
   arrowBackOutline,
   arrowForwardOutline,
   closeOutline,
+  cloudOutline,
+  globeOutline,
+  logoGoogle,
+  personCircleOutline,
   saveOutline,
   trashOutline,
   todayOutline,
@@ -655,6 +739,7 @@ import {
   translateReminderOffset,
   normalizeOffsetCodes,
 } from "@/utils/reminders";
+import { pickForegroundColor } from "@/utils/colorContrast";
 import { useCalendarStore } from "@/store/calendarStore";
 
 // 2. Controllers / Composables
@@ -674,6 +759,7 @@ import RemindersComponent from "../reminders/RemindersComponent.vue";
 // 4. Interface and types imports
 import type { EventReminderRepeat, Event } from "@/utils/interfaces";
 import type { EventItem } from "@/store/eventStore";
+import type { CalendarItem } from "@/store/calendarStore";
 
 // 5. Main (props, emits)
 const props = defineProps({
@@ -832,6 +918,90 @@ const isAnonymous = computed(() => authController.isAnonymous());
 // both read from this computed.
 const calendarList = computed(() => calendarController.getCalendarList());
 
+// LBDS-305 - the picker must not offer rows whose source was
+// disconnected (`selectable: false`). Filtering here means the
+// empty state, the row count, and the radio list all see the same
+// set. Archived rows still exist in the store so the events table
+// can resolve their names, but they are ghost rows for the picker.
+const selectableCalendarList = computed(() =>
+  calendarList.value.filter((c) => c.selectable),
+);
+
+// LBDS-305 - the source whose detail popover is open. `null` means
+// closed. The detail lives in a SECOND popover (a sibling of the
+// picker) so the picker stays open behind it and the user can read
+// the source and go back to browsing without losing the list.
+const openSourceId = ref<number | null>(null);
+
+// The click that opened it. Ionic anchors the popover to the event's
+// target, so the detail opens RIGHT AT the indicator - the same
+// place the `ion-select` of this form opens its own popover - instead
+// of floating in the middle of the screen.
+const sourcePopoverEvent = ref<Event | null>(null);
+
+// The row whose detail popover is open. It looks the row up in the
+// SAME list the picker renders (`selectableCalendarList`), so the
+// detail can never show a row the picker is not offering (an
+// archived mirror, for instance).
+const openSource = computed<CalendarItem | null>(() => {
+  if (openSourceId.value === null) return null;
+  return selectableCalendarList.value.find((c) => c.id === openSourceId.value) ?? null;
+});
+
+function openSourcePopover(params: { id: number; event: Event }): void {
+  sourcePopoverEvent.value = params.event;
+  openSourceId.value = params.id;
+}
+
+function closeSourcePopover(): void {
+  openSourceId.value = null;
+  sourcePopoverEvent.value = null;
+}
+
+// LBDS-305 - the kind of the source: the icon of the indicator dot
+// and the title of the detail popover.
+const sourceKindLabel = (params: { type: string | null }): string => {
+  switch (params.type) {
+    case "google":
+      return "Google";
+    case "caldav":
+      return "CalDAV";
+    case "ics":
+      return "Suscripción";
+    default:
+      return "Fuente externa";
+  }
+};
+
+const sourceKindIcon = (params: { type: string | null }): string => {
+  switch (params.type) {
+    case "google":
+      return logoGoogle;
+    case "caldav":
+      return cloudOutline;
+    case "ics":
+      return globeOutline;
+    default:
+      return globeOutline;
+  }
+};
+
+// One line of context about what the calendar is. It answers the
+// question the kind alone leaves open: where does this come from and
+// what happens to the events.
+const sourceKindNote = (params: { type: string | null }): string => {
+  switch (params.type) {
+    case "google":
+      return "Se sincroniza con tu cuenta de Google Calendar.";
+    case "caldav":
+      return "Se sincroniza con un servidor CalDAV.";
+    case "ics":
+      return "Es una suscripción de solo lectura.";
+    default:
+      return "Se sincroniza con una fuente externa.";
+  }
+};
+
 // LBDS-298 - the calendar name shown in the "Calendario" row.
 // Returns "Sin calendarios" when the user has zero calendars (the
 // row stays rendered but disabled, so the user can see the picker
@@ -907,6 +1077,11 @@ async function loadCalendars(): Promise<void> {
     await calendarController.getCalendars();
   } catch (e) {
     console.warn("[AdminEventComponent] Failed to load calendars:", e);
+  } finally {
+    // LBDS-305 - the list may have changed (a source disconnected
+    // while its detail was open), so the open detail is dropped
+    // instead of pointing at a row that is no longer offered.
+    closeSourcePopover();
   }
 }
 
@@ -978,6 +1153,10 @@ const onCalendarRadioChange = (ev: CustomEvent<{ value: number | string | null }
 
 const resetCalendar = (): void => {
   isOpenPopoverCalendar.value = false;
+  // LBDS-305 - closing the picker must also close the source detail
+  // popover. Otherwise it stays on screen with stale content, and the
+  // next time the picker opens the detail comes back up on its own.
+  closeSourcePopover();
 };
 
 const filterZones = (query: string): void => {
@@ -1203,5 +1382,101 @@ async function deleteEvent(): Promise<void> {
   --padding-end: 0;
   height: 100%;
   overflow: auto;
+}
+
+/*
+ * LBDS-305 - the source indicator on each mirrored calendar row.
+ *
+ * It is an icon-only dot on purpose: a text badge squeezed the
+ * calendar name in the 22rem picker ("Google C…"). The dot keeps the
+ * row intact and the details (kind, account) open in a popover.
+ *
+ * The dot is painted with the source color (chosen by the user) and
+ * its icon uses the foreground that reaches the better WCAG contrast
+ * ratio against that color, so it stays readable whatever the color.
+ */
+.calendar-source-trigger {
+  --padding-start: 0.25rem;
+  --padding-end: 0.25rem;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  height: 2rem;
+  margin: 0;
+  z-index: 2;
+}
+
+.calendar-source-trigger-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+/*
+ * LBDS-305 - the source detail card inside its own popover.
+ */
+.calendar-source-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.calendar-source-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.calendar-source-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.calendar-source-card-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.calendar-source-card-kind {
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.calendar-source-card-name {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-source-card-account {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ion-color-step-100, rgba(0, 0, 0, 0.08));
+  overflow-wrap: anywhere;
+}
+
+.calendar-source-card-note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  opacity: 0.65;
 }
 </style>

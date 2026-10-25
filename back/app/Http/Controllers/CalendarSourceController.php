@@ -15,6 +15,7 @@ use App\Services\CalendarSyncService;
 use App\Support\GuestToken;
 use App\Traits\ValidatesPublicUrl;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CalendarSourceController extends Controller
 {
@@ -34,7 +35,7 @@ class CalendarSourceController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'type' => 'required|string|in:ics,caldav',
+            'type' => ['required', 'string', 'in:' . implode(',', CalendarSource::MANUAL_TYPES)],
             'name' => 'required|string|max:255',
             'url' => 'required|url|max:2048',
             'username' => 'nullable|string|max:255',
@@ -46,8 +47,31 @@ class CalendarSourceController extends Controller
         $this->assertPublicHttpUrl($data['url']);
         $this->assertQuota($request);
         $this->assertNotDuplicate($request, $data);
+        $ownerSub = $this->ssoSub($request);
+        // LBDS-305 - denormalize the `users.id` matching the SSO sub
+        // at creation. The mirror observer reads `user_id` directly
+        // (no `users` lookup) to decide whether to create a
+        // `calendars` mirror row. Stays NULL for guest sources
+        // (`guest:` prefix), which the observer then skips.
+        // F2 - try SSO sub first, then fall back to the authenticated
+        // request user so a legitimate user is not left without a mirror
+        // when the SSO sub lookup misses (e.g. first login before user
+        // row exists). Guest sources (no `users` row at all) stay on
+        // the documented skip path.
+        $ownerUserId = \App\Models\User::where('sso_sub', $ownerSub)->value('id');
+        if ($ownerUserId === null && ! str_starts_with($ownerSub, 'guest:')) {
+            $requestUser = $request->user();
+            if ($requestUser !== null) {
+                $ownerUserId = $requestUser->id;
+            }
+        }
+        if ($ownerUserId === null && ! str_starts_with($ownerSub, 'guest:')) {
+            Log::warning('LBDS-305 mirror skipped: could not resolve user_id for sso_sub', [
+                'sso_sub' => $ownerSub,
+            ]);
+        }
         $source = new CalendarSource([
-            'sso_sub' => $this->ssoSub($request),
+            'sso_sub' => $ownerSub,
             'sso_iss' => null,
             'type' => $data['type'],
             'name' => $data['name'],
@@ -58,6 +82,7 @@ class CalendarSourceController extends Controller
                 : null,
             'color' => $data['color'] ?? '#3880ff',
             'is_active' => $data['is_active'] ?? true,
+            'user_id' => $ownerUserId,
         ]);
         $source->save();
 
