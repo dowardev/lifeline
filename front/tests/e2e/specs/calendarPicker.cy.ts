@@ -200,6 +200,10 @@ describe('Calendar picker (LBDS-298)', () => {
     cy.get('ion-select.calendar-select')
       .invoke('text')
       .should('match', /Sin calendarios/)
+    // LBDS-305: with the `ion-select` there is no popover to explain
+    // the case, so the note lives next to the control.
+    cy.get('ion-note.calendar-select-note').should('exist')
+      .and('contain', 'LBDS-292')
   })
 
   it('LBDS-305: lists the mirrored external sources in the same picker', () => {

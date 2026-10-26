@@ -223,6 +223,26 @@
                             :value="cal.id"
                           >{{ calendarOptionLabel({ cal }) }}</ion-select-option>
                         </ion-select>
+
+                        <!--
+                          LBDS-305: the old custom popover explained the
+                          zero-calendars case inside itself. With the
+                          `ion-select` there is no popover to open, so
+                          the note lives next to the control - otherwise
+                          the user only sees a disabled "Sin calendarios"
+                          without knowing what happens to the event.
+                        -->
+                        <ion-note
+                          v-if="
+                            selectableCalendarList.length === 0 &&
+                            !calendarLoadError
+                          "
+                          class="calendar-select-note"
+                        >
+                          No tenés calendarios. El evento se creará con
+                          <strong>calendar_id</strong> vacío; LBDS-292 lo
+                          auto-provisionará en el primer sync.
+                        </ion-note>
                       </ion-item>
 
                       <!-- guests -->
@@ -320,9 +340,6 @@
                           :interface="
                             isPlatform('desktop') ? 'popover' : 'alert'
                           "
-                          :interface-options="{
-                            cssClass: 'calendar-select-popover',
-                          }"
                           @ion-change="
                             event.availability.value = $event.target
                               .value as string
@@ -1187,5 +1204,13 @@ async function deleteEvent(): Promise<void> {
  */
 .calendar-select {
   --max-width: 100%;
+}
+
+/* LBDS-305 - the note under the select when the user has no calendars. */
+.calendar-select-note {
+  display: block;
+  padding: 0 1rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 </style>
