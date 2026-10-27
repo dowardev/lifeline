@@ -83,5 +83,11 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
+    // The default 5s timeout is not enough for the component mounts on
+    // a loaded machine: the Ionic components take seconds to hydrate,
+    // and the spec was timing out on files that pass in isolation.
+    // 20s leaves room for a slow CI container without hiding a real
+    // hang (a genuinely stuck test still fails, just later).
+    testTimeout: 20000,
   },
 });

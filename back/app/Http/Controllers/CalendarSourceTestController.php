@@ -5,6 +5,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CalendarSource;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
@@ -15,7 +16,10 @@ class CalendarSourceTestController extends Controller
     public function __invoke(Request $request)
     {
         $request->validate([
-            'type' => 'required|string|in:ics,caldav',
+            // P3 - the test endpoint probes the same kinds a user can
+            // actually create, so the validated set is the shared
+            // constant instead of a duplicated literal.
+            'type' => ['required', 'string', 'in:' . implode(',', CalendarSource::MANUAL_TYPES)],
             'url' => 'required|url|max:2048',
             'username' => 'nullable|string|max:255',
             'password' => 'nullable|string|max:1024',

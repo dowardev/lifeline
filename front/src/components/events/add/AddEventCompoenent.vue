@@ -188,17 +188,61 @@
 
                     <ion-card class="shadow1">
                       <!-- calendar -->
-                      <ion-item
-                        button
-                        class="transparent"
-                        lines="full"
-                        :disabled="calendarList.length === 0"
-                        @click="isOpenPopoverCalendar = true"
-                      >
-                        <ion-label>Calendario</ion-label>
-                        <ion-label slot="end" class="ion-text-wrap">{{
-                          selectedCalendarName
-                        }}</ion-label>
+                      <ion-item lines="full" class="transparent">
+                        <ion-select
+                          class="calendar-select"
+                          label="Calendario"
+                          :placeholder="calendarPlaceholder"
+                          ok-text="Confirmar"
+                          cancel-text="Cancelar"
+                          :value="event.calendarId.value"
+                          :disabled="selectableCalendarList.length === 0"
+                          :interface="
+                            isPlatform('desktop') ? 'popover' : 'alert'
+                          "
+                          :interface-options="{
+                            cssClass: 'calendar-select-popover',
+                          }"
+                          @ion-change="onCalendarSelectChange($event)"
+                        >
+                          <!--
+                            LBDS-305: one option per calendar, local and
+                            mirrored alike.
+
+                            `ion-select` renders every option as TEXT
+                            (`<ion-radio>{option.textContent}</ion-radio>`),
+                            so the source kind and the account go in the
+                            label itself - there is no markup to put an
+                            icon or a color in. That is what tells two
+                            Google accounts with the same calendar name
+                            apart.
+                          -->
+                          <ion-select-option
+                            v-for="cal in selectableCalendarList"
+                            :key="cal.id"
+                            :value="cal.id"
+                          >{{ calendarOptionLabel({ cal }) }}</ion-select-option>
+                        </ion-select>
+
+                        <!--
+                          LBDS-305: the old custom popover explained the
+                          zero-calendars case inside itself. With the
+                          `ion-select` there is no popover to open, so
+                          the note lives next to the control - otherwise
+                          the user only sees a disabled "Sin calendarios"
+                          without knowing what happens to the event.
+                        -->
+                        <ion-note
+                          v-if="
+                            selectableCalendarList.length === 0 &&
+                            !calendarLoadError
+                          "
+                          class="calendar-select-note"
+                        >
+                          No tenés calendarios. El evento se creará con
+                          <strong>calendar_id</strong> vacío; LBDS-292 lo
+                          auto-provisionará en el primer sync.
+                        </ion-note>
                       </ion-item>
 
                       <!-- guests -->
@@ -497,72 +541,7 @@
         </ion-content>
       </ion-popover>
 
-      <!-- popover calendar -->
-      <ion-popover
-        style="--width: 22rem"
-        :is-open="isOpenPopoverCalendar"
-        :backdrop-dismiss="false"
-        @will-dismiss="resetCalendar()"
-      >
-        <ion-header mode="ios">
-          <ion-toolbar>
-            <ion-buttons slot="start">
-              <ion-button @click="isOpenPopoverCalendar = false">
-                <ion-icon :icon="closeOutline"></ion-icon>
-              </ion-button>
-            </ion-buttons>
-            <ion-title>Calendario</ion-title>
-          </ion-toolbar>
-        </ion-header>
-
-        <ion-content class="ion-padding">
-          <div v-if="calendarList.length === 0" class="ion-padding">
-            <ion-note v-if="calendarLoadError" color="warning">
-              <ion-icon :icon="warningOutline" style="vertical-align: middle"></ion-icon>
-              No se pudo cargar la lista de calendarios: {{ calendarLoadError }}.
-              Probá cerrar y reabrir el modal.
-            </ion-note>
-            <ion-note v-else>
-              No tenés calendarios. El evento se creará con
-              <strong>calendar_id</strong> vacío; LBDS-292 lo
-              auto-provisionará en el primer sync.
-            </ion-note>
-          </div>
-          <ion-radio-group
-            v-else
-            :value="event.calendarId.value"
-            @ion-change="onCalendarRadioChange($event)"
-          >
-            <!--
-              LBDS-298 F5: a single tap fires both the @click on
-              the item AND the @ion-change on the radio group.
-              The earlier implementation had both handlers write
-              to `event.calendarId` independently, which created
-              two divergent code paths and a race on popover
-              dismissal. We now route BOTH paths through
-              `selectCalendar`: @click for pointer taps, and
-              @ion-change for keyboard navigation (arrow keys +
-              Enter/Space, required for WCAG 2.1 AA). The radio's
-              :value binding keeps the visual state in sync.
-            -->
-            <ion-item
-              v-for="cal in calendarList"
-              :key="cal.id"
-              button
-              @click="selectCalendar({ id: cal.id })"
-            >
-              <ion-radio
-                :value="cal.id"
-                label-placement="end"
-                justify="start"
-                >{{ cal.name }}</ion-radio
-              >
-            </ion-item>
-          </ion-radio-group>
-        </ion-content>
-      </ion-popover>
       <!-- end popovers -->
-
       <!-- modals -->
       <ion-modal ref="modalDatetimeAvailability" :keep-contents-mounted="true">
         <ion-header :translucent="true" mode="ios" class="ion-no-border">
@@ -643,6 +622,7 @@ import {
   arrowBackOutline,
   arrowForwardOutline,
   closeOutline,
+  personCircleOutline,
   saveOutline,
   trashOutline,
   todayOutline,
@@ -674,6 +654,7 @@ import RemindersComponent from "../reminders/RemindersComponent.vue";
 // 4. Interface and types imports
 import type { EventReminderRepeat, Event } from "@/utils/interfaces";
 import type { EventItem } from "@/store/eventStore";
+import type { CalendarItem } from "@/store/calendarStore";
 
 // 5. Main (props, emits)
 const props = defineProps({
@@ -699,7 +680,6 @@ const emailGuest = ref("");
 // LBDS-298 - calendar picker state. The row is hidden when the user
 // has zero calendars; otherwise it shows the picked calendar's name
 // and opens a popover with one `ion-radio` per calendar.
-const isOpenPopoverCalendar = ref(false);
 const event = {
   name: ref(""),
   description: ref(""),
@@ -832,23 +812,66 @@ const isAnonymous = computed(() => authController.isAnonymous());
 // both read from this computed.
 const calendarList = computed(() => calendarController.getCalendarList());
 
-// LBDS-298 - the calendar name shown in the "Calendario" row.
-// Returns "Sin calendarios" when the user has zero calendars (the
-// row stays rendered but disabled, so the user can see the picker
-// exists and LBDS-292's auto-provision will populate it on the
-// next sync). Falls back to "—" while the list is still loading.
-// When the load itself failed, "Error al cargar" makes the row
-// visually distinct from the "you have no calendars" case so the
-// user knows the picker is broken and not just empty.
-const selectedCalendarName = computed<string>(() => {
-  if (calendarList.value.length === 0) {
-    return calendarLoadError.value ? "Error al cargar" : "Sin calendarios";
-  }
-  const id = event.calendarId.value;
-  if (id === null || id === undefined) return "—";
-  const found = calendarList.value.find((c) => c.id === id);
-  return found?.name ?? "—";
+// LBDS-305 - the picker must not offer rows whose source was
+// disconnected (`selectable: false`). Filtering here means the
+// empty state, the row count, and the radio list all see the same
+// set. Archived rows still exist in the store so the events table
+// can resolve their names, but they are ghost rows for the picker.
+const selectableCalendarList = computed(() =>
+  calendarList.value.filter((c) => c.selectable),
+);
+
+// LBDS-305 - the placeholder of the calendar select. It doubles as
+// the error surface: when the list could not be loaded the user
+// sees WHY instead of a bare "Sin calendarios" that would look like
+// an empty account.
+const calendarPlaceholder = computed<string>(() => {
+  if (calendarLoadError.value) return "Error al cargar";
+  if (selectableCalendarList.value.length === 0) return "Sin calendarios";
+  return "Elegí un calendario";
 });
+
+// LBDS-305 - the select's own change handler. `ion-select` gives the
+// typed value on `detail.value`; the option carries the calendar id.
+const onCalendarSelectChange = (ev: CustomEvent<{ value: number | string | null }>): void => {
+  const next = ev.detail?.value;
+  if (next === null || next === undefined || next === "") {
+    event.calendarId.value = null;
+    return;
+  }
+  const id = Number(next);
+  if (Number.isNaN(id)) return;
+  event.calendarId.value = id;
+};
+
+// LBDS-305 - the label of a calendar option.
+//
+// `ion-select` renders the options as plain text, so the source kind
+// and the account are part of the label: "Google Calendar (Google) ·
+// alice@gmail.com". The account is what tells two accounts with the
+// same calendar name apart.
+const calendarOptionLabel = (params: { cal: CalendarItem }): string => {
+  const { cal } = params;
+  if (!cal.source) return cal.name;
+  const kind = sourceKindLabel({ type: cal.source.type });
+  const account = cal.source.username;
+  return account ? `${cal.name} (${kind}) · ${account}` : `${cal.name} (${kind})`;
+};
+
+// LBDS-305 - the kind of the source, shown in the option label.
+const sourceKindLabel = (params: { type: string | null }): string => {
+  switch (params.type) {
+    case "google":
+      return "Google";
+    case "caldav":
+      return "CalDAV";
+    case "ics":
+      return "Suscripción";
+    default:
+      return "Fuente externa";
+  }
+};
+
 
 // LBDS-298 F3 - reactive read of the store's load error. When the
 // `GET /calendars` request fails, the store sets `error`; the modal
@@ -946,39 +969,6 @@ function preSelectCalendar(): void {
   const def = calendarController.getDefaultCalendar();
   event.calendarId.value = def?.id ?? null;
 }
-
-// LBDS-298 - tapping a row in the popover selects it and closes the
-// popover. Same UX pattern as the time-zone picker.
-const selectCalendar = (params: { id: number }): void => {
-  const { id } = params;
-  event.calendarId.value = id;
-  isOpenPopoverCalendar.value = false;
-};
-
-// LBDS-298 F5 - keyboard a11y path. `ion-radio-group` fires
-// `ion-change` when the user moves the selection via keyboard
-// (arrow keys to focus + Enter/Space to confirm) instead of
-// pointer. Without this handler the visual radio state would
-// change but `event.calendarId` would not, and the popover would
-// stay open - a WCAG 2.1 AA violation. We parse the value (the
-// radio passes the raw string from its `value` attribute, not
-// the typed JS value) and route it through `selectCalendar` so
-// pointer and keyboard paths share the same code.
-const onCalendarRadioChange = (ev: CustomEvent<{ value: number | string | null }>): void => {
-  const next = ev.detail?.value
-  if (typeof next === 'number') {
-    selectCalendar({ id: next })
-    return
-  }
-  if (typeof next === 'string' && next !== '') {
-    const parsed = Number(next)
-    if (!Number.isNaN(parsed)) selectCalendar({ id: parsed })
-  }
-}
-
-const resetCalendar = (): void => {
-  isOpenPopoverCalendar.value = false;
-};
 
 const filterZones = (query: string): void => {
   filteredZones.value = timeZoneNames.filter((name: string) =>
@@ -1203,5 +1193,24 @@ async function deleteEvent(): Promise<void> {
   --padding-end: 0;
   height: 100%;
   overflow: auto;
+}
+
+/*
+ * LBDS-305 - the calendar select.
+ *
+ * The select lists the local calendars and the mirrored external
+ * sources in ONE list. `ion-select` renders each option as text, so
+ * the source kind and the account travel in the option label.
+ */
+.calendar-select {
+  --max-width: 100%;
+}
+
+/* LBDS-305 - the note under the select when the user has no calendars. */
+.calendar-select-note {
+  display: block;
+  padding: 0 1rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 </style>

@@ -11,8 +11,34 @@ const serverRows: Array<{
   user_id: number
   name: string
   default: number
+  source_id: number | null
+  source: null
+  archived_at: null
+  selectable: boolean
 }> = []
 let nextServerRows: unknown = { data: [] }
+
+// LBDS-305 - the picker contract now carries source metadata +
+// `selectable`. The existing tests are about the local-only path
+// (no source), so this helper applies the LBDS-305 defaults for
+// a local row: no source link, no archive, selectable. Each
+// fixture spreads it so the new fields stay implicit in the test
+// data and the new spec can exercise the merged-shape.
+const localRow = (params: {
+  id: number
+  user_id: number
+  name: string
+  default: number
+}) => ({
+  id: params.id,
+  user_id: params.user_id,
+  name: params.name,
+  default: params.default,
+  source_id: null,
+  source: null,
+  archived_at: null,
+  selectable: true,
+})
 
 vi.mock('@/services/apiClient', () => ({
   apiClient: {
@@ -58,9 +84,9 @@ describe('useCalendarStore - defaultCalendar', () => {
     const store = useCalendarStore()
     store.setCalendars({
       calendars: [
-        { id: 11, user_id: 7, name: 'Personal', default: 0 },
-        { id: 12, user_id: 7, name: 'Trabajo', default: 1 },
-        { id: 13, user_id: 7, name: 'Side', default: 0 },
+        localRow({ id: 11, user_id: 7, name: 'Personal', default: 0 }),
+        localRow({ id: 12, user_id: 7, name: 'Trabajo', default: 1 }),
+        localRow({ id: 13, user_id: 7, name: 'Side', default: 0 }),
       ],
     })
     expect(store.defaultCalendar).not.toBeNull()
@@ -72,8 +98,8 @@ describe('useCalendarStore - defaultCalendar', () => {
     const store = useCalendarStore()
     store.setCalendars({
       calendars: [
-        { id: 21, user_id: 7, name: 'A', default: 0 },
-        { id: 22, user_id: 7, name: 'B', default: 0 },
+        localRow({ id: 21, user_id: 7, name: 'A', default: 0 }),
+        localRow({ id: 22, user_id: 7, name: 'B', default: 0 }),
       ],
     })
     expect(store.defaultCalendar?.id).toBe(21)
@@ -86,11 +112,46 @@ describe('useCalendarStore - defaultCalendar', () => {
     const store = useCalendarStore()
     store.setCalendars({
       calendars: [
-        { id: 31, user_id: 7, name: 'X', default: 1 },
-        { id: 32, user_id: 7, name: 'Y', default: 0 },
+        localRow({ id: 31, user_id: 7, name: 'X', default: 1 }),
+        localRow({ id: 32, user_id: 7, name: 'Y', default: 0 }),
       ],
     })
     expect(store.defaultCalendar?.id).toBe(31)
+  })
+
+  it('LBDS-305: picks a mirror as the default over an archived local row', () => {
+    // Archived mirrors (`selectable: false`) must not be pre-selected;
+    // the picker falls back to the first selectable row instead.
+    const store = useCalendarStore()
+    store.setCalendars({
+      calendars: [
+        {
+          id: 41, user_id: 7, name: 'Old source', default: 1,
+          source_id: 99, source: { id: 99, type: 'caldav', name: 'X', color: '#000', username: null },
+          archived_at: '2026-10-01T00:00:00Z', selectable: false,
+        },
+        {
+          id: 42, user_id: 7, name: 'Fresh mirror', default: 0,
+          source_id: 100, source: { id: 100, type: 'google', name: 'G', color: '#f00', username: 'me@x.com' },
+          archived_at: null, selectable: true,
+        },
+      ],
+    })
+    expect(store.defaultCalendar?.id).toBe(42)
+  })
+
+  it('LBDS-305: returns null when every row is archived', () => {
+    const store = useCalendarStore()
+    store.setCalendars({
+      calendars: [
+        {
+          id: 51, user_id: 7, name: 'Ghost', default: 1,
+          source_id: 99, source: { id: 99, type: 'ics', name: 'X', color: '#000', username: null },
+          archived_at: '2026-10-01T00:00:00Z', selectable: false,
+        },
+      ],
+    })
+    expect(store.defaultCalendar).toBeNull()
   })
 })
 
@@ -98,8 +159,8 @@ describe('useCalendarStore - getCalendars', () => {
   it('calls /calendars and unwraps a paginated `{ data: [...] }` envelope', async () => {
     nextServerRows = {
       data: [
-        { id: 41, user_id: 7, name: 'Personal', default: 1 },
-        { id: 42, user_id: 7, name: 'Trabajo', default: 0 },
+        localRow({ id: 41, user_id: 7, name: 'Personal', default: 1 }),
+        localRow({ id: 42, user_id: 7, name: 'Trabajo', default: 0 }),
       ],
       links: { first: '...', last: '...', prev: null, next: null },
       meta: { current_page: 1, from: 1, last_page: 1, per_page: 50, to: 2 },
@@ -116,7 +177,7 @@ describe('useCalendarStore - getCalendars', () => {
 
   it('also accepts the `{ calendars: [...] }` envelope shape', async () => {
     nextServerRows = {
-      calendars: [{ id: 51, user_id: 7, name: 'Side', default: 1 }],
+      calendars: [localRow({ id: 51, user_id: 7, name: 'Side', default: 1 })],
     }
     const store = useCalendarStore()
     const list = await store.getCalendars()
@@ -143,7 +204,7 @@ describe('useCalendarStore - getCalendars', () => {
     nextServerRows = { totally: 'wrong' }
     const store = useCalendarStore()
     store.setCalendars({
-      calendars: [{ id: 99, user_id: 7, name: 'Sticky', default: 1 }],
+      calendars: [localRow({ id: 99, user_id: 7, name: 'Sticky', default: 1 })],
     })
     const list = await store.getCalendars()
     expect(list).toEqual([])

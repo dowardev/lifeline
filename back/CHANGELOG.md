@@ -14,6 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Harden guest invitation abuse: per-user rate limit (100 invitations/hour via `RateLimiter`) and a 50-guest cap per event payload (`guests|max:50`); regression test asserting no unauthenticated invitation path exists — LBDS-220
 
 ### Added
+- Mirror service for external calendar sources: each `calendar_sources` row gets a
+  `calendars` row (`source_id`, nullable FK `ON DELETE SET NULL`, unique) so the event
+  modal's calendar picker lists local and external calendars together.
+  `CalendarSourceMirrorObserver` keeps the mirror in sync on source create, rename and
+  delete; a disconnected source leaves an `archived_at` ghost row that still resolves
+  existing `events.calendar_id` but is not selectable. New columns: `calendars.source_id`,
+  `calendars.archived_at`, `calendars.default_user_id` (generated) and
+  `calendar_sources.user_id` (denormalized from `users.sso_sub`) — LBDS-305
+- `GET /calendars` embeds the source block (`type`, `name`, `color`, `username`) and
+  `selectable: false` for archived rows, so a consumer can tell a mirrored row from a
+  local one — LBDS-305
+- The "one active default calendar per user" invariant is now enforced at the database
+  level: a generated column that yields `user_id` only for an active default, plus a
+  unique index over it (MySQL/MariaDB have no partial unique indexes) — LBDS-305
 - CalDAV discovery of address books and VTODO-capable task collections (`discoverAll` reports per-kind failure so a failed sub-discovery never refreshes stored collections); new `ExternalContact`/`ExternalTask` models with `external_contacts`/`external_tasks` tables — LBDS-266
 - CalDAV addressbook (`addressbook-query` + VCARD) and task-list (`VTODO`) sync, and Google Tasks + People API contacts, routed per collection kind with the LBDS-264 prune guard applied to every kind — LBDS-266
 - `GET /external-contacts` and `GET /external-tasks` endpoints honoring the per-collection `hidden` flag — LBDS-266
@@ -22,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Persistent invitation sent-journal (`event_invitation_sends`, UNIQUE `(event_id, email)`) so each (event, guest email) is invited at most once, even under concurrent requests/retries; delete-and-re-add does not resend; journal errors stay fail-open and never block event save — LBDS-220
 
 ### Changed
+- External calendar sources are linked to their `users` row when it becomes
+  resolvable: `ResolveSsoUser` links the sources of a freshly provisioned (or adopted)
+  account, and `ResolveCalendarOwner` links the guest sources adopted at login. A source
+  connected before the account existed was previously invisible in the picker — LBDS-305
+- `CalendarSource::VALID_TYPES` / `MANUAL_TYPES` centralize the source kinds
+  (`google`, `caldav`, `ics`); the manual "Cuentas" endpoints validate against the
+  constant instead of a duplicated literal — LBDS-305
 - Redesign the guest-invitation email (`EventInvitation` → `emails.event-invitation`) as a branded HTML template: table-based email-safe layout, public PNG logo at `/assets/lifeline_v1.png` resolved from `app.url` (Gmail/Outlook drop base64/webp), accent event card (left border with square left edge), footer linking to https://lifeline.dowar.xyz; original content preserved as plain-text fallback (`emails.event-invitation-text`) — LBDS-219
 
 ### Fixed

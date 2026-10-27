@@ -17,10 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `androidxCoreVersion` from the non-existent `1.16.1` to `1.17.0` in `front/android/variables.gradle` (1.16.1 was never published to Google Maven; 1.17.0 is) — LBDS-268
 
 ### Changed
+- `CalendarItem` carries the mirror metadata (`source_id`, `source`, `archived_at`,
+  `selectable`), and `defaultCalendar` skips the rows that are no longer selectable.
+  The calendar select's popover is widened to 24rem through a `cssClass` the select
+  passes to the overlay (the width does not inherit from the select element) — LBDS-305
 - Fetch the HMAC-signed guest token once per page load from `GET calendar-sources/guest-token` and replay it as `X-Guest-Id` (response headers are invisible through the SSO HttpClient wrapper); bootstrap UUID kept for first contact — LBDS-230
 - In anonymous (no SSO session) mode, disable the guest-invitation input in the event form and show a hint to sign in before inviting by email; visible guests stay listed but cannot be removed — LBDS-220
 
 ### Added
+- The event modal's "Calendario" picker now lists the local calendars and the mirrored
+  external sources (Google / CalDAV / `.ics`) in one unified list. It is an `ion-select`
+  with the same interface the form's availability select uses (`popover` on desktop,
+  `alert` on mobile), so the options open in the same place. A mirrored option carries
+  its kind and account ("Google Calendar (Google) · alice@gmail.com"), which is what
+  tells two accounts with the same calendar name apart — LBDS-305
 - First-class accounts panel in Settings (Cuentas, `/settings/accounts`) managing Google (OAuth) and CalDAV connections; old `/settings/calendar` and `/calendars` routes redirect — LBDS-266
 - Tareas and Contactos sections in the connection modal with per-kind filtering, plus a personalized sync/discovery alert per section kind — LBDS-266
 - One external-source sync per visible data surface (app launch, foreground return, entering the calendar page), gated by a 10-minute TTL so navigation cannot hammer providers — LBDS-266

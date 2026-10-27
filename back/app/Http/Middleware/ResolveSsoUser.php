@@ -5,6 +5,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CalendarSource;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
@@ -31,6 +32,14 @@ class ResolveSsoUser
         }
 
         $user = User::where('sso_sub', $ssoSub)->first();
+
+        // F2 - the linking of external calendar sources to their user
+        // only has to run when the user row is CREATED or its `sso_sub`
+        // is (re)stamped. A user that already existed was already
+        // resolvable when its sources were created, so their `user_id`
+        // was set then. Running the lookup on every authenticated
+        // request would add a query to the hot path for no gain.
+        $userRowJustLinked = false;
 
         if (! $user) {
             // Enrich attributes when the profile is available (basic
@@ -65,6 +74,7 @@ class ResolveSsoUser
                     if ($legacy && (bool) $legacy->is_email_verified) {
                         $legacy->forceFill(['sso_sub' => $ssoSub])->save();
                         $user = $legacy;
+                        $userRowJustLinked = true;
                     }
                 }
 
@@ -89,6 +99,7 @@ class ResolveSsoUser
                         'email' => $emailForRow,
                         'password' => bcrypt(Str::random(32)),
                     ]);
+                    $userRowJustLinked = true;
                 }
             } catch (\Illuminate\Database\QueryException $e) {
                 // Same-sub double login: the winner row is already there.
@@ -104,8 +115,12 @@ class ResolveSsoUser
                             'email' => null,
                             'password' => bcrypt(Str::random(32)),
                         ]);
+                        $userRowJustLinked = true;
                     } catch (\Illuminate\Database\QueryException $e) {
                         $user = User::where('sso_sub', $ssoSub)->firstOrFail();
+                        // The row was created by the concurrent request that
+                        // won the race, so its sources still need linking.
+                        $userRowJustLinked = true;
                     }
                 }
             }
@@ -114,6 +129,27 @@ class ResolveSsoUser
         $request->setUserResolver(function () use ($user) {
             return $user;
         });
+
+        // LBDS-305 - link the user's external calendar sources to the
+        // `users` row. A source connected BEFORE that row existed could
+        // not get a mirror (the mirror needs `calendars.user_id`);
+        // linking it now makes the observer create the missing mirror,
+        // so the source shows up in the event modal's picker.
+        //
+        // F2 - this only runs when the user row was just created or its
+        // `sso_sub` was stamped. A user that already existed was
+        // resolvable when its sources were created, so their
+        // `user_id` was set then; re-checking on every authenticated
+        // request would add a query to the hot path for no gain.
+        //
+        // The save is per model (not a mass `update()`) so the
+        // `CalendarSource` observer fires and the mirror is created.
+        if ($userRowJustLinked) {
+            foreach (CalendarSource::where('sso_sub', $ssoSub)->whereNull('user_id')->get() as $source) {
+                $source->user_id = $user->id;
+                $source->save();
+            }
+        }
 
         return $next($request);
     }
