@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- The e2e suite is executable end to end: `pnpm run test:e2e` builds the app with the offline flags (`VITE_E2E_BYPASS_AUTH=1`, local API, no SSO), serves that build and runs Cypress against it. The harness releases the build, the server and the browser on Ctrl+C and on a timeout, and it runs one process less (the build and the server are in-process) so it also works in containers with a tight task budget — LBDS-13
+- The calendar picker specs (LBDS-298) and the anonymous boot spec (LBDS-199) match the real app again: the select is disabled until the calendar list arrives, the displayed text is read from the select's shadow root, the option click lands on the radio inside the option, and the routed page is asserted as the `.ion-page` element the app renders — LBDS-13
 - `scheduleEventReminders`, `scheduleTaskReminders`, `scheduleNoteReminders` and `syncExternalReminders` now enforce a 10-second minimum lead time on near-future fires so the Capacitor Android plugin no longer silently drops them via its `at < now` early-return — LBDS-268
 - Local notification ids are now clamped to Java `int` range (max 2^31−1) so the `@capacitor/local-notifications` Android plugin no longer rejects them with "The identifier should be a Java int" — LBDS-268
 - Declare `android.permission.USE_EXACT_ALARM` (API 33+, auto-granted) and `SCHEDULE_EXACT_ALARM` (API 31-32, user-granted) in the Android manifest so the Capacitor plugin uses `AlarmManager.setExact` instead of the inexact `set`, eliminating the seconds-to-minute OS-batching drift — LBDS-268

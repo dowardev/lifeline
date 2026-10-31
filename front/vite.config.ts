@@ -4,7 +4,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import pkg from "./package.json";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
@@ -14,6 +14,11 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
+      // The e2e build (`vite build --mode e2e`) does not need a service
+      // worker: it would cache assets between specs (breaking test
+      // isolation) and its generation is one more thing that can fail in
+      // a constrained environment.
+      disable: mode === "e2e",
       registerType: "autoUpdate",
       manifest: {
         name: "LifeLine",
@@ -90,4 +95,4 @@ export default defineConfig({
     // hang (a genuinely stuck test still fails, just later).
     testTimeout: 20000,
   },
-});
+}));

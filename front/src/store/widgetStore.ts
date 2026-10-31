@@ -304,7 +304,7 @@ export function packIntoScreens(params: {
   const cols = params.cols ?? 12
   const rows = Math.max(1, params.rowsPerScreen)
   const bp = params.breakpoint
-  const newGrid = () => Array.from({ length: rows }, () => new Array<boolean>(cols).fill(false))
+  const newGrid = () => Array.from({ length: rows }, () => Array.from({ length: cols }, () => false))
   const fits = (grid: boolean[][], r: number, c: number, w: number, h: number): boolean => {
     if (r + h > rows || c + w > cols) return false
     for (let rr = r; rr < r + h; rr++) {
@@ -410,7 +410,7 @@ export function canFitInScreen(params: {
   if (params.mobileOnePerPage) {
     return (params.screens[params.targetIndex]?.length ?? 0) === 0
   }
-  const grid = Array.from({ length: rows }, () => new Array<boolean>(cols).fill(false))
+  const grid = Array.from({ length: rows }, () => Array.from({ length: cols }, () => false))
   const fits = (r: number, c: number, w: number, h: number): boolean => {
     if (r + h > rows || c + w > cols) return false
     for (let rr = r; rr < r + h; rr++) {

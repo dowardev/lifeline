@@ -22,12 +22,29 @@
 // the backend `CalendarResource` emits for `calendars.user_id = ...`
 // rows with `source_id = null`.
 
+type CalendarRow = {
+  id: number
+  user_id: number
+  name: string
+  default: number
+  source_id: number | null
+  source: {
+    id: number
+    type: 'ics' | 'caldav' | 'google'
+    name: string
+    color: string
+    username: string | null
+  } | null
+  archived_at: string | null
+  selectable: boolean
+}
+
 const localRow = (params: {
   id: number
   user_id: number
   name: string
   default: number
-}) => ({
+}): CalendarRow => ({
   id: params.id,
   user_id: params.user_id,
   name: params.name,
@@ -47,7 +64,7 @@ const mirrorRow = (params: {
   source_username?: string | null
   color?: string
   default?: number
-}) => ({
+}): CalendarRow => ({
   id: params.id,
   user_id: params.user_id,
   name: params.name,
@@ -141,6 +158,63 @@ function openAddEventModal(): void {
     .click({ force: true })
 }
 
+/**
+ * Waits until the calendar list has landed in the picker.
+ *
+ * The select is rendered DISABLED (no calendars yet) and the list arrives
+ * asynchronously from the (stubbed) API, so any interaction with the
+ * picker has to wait for it: clicking a disabled select opens nothing,
+ * which is what made this spec look like it had a broken harness.
+ */
+function waitForCalendarsLoaded(): void {
+  cy.get('ion-select.calendar-select').should('have.prop', 'disabled', false)
+}
+
+/**
+ * The options of the select popover, in order.
+ *
+ * `cy.contains()`-style text matching is done with a FILTER FUNCTION and
+ * not with `:has-text()`: the app ships its own jQuery/Sizzle, which does
+ * not know Cypress' `:has-text()` pseudo-selector (it throws "unsupported
+ * pseudo: has-text"). The filter function runs on Cypress' own jQuery.
+ */
+function popoverOptions(): Cypress.Chainable<JQuery<HTMLElement>> {
+  return cy.get('ion-select-popover .select-interface-option')
+}
+
+function popoverOptionsWithText(params: { text: string }): Cypress.Chainable<JQuery<HTMLElement>> {
+  return popoverOptions().filter((_index, element) =>
+    Cypress.$(element).text().includes(params.text),
+  )
+}
+
+/**
+ * Picks an option of the select popover.
+ *
+ * The click has to land on the `ion-radio` INSIDE the option: the radio
+ * is what toggles the selection (the radio group emits `ionChange`), and
+ * the option row is only its container.
+ */
+function pickOption(params: { text: string }): void {
+  popoverOptionsWithText({ text: params.text })
+    .find('ion-radio')
+    .first()
+    .click({ force: true })
+}
+
+/**
+ * The text the select DISPLAYS (the selected calendar, or the
+ * placeholder when nothing is selected).
+ *
+ * `ion-select` renders in a shadow root, so the displayed text is NOT
+ * part of the host element: it lives in the `.select-text` div inside
+ * the shadow root. Reading the host's text would only return the text
+ * of the SLOTTED options (all of them, selected or not).
+ */
+function selectText(): Cypress.Chainable<JQuery<HTMLElement>> {
+  return cy.get('ion-select.calendar-select').shadow().find('.select-text')
+}
+
 describe('Calendar picker (LBDS-298)', () => {
   beforeEach(() => {
     // Force a fresh storage so the SSO/anonymous state from
@@ -153,37 +227,31 @@ describe('Calendar picker (LBDS-298)', () => {
   it('renders the Calendario select when the user has at least one calendar', () => {
     cy.visit('/calendar')
     openAddEventModal()
+    waitForCalendarsLoaded()
 
     // The picker is an `ion-select` inside the "Otros" card, the same
     // control the availability select uses. It must be present AND
     // enabled so its popover can open.
     cy.get('ion-select.calendar-select').should('exist')
-      .and('not.have.attr', 'disabled')
+      .and('have.prop', 'disabled', false)
     // Pre-selects the default:1 row.
-    cy.get('ion-select.calendar-select')
-      .invoke('text')
-      .should('match', /Personal/)
+    selectText().should('contain', 'Personal')
   })
 
   it('opens the select popover with one option per calendar and closes after pick', () => {
     cy.visit('/calendar')
     openAddEventModal()
+    waitForCalendarsLoaded()
     cy.get('ion-select.calendar-select').click({ force: true })
 
     // The select's popover renders one option per calendar.
     cy.get('ion-select-popover').should('exist')
-    cy.get('ion-select-popover')
-      .find('.select-interface-option')
-      .should('have.length', CALENDARS.length)
+    popoverOptions().should('have.length', CALENDARS.length)
 
     // Pick the second calendar. The popover closes and the select
     // reflects the new selection.
-    cy.get('ion-select-popover')
-      .find('.select-interface-option').filter({ hasText: 'Trabajo' }).first()
-      .click({ force: true })
-    cy.get('ion-select.calendar-select')
-      .invoke('text')
-      .should('match', /Trabajo/)
+    pickOption({ text: 'Trabajo' })
+    selectText().should('contain', 'Trabajo')
   })
 
   it('renders the Calendario row disabled with "Sin calendarios" when the user has zero', () => {
@@ -191,15 +259,16 @@ describe('Calendar picker (LBDS-298)', () => {
     cy.intercept('GET', '**/api/v1/calendars*', { body: { data: [], links: {}, meta: {} } }).as('getCalendarsEmpty')
     cy.visit('/calendar')
     openAddEventModal()
+    // The modal asks for the calendars when it opens, so the request
+    // happens after the visit.
+    cy.wait('@getCalendarsEmpty')
 
     // The select is rendered (so the user can see the picker exists)
     // but disabled (the popover does not open on tap), and it says
     // there are no calendars.
     cy.get('ion-select.calendar-select').should('exist')
-      .and('have.attr', 'disabled')
-    cy.get('ion-select.calendar-select')
-      .invoke('text')
-      .should('match', /Sin calendarios/)
+      .and('have.prop', 'disabled', true)
+    selectText().should('contain', 'Sin calendarios')
     // LBDS-305: with the `ion-select` there is no popover to explain
     // the case, so the note lives next to the control.
     cy.get('ion-note.calendar-select-note').should('exist')
@@ -220,38 +289,28 @@ describe('Calendar picker (LBDS-298)', () => {
     }).as('getCalendarsWithSource')
     cy.visit('/calendar')
     openAddEventModal()
+    waitForCalendarsLoaded()
     cy.get('ion-select.calendar-select').click({ force: true })
 
     // The select's popover renders one option per row: the local
     // calendar AND the mirrored external sources, in the same list.
     cy.get('ion-select-popover').should('exist')
-    cy.get('ion-select-popover')
-      .find('.select-interface-option')
-      .should('have.length', CALENDARS_WITH_SOURCE.length)
+    popoverOptions().should('have.length', CALENDARS_WITH_SOURCE.length)
 
     // A mirrored option carries the kind of its source and the
     // account, so two Google accounts with the same calendar name
     // are told apart.
-    cy.get('ion-select-popover')
-      .find('.select-interface-option').filter({ hasText: 'alice@gmail.com' })
-      .should('exist')
-    cy.get('ion-select-popover')
-      .find('.select-interface-option').filter({ hasText: 'Google' })
-      .should('exist')
+    popoverOptionsWithText({ text: 'alice@gmail.com' }).should('exist')
+    popoverOptionsWithText({ text: 'Google' }).should('exist')
 
     // The local option keeps just the calendar name.
-    cy.get('ion-select-popover')
-      .find('.select-interface-option').filter({ hasText: 'Personal' })
+    popoverOptionsWithText({ text: 'Personal' }).first()
       .invoke('text')
       .should('not.match', /Google|CalDAV/)
 
     // Picking a mirrored source closes the popover and the select
     // reflects the new selection.
-    cy.get('ion-select-popover')
-      .find('.select-interface-option').filter({ hasText: 'Work' }).first()
-      .click({ force: true })
-    cy.get('ion-select.calendar-select')
-      .invoke('text')
-      .should('match', /Work/)
+    pickOption({ text: 'Work' })
+    selectText().should('contain', 'Work')
   })
 })
