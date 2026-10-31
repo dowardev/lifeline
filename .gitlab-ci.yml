@@ -10,16 +10,41 @@ stages:
   - deploy
   - rollback
 
+variables:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+  # Version of @dowardev/sso-client that CI resolves from npm (the repo
+  # depends on the sibling sso monorepo through a `link:`, which does not
+  # exist in the runner). See scripts/ci/frontend-install.sh.
+  CI_SSO_CLIENT_VERSION: "0.4.0"
+
 cache:
   key: "$CI_COMMIT_REF_SLUG"
   paths:
     - back/vendor/
     - back/.composer/cache/
     - front/node_modules/.pnpm/
+    - .cache/Cypress/
 
 # Tags semver con prerelease opcional: vX.Y.Z, vX.Y.Z-alpha.N, vX.Y.Z-beta.N, vX.Y.Z-rc.N
 .tag_rules:
   rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+(-(alpha|beta|rc|dryrun)\.\d+)?$/'
+
+# Gates rapidos de TEST: corren en branches, en merge requests y en tags.
+# Build y deploy siguen siendo solo de tags.
+# - En un MR, $CI_COMMIT_BRANCH no esta definido: hay que matchear el
+#   pipeline source explicitamente.
+# - En un pipeline de tag, $CI_COMMIT_BRANCH tampoco esta definido.
+#
+# Los jobs de LINT (.tag_rules) quedan solo en tags: el lint del repo
+# (pint + eslint) tiene deuda acumulada y hoy ya falla en main, asi que
+# correrlo en cada branch haria nacer cada MR con jobs rojos que no son
+# suyos. En un pipeline de tag corren lint Y test: el tag es el unico
+# lugar donde la deuda de lint tiene que frenarse.
+.ci_rules:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+(-(alpha|beta|rc|dryrun)\.\d+)?$/'
 
 # Setup SSH comun: usa SSH_KNOWN_HOSTS (CI var masked) en vez de ssh-keyscan
@@ -36,25 +61,31 @@ cache:
     - echo "  PubkeyAcceptedAlgorithms +ssh-rsa" >> ~/.ssh/config
 
 # Setup composer comun: composer:2.8 + COMPOSER_HOME fijado
+# La instalacion usa scripts/ci/backend-install.sh: en CI el servidor SSO
+# (path: ../../sso/packages/sso-server) no existe y hay que resolverlo
+# desde Packagist.
 .composer_setup:
   before_script:
     - cd back
     - export COMPOSER_HOME="$CI_PROJECT_DIR/back/.composer"
-    - composer install --prefer-dist --no-progress --no-interaction
+    - $CI_PROJECT_DIR/scripts/ci/backend-install.sh
 
 # Setup composer para lint (sin scripts/migrate)
 .composer_lint_setup:
   before_script:
     - cd back
     - export COMPOSER_HOME="$CI_PROJECT_DIR/back/.composer"
-    - composer install --prefer-dist --no-progress --no-interaction --no-scripts
+    - $CI_PROJECT_DIR/scripts/ci/backend-install.sh --no-scripts
 
 # Frontend Ionic Vue jobs
+# La instalacion de dependencias usa scripts/ci/frontend-install.sh: en CI
+# el cliente SSO (link: ../../sso/packages/sso-client) no existe y hay que
+# resolverlo desde npm.
 .frontend_setup:
   before_script:
     - cd front
     - corepack enable
-    - pnpm install --frozen-lockfile
+    - "$CI_PROJECT_DIR/scripts/ci/frontend-install.sh"
 
 # ============================================
 # STAGE: lint
@@ -85,7 +116,7 @@ backend_test:
   image:
     name: composer:2.8
     entrypoint: [""]
-  extends: [.tag_rules, .composer_setup]
+  extends: [.ci_rules, .composer_setup]
   variables:
     DB_CONNECTION: sqlite
     DB_DATABASE: ":memory:"
@@ -93,7 +124,7 @@ backend_test:
     - cd back
     - export COMPOSER_HOME="$CI_PROJECT_DIR/back/.composer"
     - cp .env.testing.example .env
-    - composer install --prefer-dist --no-progress --no-interaction
+    - $CI_PROJECT_DIR/scripts/ci/backend-install.sh
     - php artisan key:generate --force
     - mkdir -p keys
     - php artisan jwt:generate-keys || true
@@ -104,9 +135,46 @@ backend_test:
 frontend_test:
   stage: test
   image: node:24.4-alpine
-  extends: [.tag_rules, .frontend_setup]
+  extends: [.ci_rules, .frontend_setup]
   script:
     - pnpm run test:unit
+
+# E2E de frontend: build offline (bypass de auth + API local) servido por
+# el harness y el suite de Cypress encima. Necesita glibc (el binario de
+# Cypress no corre en alpine) y un display virtual.
+frontend_e2e_test:
+  stage: test
+  image:
+    name: node:24-bookworm
+    entrypoint: [""]
+  extends: [.ci_rules]
+  variables:
+    # El binario de Cypress se cachea en el directorio del proyecto para
+    # que el cache de CI lo reuse.
+    CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/.cache/Cypress"
+    # Electron necesita estos flags dentro de un contenedor (el runner es
+    # uno): sin ellos intenta spawnar un proceso de GPU y falla.
+    ELECTRON_EXTRA_LAUNCH_ARGS: "--disable-gpu --disable-dev-shm-usage --no-sandbox"
+  cache:
+    paths:
+      - front/node_modules/.pnpm/
+      - .cache/Cypress/
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends xvfb xauth libgtk-3-0 libgbm1 libnotify4 libnss3 libxss1 libasound2 libxtst6
+    - corepack enable
+    - "$CI_PROJECT_DIR/scripts/ci/frontend-install.sh"
+    - cd front
+    - pnpm exec cypress install
+    - pnpm exec cypress verify
+  script:
+    - xvfb-run -a pnpm run test:e2e
+  artifacts:
+    when: always
+    paths:
+      - front/tests/e2e/videos/
+      - front/tests/e2e/screenshots/
+    expire_in: 1h
 
 # ============================================
 # STAGE: build
@@ -170,6 +238,7 @@ backend_deploy:
     - backend_build
   before_script:
     - !reference [.ssh_setup, before_script]
+    - $CI_PROJECT_DIR/scripts/ci/backend-install.sh --no-dev
   script:
     - |
       tar -czf /tmp/backend.tar.gz \

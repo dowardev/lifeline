@@ -4,6 +4,11 @@ describe('Anonymous boot (LBDS-199)', () => {
     // redirecting to SSO login, so the app is usable with no SSO configured.
     cy.visit('/home')
     cy.url().should('include', '/home')
-    cy.get('ion-page').should('exist')
+    // The app shell mounted: `ion-app` wraps the split pane, and the
+    // routed page renders as a `.ion-page` DIV (Ionic Vue replaces the
+    // `ion-page` tag with the div the component renders).
+    cy.get('ion-app').should('exist')
+    cy.get('.ion-page').should('exist')
+    cy.get('.widget-grid-section').should('exist')
   })
 })

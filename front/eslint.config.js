@@ -46,4 +46,19 @@ export default [
       "@typescript-eslint/no-empty-object-type": "warn",
     },
   },
+  {
+    // Plain ESM scripts that run with `node` (the e2e harness). They are
+    // JavaScript, not TypeScript: the Node globals are available and the
+    // TypeScript-only rules do not apply.
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+      },
+    },
+    rules: {
+      "@typescript-eslint/explicit-function-return-type": "off",
+    },
+  },
 ];

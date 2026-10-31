@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **back:** Remodel local identity on the SSO `sub` claim (`sso_sub` unique key, nullable profile fields): advanced-encryption accounts without email auto-provision on first call instead of 404; pre-remodel rows adopted by verified email only — LBDS-230
 - **back/front:** HMAC-signed guest token (`{uuid}.{hmac}`): the `X-Guest-Id` header is honored only when signed, raw UUIDs are ignored, and the token is delivered via the `X-Guest-Token` response header plus a `GET calendar-sources/guest-token` body endpoint (the SSO HttpClient wrapper strips headers) — LBDS-230
 ### Changed
+- **root:** CI now runs the backend, frontend unit and e2e suites on branches and merge requests (they only ran on release tags), and the frontend e2e suite enters the pipeline as its own job — LBDS-13
 - **back:** Redesign the guest-invitation email as a branded HTML template — LifeLine logo served publicly as PNG (`back/public/assets/lifeline_v1.png`) for wide email-client support, accent event card with title/date/inviter, footer linking to https://lifeline.dowar.xyz — with the original content kept as a plain-text fallback — LBDS-219
 
 ### Fixed
