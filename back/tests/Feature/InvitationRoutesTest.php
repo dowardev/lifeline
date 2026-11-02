@@ -1,13 +1,15 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace Tests\Feature;
 
 use App\Models\User;
 use Dowardev\SsoServer\Client\SsoServerClient;
+use Dowardev\SsoServer\Types\SsoUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Mockery;
 use Tests\TestCase;
 
@@ -33,7 +35,7 @@ class InvitationRoutesTest extends TestCase
 
     private function actingAsSsoUser(User $user): void
     {
-        $ssoUser = new \Dowardev\SsoServer\Types\SsoUser((string) $user->id);
+        $ssoUser = new SsoUser((string) $user->id);
         $sso = Mockery::mock(SsoServerClient::class);
         $sso->shouldReceive('authenticateRequest')->andReturn($ssoUser);
         $sso->shouldReceive('getId')->andReturn((string) $user->id);
@@ -57,7 +59,7 @@ class InvitationRoutesTest extends TestCase
         return $user;
     }
 
-    public function testUnauthenticatedEventCreationIsRejected(): void
+    public function test_unauthenticated_event_creation_is_rejected(): void
     {
         $response = $this->postJson('/api/v1/events', [
             'name' => 'X',
@@ -70,15 +72,15 @@ class InvitationRoutesTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function testNoPublicInvitationsRouteExists(): void
+    public function test_no_public_invitations_route_exists(): void
     {
-        $this->assertFalse(\Illuminate\Support\Facades\Route::has('invitations.store'));
+        $this->assertFalse(Route::has('invitations.store'));
 
         $this->postJson('/api/v1/invitations', [])->assertStatus(404);
         $this->postJson('/api/invitations', [])->assertStatus(404);
     }
 
-    public function testMoreThanFiftyGuestsIsRejectedOnCreate(): void
+    public function test_more_than_fifty_guests_is_rejected_on_create(): void
     {
         $user = $this->makeUser();
         $this->actingAsSsoUser($user);
@@ -102,7 +104,7 @@ class InvitationRoutesTest extends TestCase
         $response->assertJsonValidationErrors(['guests']);
     }
 
-    public function testFiftyGuestsIsAcceptedOnCreate(): void
+    public function test_fifty_guests_is_accepted_on_create(): void
     {
         $user = $this->makeUser();
         $this->actingAsSsoUser($user);

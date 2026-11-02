@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Http\Middleware;
 
@@ -14,6 +14,7 @@ use App\Support\GuestToken;
 use Closure;
 use Dowardev\SsoServer\Middleware\SsoAuthMiddleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -48,7 +49,7 @@ class ResolveCalendarOwner
         $guestId = GuestToken::verify((string) $request->header(GuestToken::HEADER, ''))
             ?? $this->cookieGuestId($request)
             ?? (string) Str::uuid();
-        $request->merge(['calendar_owner' => 'guest:' . $guestId]);
+        $request->merge(['calendar_owner' => 'guest:'.$guestId]);
 
         /** @var Response $response */
         $response = $next($request);
@@ -94,7 +95,7 @@ class ResolveCalendarOwner
         if ($guestId === null) {
             return;
         }
-        $guestOwner = 'guest:' . $guestId;
+        $guestOwner = 'guest:'.$guestId;
 
         // LBDS-305 - the guest's sources become the user's sources, and
         // they were created without a `user_id` (a guest has no `users`
@@ -116,6 +117,6 @@ class ResolveCalendarOwner
         ExternalEvent::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
         ExternalContact::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
         ExternalTask::where('sso_sub', $guestOwner)->update(['sso_sub' => $sub]);
-        \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget(self::COOKIE));
+        Cookie::queue(Cookie::forget(self::COOKIE));
     }
 }

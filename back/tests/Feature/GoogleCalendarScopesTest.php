@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace Tests\Feature;
 
@@ -16,7 +16,7 @@ use Tests\TestCase;
  */
 class GoogleCalendarScopesTest extends TestCase
 {
-    public function testAuthorizeUrlRequestsEveryCollectionScope(): void
+    public function test_authorize_url_requests_every_collection_scope(): void
     {
         config([
             'services.google_calendar.client_id' => 'client-id',

@@ -1,9 +1,11 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -23,11 +25,11 @@ return new class extends Migration
         // Advanced-encryption rows (sso_sub set, no contact fields) cannot
         // exist under the pre-remodel NOT NULL schema: drop only those.
         // Legacy rows (null sso_sub, address set) are left untouched.
-        \Illuminate\Support\Facades\DB::table('users')
+        DB::table('users')
             ->whereNotNull('sso_sub')
             ->whereNull('email')
             ->delete();
-        \Illuminate\Support\Facades\DB::table('users')->whereNull('name')->update(['name' => '']);
+        DB::table('users')->whereNull('name')->update(['name' => '']);
         Schema::table('users', function (Blueprint $table) {
             $table->dropUnique(['sso_sub']);
             $table->dropColumn('sso_sub');

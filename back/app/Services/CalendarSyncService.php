@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Services;
 
@@ -12,6 +12,7 @@ use App\Models\ExternalTask;
 use App\Support\ExternalReminderParser;
 use App\Traits\ValidatesPublicUrl;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
 use Sabre\VObject\Reader;
@@ -19,6 +20,7 @@ use Sabre\VObject\Reader;
 class CalendarSyncService
 {
     use ValidatesPublicUrl;
+
     public function syncSource(CalendarSource $source, ?string $onlyHref = null): array
     {
         $stats = ['upserted' => 0, 'pruned' => 0];
@@ -64,10 +66,10 @@ class CalendarSyncService
             }
 
             if ($skipped !== [] && $confirmed === []) {
-                throw new \RuntimeException('Sync failed: ' . implode('; ', $skipped));
+                throw new \RuntimeException('Sync failed: '.implode('; ', $skipped));
             }
             if ($skipped !== []) {
-                \Illuminate\Support\Facades\Log::warning('Calendar sync partially skipped', [
+                Log::warning('Calendar sync partially skipped', [
                     'source' => $source->id,
                     'skipped' => $skipped,
                 ]);
@@ -110,7 +112,7 @@ class CalendarSyncService
     private function syncGoogleCalendar(CalendarSource $source, string $calendarId, array &$stats): array
     {
         $window = $this->window();
-        $events = (new GoogleCalendarService())->listEvents(
+        $events = (new GoogleCalendarService)->listEvents(
             $source,
             $calendarId,
             (new \DateTime($window['start']))->format(\DateTimeInterface::RFC3339),
@@ -169,13 +171,13 @@ class CalendarSyncService
         $this->assertPublicHttpUrl($collectionUrl);
         $window = $this->window();
         $body = '<?xml version="1.0" encoding="utf-8" ?>'
-            . '<C:calendar-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
-            . '<D:prop><D:getetag/><C:calendar-data/></D:prop>'
-            . '<C:filter><C:comp-filter name="VCALENDAR">'
-            . '<C:comp-filter name="VEVENT">'
-            . "<C:time-range start=\"{$window['start']}\" end=\"{$window['end']}\"/>"
-            . '</C:comp-filter></C:comp-filter></C:filter>'
-            . '</C:calendar-query>';
+            .'<C:calendar-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
+            .'<D:prop><D:getetag/><C:calendar-data/></D:prop>'
+            .'<C:filter><C:comp-filter name="VCALENDAR">'
+            .'<C:comp-filter name="VEVENT">'
+            ."<C:time-range start=\"{$window['start']}\" end=\"{$window['end']}\"/>"
+            .'</C:comp-filter></C:comp-filter></C:filter>'
+            .'</C:calendar-query>';
 
         $options = [
             'headers' => ['Content-Type' => 'application/xml; charset=utf-8', 'Depth' => '1'],
@@ -238,7 +240,7 @@ class CalendarSyncService
 
     private function syncGoogleTasks(CalendarSource $source, string $href, array &$stats): array
     {
-        $items = (new GoogleCalendarService())->listTasks($source, $href);
+        $items = (new GoogleCalendarService)->listTasks($source, $href);
         $seen = [];
         foreach ($items as $item) {
             $uid = $item['uid'];
@@ -267,7 +269,7 @@ class CalendarSyncService
 
     private function syncGoogleContacts(CalendarSource $source, string $href, array &$stats): array
     {
-        $items = (new GoogleCalendarService())->listContacts($source);
+        $items = (new GoogleCalendarService)->listContacts($source);
         $seen = [];
         foreach ($items as $item) {
             $uid = $item['uid'];
@@ -302,12 +304,12 @@ class CalendarSyncService
         $collectionUrl = $this->absoluteUrl($baseUrl, $collectionHref);
         $this->assertPublicHttpUrl($collectionUrl);
         $body = '<?xml version="1.0" encoding="utf-8" ?>'
-            . '<C:calendar-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
-            . '<D:prop><D:getetag/><C:calendar-data/></D:prop>'
-            . '<C:filter><C:comp-filter name="VCALENDAR">'
-            . '<C:comp-filter name="VTODO"/>'
-            . '</C:comp-filter></C:filter>'
-            . '</C:calendar-query>';
+            .'<C:calendar-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
+            .'<D:prop><D:getetag/><C:calendar-data/></D:prop>'
+            .'<C:filter><C:comp-filter name="VCALENDAR">'
+            .'<C:comp-filter name="VTODO"/>'
+            .'</C:comp-filter></C:filter>'
+            .'</C:calendar-query>';
         $options = [
             'headers' => ['Content-Type' => 'application/xml; charset=utf-8', 'Depth' => '1'],
             'body' => $body,
@@ -378,9 +380,9 @@ class CalendarSyncService
         $collectionUrl = $this->absoluteUrl($baseUrl, $collectionHref);
         $this->assertPublicHttpUrl($collectionUrl);
         $body = '<?xml version="1.0" encoding="utf-8" ?>'
-            . '<C:addressbook-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
-            . '<D:prop><D:getetag/><C:address-data/></D:prop>'
-            . '</C:addressbook-query>';
+            .'<C:addressbook-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
+            .'<D:prop><D:getetag/><C:address-data/></D:prop>'
+            .'</C:addressbook-query>';
         $options = [
             'headers' => ['Content-Type' => 'application/xml; charset=utf-8', 'Depth' => '1'],
             'body' => $body,
@@ -429,7 +431,7 @@ class CalendarSyncService
         try {
             $doc = new \SimpleXMLElement($xml);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Invalid CardDAV multistatus response: ' . mb_substr(trim($xml), 0, 200), 0, $e);
+            throw new \RuntimeException('Invalid CardDAV multistatus response: '.mb_substr(trim($xml), 0, 200), 0, $e);
         }
         $doc->registerXPathNamespace('d', 'DAV:');
         $doc->registerXPathNamespace('c', 'urn:ietf:params:xml:ns:carddav');
@@ -498,6 +500,7 @@ class CalendarSyncService
             $seen = $seenByCollection[null] ?? [];
             $pruned += (clone $query)->whereNull('collection_href')
                 ->whereNotIn('external_uid', $seen)->delete();
+
             return $pruned;
         }
         foreach ($seenByCollection as $href => $seen) {
@@ -564,16 +567,16 @@ class CalendarSyncService
     {
         $uid = (string) ($event->UID ?? '');
         if (isset($event->{'RECURRENCE-ID'})) {
-            return $uid . '@' . (string) $event->{'RECURRENCE-ID'};
+            return $uid.'@'.(string) $event->{'RECURRENCE-ID'};
         }
         if (isset($event->DTSTART)) {
             $dt = $event->DTSTART->getDateTime();
             if ($dt) {
-                return $uid . '@' . $dt->format('Ymd\THis');
+                return $uid.'@'.$dt->format('Ymd\THis');
             }
         }
 
-        return $uid !== '' ? $uid : md5((string) $event->SUMMARY . (string) ($event->DTSTART ?? ''));
+        return $uid !== '' ? $uid : md5((string) $event->SUMMARY.(string) ($event->DTSTART ?? ''));
     }
 
     private function window(): array
@@ -591,6 +594,7 @@ class CalendarSyncService
         }
         try {
             $end = \DateTime::createFromInterface($start);
+
             return $end->add(new \DateInterval($duration));
         } catch (\Exception $e) {
             return null;
@@ -604,7 +608,7 @@ class CalendarSyncService
             $doc = new \SimpleXMLElement($xml);
         } catch (\Exception $e) {
             throw new \RuntimeException(
-                'Invalid CalDAV multistatus response (' . $e->getMessage() . '): ' . mb_substr(trim($xml), 0, 200),
+                'Invalid CalDAV multistatus response ('.$e->getMessage().'): '.mb_substr(trim($xml), 0, 200),
                 0,
                 $e
             );
@@ -633,15 +637,15 @@ class CalendarSyncService
             return $href;
         }
         $parts = parse_url($base);
-        $origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '');
+        $origin = ($parts['scheme'] ?? 'https').'://'.($parts['host'] ?? '');
         if (isset($parts['port'])) {
-            $origin .= ':' . $parts['port'];
+            $origin .= ':'.$parts['port'];
         }
         if (str_starts_with($href, '/')) {
-            return $origin . $href;
+            return $origin.$href;
         }
 
-        return rtrim($base, '/') . '/' . $href;
+        return rtrim($base, '/').'/'.$href;
     }
 
     protected function httpClient(): Client

@@ -1,4 +1,5 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
@@ -9,11 +10,12 @@ use Illuminate\Support\Str;
 class GuestToken
 {
     public const HEADER = 'X-Guest-Id';
+
     public const TOKEN_HEADER = 'X-Guest-Token';
 
     public static function issue(string $guestId): string
     {
-        return $guestId . '.' . hash_hmac('sha256', $guestId, (string) config('app.key'));
+        return $guestId.'.'.hash_hmac('sha256', $guestId, (string) config('app.key'));
     }
 
     public static function verify(string $token): ?string

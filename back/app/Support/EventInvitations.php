@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Support;
 
@@ -31,7 +31,6 @@ class EventInvitations
      * Normalize a raw guest list into a deduped array of valid, lowercase emails.
      * Null/empty/invalid/duplicate entries are dropped.
      *
-     * @param  array  $guests
      * @return string[]
      */
     public static function normalizeGuests(array $guests): array

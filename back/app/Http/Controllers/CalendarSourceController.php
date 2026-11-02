@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Http\Controllers;
 
@@ -9,9 +9,10 @@ use App\Models\CalendarSource;
 use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
 use App\Models\ExternalTask;
+use App\Models\User;
 use App\Services\CaldavDiscoveryService;
-use App\Services\GoogleCalendarService;
 use App\Services\CalendarSyncService;
+use App\Services\GoogleCalendarService;
 use App\Support\GuestToken;
 use App\Traits\ValidatesPublicUrl;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class CalendarSourceController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'type' => ['required', 'string', 'in:' . implode(',', CalendarSource::MANUAL_TYPES)],
+            'type' => ['required', 'string', 'in:'.implode(',', CalendarSource::MANUAL_TYPES)],
             'name' => 'required|string|max:255',
             'url' => 'required|url|max:2048',
             'username' => 'nullable|string|max:255',
@@ -58,7 +59,7 @@ class CalendarSourceController extends Controller
         // when the SSO sub lookup misses (e.g. first login before user
         // row exists). Guest sources (no `users` row at all) stay on
         // the documented skip path.
-        $ownerUserId = \App\Models\User::where('sso_sub', $ownerSub)->value('id');
+        $ownerUserId = User::where('sso_sub', $ownerSub)->value('id');
         if ($ownerUserId === null && ! str_starts_with($ownerSub, 'guest:')) {
             $requestUser = $request->user();
             if ($requestUser !== null) {
@@ -206,7 +207,7 @@ class CalendarSourceController extends Controller
             return response()->json(['message' => 'La fuente está desactivada.'], 422);
         }
         $request->validate(['collection_href' => 'nullable|string|max:2048']);
-        $result = (new CalendarSyncService())->syncSource(
+        $result = (new CalendarSyncService)->syncSource(
             $source->fresh(),
             $request->input('collection_href')
         );
@@ -246,7 +247,7 @@ class CalendarSourceController extends Controller
         $refreshedKinds = [];
         try {
             if ($source->type === 'google') {
-                $google = new GoogleCalendarService();
+                $google = new GoogleCalendarService;
                 // Each Google API is isolated: a missing OAuth scope (403) or
                 // any other API error only marks that kind undiscovered and
                 // must never hide the kinds that did answer.
@@ -266,7 +267,7 @@ class CalendarSourceController extends Controller
             } elseif ($source->type === 'caldav') {
                 $url = decrypt($source->url);
                 $password = $source->password !== null ? decrypt($source->password) : null;
-                $discovery = (new CaldavDiscoveryService())->discoverAll($url, $source->username, $password);
+                $discovery = (new CaldavDiscoveryService)->discoverAll($url, $source->username, $password);
                 $found = $discovery['found'];
                 // Only kinds whose sub-discovery actually answered may refresh
                 // stored entries. Tasks share the calendar PROPFIND, so they
@@ -282,14 +283,15 @@ class CalendarSourceController extends Controller
                 return response()->json(['message' => 'Tipo de fuente no soportado.'], 422);
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => 'No se pudo descubrir: ' . mb_substr($e->getMessage(), 0, 300)], 422);
+            return response()->json(['message' => 'No se pudo descubrir: '.mb_substr($e->getMessage(), 0, 300)], 422);
         }
         if (empty($found)) {
             if ($failed === []) {
                 return response()->json(['message' => 'No se encontraron calendarios en el servidor.'], 422);
             }
+
             return response()->json([
-                'message' => 'No se pudo descubrir: ' . $this->describeFailures($failed),
+                'message' => 'No se pudo descubrir: '.$this->describeFailures($failed),
                 'discovery_errors' => $failed,
             ], 422);
         }
@@ -359,7 +361,7 @@ class CalendarSourceController extends Controller
         $labels = ['calendar' => 'Calendarios', 'tasks' => 'Tareas', 'contacts' => 'Contactos'];
         $parts = [];
         foreach ($failed as $kind => $detail) {
-            $parts[] = ($labels[$kind] ?? $kind) . ': ' . $detail;
+            $parts[] = ($labels[$kind] ?? $kind).': '.$detail;
         }
 
         return implode(' · ', $parts);
