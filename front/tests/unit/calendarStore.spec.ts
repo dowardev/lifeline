@@ -29,7 +29,16 @@ const localRow = (params: {
   user_id: number
   name: string
   default: number
-}) => ({
+}): {
+  id: number
+  user_id: number
+  name: string
+  default: number
+  source_id: null
+  source: null
+  archived_at: null
+  selectable: boolean
+} => ({
   id: params.id,
   user_id: params.user_id,
   name: params.name,

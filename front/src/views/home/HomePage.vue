@@ -180,7 +180,7 @@ function updateBreakpoint(): void {
   setBreakpoint({ breakpoint: bp })
 }
 
-function getWidgetIcon(params: { id: string }) {
+function getWidgetIcon(params: { id: string }): string {
   switch (params.id) {
     case 'calendar':
       return calendarOutline
