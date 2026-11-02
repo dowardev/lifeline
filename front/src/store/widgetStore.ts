@@ -75,12 +75,12 @@ export const useWidgetStore = defineStore('widget', () => {
   const currentBreakpoint = ref<Breakpoint>('lg')
   const isInitialized = ref(false)
 
-  const getWidgetDefinition = computed(() => {
+  const getWidgetDefinition = computed((): (params: { widgetId: string }) => WidgetDefinition | undefined => {
     return (params: { widgetId: string }) =>
       availableWidgets.value.find(w => w.id === params.widgetId)
   })
 
-  const getActiveWidgetsForBreakpoint = computed(() => {
+  const getActiveWidgetsForBreakpoint = computed((): (params: { breakpoint: Breakpoint }) => Array<Omit<WidgetInstance, 'x' | 'y' | 'w' | 'h'> & { x: number; y: number; w: number; h: number }> => {
     return (params: { breakpoint: Breakpoint }) => {
       const breakpoint = params.breakpoint
       return [...activeWidgets.value]
@@ -304,7 +304,7 @@ export function packIntoScreens(params: {
   const cols = params.cols ?? 12
   const rows = Math.max(1, params.rowsPerScreen)
   const bp = params.breakpoint
-  const newGrid = () => Array.from({ length: rows }, () => Array.from({ length: cols }, () => false))
+  const newGrid = (): boolean[][] => Array.from({ length: rows }, () => Array.from({ length: cols }, () => false))
   const fits = (grid: boolean[][], r: number, c: number, w: number, h: number): boolean => {
     if (r + h > rows || c + w > cols) return false
     for (let rr = r; rr < r + h; rr++) {

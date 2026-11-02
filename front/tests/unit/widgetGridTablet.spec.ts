@@ -5,9 +5,9 @@
 
         const { gridstackMock } = vi.hoisted(() => ({
           gridstackMock: {
-            addWidget: vi.fn((cfg: any) => {
+            addWidget: vi.fn((cfg: any): any => {
               // Mimic gridstack: track nodes so re-syncs see them as already present.
-              if (!gridstackMock.engine.nodes.some((n: any) => n.id === cfg.id)) {
+              if (!gridstackMock.engine.nodes.some((n: any): boolean => n.id === cfg.id)) {
                 gridstackMock.engine.nodes.push(cfg)
               }
               return cfg
@@ -25,12 +25,12 @@
             name: 'GridStack',
             props: ['options', 'components'],
             template: '<div class="grid-stack"></div>',
-            mounted(this: any) {
+            mounted(this: any): void {
               this.$el.gridstack = gridstackMock
             },
           },
-          useGridStack: () => ({ grid: gridstackMock }),
-          useGridStackItem: () => ({ node: undefined }),
+          useGridStack: (): { grid: typeof gridstackMock } => ({ grid: gridstackMock }),
+          useGridStackItem: (): { node: undefined } => ({ node: undefined }),
         }))
 
         import WidgetGrid from '@/components/widgets/WidgetGrid.vue'
@@ -54,7 +54,7 @@
             gridstackMock.engine.nodes = []
           })
 
-          async function mountWithBreakpoint(bp: 'lg' | 'md') {
+          async function mountWithBreakpoint(bp: 'lg' | 'md'): Promise<{ store: ReturnType<typeof useWidgetStore>; wrapper: ReturnType<typeof mount> }> {
             const store = useWidgetStore()
             store.setBreakpoint({ breakpoint: bp })
             store.initializeDefaultLayout()
@@ -68,7 +68,7 @@
 
           // Unique widgets actually committed to the grid (deduped by widget type
           // across the initial sync and the rAF/ResizeObserver re-syncs).
-          function addedWidgets() {
+          function addedWidgets(): Array<{ props: { widgetId: string } }> {
             const calls = gridstackMock.addWidget.mock.calls.map((c) => c[0])
             return Array.from(new Map(calls.map((c) => [c.props.widgetId, c])).values())
           }

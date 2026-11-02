@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
-import { computed } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 import { useWidgetStore } from '@/store/widgetStore'
 import type { Breakpoint, WidgetDefinition, WidgetInstance } from '@/store/widgetStore'
 
@@ -9,7 +9,24 @@ import type { Breakpoint, WidgetDefinition, WidgetInstance } from '@/store/widge
  * Composable bridge between Vue components and the widget Pinia store.
  * Components must not access the store directly.
  */
-export function useWidgets() {
+export function useWidgets(): {
+  availableWidgets: ComputedRef<WidgetDefinition[]>
+  activeWidgets: ComputedRef<WidgetInstance[]>
+  currentBreakpoint: ComputedRef<Breakpoint>
+  getWidgetName: (params: { widgetId: string }) => string
+  addWidget: (params: { widgetId: string }) => WidgetInstance | null
+  removeWidget: (params: { instanceId: string }) => void
+  setBreakpoint: (params: { breakpoint: Breakpoint }) => void
+  loadFromStorage: () => boolean
+  saveToStorage: () => void
+  initializeDefaultLayout: () => void
+  resetToDefault: () => void
+  updateWidgetPosition: (params: { instanceId: string; x: number; y: number; w: number; h: number; breakpoint: Breakpoint }) => void
+  updateWidgetLayout: (params: { items: Array<{ instanceId: string; x: number; y: number; w: number; h: number }>; breakpoint: Breakpoint }) => void
+  updateWidgetProps: (params: { instanceId: string; props: Record<string, unknown> }) => void
+  setOrderForLayout: (params: { instanceIds: string[] }) => void
+  assignWidgetScreen: (params: { instanceId: string; targetIndex: number | null }) => void
+} {
   const store = useWidgetStore()
 
   const availableWidgets = computed<WidgetDefinition[]>(() => store.availableWidgets)
