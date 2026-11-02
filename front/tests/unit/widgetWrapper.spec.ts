@@ -2,16 +2,28 @@ import { describe, it, expect, vi } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import WidgetWrapper from '@/components/widgets/WidgetWrapper.vue'
 
-const { removeWidgetMock } = vi.hoisted(() => ({ removeWidgetMock: vi.fn() }))
+const { removeWidgetMock } = vi.hoisted((): { removeWidgetMock: ReturnType<typeof vi.fn> } => ({ removeWidgetMock: vi.fn() }))
 
-vi.mock('gridstack/dist/vue', () => ({
+vi.mock('gridstack/dist/vue', (): {
+  GridStack: { template: string }
+  useGridStack: () => { grid: undefined }
+  useGridStackItem: () => { node: undefined }
+} => ({
   GridStack: { template: '<div><slot /></div>' },
-  useGridStack: () => ({ grid: undefined }),
-  useGridStackItem: () => ({ node: undefined }),
+  useGridStack: (): { grid: undefined } => ({ grid: undefined }),
+  useGridStackItem: (): { node: undefined } => ({ node: undefined }),
 }))
 
-vi.mock('@/composables/useWidgets', () => ({
-  useWidgets: () => ({
+vi.mock('@/composables/useWidgets', (): {
+  useWidgets: () => {
+    availableWidgets: { value: unknown[] }
+    removeWidget: typeof removeWidgetMock
+  }
+} => ({
+  useWidgets: (): {
+    availableWidgets: { value: unknown[] }
+    removeWidget: typeof removeWidgetMock
+  } => ({
     availableWidgets: { value: [] },
     removeWidget: removeWidgetMock,
   }),

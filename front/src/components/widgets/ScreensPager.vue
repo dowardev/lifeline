@@ -155,12 +155,12 @@ onUnmounted(() => {
 })
 
 // 10. Functions
-function onResize() {
+function onResize(): void {
   viewportHeight.value = window.innerHeight
   viewportWidth.value = window.innerWidth
 }
 
-function onScroll() {
+function onScroll(): void {
   const el = trackRef.value
   if (!el) return
   const pageWidth = el.clientWidth
@@ -169,27 +169,27 @@ function onScroll() {
   activeIndex.value = Math.min(Math.max(idx, 0), screens.value.length - 1)
 }
 
-function goTo(index: number) {
+function goTo(index: number): void {
   const el = trackRef.value
   if (!el) return
   el.scrollTo({ left: index * el.clientWidth, behavior: 'smooth' })
   activeIndex.value = index
 }
 
-function prev() {
+function prev(): void {
   goTo(Math.max(0, activeIndex.value - 1))
 }
 
-function next() {
+function next(): void {
   goTo(Math.min(screens.value.length - 1, activeIndex.value + 1))
 }
 
-function selectScreen(index: number) {
+function selectScreen(index: number): void {
   goTo(index)
   popoverOpen.value = false
 }
 
-function onLayoutChange() {
+function onLayoutChange(): void {
   emit('layout-change')
 }
 

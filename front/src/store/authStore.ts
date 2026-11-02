@@ -236,7 +236,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearAuth,
     setFromSso,
     restoreCachedAuth,
-    markAuthExpired: () => {
+    markAuthExpired: (): void => {
       // H-6 (pre-merge review): the apiClient flips this when it sees
       // a 401/403 from a real call. The UI can watch the flag and prompt
       // the user to re-login. The session itself is cleared by the

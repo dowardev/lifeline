@@ -42,6 +42,15 @@ import WidgetWrapper from './WidgetWrapper.vue'
 import type { GridStackOptions, GridStackNode } from 'gridstack'
 import type { Breakpoint, WidgetInstance } from '@/store/widgetStore'
 
+type GridStackWidgetNode = GridStackNode & {
+  component: string
+  props: Record<string, unknown>
+  minW?: number
+  minH?: number
+  maxW?: number
+  maxH?: number
+}
+
 // 5. Main (props, emits, etc.)
 const props = defineProps<{ widgets?: WidgetInstance[]; screenIndex?: number; screenCount?: number; mobile?: boolean }>()
 const emit = defineEmits<{
@@ -148,7 +157,7 @@ function syncGridWithStore(params: { widgets: typeof activeWidgets.value }): voi
   })
   const wantedIds = new Set(visible.map((w) => w.id))
 
-  function buildAddConfig(params: { widget: (typeof activeWidgets.value)[number] }) {
+  function buildAddConfig(params: { widget: (typeof activeWidgets.value)[number] }): GridStackWidgetNode {
     const w = params.widget
     return {
       id: w.id,
