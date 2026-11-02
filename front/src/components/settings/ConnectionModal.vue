@@ -79,6 +79,7 @@
           :is="formComponent"
           :connection="connection as GoogleConnection & CaldavConnection"
           :disabled="formDisabled"
+          @update:connection="onFormUpdate({ connection: $event })"
         />
       </ion-list>
 
@@ -200,6 +201,7 @@ const emit = defineEmits<{
   'toggle-subscription': [value: { href: string; subscribed: boolean }];
   'toggle-hidden': [value: { href: string }];
   'sync-collection': [value: { href: string }];
+  'update:connection': [connection: GoogleConnection | CaldavConnection];
 }>();
 
 // 6. Vars and const
@@ -272,6 +274,10 @@ const progressAlert = computed(() => {
 // (none)
 
 // 10. Functions (named parameters pattern)
+function onFormUpdate(params: { connection: GoogleConnection | CaldavConnection }): void {
+  emit('update:connection', params.connection);
+}
+
 function onSegmentChange(params: { detail: { value?: string | number | null } }): void {
   const value = params.detail.value;
   if (value === 'config' || value === 'calendarios' || value === 'tareas' || value === 'contactos') {

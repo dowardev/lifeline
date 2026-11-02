@@ -110,6 +110,7 @@
           @toggle-hidden="onModalToggleHidden({ value: $event })"
           @sync-collection="onModalSyncCollection({ value: $event })"
           @remove="onModalRemove()"
+          @update:connection="onModalUpdate({ connection: $event })"
         />
       </ion-modal>
     </ion-content>
@@ -848,6 +849,10 @@ async function removeConnection(params: {
 function isFormDisabled(): boolean {
   const connection = selectedGoogle() ?? selectedCaldav();
   return connection ? connection.testing || connection.saving : false;
+}
+
+function onModalUpdate(params: { connection: GoogleConnection | CaldavConnection }): void {
+  if (draft.value) draft.value.connection = params.connection;
 }
 
 function onModalSave(): void {
