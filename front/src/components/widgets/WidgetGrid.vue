@@ -121,11 +121,6 @@ function getGrid(): any {
   return (el as any)?.gridstack
 }
 
-function getGridNode(params: { grid: any; id: string }): GridStackNode | undefined {
-  const nodes: GridStackNode[] = params.grid?.engine?.nodes ?? []
-  return nodes.find((n) => n.id === params.id)
-}
-
 function getWidgetLimit(params: {
   widgetId: string
   prop: 'minWidth' | 'minHeight' | 'maxWidth' | 'maxHeight'
@@ -229,7 +224,7 @@ function persistLiveLayout(): void {
   emit('layout-change')
 }
 
-function onGridChange(params: { nodes: GridStackNode | GridStackNode[] }): void {
+function onGridChange(): void {
   // change fires on every move; persist immediately.
   persistLiveLayout()
 }
@@ -257,11 +252,11 @@ function onWidgetRemoved(params: { nodes: GridStackNode | GridStackNode[] }): vo
   emit('layout-change')
 }
 
-function onResizeStop(params: { el: unknown }): void {
+function onResizeStop(): void {
   persistLiveLayout()
 }
 
-function onDragStop(params: { el: unknown }): void {
+function onDragStop(): void {
   persistLiveLayout()
 }
 </script>

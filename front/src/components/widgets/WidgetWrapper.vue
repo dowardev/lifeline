@@ -5,7 +5,7 @@
 
 <template>
   <div class="widget-wrapper">
-    <div class="widget-header" v-if="showHeader">
+    <div v-if="showHeader" class="widget-header">
       <div class="widget-title">{{ widgetName }}</div>
 
       <div class="widget-actions">
@@ -50,10 +50,10 @@
       <ion-content>
         <ion-list>
           <ion-item
-            button
-            :detail="false"
             v-for="n in (props.screenCount ?? 1)"
             :key="n"
+            button
+            :detail="false"
             @click="moveTo(n - 1)"
           >
             <ion-label>

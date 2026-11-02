@@ -12,8 +12,8 @@
 
   <ion-item class="transparent">
     <ion-input
-      :disabled="disabled"
       v-model="connection.name"
+      :disabled="disabled"
       label="Nombre"
       label-placement="stacked"
       placeholder="Mi calendario de Google"

@@ -1,8 +1,8 @@
 <template>
   <div class="screens-pager">
     <template v-if="activeWidgets.length > 0">
-      <div class="screens-header" v-if="screens.length > 1">
-        <ion-button fill="clear" class="nav-arrow" @click="prev" :disabled="activeIndex === 0">
+      <div v-if="screens.length > 1" class="screens-header">
+        <ion-button fill="clear" class="nav-arrow" :disabled="activeIndex === 0" @click="prev">
           <ion-icon :icon="chevronBackOutline" />
         </ion-button>
         <ion-button fill="clear" class="screen-trigger" @click="popoverOpen = true">
@@ -11,16 +11,16 @@
         <ion-button
           fill="clear"
           class="nav-arrow"
-          @click="next"
           :disabled="activeIndex === screens.length - 1"
+          @click="next"
         >
           <ion-icon :icon="chevronForwardOutline" />
         </ion-button>
       </div>
 
       <div
-        class="screens-track"
         ref="trackRef"
+        class="screens-track"
         @scroll.passive="onScroll"
       >
         <section
@@ -32,7 +32,7 @@
         </section>
       </div>
 
-      <div class="screens-dots" v-if="screens.length > 1">
+      <div v-if="screens.length > 1" class="screens-dots">
         <span
           v-for="(scr, i) in screens"
           :key="'dot-' + i"
@@ -54,10 +54,10 @@
       <ion-content>
         <ion-list>
           <ion-item
-            button
-            :detail="false"
             v-for="(scr, i) in screens"
             :key="'pop-' + i"
+            button
+            :detail="false"
             @click="selectScreen(i)"
           >
             <ion-label>Escritorio {{ i + 1 }}</ion-label>

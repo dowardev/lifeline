@@ -61,9 +61,10 @@
               :error-text="v$.titleValue.$errors[0]?.$message as string"
               :class="v$.titleValue.$errors.length == 0 ? 'ion-valid' : 'ion-invalid'"
               :value="titleValue"
+              ref="inputTitle"
               @ion-input="titleValue = $event.detail.value as string"
               @ion-blur="updateTitle()"
-              @ion-focus="($refs.inputTitle as any).$el.classList.add('ion-touched'); v$.titleValue.$touch();"
+              @ion-focus="(inputTitle as any)?.$el?.classList.add('ion-touched'); v$.titleValue.$touch();"
             ></ion-input>
           </ion-col>
         </ion-row>
@@ -279,7 +280,7 @@ const isReorderDisabled = isDisabled;
 let documentUrl = route.params.url as string;
 let documentId = "";
 const titleValue = ref("");
-const inputTitle = ref(null);
+const inputTitle = ref<any>(null);
 let hasShownNoteReminderToast = false;
 
 const docElements = computed(() => {
