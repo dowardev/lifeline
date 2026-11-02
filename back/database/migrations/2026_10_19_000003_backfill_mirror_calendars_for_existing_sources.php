@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 use App\Models\Calendar;
 use App\Models\CalendarSource;
@@ -40,6 +40,7 @@ return new class extends Migration
                 if ($existing !== null && $existing->default && $existing->archived_at === null) {
                     $userHasActiveDefault[$source->user_id] = true;
                 }
+
                 continue;
             }
 

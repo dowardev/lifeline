@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace Tests\Feature;
 
@@ -70,9 +70,7 @@ class CalendarSyncContactsTasksTest extends TestCase
 
         return new class($client) extends CalendarSyncService
         {
-            public function __construct(private readonly Client $forcedClient)
-            {
-            }
+            public function __construct(private readonly Client $forcedClient) {}
 
             protected function httpClient(): Client
             {
@@ -97,25 +95,25 @@ class CalendarSyncContactsTasksTest extends TestCase
     private function resourceErrorMultistatus(string $statusLine): string
     {
         return '<?xml version="1.0" encoding="utf-8"?>'
-            . '<D:multistatus xmlns:D="DAV:">'
-            . '<D:response><D:href>' . self::HREF . 'ada.vcf</D:href>'
-            . '<D:status>' . $statusLine . '</D:status></D:response>'
-            . '</D:multistatus>';
+            .'<D:multistatus xmlns:D="DAV:">'
+            .'<D:response><D:href>'.self::HREF.'ada.vcf</D:href>'
+            .'<D:status>'.$statusLine.'</D:status></D:response>'
+            .'</D:multistatus>';
     }
 
     private function addressbookMultistatus(string $fn): string
     {
-        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:" . $fn . "\r\nEND:VCARD";
+        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:".$fn."\r\nEND:VCARD";
 
         return '<?xml version="1.0" encoding="utf-8"?>'
-            . '<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
-            . '<D:response><D:href>/addressbooks/user/default/ada.vcf</D:href>'
-            . '<D:propstat><D:prop><C:address-data><![CDATA[' . $vcard . ']]></C:address-data></D:prop>'
-            . '<D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>'
-            . '</D:multistatus>';
+            .'<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
+            .'<D:response><D:href>/addressbooks/user/default/ada.vcf</D:href>'
+            .'<D:propstat><D:prop><C:address-data><![CDATA['.$vcard.']]></C:address-data></D:prop>'
+            .'<D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>'
+            .'</D:multistatus>';
     }
 
-    public function testContactsPruneSkipsUnconfirmedCollection(): void
+    public function test_contacts_prune_skips_unconfirmed_collection(): void
     {
         $source = $this->makeSource();
 
@@ -128,7 +126,7 @@ class CalendarSyncContactsTasksTest extends TestCase
         $this->assertSame(1, ExternalContact::where('calendar_source_id', $source->id)->count());
     }
 
-    public function testContactsPruneDeletesStaleRowForConfirmedCollection(): void
+    public function test_contacts_prune_deletes_stale_row_for_confirmed_collection(): void
     {
         $source = $this->makeSource();
 
@@ -141,7 +139,7 @@ class CalendarSyncContactsTasksTest extends TestCase
         $this->assertSame(0, ExternalContact::where('calendar_source_id', $source->id)->count());
     }
 
-    public function testTasksPruneSkipsUnconfirmedCollection(): void
+    public function test_tasks_prune_skips_unconfirmed_collection(): void
     {
         $source = $this->makeSource();
 
@@ -154,7 +152,7 @@ class CalendarSyncContactsTasksTest extends TestCase
         $this->assertSame(1, ExternalTask::where('calendar_source_id', $source->id)->count());
     }
 
-    public function testTasksPruneDeletesStaleRowForConfirmedCollection(): void
+    public function test_tasks_prune_deletes_stale_row_for_confirmed_collection(): void
     {
         $source = $this->makeSource();
 
@@ -167,7 +165,7 @@ class CalendarSyncContactsTasksTest extends TestCase
         $this->assertSame(0, ExternalTask::where('calendar_source_id', $source->id)->count());
     }
 
-    public function testExtractCalendarDataThrowsWhenResourceStatusIsError(): void
+    public function test_extract_calendar_data_throws_when_resource_status_is_error(): void
     {
         $xml = $this->resourceErrorMultistatus('HTTP/1.1 403 Forbidden');
 
@@ -179,7 +177,7 @@ class CalendarSyncContactsTasksTest extends TestCase
         }
     }
 
-    public function testExtractAddressDataThrowsWhenResourceStatusIsError(): void
+    public function test_extract_address_data_throws_when_resource_status_is_error(): void
     {
         $xml = $this->resourceErrorMultistatus('HTTP/1.1 500 Internal Server Error');
 
@@ -191,7 +189,7 @@ class CalendarSyncContactsTasksTest extends TestCase
         }
     }
 
-    public function testMultistatusWithErrorResourceStatusKeepsStoredRowsIntact(): void
+    public function test_multistatus_with_error_resource_status_keeps_stored_rows_intact(): void
     {
         $source = $this->makeSource();
         $this->subscribeContacts($source);
@@ -210,7 +208,7 @@ class CalendarSyncContactsTasksTest extends TestCase
         $this->assertSame(1, ExternalTask::where('calendar_source_id', $source->id)->count());
     }
 
-    public function testUidLessVcardsKeepStableIdentityAcrossSyncs(): void
+    public function test_uid_less_vcards_keep_stable_identity_across_syncs(): void
     {
         $source = $this->makeSource();
         $this->subscribeContacts($source);

@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace Tests\Feature;
 
@@ -19,7 +19,7 @@ use Tests\TestCase;
  */
 class GoogleContactsRequestTest extends TestCase
 {
-    public function testContactsAreRequestedFromTheMeConnectionsPath(): void
+    public function test_contacts_are_requested_from_the_me_connections_path(): void
     {
         $url = GoogleCalendarService::PEOPLE_CONNECTIONS_URL;
 
@@ -28,7 +28,7 @@ class GoogleContactsRequestTest extends TestCase
         $this->assertStringNotContainsString('/people/connections', $url);
     }
 
-    public function testContactsQueryCarriesNoResourceNameParameter(): void
+    public function test_contacts_query_carries_no_resource_name_parameter(): void
     {
         $query = GoogleCalendarService::contactsQuery();
 
@@ -38,7 +38,7 @@ class GoogleContactsRequestTest extends TestCase
         $this->assertArrayNotHasKey('pageToken', $query);
     }
 
-    public function testContactsQueryPaginatesWithAPageToken(): void
+    public function test_contacts_query_paginates_with_a_page_token(): void
     {
         $query = GoogleCalendarService::contactsQuery('next-page');
 

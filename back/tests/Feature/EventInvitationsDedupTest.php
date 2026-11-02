@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace Tests\Feature;
 
@@ -47,7 +47,7 @@ class EventInvitationsDedupTest extends TestCase
         return $event;
     }
 
-    public function testCreateSendsExactlyOneMailPerGuest(): void
+    public function test_create_sends_exactly_one_mail_per_guest(): void
     {
         Mail::fake();
 
@@ -68,7 +68,7 @@ class EventInvitationsDedupTest extends TestCase
         }
     }
 
-    public function testRetrySendsNoAdditionalMails(): void
+    public function test_retry_sends_no_additional_mails(): void
     {
         Mail::fake();
 
@@ -82,7 +82,7 @@ class EventInvitationsDedupTest extends TestCase
         $this->assertSame(2, DB::table('event_invitation_sends')->where('event_id', $event->id)->count());
     }
 
-    public function testUpdateSendsOnlyToNewGuestsAndReSaveSendsNothing(): void
+    public function test_update_sends_only_to_new_guests_and_re_save_sends_nothing(): void
     {
         Mail::fake();
 
@@ -102,7 +102,7 @@ class EventInvitationsDedupTest extends TestCase
         Mail::assertSent(EventInvitation::class, 2);
     }
 
-    public function testDeletingAndReaddingGuestDoesNotResend(): void
+    public function test_deleting_and_readding_guest_does_not_resend(): void
     {
         Mail::fake();
 
@@ -123,7 +123,7 @@ class EventInvitationsDedupTest extends TestCase
         Mail::assertSent(EventInvitation::class, 2);
     }
 
-    public function testLegacyObjectShapedPreviousGuestsDoNotResend(): void
+    public function test_legacy_object_shaped_previous_guests_do_not_resend(): void
     {
         Mail::fake();
 
@@ -140,7 +140,7 @@ class EventInvitationsDedupTest extends TestCase
         Mail::assertSent(EventInvitation::class, 3);
     }
 
-    public function testRateLimitStopsFurtherSendsAndLeavesGuestsUnclaimed(): void
+    public function test_rate_limit_stops_further_sends_and_leaves_guests_unclaimed(): void
     {
         Mail::fake();
 

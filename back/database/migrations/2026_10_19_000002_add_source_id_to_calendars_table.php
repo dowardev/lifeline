@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -64,16 +64,16 @@ return new class extends Migration
         if ($driver === 'mysql') {
             DB::statement(
                 'ALTER TABLE `calendars` ADD COLUMN `default_user_id` BIGINT UNSIGNED AS ('
-                . 'CASE WHEN `default` = 1 AND `archived_at` IS NULL THEN `user_id` ELSE NULL END'
-                . ') VIRTUAL'
+                .'CASE WHEN `default` = 1 AND `archived_at` IS NULL THEN `user_id` ELSE NULL END'
+                .') VIRTUAL'
             );
             DB::statement('CREATE UNIQUE INDEX `calendars_default_user_id_unique` ON `calendars` (`default_user_id`)');
         } elseif ($driver === 'sqlite') {
             DB::statement(
                 'ALTER TABLE `calendars` ADD COLUMN `default_user_id` INTEGER '
-                . 'GENERATED ALWAYS AS ('
-                . 'CASE WHEN `default` = 1 AND `archived_at` IS NULL THEN `user_id` ELSE NULL END'
-                . ') VIRTUAL'
+                .'GENERATED ALWAYS AS ('
+                .'CASE WHEN `default` = 1 AND `archived_at` IS NULL THEN `user_id` ELSE NULL END'
+                .') VIRTUAL'
             );
             DB::statement('CREATE UNIQUE INDEX `calendars_default_user_id_unique` ON `calendars` (`default_user_id`)');
         }

@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Services;
 
@@ -86,6 +86,7 @@ class CaldavDiscoveryService
         if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
             return null;
         }
+
         return (string) $response->getBody();
     }
 
@@ -93,12 +94,13 @@ class CaldavDiscoveryService
     {
         $xml = $this->propfind($client, $url,
             '<?xml version="1.0" encoding="utf-8" ?>'
-            . '<D:propfind xmlns:D="DAV:"><D:prop><D:current-user-principal/></D:prop></D:propfind>',
+            .'<D:propfind xmlns:D="DAV:"><D:prop><D:current-user-principal/></D:prop></D:propfind>',
             '0', $auth);
         if ($xml === null) {
             return null;
         }
         $href = $this->firstHref($xml, 'current-user-principal');
+
         return $href !== null ? $this->absoluteUrl($url, $href) : null;
     }
 
@@ -106,13 +108,14 @@ class CaldavDiscoveryService
     {
         $xml = $this->propfind($client, $principalUrl,
             '<?xml version="1.0" encoding="utf-8" ?>'
-            . '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
-            . '<D:prop><C:calendar-home-set/></D:prop></D:propfind>',
+            .'<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
+            .'<D:prop><C:calendar-home-set/></D:prop></D:propfind>',
             '0', $auth);
         if ($xml === null) {
             return null;
         }
         $href = $this->firstHref($xml, 'calendar-home-set');
+
         return $href !== null ? $this->absoluteUrl($principalUrl, $href) : null;
     }
 
@@ -120,9 +123,9 @@ class CaldavDiscoveryService
     {
         $xml = $this->propfind($client, $homeUrl,
             '<?xml version="1.0" encoding="utf-8" ?>'
-            . '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
-            . '<D:prop><D:displayname/><D:resourcetype/>'
-            . '<C:supported-calendar-component-set/></D:prop></D:propfind>',
+            .'<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
+            .'<D:prop><D:displayname/><D:resourcetype/>'
+            .'<C:supported-calendar-component-set/></D:prop></D:propfind>',
             '1', $auth);
         if ($xml === null) {
             return null;
@@ -153,6 +156,7 @@ class CaldavDiscoveryService
                     'name' => $addrName !== '' ? $addrName : basename(rtrim($href, '/')),
                     'type' => 'contacts',
                 ];
+
                 continue;
             }
             if (! $isCalendar) {
@@ -185,8 +189,8 @@ class CaldavDiscoveryService
         $home = $this->findAddressbookHomeSet($client, $principalUrl, $auth) ?? $principalUrl;
         $xml = $this->propfind($client, $home,
             '<?xml version="1.0" encoding="utf-8" ?>'
-            . '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
-            . '<D:prop><D:displayname/><D:resourcetype/></D:prop></D:propfind>',
+            .'<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
+            .'<D:prop><D:displayname/><D:resourcetype/></D:prop></D:propfind>',
             '1', $auth);
         if ($xml === null) {
             return null;
@@ -221,13 +225,14 @@ class CaldavDiscoveryService
     {
         $xml = $this->propfind($client, $principalUrl,
             '<?xml version="1.0" encoding="utf-8" ?>'
-            . '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
-            . '<D:prop><C:addressbook-home-set/></D:prop></D:propfind>',
+            .'<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">'
+            .'<D:prop><C:addressbook-home-set/></D:prop></D:propfind>',
             '0', $auth);
         if ($xml === null) {
             return null;
         }
         $href = $this->firstHref($xml, 'addressbook-home-set');
+
         return $href !== null ? $this->absoluteUrl($principalUrl, $href) : null;
     }
 
@@ -243,6 +248,7 @@ class CaldavDiscoveryService
             return null;
         }
         $href = trim((string) $nodes[0]);
+
         return $href !== '' ? $href : null;
     }
 
@@ -250,6 +256,7 @@ class CaldavDiscoveryService
     {
         try {
             $doc = new \SimpleXMLElement($xml);
+
             return $doc;
         } catch (\Exception $e) {
             return null;
@@ -262,13 +269,14 @@ class CaldavDiscoveryService
             return $href;
         }
         $parts = parse_url($base);
-        $origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '');
+        $origin = ($parts['scheme'] ?? 'https').'://'.($parts['host'] ?? '');
         if (isset($parts['port'])) {
-            $origin .= ':' . $parts['port'];
+            $origin .= ':'.$parts['port'];
         }
         if (str_starts_with($href, '/')) {
-            return $origin . $href;
+            return $origin.$href;
         }
-        return rtrim($base, '/') . '/' . $href;
+
+        return rtrim($base, '/').'/'.$href;
     }
 }

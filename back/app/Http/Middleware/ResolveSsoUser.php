@@ -1,18 +1,20 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Http\Middleware;
 
 use App\Models\CalendarSource;
 use App\Models\User;
 use Closure;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\Response;
 use Dowardev\SsoServer\Client\SsoServerClient;
 use Dowardev\SsoServer\Http\SsoHttpClient;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class ResolveSsoUser
 {
@@ -101,7 +103,7 @@ class ResolveSsoUser
                     ]);
                     $userRowJustLinked = true;
                 }
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 // Same-sub double login: the winner row is already there.
                 $user = User::where('sso_sub', $ssoSub)->first();
                 if (! $user) {
@@ -116,7 +118,7 @@ class ResolveSsoUser
                             'password' => bcrypt(Str::random(32)),
                         ]);
                         $userRowJustLinked = true;
-                    } catch (\Illuminate\Database\QueryException $e) {
+                    } catch (QueryException $e) {
                         $user = User::where('sso_sub', $ssoSub)->firstOrFail();
                         // The row was created by the concurrent request that
                         // won the race, so its sources still need linking.
@@ -163,11 +165,12 @@ class ResolveSsoUser
             if ($token === '') {
                 return [];
             }
+
             return $this->ssoHttp->get('/me', $token) ?? [];
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('SSO profile fallback failed', ['error' => $e->getMessage()]);
+            Log::warning('SSO profile fallback failed', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
-
 }

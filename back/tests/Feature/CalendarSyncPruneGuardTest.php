@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace Tests\Feature;
 
@@ -56,21 +56,21 @@ class CalendarSyncPruneGuardTest extends TestCase
         return $ref->invokeArgs($target, $args);
     }
 
-    public function testExtractCalendarDataThrowsOnGarbage(): void
+    public function test_extract_calendar_data_throws_on_garbage(): void
     {
         $this->expectException(\RuntimeException::class);
         $this->callPrivate(new CalendarSyncService, 'extractCalendarData', ['not xml at all {{{']);
     }
 
-    public function testExtractCalendarDataReturnsEmptyForValidEmptyMultistatus(): void
+    public function test_extract_calendar_data_returns_empty_for_valid_empty_multistatus(): void
     {
         $xml = '<?xml version="1.0" encoding="utf-8"?>'
-            . '<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"></D:multistatus>';
+            .'<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"></D:multistatus>';
 
         $this->assertSame([], $this->callPrivate(new CalendarSyncService, 'extractCalendarData', [$xml]));
     }
 
-    public function testPruneUnseenSkipsUnconfirmedCollection(): void
+    public function test_prune_unseen_skips_unconfirmed_collection(): void
     {
         $source = $this->makeSource();
 
@@ -82,7 +82,7 @@ class CalendarSyncPruneGuardTest extends TestCase
         $this->assertSame(1, ExternalEvent::where('calendar_source_id', $source->id)->count());
     }
 
-    public function testPruneUnseenDeletesStaleRowForConfirmedCollection(): void
+    public function test_prune_unseen_deletes_stale_row_for_confirmed_collection(): void
     {
         $source = $this->makeSource();
 
@@ -94,7 +94,7 @@ class CalendarSyncPruneGuardTest extends TestCase
         $this->assertSame(0, ExternalEvent::where('calendar_source_id', $source->id)->count());
     }
 
-    public function testPruneUnseenForKeepsContactsOnUnconfirmedCollection(): void
+    public function test_prune_unseen_for_keeps_contacts_on_unconfirmed_collection(): void
     {
         $source = $this->makeSource();
         ExternalContact::create([
@@ -113,7 +113,7 @@ class CalendarSyncPruneGuardTest extends TestCase
         $this->assertSame(1, ExternalContact::where('calendar_source_id', $source->id)->count());
     }
 
-    public function testPruneUnseenForPrunesTasksOnConfirmedCollection(): void
+    public function test_prune_unseen_for_prunes_tasks_on_confirmed_collection(): void
     {
         $source = $this->makeSource();
         ExternalTask::create([

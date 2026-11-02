@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Http\Controllers;
 
@@ -19,7 +19,7 @@ class CalendarSourceTestController extends Controller
             // P3 - the test endpoint probes the same kinds a user can
             // actually create, so the validated set is the shared
             // constant instead of a duplicated literal.
-            'type' => ['required', 'string', 'in:' . implode(',', CalendarSource::MANUAL_TYPES)],
+            'type' => ['required', 'string', 'in:'.implode(',', CalendarSource::MANUAL_TYPES)],
             'url' => 'required|url|max:2048',
             'username' => 'nullable|string|max:255',
             'password' => 'nullable|string|max:1024',
@@ -69,9 +69,9 @@ class CalendarSourceTestController extends Controller
                 'Depth' => '0',
             ],
             'body' => '<?xml version="1.0" encoding="utf-8" ?>'
-                . '<D:propfind xmlns:D="DAV:">'
-                . '<D:prop><D:displayname/><D:resourcetype/></D:prop>'
-                . '</D:propfind>',
+                .'<D:propfind xmlns:D="DAV:">'
+                .'<D:prop><D:displayname/><D:resourcetype/></D:prop>'
+                .'</D:propfind>',
         ];
         if ($username !== null && $username !== '') {
             $options['auth'] = [$username, (string) $password];
@@ -83,6 +83,7 @@ class CalendarSourceTestController extends Controller
             if ($e->getResponse() && $e->getResponse()->getStatusCode() === 401) {
                 return response()->json(['message' => 'Autenticación CalDAV rechazada (401). Revisá usuario y contraseña.'], 422);
             }
+
             return response()->json(['message' => $this->fetchErrorMessage($e)], 422);
         }
 
@@ -129,6 +130,7 @@ class CalendarSourceTestController extends Controller
         if ($status !== null && $status >= 400) {
             return "La URL devolvió HTTP {$status}.";
         }
+
         return 'No se pudo alcanzar la URL (timeout o error de red).';
     }
 }

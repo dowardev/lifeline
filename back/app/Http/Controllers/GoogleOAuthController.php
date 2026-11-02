@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Http\Controllers;
 
@@ -35,20 +35,20 @@ class GoogleOAuthController extends Controller
             $state = null;
         }
         if (! is_array($state) || ($state['exp'] ?? 0) < now()->timestamp || ($state['sub'] ?? '') === '') {
-            return redirect()->to($front . '&error=invalid_state');
+            return redirect()->to($front.'&error=invalid_state');
         }
 
         if ($request->filled('error')) {
-            return redirect()->to($front . '&error=denied');
+            return redirect()->to($front.'&error=denied');
         }
 
         try {
             $tokens = $google->exchangeCode((string) $request->input('code', ''));
         } catch (\Exception $e) {
-            return redirect()->to($front . '&error=exchange_failed');
+            return redirect()->to($front.'&error=exchange_failed');
         }
         if (! isset($tokens['access_token'])) {
-            return redirect()->to($front . '&error=exchange_failed');
+            return redirect()->to($front.'&error=exchange_failed');
         }
 
         $source = CalendarSource::where('sso_sub', $state['sub'])
@@ -68,6 +68,6 @@ class GoogleOAuthController extends Controller
         $source->last_error = null;
         $source->save();
 
-        return redirect()->to($front . '&connected=' . $source->id);
+        return redirect()->to($front.'&connected='.$source->id);
     }
 }

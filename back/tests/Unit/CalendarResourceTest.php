@@ -1,4 +1,5 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
@@ -27,7 +28,7 @@ class CalendarResourceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testLegacyLocalRowHasNullSourceAndIsSelectable(): void
+    public function test_legacy_local_row_has_null_source_and_is_selectable(): void
     {
         $user = User::factory()->create();
 
@@ -49,7 +50,7 @@ class CalendarResourceTest extends TestCase
         $this->assertTrue($payload['selectable']);
     }
 
-    public function testMirrorRowEmbedsSourceBlockWithKindMetadata(): void
+    public function test_mirror_row_embeds_source_block_with_kind_metadata(): void
     {
         $user = User::factory()->create();
 
@@ -80,7 +81,7 @@ class CalendarResourceTest extends TestCase
         $this->assertNull($payload['archived_at']);
     }
 
-    public function testArchivedMirrorIsNotSelectableAndKeepsTheOriginalName(): void
+    public function test_archived_mirror_is_not_selectable_and_keeps_the_original_name(): void
     {
         $user = User::factory()->create();
 
@@ -110,7 +111,7 @@ class CalendarResourceTest extends TestCase
         $this->assertNotNull($payload['archived_at']);
     }
 
-    public function testGoogleSourceExposesTypeAndUsernameForTheBadge(): void
+    public function test_google_source_exposes_type_and_username_for_the_badge(): void
     {
         $user = User::factory()->create();
 
@@ -138,7 +139,7 @@ class CalendarResourceTest extends TestCase
         $this->assertSame('Personal', $payload['source']['name']);
     }
 
-    public function testMirrorRowEmbedsSourceBlockWithoutEagerLoad(): void
+    public function test_mirror_row_embeds_source_block_without_eager_load(): void
     {
         // F4 - the resource must never return `source: null` when
         // `source_id` is set, even if the caller forgets `with('source')`.
@@ -168,7 +169,7 @@ class CalendarResourceTest extends TestCase
         $this->assertSame('#ff00ff', $payload['source']['color']);
     }
 
-    public function testSourceColorAndUsernameChangeReflectedInResource(): void
+    public function test_source_color_and_username_change_reflected_in_resource(): void
     {
         // F6 - the mirror only denormalizes `name`. When the source's
         // `color` or `username` changes, the resource must reflect the

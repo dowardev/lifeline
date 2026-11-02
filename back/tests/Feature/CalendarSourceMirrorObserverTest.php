@@ -1,4 +1,5 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
@@ -7,7 +8,9 @@ namespace Tests\Feature;
 use App\Models\Calendar;
 use App\Models\CalendarSource;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -35,7 +38,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testCreatingASourceForAUserCreatesAMirrorCalendar(): void
+    public function test_creating_a_source_for_a_user_creates_a_mirror_calendar(): void
     {
         $user = User::factory()->create();
 
@@ -57,14 +60,14 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertNull($mirror->archived_at);
     }
 
-    public function testCreatingAGuestSourceSkipsMirroring(): void
+    public function test_creating_a_guest_source_skips_mirroring(): void
     {
         // Guest sources have no `users` row, so `user_id` stays NULL
         // and the mirror cannot satisfy the `calendars.user_id` FK.
         // The source itself is still saved (guests have their own
         // picker-less flow); only the mirror is skipped.
         $this->makeSource(null, [
-            'sso_sub' => 'guest:' . \Illuminate\Support\Str::uuid(),
+            'sso_sub' => 'guest:'.Str::uuid(),
             'type' => 'ics',
             'name' => 'Guest cal',
         ]);
@@ -72,7 +75,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertSame(0, Calendar::count(), 'Guest source should not create a mirror row.');
     }
 
-    public function testFirstSourceMirrorBecomesDefaultWhenUserHasNoActiveDefault(): void
+    public function test_first_source_mirror_becomes_default_when_user_has_no_active_default(): void
     {
         $user = User::factory()->create();
 
@@ -86,7 +89,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertTrue((bool) $mirror->default, 'First mirror must take the default slot when no other active default exists.');
     }
 
-    public function testSubsequentSourceMirrorDoesNotStealAnExistingDefault(): void
+    public function test_subsequent_source_mirror_does_not_steal_an_existing_default(): void
     {
         $user = User::factory()->create();
         $existing = Calendar::create([
@@ -109,7 +112,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertFalse((bool) $mirror->default, 'Second mirror must not override an existing default.');
     }
 
-    public function testRenamingASourceRenamesItsMirror(): void
+    public function test_renaming_a_source_renames_its_mirror(): void
     {
         $user = User::factory()->create();
         $source = $this->makeSource($user, [
@@ -124,7 +127,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertSame('New name', $mirror->name, 'Mirror name should follow the source rename.');
     }
 
-    public function testUpdatingUnrelatedFieldsDoesNotTouchTheMirrorName(): void
+    public function test_updating_unrelated_fields_does_not_touch_the_mirror_name(): void
     {
         $user = User::factory()->create();
         $source = $this->makeSource($user, [
@@ -140,7 +143,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertSame('Stable name', $mirror->name, 'Color change should not touch the mirror name.');
     }
 
-    public function testDeletingASourceArchivesTheMirrorAndNullsSourceId(): void
+    public function test_deleting_a_source_archives_the_mirror_and_nulls_source_id(): void
     {
         $user = User::factory()->create();
         $source = $this->makeSource($user, [
@@ -158,7 +161,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertNotNull($mirror->archived_at, 'Mirror must be marked archived so the picker skips it.');
     }
 
-    public function testNewSourceAfterADisconnectTakesTheDefaultSlotWhenNoActiveDefaultRemains(): void
+    public function test_new_source_after_a_disconnect_takes_the_default_slot_when_no_active_default_remains(): void
     {
         $user = User::factory()->create();
         $first = $this->makeSource($user, [
@@ -176,7 +179,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertTrue((bool) $mirror->default, 'When the only default was archived, the next mirror takes the default slot.');
     }
 
-    public function testMultipleSourcesCreatedSequentiallyOnlyFirstGetsDefault(): void
+    public function test_multiple_sources_created_sequentially_only_first_gets_default(): void
     {
         // F1/F3 - the default assignment logic: first source gets default,
         // subsequent ones don't. This mirrors the backfill migration's rule.
@@ -193,7 +196,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertFalse((bool) $mirrors[2]->default, 'Third mirror must not be default');
     }
 
-    public function testSourceWithColorAndUsernameChangeDoesNotAffectMirrorName(): void
+    public function test_source_with_color_and_username_change_does_not_affect_mirror_name(): void
     {
         // F6 - the observer only syncs `name`. Color/username changes on
         // the source do not affect the mirror's denormalized name.
@@ -217,13 +220,13 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertSame('new@gmail.com', $source->fresh()->username);
     }
 
-    public function testGuestSourceLogsWarningAndSkipsMirror(): void
+    public function test_guest_source_logs_warning_and_skips_mirror(): void
     {
         // F2 - guest sources (no users row) should log a warning and
         // skip mirror creation. We can't easily assert on Log facade here,
         // but we verify the mirror is not created.
         $this->makeSource(null, [
-            'sso_sub' => 'guest:' . \Illuminate\Support\Str::uuid(),
+            'sso_sub' => 'guest:'.Str::uuid(),
             'type' => 'ics',
             'name' => 'Guest cal',
         ]);
@@ -231,7 +234,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertSame(0, Calendar::count(), 'Guest source should not create a mirror row.');
     }
 
-    public function testLinkingTheUserLaterCreatesTheMissingMirror(): void
+    public function test_linking_the_user_later_creates_the_missing_mirror(): void
     {
         // F2 - the source can be connected BEFORE the `users` row
         // exists. When the row appears later (first login), the source
@@ -257,7 +260,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertSame('Connected before login', $mirror->name);
     }
 
-    public function testLinkingTheUserDoesNotCreateASecondMirror(): void
+    public function test_linking_the_user_does_not_create_a_second_mirror(): void
     {
         // F2 - the late-link path must not duplicate a mirror that
         // already exists (the source was created for an existing user).
@@ -274,7 +277,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertSame(1, Calendar::count(), 'No duplicate mirror may be created.');
     }
 
-    public function testDatabaseRejectsTwoActiveDefaultsForTheSameUser(): void
+    public function test_database_rejects_two_active_defaults_for_the_same_user(): void
     {
         // P2 - the DB-level guarantee. A generated column yields
         // `user_id` for an active default and NULL otherwise, and a
@@ -296,11 +299,11 @@ class CalendarSourceMirrorObserverTest extends TestCase
             'default' => true,
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         $second->save();
     }
 
-    public function testDatabaseAllowsSeveralNonDefaultRowsForTheSameUser(): void
+    public function test_database_allows_several_non_default_rows_for_the_same_user(): void
     {
         // P2 - the guard must only constrain ACTIVE defaults.
         $user = User::factory()->create();
@@ -317,7 +320,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         $this->assertSame(3, Calendar::where('user_id', $user->id)->count());
     }
 
-    public function testDatabaseAllowsASecondDefaultForADifferentUser(): void
+    public function test_database_allows_a_second_default_for_a_different_user(): void
     {
         // P2 - the guard is per user, not global.
         $alice = User::factory()->create();
@@ -326,7 +329,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
         foreach ([$alice, $bob] as $user) {
             $calendar = new Calendar;
             $calendar->fill([
-                'name' => 'Default for ' . $user->id,
+                'name' => 'Default for '.$user->id,
                 'user_id' => $user->id,
                 'default' => true,
             ])->save();
@@ -338,7 +341,7 @@ class CalendarSourceMirrorObserverTest extends TestCase
     private function makeSource(?User $user, array $overrides): CalendarSource
     {
         $payload = array_merge([
-            'sso_sub' => $user?->sso_sub ?? 'guest:' . \Illuminate\Support\Str::uuid(),
+            'sso_sub' => $user?->sso_sub ?? 'guest:'.Str::uuid(),
             'type' => 'ics',
             'name' => 'Source',
             'url' => encrypt('https://cal.example.com/feed.ics'),
