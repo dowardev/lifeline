@@ -612,8 +612,6 @@ import {
   IonIcon,
   IonItem,
   IonNote,
-  IonRadio,
-  IonRadioGroup,
 } from "@ionic/vue";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { add, format, sub } from "date-fns";
@@ -622,11 +620,9 @@ import {
   arrowBackOutline,
   arrowForwardOutline,
   closeOutline,
-  personCircleOutline,
   saveOutline,
   trashOutline,
   todayOutline,
-  warningOutline,
 } from "ionicons/icons";
 import useVuelidate from "@vuelidate/core";
 import { email, helpers, maxLength, required } from "@vuelidate/validators";

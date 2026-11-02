@@ -658,13 +658,9 @@ async function save(): Promise<void> {
 
     // Request notification permission synchronously within the user gesture
     // (before any network await below) or Capacitor/Chrome rejects it.
-    let notificationsGranted = true;
-    try {
-      notificationsGranted =
-        await useReminder().checkNotificationsPermissions();
-    } catch {
-      notificationsGranted = true;
-    }
+    await useReminder()
+      .checkNotificationsPermissions()
+      .catch(() => undefined);
 
     if (authStore.isAnonymous) {
       const editingId = props.taskData?.id ? Number(props.taskData.id) : null;

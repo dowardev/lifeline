@@ -8,13 +8,13 @@
     <div v-if="!apiKey" class="wakatime-setup">
       <ion-icon :icon="timerOutline" class="wakatime-icon"></ion-icon>
       <p class="wakatime-text">Conecta WakaTime</p>
-      <ion-button fill="outline" @click="openApiKeyModal" size="small">
+      <ion-button fill="outline" size="small" @click="openApiKeyModal">
         Configurar API Key
       </ion-button>
     </div>
 
     <div v-else class="wakatime-content">
-      <WakaTimeToday :api-key="apiKey" ref="todayRef" />
+      <WakaTimeToday ref="todayRef" :api-key="apiKey" />
 
       <div class="wakatime-stats">
         <div class="stat-item">
@@ -32,7 +32,7 @@
           <ion-icon slot="start" :icon="refreshOutline"></ion-icon>
           Actualizar
         </ion-button>
-        <ion-button fill="clear" size="small" @click="logoutWakaTime" color="danger">
+        <ion-button fill="clear" size="small" color="danger" @click="logoutWakaTime">
           <ion-icon slot="start" :icon="logOutOutline"></ion-icon>
           Desconectar
         </ion-button>

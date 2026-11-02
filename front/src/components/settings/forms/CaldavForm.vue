@@ -6,8 +6,8 @@
 <template>
   <ion-item class="transparent">
     <ion-input
-      :disabled="disabled"
       v-model="connection.name"
+      :disabled="disabled"
       label="Nombre"
       label-placement="stacked"
       placeholder="Mi servidor CalDAV"
@@ -16,8 +16,8 @@
 
   <ion-item class="transparent">
     <ion-input
-      :disabled="disabled"
       v-model="connection.url"
+      :disabled="disabled"
       label="URL del servidor"
       label-placement="stacked"
       placeholder="https://caldav.ejemplo.com/remote.php/dav"
@@ -27,8 +27,8 @@
 
   <ion-item class="transparent">
     <ion-input
-      :disabled="disabled"
       v-model="connection.username"
+      :disabled="disabled"
       label="Usuario"
       label-placement="stacked"
       placeholder="usuario"
@@ -37,8 +37,8 @@
 
   <ion-item class="transparent">
     <ion-input
-      :disabled="disabled"
       v-model="connection.password"
+      :disabled="disabled"
       label="Contraseña"
       label-placement="stacked"
       type="password"
