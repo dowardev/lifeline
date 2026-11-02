@@ -1,16 +1,19 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
 namespace Tests\Feature;
 
-use App\Http\Middleware\ResolveCalendarOwner;
 use App\Models\Calendar;
 use App\Models\CalendarSource;
 use App\Models\User;
 use Dowardev\SsoServer\Client\SsoServerClient;
+use Dowardev\SsoServer\Types\SsoUser;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Mockery;
 use Tests\TestCase;
 
@@ -45,7 +48,7 @@ class CalendarMirrorSeamsTest extends TestCase
      */
     private function actingAsSsoUser(string $sub, ?string $email = null): void
     {
-        $ssoUser = new \Dowardev\SsoServer\Types\SsoUser($sub, 'Owner', $email, 'owner');
+        $ssoUser = new SsoUser($sub, 'Owner', $email, 'owner');
         $sso = Mockery::mock(SsoServerClient::class);
         $sso->shouldReceive('authenticateRequest')->andReturn($ssoUser);
         $sso->shouldReceive('getId')->andReturn((string) $sub);
@@ -59,16 +62,16 @@ class CalendarMirrorSeamsTest extends TestCase
         $user = new User;
         $user->forceFill([
             'name' => 'Owner',
-            'user' => 'owner' . uniqid(),
-            'email' => 'owner+' . uniqid() . '@example.com',
+            'user' => 'owner'.uniqid(),
+            'email' => 'owner+'.uniqid().'@example.com',
             'password' => bcrypt('secret'),
-            'sso_sub' => $ssoSub ?? 'sso:owner:' . uniqid(),
+            'sso_sub' => $ssoSub ?? 'sso:owner:'.uniqid(),
         ])->save();
 
         return $user;
     }
 
-    public function testLateLinkedSourceAppearsInThePickerOnTheSameRequest(): void
+    public function test_late_linked_source_appears_in_the_picker_on_the_same_request(): void
     {
         // F3 - the source was connected while the account had no local
         // `users` row yet, so it could not get a mirror. The request
@@ -90,7 +93,7 @@ class CalendarMirrorSeamsTest extends TestCase
         $this->assertSame(0, Calendar::count(), 'No mirror can exist before the user is resolvable.');
         $this->assertNull(User::where('sso_sub', $sub)->first(), 'The account does not exist yet.');
 
-        $this->actingAsSsoUser($sub, 'late-' . uniqid() . '@example.com');
+        $this->actingAsSsoUser($sub, 'late-'.uniqid().'@example.com');
 
         $response = $this->withHeader('Authorization', 'Bearer test-token')
             ->getJson('/api/v1/calendars');
@@ -111,7 +114,7 @@ class CalendarMirrorSeamsTest extends TestCase
         $this->assertTrue($rows[0]['selectable']);
     }
 
-    public function testResolvingAnExistingUserDoesNotRunTheSourceLinking(): void
+    public function test_resolving_an_existing_user_does_not_run_the_source_linking(): void
     {
         // F2 - the linking must NOT run on every authenticated request.
         // With the user already resolvable, the source linking is
@@ -138,7 +141,7 @@ class CalendarMirrorSeamsTest extends TestCase
         $this->assertSame(1, Calendar::count(), 'No extra mirror may be created.');
     }
 
-    public function testIndexDoesNotRunOneQueryPerMirrorRow(): void
+    public function test_index_does_not_run_one_query_per_mirror_row(): void
     {
         // F5 - the resource lazy-loads `source`, so the controller MUST
         // eager-load it. This test pins the query count: one query for
@@ -182,11 +185,11 @@ class CalendarMirrorSeamsTest extends TestCase
             1,
             count($sourceQueries),
             'The source relation must be eager-loaded, not lazy-loaded per row. Queries: '
-                . implode(' | ', array_column($queries, 'query')),
+                .implode(' | ', array_column($queries, 'query')),
         );
     }
 
-    public function testDataMigrationDownKeepsLocalCalendars(): void
+    public function test_data_migration_down_keeps_local_calendars(): void
     {
         // F6 - the backfill's `down()` removes the mirror rows. A local
         // calendar (no `source_id`) must survive it.
@@ -222,7 +225,7 @@ class CalendarMirrorSeamsTest extends TestCase
         );
     }
 
-    public function testSchemaMigrationDownIsIdempotent(): void
+    public function test_schema_migration_down_is_idempotent(): void
     {
         // F7 - the `down()` guards the generated column and its index,
         // so running it twice must not fail.
@@ -236,7 +239,7 @@ class CalendarMirrorSeamsTest extends TestCase
         $this->assertTrue(true, 'The down() ran twice without throwing.');
     }
 
-    public function testSourceIdIsUniqueAcrossMirrors(): void
+    public function test_source_id_is_unique_across_mirrors(): void
     {
         // F4 - one source may have at most one mirror row. The unique
         // index over `source_id` is the backstop for the observer.
@@ -259,17 +262,17 @@ class CalendarMirrorSeamsTest extends TestCase
             'default' => false,
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         $duplicate->save();
     }
 
-    public function testGuestSourcesAreNeverMirrored(): void
+    public function test_guest_sources_are_never_mirrored(): void
     {
         // F3/F4 - a guest has no `users` row, so no mirror can be
         // created, and the guest flow stays on the documented path.
         $source = new CalendarSource;
         $source->forceFill([
-            'sso_sub' => 'guest:' . \Illuminate\Support\Str::uuid(),
+            'sso_sub' => 'guest:'.Str::uuid(),
             'type' => 'ics',
             'name' => 'Guest cal',
             'url' => encrypt('https://cal.example.com/feed.ics'),

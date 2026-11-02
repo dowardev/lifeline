@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Observers;
 
@@ -40,6 +40,7 @@ class CalendarSourceMirrorObserver
     {
         if ($source->user_id === null) {
             $this->logSkippedMirror($source);
+
             return;
         }
 
@@ -64,6 +65,7 @@ class CalendarSourceMirrorObserver
             $mirror = Calendar::withTrashed()->where('source_id', $source->id)->first();
             if ($mirror === null) {
                 $this->createMirror($source);
+
                 return;
             }
         }
@@ -176,6 +178,7 @@ class CalendarSourceMirrorObserver
 
         if (str_starts_with((string) $source->sso_sub, 'guest:')) {
             Log::info('LBDS-305 no mirror for guest source (no users row to link)', $context);
+
             return;
         }
 

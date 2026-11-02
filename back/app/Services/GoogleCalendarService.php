@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Services;
 
@@ -79,7 +79,7 @@ class GoogleCalendarService
         if (! is_array($data)) {
             // An unparseable body must leave the collection unconfirmed,
             // never look like a confirmed empty success.
-            throw new \RuntimeException('Google devolvió una respuesta no válida para ' . $label . '.');
+            throw new \RuntimeException('Google devolvió una respuesta no válida para '.$label.'.');
         }
 
         return $data;
@@ -101,7 +101,7 @@ class GoogleCalendarService
 
                     return new \RuntimeException(
                         "la API de Google para {$label} no está habilitada en {$where}."
-                        . ($activation === null ? '' : " Habilitala en {$activation}"),
+                        .($activation === null ? '' : " Habilitala en {$activation}"),
                         0,
                         $e
                     );
@@ -115,14 +115,14 @@ class GoogleCalendarService
                 }
 
                 return new \RuntimeException(
-                    "Google rechazó {$label}: " . mb_substr($detail, 0, 160),
+                    "Google rechazó {$label}: ".mb_substr($detail, 0, 160),
                     0,
                     $e
                 );
             }
         }
 
-        return new \RuntimeException('No se pudo consultar ' . $label . ' en Google.', 0, $e);
+        return new \RuntimeException('No se pudo consultar '.$label.' en Google.', 0, $e);
     }
 
     /**
@@ -152,7 +152,7 @@ class GoogleCalendarService
             'state' => $state,
         ]);
 
-        return 'https://accounts.google.com/o/oauth2/v2/auth?' . $query;
+        return 'https://accounts.google.com/o/oauth2/v2/auth?'.$query;
     }
 
     public function exchangeCode(string $code): array
@@ -252,7 +252,7 @@ class GoogleCalendarService
                 continue;
             }
             $out[] = [
-                'href' => 'tasks:' . (string) $item['id'],
+                'href' => 'tasks:'.(string) $item['id'],
                 'name' => (string) ($item['title'] ?? $item['id']),
                 'type' => 'tasks',
             ];
@@ -275,7 +275,7 @@ class GoogleCalendarService
         $this->getJson(
             self::PEOPLE_CONNECTIONS_URL,
             [
-                'headers' => ['Authorization' => 'Bearer ' . $this->accessToken($source)],
+                'headers' => ['Authorization' => 'Bearer '.$this->accessToken($source)],
                 'query' => ['pageSize' => 1, 'personFields' => 'names'],
             ],
             'los contactos'
@@ -299,7 +299,7 @@ class GoogleCalendarService
                 $query['pageToken'] = $pageToken;
             }
             $data = $this->getJson(
-                'https://tasks.googleapis.com/tasks/v1/lists/' . rawurlencode($listId) . '/tasks',
+                'https://tasks.googleapis.com/tasks/v1/lists/'.rawurlencode($listId).'/tasks',
                 ['headers' => ['Authorization' => "Bearer {$token}"], 'query' => $query],
                 'las tareas'
             );
@@ -364,7 +364,7 @@ class GoogleCalendarService
     {
         $token = $this->accessToken($source);
         $data = $this->getJson(
-            'https://www.googleapis.com/calendar/v3/calendars/' . rawurlencode($calendarId) . '/events',
+            'https://www.googleapis.com/calendar/v3/calendars/'.rawurlencode($calendarId).'/events',
             [
                 'headers' => ['Authorization' => "Bearer {$token}"],
                 'query' => [
@@ -388,7 +388,7 @@ class GoogleCalendarService
             $recurring = isset($item['recurringEventId']);
             $out[] = [
                 'uid' => $recurring
-                    ? ((string) ($item['recurringEventId'] ?? $item['id'])) . '@' . (string) ($item['id'])
+                    ? ((string) ($item['recurringEventId'] ?? $item['id'])).'@'.(string) ($item['id'])
                     : (string) $item['id'],
                 'title' => (string) ($item['summary'] ?? '(sin título)'),
                 'start' => $start,
@@ -468,8 +468,8 @@ class GoogleCalendarService
         $this->calendarDefaultReminders[$calendarId] = [];
         try {
             $data = $this->getJson(
-                'https://www.googleapis.com/calendar/v3/users/me/calendarList/' . rawurlencode($calendarId),
-                ['headers' => ['Authorization' => 'Bearer ' . $this->accessToken($source)]],
+                'https://www.googleapis.com/calendar/v3/users/me/calendarList/'.rawurlencode($calendarId),
+                ['headers' => ['Authorization' => 'Bearer '.$this->accessToken($source)]],
                 'los recordatorios predeterminados del calendario'
             );
             $this->calendarDefaultReminders[$calendarId] = $this->popupSeconds($data['defaultReminders'] ?? null);

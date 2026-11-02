@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace Tests\Feature;
 
@@ -54,7 +54,7 @@ class GoogleOAuthSourceSyncTest extends TestCase
         return $source;
     }
 
-    public function testSyncServiceAcceptsTheOAuthSentinelUrl(): void
+    public function test_sync_service_accepts_the_o_auth_sentinel_url(): void
     {
         $source = $this->makeGoogleSource();
 
@@ -62,16 +62,16 @@ class GoogleOAuthSourceSyncTest extends TestCase
         // the guard alone, without touching the network.
         $result = (new CalendarSyncService)->syncSource($source);
 
-        $this->assertTrue($result['ok'], 'sync should not fail on the sentinel url: ' . json_encode($result));
+        $this->assertTrue($result['ok'], 'sync should not fail on the sentinel url: '.json_encode($result));
         $this->assertNull($source->fresh()->last_error);
     }
 
-    public function testSyncEndpointAcceptsTheOAuthSentinelUrl(): void
+    public function test_sync_endpoint_accepts_the_o_auth_sentinel_url(): void
     {
         $source = $this->makeGoogleSource();
 
         $response = $this->withoutMiddleware(ResolveCalendarOwner::class)->postJson(
-            '/api/v1/calendar-sources/' . $source->id . '/sync?calendar_owner=' . self::OWNER,
+            '/api/v1/calendar-sources/'.$source->id.'/sync?calendar_owner='.self::OWNER,
             []
         );
 
@@ -79,7 +79,7 @@ class GoogleOAuthSourceSyncTest extends TestCase
         $response->assertJsonPath('ok', true);
     }
 
-    public function testSsrfGuardStillRejectsNonHttpUrlsForUserSuppliedSources(): void
+    public function test_ssrf_guard_still_rejects_non_http_urls_for_user_supplied_sources(): void
     {
         $source = $this->makeCaldavSource('ftp://internal.example.com/dav');
 
@@ -89,12 +89,12 @@ class GoogleOAuthSourceSyncTest extends TestCase
         $this->assertStringContainsString('http://', (string) $result['message']);
     }
 
-    public function testSyncEndpointStillRejectsNonHttpUrlsForUserSuppliedSources(): void
+    public function test_sync_endpoint_still_rejects_non_http_urls_for_user_supplied_sources(): void
     {
         $source = $this->makeCaldavSource('ftp://internal.example.com/dav');
 
         $response = $this->withoutMiddleware(ResolveCalendarOwner::class)->postJson(
-            '/api/v1/calendar-sources/' . $source->id . '/sync?calendar_owner=' . self::OWNER,
+            '/api/v1/calendar-sources/'.$source->id.'/sync?calendar_owner='.self::OWNER,
             []
         );
 

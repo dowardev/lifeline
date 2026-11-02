@@ -10,14 +10,14 @@ class ReminderOffsetsTest extends TestCase
 {
     use CreatesApplication;
 
-    public function testCanonicalHasElevenCodesInTableOrder(): void
+    public function test_canonical_has_eleven_codes_in_table_order(): void
     {
         $this->assertSame([
             'at_time', '5m', '10m', '15m', '30m', '1h', '2h', '1d', '2d', '1w', '1mo',
         ], ReminderOffsets::CANONICAL);
     }
 
-    public function testLegacyMapCoversEveryUnambiguousLegacyCode(): void
+    public function test_legacy_map_covers_every_unambiguous_legacy_code(): void
     {
         $this->assertSame(ReminderOffsets::LEGACY, [
             'just' => 'at_time',
@@ -35,29 +35,29 @@ class ReminderOffsetsTest extends TestCase
         ]);
     }
 
-    public function testNormalizeMapsLegacyToCanonicalWithAtTimeFirstClass(): void
+    public function test_normalize_maps_legacy_to_canonical_with_at_time_first_class(): void
     {
         $this->assertSame(['at_time'], ReminderOffsets::normalize(['just']));
         $this->assertSame(['5m', '1mo'], ReminderOffsets::normalize(['5mb', '1mtb', '1mb']));
     }
 
-    public function testNormalizeDropsUnknownAndEmptyCodesWithWarning(): void
+    public function test_normalize_drops_unknown_and_empty_codes_with_warning(): void
     {
         $this->assertSame(['at_time'], ReminderOffsets::normalize(['1smn', '', 'just', 'nonsense']));
     }
 
-    public function testNormalizeCollapsesDuplicates(): void
+    public function test_normalize_collapses_duplicates(): void
     {
         $this->assertSame(['5m', '1h'], ReminderOffsets::normalize(['5m', '5m', '5mb', '1h', '1h']));
     }
 
-    public function testNormalizeOrdersOutputByCanonicalTableOrder(): void
+    public function test_normalize_orders_output_by_canonical_table_order(): void
     {
         $this->assertSame(['at_time', '5m', '1w', '1mo'], ReminderOffsets::normalize(['1mo', 'at_time', '1w', '5m']));
         $this->assertSame(['at_time', '5m', '2h', '1mo'], ReminderOffsets::normalize(['5mb', '2hb', '1mtb', 'just']));
     }
 
-    public function testIsValidOnlyAcceptsCanonicalCodes(): void
+    public function test_is_valid_only_accepts_canonical_codes(): void
     {
         $this->assertTrue(ReminderOffsets::isValid('at_time'));
         $this->assertTrue(ReminderOffsets::isValid('1mo'));
@@ -66,7 +66,7 @@ class ReminderOffsetsTest extends TestCase
         $this->assertFalse(ReminderOffsets::isValid(''));
     }
 
-    public function testCodeForSecondsMapsEveryFixedOffset(): void
+    public function test_code_for_seconds_maps_every_fixed_offset(): void
     {
         $this->assertSame('at_time', ReminderOffsets::codeForSeconds(0));
         $this->assertSame('5m', ReminderOffsets::codeForSeconds(300));
@@ -80,7 +80,7 @@ class ReminderOffsetsTest extends TestCase
         $this->assertSame('1w', ReminderOffsets::codeForSeconds(604800));
     }
 
-    public function testCodeForSecondsNeverDerivesMonthOrNonCanonicalOffsets(): void
+    public function test_code_for_seconds_never_derives_month_or_non_canonical_offsets(): void
     {
         // 1mo has no fixed second count: a real month varies in length.
         $this->assertNull(ReminderOffsets::codeForSeconds(2592000));
@@ -88,7 +88,7 @@ class ReminderOffsetsTest extends TestCase
         $this->assertNull(ReminderOffsets::codeForSeconds(-5400));
     }
 
-    public function testCodesForSecondsDropsUnknownDedupesAndOrders(): void
+    public function test_codes_for_seconds_drops_unknown_dedupes_and_orders(): void
     {
         $this->assertSame(
             ['15m', '1h'],
@@ -100,7 +100,7 @@ class ReminderOffsetsTest extends TestCase
         );
     }
 
-    public function testCodesForSecondsIgnoresNonNumericValues(): void
+    public function test_codes_for_seconds_ignores_non_numeric_values(): void
     {
         $this->assertSame([], ReminderOffsets::codesForSeconds(['nonsense', '', null, ['x']]));
     }

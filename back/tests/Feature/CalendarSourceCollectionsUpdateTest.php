@@ -1,7 +1,7 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace Tests\Feature;
 
@@ -73,12 +73,12 @@ class CalendarSourceCollectionsUpdateTest extends TestCase
     private function putCollections(CalendarSource $source, array $collections)
     {
         return $this->withoutMiddleware(ResolveCalendarOwner::class)->putJson(
-            '/api/v1/calendar-sources/' . $source->id . '?calendar_owner=' . self::OWNER,
+            '/api/v1/calendar-sources/'.$source->id.'?calendar_owner='.self::OWNER,
             ['collections' => $collections]
         );
     }
 
-    public function testUnsubscribeDeletesRowsForThatCollectionOnly(): void
+    public function test_unsubscribe_deletes_rows_for_that_collection_only(): void
     {
         $source = $this->makeSource([
             ['href' => self::WORK, 'name' => 'Work', 'type' => 'calendar', 'subscribed' => true, 'hidden' => false],
@@ -102,7 +102,7 @@ class CalendarSourceCollectionsUpdateTest extends TestCase
         $this->assertSame(1, ExternalTask::where('collection_href', self::TASKS)->count());
     }
 
-    public function testAlreadyUnsubscribedCollectionIsKeptUntouchedOnUnrelatedSave(): void
+    public function test_already_unsubscribed_collection_is_kept_untouched_on_unrelated_save(): void
     {
         // Both collections arrive unsubscribed but were already unsubscribed:
         // there is no transition, so no delete runs at all.
@@ -123,7 +123,7 @@ class CalendarSourceCollectionsUpdateTest extends TestCase
         $this->assertSame(1, ExternalTask::where('collection_href', self::WORK)->count());
     }
 
-    public function testHiddenToggleDoesNotDeleteRows(): void
+    public function test_hidden_toggle_does_not_delete_rows(): void
     {
         $source = $this->makeSource([
             ['href' => self::WORK, 'name' => 'Work', 'type' => 'calendar', 'subscribed' => true, 'hidden' => false],
@@ -141,7 +141,7 @@ class CalendarSourceCollectionsUpdateTest extends TestCase
         $this->assertTrue((bool) $source->fresh()->collections[0]['hidden']);
     }
 
-    public function testKindsAndFlagsSurviveTheRoundTrip(): void
+    public function test_kinds_and_flags_survive_the_round_trip(): void
     {
         $source = $this->makeSource([
             ['href' => self::WORK, 'name' => 'Work', 'type' => 'calendar', 'subscribed' => true, 'hidden' => false],

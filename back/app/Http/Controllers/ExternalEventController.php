@@ -1,15 +1,16 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
-
 namespace App\Http\Controllers;
 
+use App\Models\CalendarSource;
 use App\Models\ExternalContact;
 use App\Models\ExternalEvent;
 use App\Models\ExternalTask;
-use App\Models\CalendarSource;
 use App\Support\ReminderOffsets;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class ExternalEventController extends Controller
@@ -112,7 +113,7 @@ class ExternalEventController extends Controller
      * Collections flagged `hidden` on their source must vanish from every
      * external listing (events, contacts, tasks), not only from the calendar.
      */
-    private function excludeHiddenCollections(\Illuminate\Database\Eloquent\Builder $query, string $owner): void
+    private function excludeHiddenCollections(Builder $query, string $owner): void
     {
         $hiddenBySource = [];
         foreach (CalendarSource::where('sso_sub', $owner)->get(['id', 'collections']) as $src) {

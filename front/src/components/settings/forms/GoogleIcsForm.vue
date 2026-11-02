@@ -6,8 +6,8 @@
 <template>
   <ion-item class="transparent">
     <ion-input
-      :disabled="disabled"
       v-model="connection.name"
+      :disabled="disabled"
       label="Nombre"
       label-placement="stacked"
       placeholder="Mi calendario de Google"
@@ -16,8 +16,8 @@
 
   <ion-item class="transparent">
     <ion-input
-      :disabled="disabled"
       v-model="connection.icsUrl"
+      :disabled="disabled"
       label="URL ICS (dirección secreta iCal)"
       label-placement="stacked"
       placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"

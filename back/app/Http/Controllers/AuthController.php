@@ -1,16 +1,16 @@
 <?php
+
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
-
 
 namespace App\Http\Controllers;
 
 use App\Http\Resources\CalendarResource;
 use App\Http\Resources\EventResource;
 use App\Http\Resources\UserResource;
+use Dowardev\SsoServer\Facades\SsoAuth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Dowardev\SsoServer\Facades\SsoAuth;
 
 class AuthController extends Controller
 {
