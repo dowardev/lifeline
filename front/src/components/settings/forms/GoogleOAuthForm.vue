@@ -12,18 +12,25 @@
 
   <ion-item class="transparent">
     <ion-input
-      v-model="connection.name"
       :disabled="disabled"
+      :value="connection.name"
       label="Nombre"
       label-placement="stacked"
       placeholder="Mi calendario de Google"
+      @ion-input="updateField({ field: 'name', value: $event.detail.value as string })"
     ></ion-input>
   </ion-item>
 
   <ion-item :disabled="disabled" class="transparent">
     <ion-label>Color</ion-label>
 
-    <input slot="end" v-model="connection.color" type="color" :disabled="disabled" />
+    <input
+      slot="end"
+      :value="connection.color"
+      type="color"
+      :disabled="disabled"
+      @input="updateField({ field: 'color', value: ($event.target as HTMLInputElement).value })"
+    />
   </ion-item>
 </template>
 
@@ -42,7 +49,8 @@ import { logoGoogle } from 'ionicons/icons';
 import type { GoogleConnection } from '@/components/settings/connectionModels';
 
 // 5. Main (props, emits, etc.)
-defineProps<{ connection: GoogleConnection; disabled: boolean }>();
+const props = defineProps<{ connection: GoogleConnection; disabled: boolean }>();
+const emit = defineEmits<{ 'update:connection': [connection: GoogleConnection] }>();
 
 // 6. Vars and const
 // (none)
@@ -57,5 +65,7 @@ defineProps<{ connection: GoogleConnection; disabled: boolean }>();
 // (none)
 
 // 10. Functions (named parameters pattern)
-// (none)
+function updateField(params: { field: 'name' | 'color'; value: string }): void {
+  emit('update:connection', { ...props.connection, [params.field]: params.value });
+}
 </script>

@@ -6,50 +6,60 @@
 <template>
   <ion-item class="transparent">
     <ion-input
-      v-model="connection.name"
       :disabled="disabled"
+      :value="connection.name"
       label="Nombre"
       label-placement="stacked"
       placeholder="Mi servidor CalDAV"
+      @ion-input="updateField({ field: 'name', value: $event.detail.value as string })"
     ></ion-input>
   </ion-item>
 
   <ion-item class="transparent">
     <ion-input
-      v-model="connection.url"
       :disabled="disabled"
+      :value="connection.url"
       label="URL del servidor"
       label-placement="stacked"
       placeholder="https://caldav.ejemplo.com/remote.php/dav"
       inputmode="url"
+      @ion-input="updateField({ field: 'url', value: $event.detail.value as string })"
     ></ion-input>
   </ion-item>
 
   <ion-item class="transparent">
     <ion-input
-      v-model="connection.username"
       :disabled="disabled"
+      :value="connection.username"
       label="Usuario"
       label-placement="stacked"
       placeholder="usuario"
+      @ion-input="updateField({ field: 'username', value: $event.detail.value as string })"
     ></ion-input>
   </ion-item>
 
   <ion-item class="transparent">
     <ion-input
-      v-model="connection.password"
       :disabled="disabled"
+      :value="connection.password"
       label="Contraseña"
       label-placement="stacked"
       type="password"
       placeholder="••••••••"
+      @ion-input="updateField({ field: 'password', value: $event.detail.value as string })"
     ></ion-input>
   </ion-item>
 
   <ion-item :disabled="disabled" class="transparent">
     <ion-label>Color</ion-label>
 
-    <input slot="end" v-model="connection.color" type="color" :disabled="disabled" />
+    <input
+      slot="end"
+      :value="connection.color"
+      type="color"
+      :disabled="disabled"
+      @input="updateField({ field: 'color', value: ($event.target as HTMLInputElement).value })"
+    />
   </ion-item>
 </template>
 
@@ -67,7 +77,8 @@ import { IonInput, IonItem, IonLabel } from '@ionic/vue';
 import type { CaldavConnection } from '@/components/settings/connectionModels';
 
 // 5. Main (props, emits, etc.)
-defineProps<{ connection: CaldavConnection; disabled: boolean }>();
+const props = defineProps<{ connection: CaldavConnection; disabled: boolean }>();
+const emit = defineEmits<{ 'update:connection': [connection: CaldavConnection] }>();
 
 // 6. Vars and const
 // (none)
@@ -82,5 +93,7 @@ defineProps<{ connection: CaldavConnection; disabled: boolean }>();
 // (none)
 
 // 10. Functions (named parameters pattern)
-// (none)
+function updateField(params: { field: 'name' | 'url' | 'username' | 'password' | 'color'; value: string }): void {
+  emit('update:connection', { ...props.connection, [params.field]: params.value });
+}
 </script>
