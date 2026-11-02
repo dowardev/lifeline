@@ -14,6 +14,7 @@
     "test:e2e:open": "node scripts/e2e.mjs --open",
     "test:unit": "vitest run --pool=forks",
     "lint": "oxlint . --fix && eslint . --fix --cache",
+    "lint:check": "oxlint . && eslint .",
     "format": "oxfmt src/"
   },
   "dependencies": {

@@ -96,16 +96,19 @@ backend_lint:
   image:
     name: composer:2.8
     entrypoint: [""]
-  extends: [.tag_rules, .composer_lint_setup]
+  extends: [.ci_rules, .composer_lint_setup]
   script:
     - vendor/bin/pint --test
 
 frontend_lint:
   stage: lint
   image: node:24.4-alpine
-  extends: [.tag_rules, .frontend_setup]
+  extends: [.ci_rules, .frontend_setup]
   script:
-    - pnpm run lint
+    # `lint:check` NO auto-corrige: el job tiene que FALLAR cuando el
+    # codigo esta mal formateado, no arreglarlo y tirarlo (eso es lo que
+    # hacia el job anterior: tapaba la deriva en vez de detectarla).
+    - pnpm run lint:check
 
 # ============================================
 # STAGE: test
