@@ -173,9 +173,9 @@ function getRepository(): ReturnType<
           clearPendingMutations(tempId)
           for (const m of pending) {
             if (m.kind === 'update') {
-              await getRepository().update({ id: serverId as number, patch: m.patch })
+              await getRepository().update({ id, patch: m.patch })
             } else {
-              await getRepository().remove({ id: serverId as number })
+              await getRepository().remove({ id })
             }
           }
         }

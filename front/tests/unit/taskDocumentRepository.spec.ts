@@ -129,6 +129,71 @@ describe('TaskController LBDS-231 (offline-first)', () => {
     expect(controller.getTask({ id: tempId })).toBeNull()
   })
 
+  it('drains the mutations pending against the tempId once the server id is known', async () => {
+    // Issue #1: the reconciler drained the pending mutations with an
+    // undefined id (`serverId`), so the update was re-enqueued against
+    // `/tasks` instead of `/tasks/{serverId}`.
+    onlineState.value = false
+    const controller = new TaskController()
+
+    const { id: tempId } = await controller.createTask({ title: 'Created offline' })
+    await controller.updateTask({
+      id: tempId as unknown as number,
+      title: 'Edited while pending',
+    })
+
+    // Only the create is queued: the update is stashed against the tempId.
+    expect(await testDb.table('outbox').count()).toBe(1)
+
+    onlineState.value = true
+    await controller.flushQueue()
+
+    const serverId = 42
+    const queued = await testDb.table('outbox').toArray()
+    expect(queued).toHaveLength(1)
+    expect(queued[0]).toMatchObject({
+      entityType: 'tasks',
+      op: 'update',
+      entityId: serverId,
+      url: `/tasks/${serverId}`,
+      method: 'PUT',
+    })
+
+    await controller.flushQueue()
+    expect(apiCalls.map((c) => `${c.method} ${c.url}`)).toContain(`PUT /tasks/${serverId}`)
+    expect(await testDb.table('outbox').count()).toBe(0)
+  })
+
+  it('drains the pending delete against the server id once it is known', async () => {
+    // Issue #1: the delete branch of the H-2 drain must replay against the
+    // real server id too, not only the update branch.
+    onlineState.value = false
+    const controller = new TaskController()
+
+    const { id: tempId } = await controller.createTask({ title: 'Created then deleted offline' })
+    await controller.deleteTask({ id: tempId as unknown as number })
+
+    expect(await testDb.table('outbox').count()).toBe(1)
+
+    onlineState.value = true
+    await controller.flushQueue()
+
+    const serverId = 42
+    const queued = await testDb.table('outbox').toArray()
+    expect(queued).toHaveLength(1)
+    expect(queued[0]).toMatchObject({
+      entityType: 'tasks',
+      op: 'delete',
+      entityId: serverId,
+      url: `/tasks/${serverId}`,
+      method: 'DELETE',
+    })
+
+    await controller.flushQueue()
+    expect(apiCalls.map((c) => `${c.method} ${c.url}`)).toContain(`DELETE /tasks/${serverId}`)
+    expect(await testDb.table('outbox').count()).toBe(0)
+  })
+
   it('updateTaskStatus enqueues a PUT', async () => {
     await testDb.table('tasks').put({ id: 5, user_id: 7, title: 'X', status: 'pending' })
     const controller = new TaskController()
@@ -201,6 +266,68 @@ describe('DocumentController LBDS-231 (offline-first)', () => {
     expect(apiCalls.map((c) => `${c.method} ${c.url}`)).toContain('POST /documents')
     expect(await testDb.table('outbox').count()).toBe(0)
     expect(controller.getUserDocument({ documentId: '42' })?.title).toBe('mock')
+  })
+
+  it('drains the mutations pending against the tempId once the server id is known', async () => {
+    // Issue #1: same drain defect as events/tasks/notes.
+    onlineState.value = false
+    const controller = new DocumentController()
+
+    const { id: tempId } = await controller.createDocument({ title: 'Created offline' })
+    await controller.updateDocument({
+      id: tempId as unknown as number,
+      title: 'Edited while pending',
+    })
+
+    expect(await testDb.table('outbox').count()).toBe(1)
+
+    onlineState.value = true
+    await controller.flushQueue()
+
+    const serverId = 42
+    const queued = await testDb.table('outbox').toArray()
+    expect(queued).toHaveLength(1)
+    expect(queued[0]).toMatchObject({
+      entityType: 'documents',
+      op: 'update',
+      entityId: serverId,
+      url: `/documents/${serverId}`,
+      method: 'PUT',
+    })
+
+    await controller.flushQueue()
+    expect(apiCalls.map((c) => `${c.method} ${c.url}`)).toContain(`PUT /documents/${serverId}`)
+    expect(await testDb.table('outbox').count()).toBe(0)
+  })
+
+  it('drains the pending delete against the server id once it is known', async () => {
+    // Issue #1: the delete branch of the H-2 drain must replay against the
+    // real server id too, not only the update branch.
+    onlineState.value = false
+    const controller = new DocumentController()
+
+    const { id: tempId } = await controller.createDocument({ title: 'Created then deleted offline' })
+    await controller.deleteDocument({ id: tempId as unknown as number })
+
+    expect(await testDb.table('outbox').count()).toBe(1)
+
+    onlineState.value = true
+    await controller.flushQueue()
+
+    const serverId = 42
+    const queued = await testDb.table('outbox').toArray()
+    expect(queued).toHaveLength(1)
+    expect(queued[0]).toMatchObject({
+      entityType: 'documents',
+      op: 'delete',
+      entityId: serverId,
+      url: `/documents/${serverId}`,
+      method: 'DELETE',
+    })
+
+    await controller.flushQueue()
+    expect(apiCalls.map((c) => `${c.method} ${c.url}`)).toContain(`DELETE /documents/${serverId}`)
+    expect(await testDb.table('outbox').count()).toBe(0)
   })
 
   it('updateDocument enqueues a PUT with the patched fields only', async () => {

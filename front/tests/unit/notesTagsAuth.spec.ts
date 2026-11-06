@@ -125,6 +125,68 @@ describe('NoteController LBDS-231 (offline-first)', () => {
     expect(await testDb.table('outbox').count()).toBe(0)
   })
 
+  it('drains the mutations pending against the tempId once the server id is known', async () => {
+    // Issue #1: same drain defect as events/tasks/documents.
+    onlineState.value = false
+    const controller = new NoteController()
+
+    const { id: tempId } = await controller.createNote({ title: 'Created offline' })
+    await controller.updateNote({
+      id: tempId as unknown as number,
+      title: 'Edited while pending',
+    })
+
+    expect(await testDb.table('outbox').count()).toBe(1)
+
+    onlineState.value = true
+    await controller.flushQueue()
+
+    const serverId = 99
+    const queued = await testDb.table('outbox').toArray()
+    expect(queued).toHaveLength(1)
+    expect(queued[0]).toMatchObject({
+      entityType: 'notes',
+      op: 'update',
+      entityId: serverId,
+      url: `/notes/${serverId}`,
+      method: 'PUT',
+    })
+
+    await controller.flushQueue()
+    expect(apiCalls.map((c) => `${c.method} ${c.url}`)).toContain(`PUT /notes/${serverId}`)
+    expect(await testDb.table('outbox').count()).toBe(0)
+  })
+
+  it('drains the pending delete against the server id once it is known', async () => {
+    // Issue #1: the delete branch of the H-2 drain must replay against the
+    // real server id too, not only the update branch.
+    onlineState.value = false
+    const controller = new NoteController()
+
+    const { id: tempId } = await controller.createNote({ title: 'Created then deleted offline' })
+    await controller.deleteNote({ id: tempId as unknown as number })
+
+    expect(await testDb.table('outbox').count()).toBe(1)
+
+    onlineState.value = true
+    await controller.flushQueue()
+
+    const serverId = 99
+    const queued = await testDb.table('outbox').toArray()
+    expect(queued).toHaveLength(1)
+    expect(queued[0]).toMatchObject({
+      entityType: 'notes',
+      op: 'delete',
+      entityId: serverId,
+      url: `/notes/${serverId}`,
+      method: 'DELETE',
+    })
+
+    await controller.flushQueue()
+    expect(apiCalls.map((c) => `${c.method} ${c.url}`)).toContain(`DELETE /notes/${serverId}`)
+    expect(await testDb.table('outbox').count()).toBe(0)
+  })
+
   it('updateNote + deleteNote enqueue PUT/DELETE', async () => {
     await testDb.table('notes').put({ id: 5, user_id: 7, title: 'X' })
     const controller = new NoteController()

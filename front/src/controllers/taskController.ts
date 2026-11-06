@@ -119,17 +119,20 @@ function getRepository(): ReturnType<
           // H-4 (pre-merge review): bump the shared sync clock so views
           // that watch this store refresh from the outbox reconciler.
           store.markSynced({ at: Date.now() })
-          // H-2 (pre-merge review): drain pending mutations stashed
-          // against the tempId (see repository.ts).
-          const pending = getPendingMutations(tempId)
-          if (pending.length > 0) {
-            clearPendingMutations(tempId)
-            for (const m of pending) {
-              if (m.kind === 'update') {
-                await getRepository().update({ id: serverId as number, patch: m.patch })
-              } else {
-                await getRepository().remove({ id: serverId as number })
-              }
+        }
+        // H-2 (pre-merge review): drain pending mutations stashed
+        // against the tempId (see repository.ts). The drain lives OUTSIDE
+        // the store block on purpose: a row deleted while its create was
+        // still pending is already gone from the store, and that pending
+        // delete still has to reach the server.
+        const pending = getPendingMutations(tempId)
+        if (pending.length > 0) {
+          clearPendingMutations(tempId)
+          for (const m of pending) {
+            if (m.kind === 'update') {
+              await getRepository().update({ id, patch: m.patch })
+            } else {
+              await getRepository().remove({ id })
             }
           }
         }
