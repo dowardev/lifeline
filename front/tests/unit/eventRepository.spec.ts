@@ -175,6 +175,88 @@ describe('EventController LBDS-231 acceptance (offline-first)', () => {
     expect(controller.getEvents().find((e) => e.id === serverId)?.title).toBe('Reconcile me')
   })
 
+  it('drains the mutations pending against the tempId once the server id is known', async () => {
+    // Issue #1: the reconciler drained the pending mutations with an
+    // undefined id (`serverId`), so the update was re-enqueued against
+    // `/events` instead of `/events/{serverId}`.
+    onlineState.value = false
+    const controller = new EventController()
+    controller.useSync()
+
+    const { id: tempId } = await controller.createEvent({
+      name: 'Created offline',
+      dateStart: '2026-10-04T10:00:00Z',
+      calendar_id: 1,
+    })
+
+    // The user edits the event while the create is still pending.
+    await controller.updateEvent({
+      id: tempId as unknown as number,
+      name: 'Edited while pending',
+    })
+
+    // Only the create is queued: the update is stashed against the tempId.
+    expect(await testDb.table('outbox').count()).toBe(1)
+
+    onlineState.value = true
+    await controller.flushQueue()
+
+    const serverId = 101
+    // The drain re-enqueues the stashed update against the real server id.
+    const queued = await testDb.table('outbox').toArray()
+    expect(queued).toHaveLength(1)
+    expect(queued[0]).toMatchObject({
+      entityType: 'events',
+      op: 'update',
+      entityId: serverId,
+      url: `/events/${serverId}`,
+      method: 'PUT',
+    })
+
+    // And the processor sends it to the right URL.
+    await controller.flushQueue()
+    const put = apiCalls.find((c) => c.method === 'PUT')
+    expect(put?.url).toBe(`/events/${serverId}`)
+    expect(put?.data).toMatchObject({ name: 'Edited while pending' })
+    expect(await testDb.table('outbox').count()).toBe(0)
+  })
+
+  it('drains the pending delete against the server id once it is known', async () => {
+    // Issue #1: the delete branch of the H-2 drain must replay against the
+    // real server id too, not only the update branch.
+    onlineState.value = false
+    const controller = new EventController()
+
+    const { id: tempId } = await controller.createEvent({
+      name: 'Created then deleted offline',
+      dateStart: '2026-10-05T10:00:00Z',
+      calendar_id: 1,
+    })
+
+    await controller.removeEvent({ id: tempId as unknown as number })
+
+    // Only the create is queued: the delete is stashed against the tempId.
+    expect(await testDb.table('outbox').count()).toBe(1)
+
+    onlineState.value = true
+    await controller.flushQueue()
+
+    const serverId = 101
+    const queued = await testDb.table('outbox').toArray()
+    expect(queued).toHaveLength(1)
+    expect(queued[0]).toMatchObject({
+      entityType: 'events',
+      op: 'delete',
+      entityId: serverId,
+      url: `/events/${serverId}`,
+      method: 'DELETE',
+    })
+
+    await controller.flushQueue()
+    expect(apiCalls.map((c) => `${c.method} ${c.url}`)).toContain(`DELETE /events/${serverId}`)
+    expect(await testDb.table('outbox').count()).toBe(0)
+  })
+
   it('updateEvent + flushQueue replays the PUT', async () => {
     serverRows.push({ id: 5, user_id: 7, title: 'Old', calendar_id: 1 })
     const controller = new EventController()
