@@ -5,6 +5,7 @@ import { documentService } from '@/services/documentService'
 import { useDocumentStore } from '@/store/documentStore'
 import { db } from '@/db'
 import { getPendingMutations, clearPendingMutations } from '@/db/repository'
+import { extractListRows } from '@/utils/listResponse'
 import type { DocumentRecord } from '@/db/schema'
 import type { DocumentItem } from '@/store/documentStore'
 import type { DocumentElement } from '@/controllers/documentController'
@@ -66,14 +67,10 @@ function getRepository(): ReturnType<
       urlBase: '/documents',
       service: {
         async list(): Promise<ServerDocumentDto[]> {
-          const response = (await documentService.getDocuments()) as
-            | { documents: ServerDocumentDto[] }
-            | ServerDocumentDto[]
-          return Array.isArray(response)
-            ? response
-            : Array.isArray(response?.documents)
-              ? response.documents
-              : []
+          // The backend answers with a Laravel resource collection
+          // (`{ data: [...] }`); `extractListRows` unwraps it.
+          const response = await documentService.getDocuments()
+          return extractListRows(response, 'documents') as ServerDocumentDto[]
         },
       },
       fromServer: ({ server }) => {

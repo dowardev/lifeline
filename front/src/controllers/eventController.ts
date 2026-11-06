@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore'
 import type { EventItem } from '@/store/eventStore'
 import { db } from '@/db'
 import { getPendingMutations, clearPendingMutations } from '@/db/repository'
+import { extractListRows } from '@/utils/listResponse'
 import {
   createRepository,
   type RepositoryHooks,
@@ -100,14 +101,10 @@ function getRepository(): ReturnType<
       urlBase: '/events',
       service: {
         async list(): Promise<ServerEventDto[]> {
-          const response = (await eventService.getEvents()) as
-            | { events: ServerEventDto[] }
-            | ServerEventDto[]
-          return Array.isArray(response)
-            ? response
-            : Array.isArray(response?.events)
-              ? response.events
-              : []
+          // The backend answers with a Laravel resource collection
+          // (`{ data: [...] }`); `extractListRows` unwraps it.
+          const response = await eventService.getEvents()
+          return extractListRows(response, 'events') as ServerEventDto[]
         },
       },
       fromServer: ({ server }) => eventFromServer({ server }),
