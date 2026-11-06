@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **back:** Redesign the guest-invitation email as a branded HTML template — LifeLine logo served publicly as PNG (`back/public/assets/lifeline_v1.png`) for wide email-client support, accent event card with title/date/inviter, footer linking to https://lifeline.dowar.xyz — with the original content kept as a plain-text fallback — LBDS-219
 
 ### Fixed
+- **front:** The event, task, document and note lists were never read from the server: the backend answers with a Laravel resource collection (`{ data: [...] }`) and the data layer only understood a bare array, so every online load mirrored zero rows and emptied the store of that domain — the edit modal opened empty because it reads the store. The `data` envelope is now unwrapped (the legacy per-domain envelope keeps working)
 - Reminders created right before their fire time now arrive on Android instead of being silently dropped — the Capacitor `@capacitor/local-notifications` plugin's id (Java int) and past-time (silent `at < now`) checks no longer reject near-future fires, and `USE_EXACT_ALARM` removes the seconds-to-minute OS-batching drift — LBDS-268
 - **back:** Google OAuth sources could never refresh (SSRF guard rejected the `google-oauth` sentinel URL before any API call) — LBDS-266
 - **back:** Google Tasks and People API requests lacked their scopes and used the wrong contacts endpoint, so tasks and contacts never synced — LBDS-266

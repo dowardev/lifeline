@@ -5,6 +5,7 @@ import { taskService } from '@/services/taskService'
 import { useTaskStore } from '@/store/taskStore'
 import { db } from '@/db'
 import { getPendingMutations, clearPendingMutations } from '@/db/repository'
+import { extractListRows } from '@/utils/listResponse'
 import type { TaskRecord } from '@/db/schema'
 import type { TaskItem } from '@/store/taskStore'
 import {
@@ -62,14 +63,10 @@ function getRepository(): ReturnType<
       urlBase: '/tasks',
       service: {
         async list(): Promise<ServerTaskDto[]> {
-          const response = (await taskService.getTasks()) as
-            | { tasks: ServerTaskDto[] }
-            | ServerTaskDto[]
-          return Array.isArray(response)
-            ? response
-            : Array.isArray(response?.tasks)
-              ? response.tasks
-              : []
+          // The backend answers with a Laravel resource collection
+          // (`{ data: [...] }`); `extractListRows` unwraps it.
+          const response = await taskService.getTasks()
+          return extractListRows(response, 'tasks') as ServerTaskDto[]
         },
       },
       fromServer: ({ server }) => {

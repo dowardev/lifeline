@@ -5,6 +5,7 @@ import { noteService } from '@/services/noteService'
 import { useNoteStore } from '@/store/noteStore'
 import { db } from '@/db'
 import { getPendingMutations, clearPendingMutations } from '@/db/repository'
+import { extractListRows } from '@/utils/listResponse'
 import type { NoteItem } from '@/store/noteStore'
 import {
   createRepository,
@@ -58,14 +59,10 @@ function getRepository(): ReturnType<
       urlBase: '/notes',
       service: {
         async list(): Promise<ServerNoteDto[]> {
-          const response = (await noteService.getNotes()) as
-            | { notes: ServerNoteDto[] }
-            | ServerNoteDto[]
-          return Array.isArray(response)
-            ? response
-            : Array.isArray(response?.notes)
-              ? response.notes
-              : []
+          // The backend answers with a Laravel resource collection
+          // (`{ data: [...] }`); `extractListRows` unwraps it.
+          const response = await noteService.getNotes()
+          return extractListRows(response, 'notes') as ServerNoteDto[]
         },
       },
       fromServer: ({ server }) => {
