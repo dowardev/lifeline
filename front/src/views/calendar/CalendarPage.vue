@@ -330,6 +330,9 @@ import { useEventStore } from '@/store/eventStore';
 import { useReminder } from '@/composables/useReminder';
 import { NotificationPermissionError } from '@/controllers/reminderController';
 import { normalizeOffsetCodes } from '@/utils/reminders';
+import { isServerOwnedId, resolveEntityId, sameEntityId } from '@/utils/entityId';
+import { parseStoredRepeat } from '@/utils/repeat';
+import { toPlainData } from '@/utils/plainData';
 import type { RepeatType } from '@/utils/types';
 
 const calendarController = new CalendarController();
@@ -364,7 +367,7 @@ const selectedExternalEvent = ref<ExternalCalendarEvent | null>(null);
 const isOpenModalAddEvent = ref(false);
 const isOpenModalUpdateEvent = ref(false);
 const isOpenModalRescheduleTasks = ref(false);
-const selectedEventId = ref(0);
+const selectedEventId = ref<string | number>(0);
 const clickedDate = ref<Date | null>(null);
 const clickedEndDate = ref<Date | null>(null);
 const toastIsOpen = ref(false);
@@ -622,7 +625,7 @@ function eventToEventItem(params: { event: CalendarEvent }): EventItem {
   };
 }
 
-function getEventById(params: { id: number }): CalendarEvent | undefined {
+function getEventById(params: { id: string | number }): CalendarEvent | undefined {
   const event = eventController.getEvent({ idEvent: params.id });
   if (!event) return undefined;
   const eventItem = event as unknown as Record<string, unknown>;
@@ -673,6 +676,10 @@ function getEventById(params: { id: number }): CalendarEvent | undefined {
     description: (eventItem.description as string) || '',
     availability: (eventItem.availability as string) || '',
     guests: parseGuests(eventItem.guests),
+    // The calendar the event belongs to: the modal keeps it when the
+    // calendar list cannot be loaded (offline), so the update does not
+    // detach the event from its calendar.
+    calendar_id: eventItem.calendar_id as number | null | undefined,
     idSync: null,
     syncStatus: true,
     status: 'active',
@@ -703,25 +710,6 @@ function parseStoredNotifications(raw: string | string[] | undefined): string[] 
   return [];
 }
 
-function parseStoredRepeat(raw: unknown): {
-  frecuency: number;
-  type: string;
-  daysWeek?: string[];
-} {
-  if (typeof raw === 'string' && raw.trim()) {
-    return { frecuency: 1, type: raw };
-  }
-  if (raw && typeof raw === 'object') {
-    const obj = raw as Record<string, unknown>;
-    return {
-      frecuency: (obj.frecuency as number) ?? 1,
-      type: (obj.type as string) ?? 'unique',
-      daysWeek: Array.isArray(obj.daysWeek) ? (obj.daysWeek as string[]) : undefined,
-    };
-  }
-  return { frecuency: 1, type: 'unique' };
-}
-
 function reschedule(): void {
   isOpenModalRescheduleTasks.value = true;
 }
@@ -747,18 +735,24 @@ function handleEventClick(params: { event: { id: string | number } }): void {
     }
     return;
   }
-  const id = typeof params.event.id === 'string' ? parseInt(params.event.id, 10) : params.event.id;
+  // LBDS-231 - the id must not be coerced: an offline row carries a
+  // tempId ('tmp-<uuid>') and `parseInt` would turn it into NaN, so the
+  // update modal would receive `undefined` and render empty.
+  const id = resolveEntityId(params.event.id);
   openModalUpdate({ id });
 }
 
 async function handleEventUpdate(params: {
-  id: number;
+  id: string | number;
   dateStart: string;
   dateEnd?: string;
 }): Promise<void> {
   const { id, dateStart, dateEnd } = params;
   try {
-    if (id > 0) {
+    // LBDS-231 - only a server-owned id can be persisted remotely; a
+    // tempId (offline row) is parked locally by the repository.
+    const isServerId = /^\d+$/.test(String(id));
+    if (isServerId) {
       // Server-owned event (authenticated): persist the new times too.
       await eventController.updateEvent({ id, dateStart, dateEnd });
     }
@@ -847,7 +841,9 @@ async function saveEvent(params: { event: CalendarEvent }): Promise<void> {
       mapped.id_reminders = ids;
       eventController.addEvent({ event: mapped });
       events.value.push(mapped);
-      await db.events.put(mapped);
+      // The modal hands over reactive state and IndexedDB cannot clone
+      // a Proxy, so the row is unwrapped to plain data first.
+      await db.events.put(toPlainData(mapped));
 
       isOpenModalAddEvent.value = false;
       await systemController.openToast({ message: 'Evento creado' });
@@ -937,7 +933,11 @@ async function updateEvent(params: { event: CalendarEvent }): Promise<void> {
     }
 
     const mapped = eventToEventItem({ event: params.event });
-    const isLocalOnly = (params.event.id ?? 0) < 0 || authStore.isAnonymous;
+    // The id decides, not the session: a row the server owns keeps its
+    // mutation queued even with no session (it replays when the session
+    // comes back). Treating "no session" as local-only dropped every
+    // offline edit on the floor.
+    const isLocalOnly = !isServerOwnedId(params.event.id);
     if (isLocalOnly) {
       mapped.id_reminders = ids;
       mapped.notifications = canonical.join(',');
@@ -975,7 +975,7 @@ async function updateEvent(params: { event: CalendarEvent }): Promise<void> {
         updates: { id_reminders: ids },
       });
     }
-    const idx = events.value.findIndex((e) => e.id === mapped.id);
+    const idx = events.value.findIndex((e) => sameEntityId(e.id, mapped.id));
     if (idx !== -1) events.value[idx] = mapped;
     isOpenModalUpdateEvent.value = false;
     await systemController.openToast({ message: 'Evento actualizado' });

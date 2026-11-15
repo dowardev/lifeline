@@ -945,7 +945,10 @@ async function loadCalendars(): Promise<void> {
 function preSelectCalendar(): void {
   const list = calendarList.value;
   if (list.length === 0) {
-    event.calendarId.value = null;
+    // The list could not be loaded (offline): keep the calendar the
+    // event already belongs to. Clearing it would detach the event
+    // from its calendar on the server the next time it syncs.
+    event.calendarId.value = props.eventData?.calendar_id ?? null;
     return;
   }
   const incoming = props.eventData?.calendar_id;

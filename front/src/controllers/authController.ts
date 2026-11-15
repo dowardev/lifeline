@@ -107,19 +107,36 @@ export class AuthController {
       // We have a cached token; attempt to refresh from SSO. If it fails
       // (offline, expired) we keep the cached session - the SSO layer will
       // surface a 401 on the first request that needs fresh validation,
-      // and the outbox processor will park that op as `failed`.
+      // and the outbox processor keeps that op queued for the next flush.
       try {
-        return await this.sso.loadUser()
+        return await this.restoreSession()
       } catch {
         return null
       }
     }
     try {
-      return await this.sso.loadUser()
+      return await this.restoreSession()
     } catch {
       // SSO unavailable / unauthenticated → anonymous local mode.
       return null
     }
+  }
+
+  /**
+   * A working session means the queued mutations can be replayed again.
+   * Rows parked in `failed` (an expired token parked them) go back to
+   * `pending`, otherwise the offline changes made while the session was
+   * broken never reach the server.
+   */
+  private async restoreSession(): Promise<any> {
+    const user = await this.sso.loadUser()
+    const outbox = await import('@/db/outbox')
+    const revived = await outbox.reviveAllFailed()
+    if (revived > 0) {
+      const processor = await import('@/db/outboxProcessor')
+      void processor.flush()
+    }
+    return user
   }
 
   async logout(): Promise<void> {

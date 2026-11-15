@@ -32,6 +32,7 @@ import type {
   EventInput,
 } from '@fullcalendar/core';
 import type { EventItem } from '@/store/eventStore';
+import { resolveEntityId } from '@/utils/entityId';
 import type { ExternalCalendarEvent } from '@/services/externalEventService';
 
 // 5. Main (props, emits)
@@ -56,7 +57,7 @@ const emit = defineEmits<{
     value: { date: Date; endDate?: Date; allDay: boolean; jsEvent: MouseEvent | TouchEvent | null },
   ): void;
   (e: 'eventClick', value: { event: { id: string | number } }): void;
-  (e: 'eventUpdate', value: { id: number; dateStart: string; dateEnd?: string }): void;
+  (e: 'eventUpdate', value: { id: string | number; dateStart: string; dateEnd?: string }): void;
   (e: 'viewChange', value: string): void;
   (e: 'dateChange', value: Date): void;
 }>();
@@ -167,7 +168,9 @@ const calendarOptions = computed(() => ({
     });
   },
   eventDrop: (info: EventDropArg): void => {
-    const id = typeof info.event.id === 'string' ? parseInt(info.event.id, 10) : info.event.id;
+    // LBDS-231 - the id must not be coerced: an offline row carries a
+    // tempId ('tmp-<uuid>') and parseInt would turn it into NaN.
+    const id = resolveEntityId(info.event.id);
     emit('eventUpdate', {
       id,
       dateStart: info.event.start?.toISOString() || '',
@@ -178,7 +181,7 @@ const calendarOptions = computed(() => ({
     event: { id: string | number; start: Date | null; end: Date | null };
   }): void => {
     const ev = info.event;
-    const id = typeof ev.id === 'string' ? parseInt(ev.id, 10) : ev.id;
+    const id = resolveEntityId(ev.id);
     emit('eventUpdate', {
       id,
       dateStart: ev.start?.toISOString() || '',

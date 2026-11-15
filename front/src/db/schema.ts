@@ -2,16 +2,22 @@
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
 import Dexie, { type EntityTable } from 'dexie'
+import type { ServerRepeat } from '@/utils/repeat'
 
 export interface EventRecord {
-  id?: number
+  // LBDS-231 - Dexie preserves the id it is given, so a row created
+  // offline carries a tempId string ('tmp-<uuid>') until the reconciler
+  // swaps it for the server id.
+  id?: number | string
   user_id: number
   title: string
   calendar_id: number
   date_start?: string
   date_end?: string
   notifications?: string
-  repeat?: string
+  // The server stores the repeat rule as an array (Laravel casts the
+  // column to `array`); the app also writes the bare type string.
+  repeat?: string | ServerRepeat
   time_zone?: string
   guests?: string
   description?: string

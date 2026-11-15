@@ -67,6 +67,7 @@ const authStore = useAuthStore();
 import { useReminder } from "@/composables/useReminder";
 import { NotificationPermissionError } from "@/controllers/reminderController";
 import { normalizeOffsetCodes } from "@/utils/reminders";
+import { isServerOwnedId, resolveEntityId } from "@/utils/entityId";
 import type { RepeatType } from "@/utils/types";
 
 // 3. Components
@@ -75,6 +76,7 @@ import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue"
 // 4. Interface and types imports
 import type { EventItem } from "@/store/eventStore";
 import type { Event } from "@/utils/interfaces";
+import { toPlainData } from "@/utils/plainData";
 
 // 5. Main (props, emits, etc.)
 
@@ -83,7 +85,7 @@ const events = ref<EventItem[]>([]);
 const calendarRef = ref<InstanceType<typeof FullyCalendarVue3> | null>(null);
 const isOpenModalAddEvent = ref(false);
 const isOpenModalUpdateEvent = ref(false);
-const selectedEventId = ref(0);
+const selectedEventId = ref<string | number>(0);
 const currentDateLabel = new Date().toLocaleDateString();
 
 // 7. Watch
@@ -120,6 +122,10 @@ const selectedEventData = computed<Event | undefined>(() => {
     availability: event.availability || "",
     timezone: event.time_zone || "",
     guests: parseGuests(event.guests),
+    // The calendar the event belongs to: the modal keeps it when the
+    // calendar list cannot be loaded (offline), so the update does not
+    // detach the event from its calendar.
+    calendar_id: event.calendar_id ?? null,
     idSync: null,
     syncStatus: true,
     status: "active",
@@ -157,10 +163,10 @@ function openModalAddEvent(): void {
 }
 
 function handleEventClick(params: { event: { id: string | number } }): void {
-  const id =
-    typeof params.event.id === "string"
-      ? parseInt(params.event.id, 10)
-      : params.event.id;
+  // LBDS-231 - the id must not be coerced: an offline row carries a
+  // tempId ('tmp-<uuid>') and parseInt would turn it into NaN, so the
+  // modal would never find the row.
+  const id = resolveEntityId(params.event.id);
   const found = eventController.getEvent({ idEvent: id });
   if (!found) return;
   selectedEventId.value = id;
@@ -249,7 +255,9 @@ async function saveEvent(params: { data: { event: Event } }): Promise<void> {
       }
       mapped.id_reminders = ids;
       eventController.addEvent({ event: mapped });
-      await db.events.put(mapped);
+      // The modal hands over reactive state and IndexedDB cannot clone
+      // a Proxy, so the row is unwrapped to plain data first.
+      await db.events.put(toPlainData(mapped));
 
       isOpenModalAddEvent.value = false;
       await systemController.openToast({ message: "Evento creado" });
@@ -341,8 +349,8 @@ async function updateEvent(params: { data: { event: Event } }): Promise<void> {
     }
 
     const mapped = eventToEventItem({ event: params.data.event });
-    const isLocalOnly =
-      (params.data.event.id ?? 0) < 0 || authStore.isAnonymous;
+    // Same rule as the calendar page: the id decides, not the session.
+    const isLocalOnly = !isServerOwnedId(params.data.event.id);
     if (isLocalOnly) {
       mapped.id_reminders = ids;
       mapped.notifications = canonical.join(",");

@@ -210,7 +210,13 @@ async function applyFailure(params: {
   const { row, error } = params
   const message = error instanceof Error ? error.message : String(error)
   if (isAuthError(error, message)) {
-    await outbox.markFailed({ id: row.id!, error: message })
+    // A 401/403 means the SSO session is gone or expired, not that the
+    // mutation is wrong. Parking the row in `failed` dropped the offline
+    // change for good (nothing revived those rows), so only the changes
+    // made while online reached the server. The session can be restored,
+    // so the row goes back to the queue with a backoff and is replayed on
+    // the next flush (the SSO client renews the token meanwhile).
+    await outbox.markRetry({ id: row.id!, error: message })
     return null
   }
   // 404 on DELETE means the server already lost the row (or it never

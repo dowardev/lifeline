@@ -8,6 +8,7 @@ import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import { extractListRows } from '@/utils/listResponse'
 import type { DocumentRecord } from '@/db/schema'
 import type { DocumentItem } from '@/store/documentStore'
+import { toPlainData } from '@/utils/plainData'
 import type { DocumentElement } from '@/controllers/documentController'
 import {
   createRepository,
@@ -295,6 +296,6 @@ export class DocumentController {
     const updateFields: Partial<DocumentRecord> = {
       elements: params.elements as DocumentRecord['elements'],
     }
-    await db.documents.update(params.documentId, updateFields)
+    await db.documents.update(params.documentId, toPlainData(updateFields))
   }
 }

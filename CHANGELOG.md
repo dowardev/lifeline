@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fixed the offline edit being dropped when there is no cloud session: the event
+  update was treated as local-only (`authStore.isAnonymous`) and never queued,
+  so the change stayed in the UI and never reached the server. The id now
+  decides (`isServerOwnedId`), so a row the server owns keeps its mutation
+  queued until the session is back.
+- Fixed the outbox dropping a mutation for good when the replay answered 401:
+  the row was parked in `failed` and nothing revived it. A 401 now goes back to
+  the queue with a backoff, and restoring the session brings the parked rows
+  back (`reviveAllFailed`).
+
 ### Added
 - **back/front:** Mirror `calendar_sources` into `calendars` so the event modal's "Calendario" picker lists external sources (Google / CalDAV / `.ics`) alongside local calendars in one unified list. A new `calendars.source_id` (nullable FK, `ON DELETE SET NULL`, unique) plus an `archived_at` ghost flag back the bridge; an Eloquent observer (`CalendarSourceMirrorObserver`) keeps the mirror in sync on source create / rename / delete, and the `calendars` API now embeds the source block (kind, color, account) and `selectable: false` for archived rows. The picker is an `ion-select` (popover interface on desktop, like the form's availability select) that lists the local calendars and the mirrored sources in the same options, each mirrored option carrying its kind and account so two accounts with the same calendar name are told apart. Disconnecting a source keeps the mirror row so existing `events.calendar_id` still resolve, but the picker hides it. The "one active default calendar per user" invariant is now enforced at the database level (a generated column plus a unique index) and the source type set is centralized on the `CalendarSource` model. LBDS-293 (bidirectional event push) and LBDS-292 (auto-provision default) stay out of scope and are not affected. — LBDS-305
 - **front:** Dedicated Contacts page (`/contacts`) for Google People / CardDAV contacts synced from external calendars, with search and a read-only detail view — LBDS-271

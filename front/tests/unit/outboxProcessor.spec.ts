@@ -199,7 +199,7 @@ describe('outboxProcessor (LBDS-231)', () => {
     expect(rows[0].nextRetryAt).toBeDefined()
   })
 
-  it('401 failures mark the row as failed (no retry) and stop draining', async () => {
+  it('401 failures keep the row queued for retry and stop draining', async () => {
     apiFailures.set('PUT /events/1', '401 Unauthorized')
     apiFailures.set('PUT /events/2', 'should not be called')
 
@@ -226,8 +226,13 @@ describe('outboxProcessor (LBDS-231)', () => {
     const rows = await testDb.table('outbox').toArray()
     const failed = rows.find((r) => r.entityId === 1)
     const pending = rows.find((r) => r.entityId === 2)
-    expect(failed?.status).toBe('failed')
+    // A 401 means the SSO session expired, not that the mutation is bad.
+    // The row stays in the queue (with a backoff) so it is replayed once
+    // the session is restored; parking it in `failed` dropped the offline
+    // change for good.
+    expect(failed?.status).toBe('retrying')
     expect(failed?.lastError).toBe('401 Unauthorized')
+    expect(failed?.attempts).toBe(1)
     expect(pending?.status).toBe('pending')
     expect(pending?.attempts).toBe(0)
   })
