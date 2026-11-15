@@ -8,6 +8,7 @@ import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import { extractListRows } from '@/utils/listResponse'
 import type { TaskRecord } from '@/db/schema'
 import type { TaskItem } from '@/store/taskStore'
+import { toPlainData } from '@/utils/plainData'
 import {
   createRepository,
   type RepositoryHooks,
@@ -300,7 +301,9 @@ export class TaskController {
       notifications: params.task.notifications,
       id_reminders: params.task.id_reminders,
     }
-    await db.tasks.put(record)
+    // IndexedDB cannot clone a reactive Proxy, so the row is unwrapped
+    // to plain data first.
+    await db.tasks.put(toPlainData(record))
   }
 
   // --- Derived state (no I/O) -------------------------------------------

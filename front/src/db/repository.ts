@@ -5,6 +5,7 @@ import type { Ref } from 'vue'
 import { db } from './index'
 import * as outbox from './outbox'
 import { getIsOnline } from '@/composables/useOnlineStatus'
+import { toPlainData } from '@/utils/plainData'
 import { flush as flushOutbox } from './outboxProcessor'
 
 /**
@@ -194,8 +195,12 @@ export function createRepository<T, R extends { id?: string | number }>(
 
     async create(params): Promise<{ id: string | number }> {
       const tempId = newTempId()
+      // IndexedDB serializes with the structured clone algorithm, and a
+      // Vue reactive Proxy is not cloneable: the write would fail with
+      // `DataCloneError`. The record is unwrapped to plain data here.
+      const record = toPlainData(params.record as R)
       const optimistic: R = {
-        ...(params.record as R),
+        ...record,
         id: tempId,
       }
       // Optimistic mirror: Dexie first (source of truth for offline reads),
@@ -209,7 +214,7 @@ export function createRepository<T, R extends { id?: string | number }>(
         op: 'create',
         url: buildUrl(urlBase, tempId),
         method: 'POST',
-        payload: { ...params.record } as Record<string, unknown>,
+        payload: { ...record } as Record<string, unknown>,
       })
       hintProcessor()
 
@@ -217,7 +222,11 @@ export function createRepository<T, R extends { id?: string | number }>(
     },
 
     async update(params): Promise<void> {
-      const { id, patch } = params
+      const { id } = params
+      // Same as `create`: the patch may carry reactive values (the event
+      // modal hands over its own reactive state), and IndexedDB cannot
+      // clone a Proxy.
+      const patch = toPlainData(params.patch)
       // H-2 (pre-merge review): the create is still pending. Apply
       // the patch to the local mirror so the UI stays in sync, and
       // stash the mutation in the pending map so the reconciler

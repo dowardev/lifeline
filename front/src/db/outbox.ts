@@ -162,6 +162,31 @@ export async function revive(params: { id: number }): Promise<void> {
   })
 }
 
+/**
+ * Brings every row parked in `failed` back to `pending`.
+ *
+ * A row is parked when the replay hit an error it could not recover from
+ * (a 401 with an expired SSO token, for instance). Nothing replayed those
+ * rows again, so an offline change made while the token expired was lost
+ * for good: only the changes made while online reached the server. The
+ * session is the thing that was broken, not the mutation, so restoring the
+ * session has to bring the parked rows back.
+ */
+export async function reviveAllFailed(): Promise<number> {
+  const failed = await db.outbox.where('status').equals('failed').toArray()
+  if (failed.length === 0) return 0
+  for (const row of failed) {
+    await db.outbox.update(row.id!, {
+      status: 'pending',
+      attempts: 0,
+      updatedAt: Date.now(),
+      lastError: undefined,
+      nextRetryAt: undefined,
+    })
+  }
+  return failed.length
+}
+
 /** Bulk-deletes the given ids. Used by the processor to drop `done` rows. */
 export async function bulkDelete(params: { ids: number[] }): Promise<void> {
   const { ids } = params

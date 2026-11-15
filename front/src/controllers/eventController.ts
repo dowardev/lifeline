@@ -10,6 +10,9 @@ import type { EventItem } from '@/store/eventStore'
 import { db } from '@/db'
 import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import { extractListRows } from '@/utils/listResponse'
+import { sameEntityId } from '@/utils/entityId'
+import { toServerRepeat } from '@/utils/repeat'
+import { toPlainData } from '@/utils/plainData'
 import {
   createRepository,
   type RepositoryHooks,
@@ -151,7 +154,7 @@ function getRepository(): ReturnType<
           await db.events.put(merged)
         }
         const store = useEventStore()
-        const temp = store.events.findIndex((e) => e.id === tempId)
+        const temp = store.events.findIndex((e) => sameEntityId(e.id, tempId))
         if (temp !== -1) {
           store.removeEvent({ id: tempId as string })
           store.addEvent({ event: merged as EventItem })
@@ -273,7 +276,7 @@ export class EventController {
     dateEnd?: string
     calendar_id?: number
     notifications?: string[]
-    repeat?: string
+    repeat?: string | string[] | Record<string, unknown>
     timeZone?: string
     guests?: string[]
     description?: string
@@ -303,7 +306,16 @@ export class EventController {
           timeZone: params.timeZone ?? 'UTC',
           availability: params.availability ?? 'available',
           notifications: params.notifications,
-          repeat: params.repeat,
+          // The Laravel backend validates `repeat` as an ARRAY on both
+          // POST /events and PUT /events/{id} ("nullable|array" /
+          // "sometimes|nullable|array"). The app models the rule as an
+          // object or a bare type string, so the payload is translated
+          // into the wire shape here. Sending the raw string makes the
+          // backend answer 422 and the whole write is discarded.
+          repeat:
+            params.repeat === undefined
+              ? undefined
+              : toServerRepeat({ repeat: params.repeat }),
           guests: params.guests,
           description: params.description,
           id_reminders: params.id_reminders,
@@ -320,13 +332,13 @@ export class EventController {
   }
 
   async updateEvent(params: {
-    id: number
+    id: string | number
     name?: string
     dateStart?: string
     dateEnd?: string
     calendar_id?: number | null
     notifications?: string[]
-    repeat?: string
+    repeat?: string | string[] | Record<string, unknown>
     timeZone?: string
     guests?: string[]
     description?: string
@@ -368,7 +380,13 @@ export class EventController {
         patch.calendar_id = rest.calendar_id
       }
       if (rest.notifications !== undefined) patch.notifications = rest.notifications
-      if (rest.repeat !== undefined) patch.repeat = rest.repeat
+      // The backend validates `repeat` as an ARRAY on PUT /events/{id}
+      // ("sometimes|nullable|array"). Sending the app's bare type string
+      // ("unique" / "daily" / ...) answers 422 ("The repeat must be an
+      // array") and the update never reaches the server.
+      if (rest.repeat !== undefined) {
+        patch.repeat = toServerRepeat({ repeat: rest.repeat })
+      }
       if (rest.timeZone !== undefined) {
         patch.timeZone = rest.timeZone
         patch.time_zone = rest.timeZone
@@ -383,7 +401,7 @@ export class EventController {
     }
   }
 
-  async removeEvent(params: { id: number }): Promise<void> {
+  async removeEvent(params: { id: string | number }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
@@ -398,20 +416,25 @@ export class EventController {
   /** Stamps a row into Dexie + Pinia without touching the outbox. */
   async addLocalEvent(params: { event: EventItem }): Promise<void> {
     this.store.addEvent({ event: params.event })
-    await db.events.put(params.event)
+    // IndexedDB cannot clone a reactive Proxy, so the row is unwrapped
+    // to plain data first.
+    await db.events.put(toPlainData(params.event))
   }
 
   /** Patches a row in Dexie + Pinia without touching the outbox. */
   async updateLocalEvent(params: {
-    id?: number
+    id?: string | number
     event?: Partial<EventItem>
     updates?: Partial<EventItem>
   }): Promise<void> {
     const data = params.event || params.updates
     const id = params.id ?? data?.id
     if (data && id !== undefined) {
-      this.store.updateEvent({ id: id as number, updates: data })
-      await db.events.update(id, data)
+      // The modal hands over reactive state; IndexedDB cannot clone a
+      // Proxy, so the payload is unwrapped to plain data first.
+      const plain = toPlainData(data)
+      this.store.updateEvent({ id, updates: plain })
+      await db.events.update(id, plain)
     }
   }
 
@@ -468,8 +491,13 @@ export class EventController {
     return this.store.events
   }
 
-  getEvent(params: { idEvent: number }): EventItem | null {
-    return this.store.events.find((e: EventItem) => e.id === params.idEvent) || null
+  getEvent(params: { idEvent: string | number }): EventItem | null {
+    // LBDS-231 - the id may arrive as a string (FullCalendar hands ids
+    // back as strings, and offline rows carry a tempId until the
+    // reconciler swaps it for the server id), so a strict comparison
+    // would miss rows that are there and leave the modal empty.
+    const found = this.store.events.find((e: EventItem) => sameEntityId(e.id, params.idEvent))
+    return found || null
   }
 
   countEvents(params?: { date?: Date }): number {

@@ -165,7 +165,7 @@ describe('LBDS-231 integration: offline write -> reconnect -> sync', () => {
     expect(documentCtrl.getUserDocuments()?.find((d) => d.id === docTemp)).toBeUndefined()
   })
 
-  it('transient failures stay queued for retry; permanent failures (401) park the row', async () => {
+  it('transient failures stay queued for retry; a 401 (expired session) also stays queued', async () => {
     const eventCtrl = new EventController()
     const taskCtrl = new TaskController()
 
@@ -197,14 +197,16 @@ describe('LBDS-231 integration: offline write -> reconnect -> sync', () => {
 
     await flush()
 
-    // The event stayed queued (retrying); the task was parked as failed.
+    // Both stay queued: a network error is transient, and a 401 means the
+    // SSO session expired (recoverable) - not that the mutation is bad.
+    // Parking either one in `failed` dropped the change for good.
     const rows = await testDb.table('outbox').toArray()
     const eventRow = rows.find((r) => r.entityType === 'events')
     const taskRow = rows.find((r) => r.entityType === 'tasks')
     expect(eventRow?.status).toBe('retrying')
     expect(eventRow?.attempts).toBe(1)
     expect(eventRow?.lastError).toBe('network down')
-    expect(taskRow?.status).toBe('failed')
+    expect(taskRow?.status).toBe('retrying')
     expect(taskRow?.lastError).toBe('401 Unauthorized')
   })
 

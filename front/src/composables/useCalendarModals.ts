@@ -9,10 +9,10 @@ export function useCalendarModals(params: {
   isOpenModalUpdateEvent: Ref<boolean>;
   clickedDate: Ref<Date | null>;
   clickedEndDate: Ref<Date | null>;
-  selectedEventId: Ref<number>;
+  selectedEventId: Ref<string | number>;
 }): {
   openModalAdd: (params?: { event: unknown }) => void;
-  openModalUpdate: (params: { id: number }) => Promise<void>;
+  openModalUpdate: (params: { id: string | number }) => Promise<void>;
   onModalAddDismiss: () => void;
   onModalUpdateDismiss: () => void;
 } {
@@ -30,7 +30,7 @@ export function useCalendarModals(params: {
     isOpenModalAddEvent.value = true;
   }
 
-  async function openModalUpdate(params: { id: number }): Promise<void> {
+  async function openModalUpdate(params: { id: string | number }): Promise<void> {
     const { id } = params;
     if (isOpenModalUpdateEvent.value) {
       isOpenModalUpdateEvent.value = false;

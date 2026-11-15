@@ -3,6 +3,8 @@
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { sameEntityId } from '@/utils/entityId'
+import type { ServerRepeat } from '@/utils/repeat'
 
 export interface ScheduleElement {
   id: number
@@ -27,14 +29,18 @@ export interface Schedule {
 }
 
 export interface EventItem {
-  id: number
+  // LBDS-231 - a row created while offline carries a tempId string
+  // ('tmp-<uuid>') until the reconciler swaps it for the server id.
+  id: number | string
   user_id: number
   title: string
   calendar_id: number
   date_start?: string
   date_end?: string
   notifications?: string
-  repeat?: string
+  // The server stores the repeat rule as an array (Laravel casts the
+  // column to `array`); the app also writes the bare type string.
+  repeat?: string | ServerRepeat
   time_zone?: string
   guests?: string
   description?: string
@@ -62,9 +68,12 @@ export const useEventStore = defineStore('event', () => {
     events.value.push(params.event)
   }
 
-  function updateEvent(params: { id: number; updates: Partial<EventItem> }): void {
+  function updateEvent(params: { id: string | number; updates: Partial<EventItem> }): void {
     const { id, updates } = params
-    const index = events.value.findIndex((e) => e.id === id)
+    // LBDS-231 - the id may reach us as a string (FullCalendar always
+    // hands ids back as strings, and offline rows carry a tempId), so
+    // the comparison cannot be a strict `===`.
+    const index = events.value.findIndex((e) => sameEntityId(e.id, id))
     if (index !== -1) {
       events.value[index] = { ...events.value[index], ...updates }
     }
@@ -76,8 +85,7 @@ export const useEventStore = defineStore('event', () => {
     // either a server number id or a tempId string until reconciliation,
     // so we compare by stringified id rather than `!==` (which would
     // always be true for number-vs-string).
-    const target = String(params.id)
-    events.value = events.value.filter((e) => String(e.id) !== target)
+    events.value = events.value.filter((e) => !sameEntityId(e.id, params.id))
   }
 
   function setSchedule(params: { schedule: Schedule }): void {
