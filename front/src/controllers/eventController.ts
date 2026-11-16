@@ -12,7 +12,8 @@ import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import { extractListRows } from '@/utils/listResponse'
 import { sameEntityId } from '@/utils/entityId'
 import { toServerRepeat } from '@/utils/repeat'
-import { toPlainData } from '@/utils/plainData'
+import { toPlainData, stripUndefined } from '@/utils/plainData'
+import { resolveCalendarId } from '@/utils/calendarId'
 import {
   createRepository,
   type RepositoryHooks,
@@ -38,7 +39,9 @@ interface ServerEventDto {
   id: number
   user_id: number
   title: string
-  calendar_id: number
+  // GitLab #2 / #3 - the calendar is optional: a row can exist without
+  // one until the server provisions the default calendar (LBDS-292).
+  calendar_id?: number | null
   date_start?: string
   date_end?: string
   notifications?: string
@@ -74,11 +77,16 @@ function eventFromServer(params: { server: unknown }): Record<string, unknown> {
   const inner = raw.event && typeof raw.event === 'object'
     ? (raw.event as Record<string, unknown>)
     : raw
-  return {
+  // GitLab #3 - a field the server did not send must not land in the
+  // local row as `undefined`: the key is dropped instead. `null` is kept
+  // (it is a value the server sent).
+  return stripUndefined({
     id: typeof inner.id === 'number' || typeof inner.id === 'string' ? inner.id : undefined,
     title: (inner.name as string) ?? (inner.title as string),
     user_id: typeof inner.user_id === 'number' ? inner.user_id : undefined,
-    calendar_id: typeof inner.calendar_id === 'number' ? inner.calendar_id : undefined,
+    calendar_id: resolveCalendarId({
+      calendarId: inner.calendar_id as number | null | undefined,
+    }),
     date_start: (inner.dateStart as string) ?? (inner.date_start as string),
     date_end: (inner.dateEnd as string) ?? (inner.date_end as string),
     time_zone: (inner.timeZone as string) ?? (inner.time_zone as string),
@@ -88,7 +96,7 @@ function eventFromServer(params: { server: unknown }): Record<string, unknown> {
     guests: inner.guests as string | string[] | undefined,
     description: inner.description as string | undefined,
     id_reminders: inner.id_reminders as number[] | undefined,
-  }
+  })
 }
 
 let repositorySingleton: ReturnType<
@@ -148,7 +156,9 @@ function getRepository(): ReturnType<
         // both `dateStart` and `date_start` in the row.
         const fromServer = eventFromServer({ server: response })
         const local = await db.events.get(tempId as string)
-        const merged = { ...local, ...fromServer, id }
+        // GitLab #3 - the merged row must not carry a key whose value is
+        // `undefined` (the optimistic row of an older write could).
+        const merged = stripUndefined({ ...local, ...fromServer, id })
         if (local) {
           await db.events.delete(tempId as string)
           await db.events.put(merged)
@@ -287,7 +297,13 @@ export class EventController {
     this.store.clearError()
     try {
       const { id } = await getRepository().create({
-        record: {
+        // GitLab #3 - the optional fields the caller did not provide
+        // (`calendar_id`, `dateEnd`, `notifications`, `repeat`, `guests`,
+        // `description`, `id_reminders`) must not reach the repository as
+        // `undefined` keys: the optimistic Dexie row would carry them and
+        // break the `ServerEventDto` contract. `null` is kept (a
+        // deliberate clear).
+        record: stripUndefined({
           // The Laravel backend's POST /events expects this exact shape
           // (see App\Http\Controllers\EventController::store). The
           // server validates `name` / `dateStart` / `dateEnd` / `timeZone`
@@ -323,7 +339,7 @@ export class EventController {
           // auth store so Dexie queries on `user_id` see the right
           // value before the server-side fetchAll rewrites it.
           user_id: useAuthStore().localUser?.id ?? 0,
-        },
+        }),
       })
       return { id }
     } finally {

@@ -332,6 +332,7 @@ import { NotificationPermissionError } from '@/controllers/reminderController';
 import { normalizeOffsetCodes } from '@/utils/reminders';
 import { isServerOwnedId, resolveEntityId, sameEntityId } from '@/utils/entityId';
 import { parseStoredRepeat } from '@/utils/repeat';
+import { eventToEventItem, normalizeEvents } from '@/utils/calendarEventItem';
 import { toPlainData } from '@/utils/plainData';
 import type { RepeatType } from '@/utils/types';
 
@@ -390,7 +391,10 @@ const popoverMainCalendar = reactive({
 watch(
   () => eventController.getEvents(),
   async (response) => {
-    events.value = normalizeEvents({ events: response });
+    events.value = normalizeEvents({
+      events: response,
+      fallbackUserId: authStore.localUser?.id ?? 0,
+    });
   },
   { immediate: true, deep: true },
 );
@@ -522,7 +526,10 @@ async function loadStoredEvents(): Promise<void> {
   }
   const storeEvents = eventController.getEvents();
   if (storeEvents.length > 0) {
-    events.value = normalizeEvents({ events: storeEvents });
+    events.value = normalizeEvents({
+      events: storeEvents,
+      fallbackUserId: authStore.localUser?.id ?? 0,
+    });
     return;
   }
   try {
@@ -530,99 +537,14 @@ async function loadStoredEvents(): Promise<void> {
     if (localEvents.length > 0) {
       const itemEvents = localEvents as EventItem[];
       eventController.setEvents({ events: itemEvents });
-      events.value = normalizeEvents({ events: itemEvents });
+      events.value = normalizeEvents({
+        events: itemEvents,
+        fallbackUserId: authStore.localUser?.id ?? 0,
+      });
     }
   } catch (e) {
     console.warn('[CalendarPage] No events in IndexedDB or error loading:', e);
   }
-}
-
-function normalizeEvents(params: { events: EventItem[] }): EventItem[] {
-  return params.events.map((event) => {
-    const anyEvent = event as unknown as Record<string, unknown>;
-    // LBDS-231 - defensive unwrap for rows that the old reconciler stored
-    // with the server's `{ event: {...} }` wrapper instead of flattening it.
-    // The new reconciler (`eventController.ts`) stores them at the row root,
-    // so this branch only matters for already-persisted rows from before the
-    // fix landed.
-    const wrapped = anyEvent.event as Record<string, unknown> | undefined
-    const source: Record<string, unknown> =
-      wrapped && typeof wrapped === 'object' ? { ...anyEvent, ...wrapped } : anyEvent
-    // No `if (title && date_start) return event` shortcut: the reconciler
-    // writes `dateStart` (camelCase, the local key) plus `dateStart` (also
-    // the server key after the unwrap fix), and never `date_start`. The
-    // shortcut skipped the `date_start` assignment and FullCalendar received
-    // `start: ''`. Always normalise.
-    return {
-      id: event.id,
-      user_id:
-        (source.user_id as number) ||
-        (source.userId as number) ||
-        (authStore.localUser?.id ?? 0),
-      title: event.title || (source.name as string) || '',
-      calendar_id: (source.calendar_id as number) || 1,
-      date_start:
-        event.date_start ||
-        (event.dateStart as string) ||
-        ((source.reminders
-          ? (source.reminders as Record<string, unknown>).start instanceof Date
-            ? ((source.reminders as Record<string, unknown>).start as Date).toISOString()
-            : ((source.reminders as Record<string, unknown>).start as string) || ''
-          : '') as string),
-      date_end:
-        event.date_end ||
-        (event.dateEnd as string) ||
-        ((source.reminders
-          ? (source.reminders as Record<string, unknown>).end instanceof Date
-            ? ((source.reminders as Record<string, unknown>).end as Date).toISOString()
-            : ((source.reminders as Record<string, unknown>).end as string) || undefined
-          : undefined) as string | undefined),
-      notifications: event.notifications || (source.notifications as string) || '',
-      repeat: event.repeat || (source.repeat as string) || '',
-      time_zone: event.time_zone || (source.timezone as string) || '',
-      guests: event.guests || (source.guests as string) || '',
-      description: event.description || (source.description as string) || '',
-      availability: event.availability || (source.availability as string) || '',
-      id_reminders:
-        event.id_reminders ||
-        (source.id_reminders as number[]) ||
-        (anyEvent.idReminders as number[]) ||
-        [],
-    } as EventItem;
-  });
-}
-
-function eventToEventItem(params: { event: CalendarEvent }): EventItem {
-  const { event } = params;
-  const dateStart =
-    event.reminders?.start instanceof Date
-      ? event.reminders.start.toISOString()
-      : event.reminders?.start || '';
-  const dateEnd =
-    event.reminders?.end instanceof Date
-      ? event.reminders.end.toISOString()
-      : event.reminders?.end || '';
-
-  return {
-    id: event.id || 0,
-    user_id: event.userId ?? authStore.localUser?.id ?? 0,
-    title: event.name || '',
-    // LBDS-298 - mirror the picker selection into the local row so
-    // the optimistically inserted event lands in FullCalendar with
-    // the right calendar_id (instead of the previous hardcoded `1`,
-    // which sent the row to the wrong calendar on multi-calendar
-    // accounts).
-    calendar_id: event.calendar_id ?? 1,
-    date_start: dateStart,
-    date_end: dateEnd,
-    notifications: event.reminders?.notifications?.join(',') || '',
-    repeat: event.reminders?.repeat?.type || '',
-    time_zone: event.timezone || '',
-    guests: event.guests ? JSON.stringify(event.guests) : '',
-    description: event.description || '',
-    availability: event.availability || '',
-    id_reminders: event.reminders?.idReminders || [],
-  };
 }
 
 function getEventById(params: { id: string | number }): CalendarEvent | undefined {
@@ -820,7 +742,10 @@ async function saveEvent(params: { event: CalendarEvent }): Promise<void> {
       .catch(() => undefined);
 
     if (authStore.isAnonymous) {
-      const mapped = eventToEventItem({ event: params.event });
+      const mapped = eventToEventItem({
+        event: params.event,
+        fallbackUserId: authStore.localUser?.id ?? 0,
+      });
       mapped.id = -Date.now();
       let ids: number[] = [];
       try {
@@ -932,7 +857,10 @@ async function updateEvent(params: { event: CalendarEvent }): Promise<void> {
       if (!(error instanceof NotificationPermissionError)) throw error;
     }
 
-    const mapped = eventToEventItem({ event: params.event });
+    const mapped = eventToEventItem({
+      event: params.event,
+      fallbackUserId: authStore.localUser?.id ?? 0,
+    });
     // The id decides, not the session: a row the server owns keeps its
     // mutation queued even with no session (it replays when the session
     // comes back). Treating "no session" as local-only dropped every
