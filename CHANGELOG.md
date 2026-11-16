@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fixed the calendar-less events being silently filed under the first
+  calendar: the calendar views coerced a missing `calendar_id` to `1`
+  (`(source.calendar_id as number) || 1` and `event.calendar_id ?? 1`),
+  which also turned a real `0` into a valid-looking calendar id. Both paths
+  now share one helper with an explicit contract — a positive integer is the
+  calendar the event belongs to, anything else means "no calendar" (`null`)
+  until the server provisions the default one (LBDS-292) — GitLab #2
+- Fixed the optimistic event row carrying an `undefined` `calendar_id` (and
+  the same for `dateEnd`, `notifications`, `repeat`, `guests`, `description`
+  and `id_reminders`): the wire was correct only by accident (`JSON.stringify`
+  drops `undefined`), but the local mirror row kept the key and broke the
+  event DTO contract. The repository now drops every `undefined` key before
+  persisting (and before queueing the mutation), so the local row of any
+  domain stays free of them — GitLab #3
+
 - Fixed the offline edit being dropped when there is no cloud session: the event
   update was treated as local-only (`authStore.isAnonymous`) and never queued,
   so the change stayed in the UI and never reached the server. The id now

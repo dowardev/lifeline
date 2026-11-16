@@ -34,7 +34,10 @@ export interface EventItem {
   id: number | string
   user_id: number
   title: string
-  calendar_id: number
+  // GitLab #2 - `null` means "this event has no calendar yet" (the
+  // server provisions the default calendar, LBDS-292). It is never
+  // coerced to another calendar's id.
+  calendar_id: number | null
   date_start?: string
   date_end?: string
   notifications?: string

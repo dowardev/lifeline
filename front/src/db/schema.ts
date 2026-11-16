@@ -11,7 +11,9 @@ export interface EventRecord {
   id?: number | string
   user_id: number
   title: string
-  calendar_id: number
+  // GitLab #2 - `null` means "this event has no calendar yet"; the key is
+  // never present with an `undefined` value (GitLab #3).
+  calendar_id: number | null
   date_start?: string
   date_end?: string
   notifications?: string

@@ -136,6 +136,104 @@ describe('EventController.createEvent - calendar_id payload (LBDS-298)', () => {
   })
 })
 
+describe('EventController.createEvent - optimistic record shape (GitLab #3)', () => {
+  const OPTIONAL_KEYS = [
+    'calendar_id',
+    'date_end',
+    'dateEnd',
+    'notifications',
+    'repeat',
+    'guests',
+    'description',
+    'id_reminders',
+  ]
+
+  // A key that is present with an `undefined` value is the bug: the row
+  // claims the field exists and carries no value.
+  function carriesUndefined(row: Record<string, unknown>, key: string): boolean {
+    return (
+      Object.prototype.hasOwnProperty.call(row, key) && row[key] === undefined
+    )
+  }
+
+  it('does not store an undefined calendar_id in the optimistic row', async () => {
+    // Offline: the optimistic row is written locally and the mutation
+    // waits in the outbox, so the row under test is the optimistic one.
+    onlineState.value = false
+    const controller = new EventController()
+    await controller.createEvent({
+      name: 'Sin calendario',
+      dateStart: '2026-10-15T10:00:00Z',
+      timeZone: 'UTC',
+      availability: 'available',
+      calendar_id: undefined,
+    })
+
+    const rows = await testDb.table('events').toArray()
+    expect(rows.length).toBe(1)
+    const row = rows[0] as Record<string, unknown>
+    // The wire was already correct (`JSON.stringify` drops `undefined`),
+    // but the local mirror row kept the key with an `undefined` value,
+    // which breaks the `ServerEventDto` contract.
+    expect(carriesUndefined(row, 'calendar_id')).toBe(false)
+    expect(Object.prototype.hasOwnProperty.call(row, 'calendar_id')).toBe(false)
+  })
+
+  it('does not store undefined optional fields in the optimistic row', async () => {
+    onlineState.value = false
+    const controller = new EventController()
+    await controller.createEvent({
+      name: 'Sin opcionales',
+      dateStart: '2026-10-15T10:00:00Z',
+      timeZone: 'UTC',
+      availability: 'available',
+    })
+
+    const rows = await testDb.table('events').toArray()
+    expect(rows.length).toBe(1)
+    const row = rows[0] as Record<string, unknown>
+    for (const key of OPTIONAL_KEYS) {
+      expect(carriesUndefined(row, key)).toBe(false)
+    }
+  })
+
+  it('does not store an undefined calendar_id after the server round-trip', async () => {
+    const controller = new EventController()
+    await controller.createEvent({
+      name: 'Sin calendario',
+      dateStart: '2026-10-15T10:00:00Z',
+      timeZone: 'UTC',
+      availability: 'available',
+      calendar_id: undefined,
+    })
+    await controller.flushQueue()
+
+    const rows = await testDb.table('events').toArray()
+    expect(rows.length).toBe(1)
+    const row = rows[0] as Record<string, unknown>
+    for (const key of OPTIONAL_KEYS) {
+      expect(carriesUndefined(row, key)).toBe(false)
+    }
+  })
+
+  it('keeps the calendar_id in the local row when the picker chose one', async () => {
+    const controller = new EventController()
+    await controller.createEvent({
+      name: 'Con calendario',
+      dateStart: '2026-10-15T10:00:00Z',
+      timeZone: 'UTC',
+      availability: 'available',
+      calendar_id: 42,
+    })
+    await controller.flushQueue()
+
+    const rows = await testDb.table('events').toArray()
+    expect(rows.length).toBe(1)
+    const row = rows[0] as Record<string, unknown>
+    expect(row.calendar_id).toBe(42)
+  })
+})
+
 describe('EventController.updateEvent - calendar_id payload (LBDS-298)', () => {
   it('includes calendar_id in the PUT body when the picker switched calendars', async () => {
     const controller = new EventController()

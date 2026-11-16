@@ -5,7 +5,7 @@ import type { Ref } from 'vue'
 import { db } from './index'
 import * as outbox from './outbox'
 import { getIsOnline } from '@/composables/useOnlineStatus'
-import { toPlainData } from '@/utils/plainData'
+import { toPlainData, stripUndefined } from '@/utils/plainData'
 import { flush as flushOutbox } from './outboxProcessor'
 
 /**
@@ -199,8 +199,15 @@ export function createRepository<T, R extends { id?: string | number }>(
       // Vue reactive Proxy is not cloneable: the write would fail with
       // `DataCloneError`. The record is unwrapped to plain data here.
       const record = toPlainData(params.record as R)
+      // GitLab #3 - a key whose value is `undefined` must not reach the
+      // local row: the Dexie mirror would carry `calendar_id: undefined`
+      // (and friends), which breaks the DTO contract. `null` is a
+      // meaningful value and is kept.
+      const cleanRecord = stripUndefined(
+        record as unknown as Record<string, unknown>,
+      ) as unknown as R
       const optimistic: R = {
-        ...record,
+        ...cleanRecord,
         id: tempId,
       }
       // Optimistic mirror: Dexie first (source of truth for offline reads),
@@ -214,7 +221,7 @@ export function createRepository<T, R extends { id?: string | number }>(
         op: 'create',
         url: buildUrl(urlBase, tempId),
         method: 'POST',
-        payload: { ...record } as Record<string, unknown>,
+        payload: { ...cleanRecord } as Record<string, unknown>,
       })
       hintProcessor()
 

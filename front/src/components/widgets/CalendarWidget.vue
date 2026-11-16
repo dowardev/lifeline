@@ -77,6 +77,7 @@ import AdminEventComponent from "@/components/events/add/AddEventCompoenent.vue"
 import type { EventItem } from "@/store/eventStore";
 import type { Event } from "@/utils/interfaces";
 import { toPlainData } from "@/utils/plainData";
+import { eventToEventItem } from "@/utils/calendarEventItem";
 
 // 5. Main (props, emits, etc.)
 
@@ -173,38 +174,6 @@ function handleEventClick(params: { event: { id: string | number } }): void {
   isOpenModalUpdateEvent.value = true;
 }
 
-function eventToEventItem(params: { event: Event }): EventItem {
-  const event = params.event;
-  const dateStart =
-    event.reminders?.start instanceof Date
-      ? event.reminders.start.toISOString()
-      : event.reminders?.start || "";
-  const dateEnd =
-    event.reminders?.end instanceof Date
-      ? event.reminders.end.toISOString()
-      : event.reminders?.end || "";
-
-  return {
-    id: event.id || 0,
-    user_id: event.userId ?? authStore.localUser?.id ?? 0,
-    title: event.name || "",
-    // LBDS-298 - mirror the picker selection into the local row so
-    // the optimistic event lands in the right calendar instead of the
-    // previous hardcoded `1` (which silently misfiled events on
-    // multi-calendar accounts).
-    calendar_id: event.calendar_id ?? 1,
-    date_start: dateStart,
-    date_end: dateEnd,
-    notifications: event.reminders?.notifications?.join(",") || "",
-    repeat: event.reminders?.repeat?.type || "",
-    time_zone: event.timezone || "",
-    guests: event.guests ? JSON.stringify(event.guests) : "",
-    description: event.description || "",
-    availability: event.availability || "",
-    id_reminders: event.reminders?.idReminders || [],
-  };
-}
-
 function isoFromReminderDate(
   date: Date | string | null | undefined,
 ): string | undefined {
@@ -235,7 +204,10 @@ async function saveEvent(params: { data: { event: Event } }): Promise<void> {
       .catch(() => undefined);
 
     if (authStore.isAnonymous) {
-      const mapped = eventToEventItem({ event: params.data.event });
+      const mapped = eventToEventItem({
+        event: params.data.event,
+        fallbackUserId: authStore.localUser?.id ?? 0,
+      });
       mapped.id = -Date.now();
       let ids: number[] = [];
       try {
@@ -348,7 +320,10 @@ async function updateEvent(params: { data: { event: Event } }): Promise<void> {
       if (!(error instanceof NotificationPermissionError)) throw error;
     }
 
-    const mapped = eventToEventItem({ event: params.data.event });
+    const mapped = eventToEventItem({
+      event: params.data.event,
+      fallbackUserId: authStore.localUser?.id ?? 0,
+    });
     // Same rule as the calendar page: the id decides, not the session.
     const isLocalOnly = !isServerOwnedId(params.data.event.id);
     if (isLocalOnly) {
