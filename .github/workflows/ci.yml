@@ -218,6 +218,11 @@ jobs:
   frontend_e2e_test:
     name: frontend_e2e_test
     runs-on: ubuntu-latest
+    # GitLab corria este job en la imagen node:24-bookworm (Debian 12): el
+    # binario de Cypress no corre en alpine y necesita glibc + display virtual.
+    # Se replica la misma imagen para no depender de los paquetes del runner.
+    container:
+      image: node:24-bookworm
     needs: [release_gate, backend_lint, frontend_lint]
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref_type == 'branch' || needs.release_gate.outputs.release == 'true'))
     env:
@@ -240,10 +245,11 @@ jobs:
           cache: pnpm
           cache-dependency-path: front/pnpm-lock.yaml
 
+      # En un container job el usuario es root: sin sudo (igual que en GitLab).
       - name: Install system packages for Cypress
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xvfb xauth libgtk-3-0 libgbm1 libnotify4 libnss3 libxss1 libasound2 libxtst6
+          apt-get update
+          apt-get install -y --no-install-recommends xvfb xauth libgtk-3-0 libgbm1 libnotify4 libnss3 libxss1 libasound2 libxtst6
 
       - name: Cache Cypress binary
         uses: actions/cache@v4
