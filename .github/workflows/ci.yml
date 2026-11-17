@@ -158,7 +158,7 @@ jobs:
           $CI_PROJECT_DIR/scripts/ci/backend-install.sh
           php artisan key:generate --force
           mkdir -p keys
-          php artisan jwt:generate-keys || true
+          php artisan jwt:generate-keys || echo "jwt:generate-keys did not complete (keys may already exist)"
           php artisan config:clear
 
       - name: Run Laravel tests
