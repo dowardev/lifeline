@@ -108,10 +108,20 @@ class CalendarMirrorSeamsTest extends TestCase
         $this->assertSame($user->id, $mirror->user_id);
 
         $rows = $response->json('data');
-        $this->assertCount(1, $rows);
-        $this->assertSame($source->id, $rows[0]['source_id']);
-        $this->assertSame('ics', $rows[0]['source']['type']);
-        $this->assertTrue($rows[0]['selectable']);
+
+        // LBDS-292 - the account also owns its protected default calendar
+        // ("Personal"), provisioned by the same middleware that resolves the
+        // account. The mirror is the second row.
+        $this->assertCount(2, $rows);
+
+        $mirrorRow = collect($rows)->firstWhere('source_id', $source->id);
+        $this->assertNotNull($mirrorRow, 'The mirror must be listed in the picker.');
+        $this->assertSame('ics', $mirrorRow['source']['type']);
+        $this->assertTrue($mirrorRow['selectable']);
+
+        $defaultRow = collect($rows)->firstWhere('default', true);
+        $this->assertNotNull($defaultRow, 'The protected default calendar must be listed.');
+        $this->assertTrue($defaultRow['protected']);
     }
 
     public function test_resolving_an_existing_user_does_not_run_the_source_linking(): void
@@ -138,7 +148,11 @@ class CalendarMirrorSeamsTest extends TestCase
             ->getJson('/api/v1/calendars');
 
         $response->assertOk();
-        $this->assertSame(1, Calendar::count(), 'No extra mirror may be created.');
+        $this->assertSame(
+            1,
+            Calendar::whereNotNull('source_id')->count(),
+            'No extra mirror may be created.'
+        );
     }
 
     public function test_index_does_not_run_one_query_per_mirror_row(): void
@@ -161,7 +175,7 @@ class CalendarMirrorSeamsTest extends TestCase
             ])->save();
         }
 
-        $this->assertSame(4, Calendar::count());
+        $this->assertSame(4, Calendar::whereNotNull('source_id')->count());
 
         DB::flushQueryLog();
         DB::enableQueryLog();
@@ -170,7 +184,9 @@ class CalendarMirrorSeamsTest extends TestCase
             ->getJson('/api/v1/calendars');
 
         $response->assertOk();
-        $this->assertCount(4, $response->json('data'));
+
+        // LBDS-292 - the account also owns its protected default calendar.
+        $this->assertCount(5, $response->json('data'));
 
         $queries = DB::getQueryLog();
         DB::disableQueryLog();

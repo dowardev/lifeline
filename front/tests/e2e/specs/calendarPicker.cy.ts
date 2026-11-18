@@ -271,8 +271,13 @@ describe('Calendar picker (LBDS-298)', () => {
     selectText().should('contain', 'Sin calendarios')
     // LBDS-305: with the `ion-select` there is no popover to explain
     // the case, so the note lives next to the control.
+    //
+    // LBDS-292 changed what the note says: the event no longer goes
+    // out with an EMPTY `calendar_id` (the server would have to guess),
+    // it lands in the account's default calendar. The copy says so,
+    // and it no longer mentions the ticket.
     cy.get('ion-note.calendar-select-note').should('exist')
-      .and('contain', 'LBDS-292')
+      .and('contain', 'calendario por defecto')
   })
 
   it('LBDS-305: lists the mirrored external sources in the same picker', () => {

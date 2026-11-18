@@ -2,6 +2,7 @@
 // Copyright (C) 2021-2026 Gonzalo Ponce <gonzalo@dowar.xyz>
 
 import { useCalendarStore, type ViewCalendar, type CalendarDataStatus, type CalendarItem } from "@/store/calendarStore";
+import { calendarService } from "@/services/calendarService";
 import { storage } from "@/main";
 
 /**
@@ -158,5 +159,42 @@ export class CalendarController {
    */
   getDefaultCalendar(): CalendarItem | null {
     return this.store.defaultCalendar;
+  }
+
+  /**
+   * LBDS-292 - creates a calendar owned by the account. The new calendar
+   * is never the default: the protected default is provisioned by the
+   * server and cannot be replaced.
+   */
+  async createCalendar(params: { name: string }): Promise<CalendarItem[]> {
+    await calendarService.createCalendar({ name: params.name });
+    return await this.store.getCalendars();
+  }
+
+  /**
+   * LBDS-292 - renames a calendar the user created. The server rejects
+   * the request with 403 for the protected default calendar.
+   */
+  async renameCalendar(params: { id: number; name: string }): Promise<CalendarItem[]> {
+    await calendarService.updateCalendar({ id: params.id, name: params.name });
+    return await this.store.getCalendars();
+  }
+
+  /**
+   * LBDS-292 - deletes a calendar the user created, with one of the two
+   * strategies the API expresses: the events are destroyed with the
+   * calendar, or they are moved to another local calendar first.
+   */
+  async deleteCalendar(params: {
+    id: number;
+    strategy: "delete_events" | "move";
+    destinationCalendarId?: number;
+  }): Promise<CalendarItem[]> {
+    await calendarService.deleteCalendar({
+      id: params.id,
+      strategy: params.strategy,
+      destinationCalendarId: params.destinationCalendarId,
+    });
+    return await this.store.getCalendars();
   }
 }

@@ -313,7 +313,11 @@ export class EventController {
           // remap step.
           title: params.name,
           name: params.name,
-          calendar_id: params.calendar_id,
+          // LBDS-292 - `null` is never sent: an event always belongs
+          // to a calendar. When the picker has no selection the key is
+          // omitted and the server resolves the account's default
+          // calendar.
+          calendar_id: params.calendar_id ?? undefined,
           date_start: params.dateStart,
           date_end: params.dateEnd,
           dateStart: params.dateStart,
@@ -389,10 +393,15 @@ export class EventController {
       }
       // LBDS-298 - propagate `calendar_id` so the picker changes
       // reach the server. `undefined` means the picker did not move
-      // for this update (no-op); `null` is a deliberate clear; a
-      // number is the new selection. The backend scopes the value to
-      // `auth()->id()` and returns 404 if the calendar is not found.
-      if (rest.calendar_id !== undefined) {
+      // for this update (no-op); a number is the new selection. The
+      // backend scopes the value to `auth()->id()` and returns 404 if
+      // the calendar is not found.
+      //
+      // LBDS-292 - `null` is NOT sent anymore: an event always
+      // belongs to a calendar, so "clear the calendar" is not a state
+      // the client may ask for. The key is omitted instead, which
+      // leaves the row's calendar untouched.
+      if (rest.calendar_id !== undefined && rest.calendar_id !== null) {
         patch.calendar_id = rest.calendar_id
       }
       if (rest.notifications !== undefined) patch.notifications = rest.notifications

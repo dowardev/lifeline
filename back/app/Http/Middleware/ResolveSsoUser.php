@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 
 use App\Models\CalendarSource;
 use App\Models\User;
+use App\Services\DefaultCalendarService;
 use Closure;
 use Dowardev\SsoServer\Client\SsoServerClient;
 use Dowardev\SsoServer\Http\SsoHttpClient;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class ResolveSsoUser
 {
@@ -131,6 +133,38 @@ class ResolveSsoUser
         $request->setUserResolver(function () use ($user) {
             return $user;
         });
+
+        // LBDS-292 - every account owns a protected default calendar. The
+        // row is provisioned here, in the same step that creates the
+        // `users` row, so a brand-new account never has zero calendars
+        // (the state that used to leave its events without a calendar).
+        //
+        // It runs BEFORE the external sources are linked below: the mirror
+        // observer only claims the default slot when the user has no active
+        // default, so provisioning first keeps the slot in the local
+        // "Personal" calendar instead of an external mirror.
+        //
+        // It only runs when the row was just created or its `sso_sub` was
+        // stamped: an account that already existed was already served by
+        // the lazy provisioning in `GET /api/v1/calendars`, and doing it
+        // on every authenticated request would add a query to the hot path
+        // for no gain.
+        if ($userRowJustLinked) {
+            try {
+                DefaultCalendarService::ensureForUser($user);
+            } catch (Throwable $e) {
+                // LBDS-292 - the default calendar is provisioned here, but a
+                // provisioning failure must NOT break the login: the account
+                // is perfectly usable without it, and the lazy provisioning
+                // in `GET /api/v1/calendars` (and the resolution on the
+                // first event) gives it its default as soon as the database
+                // answers again.
+                Log::warning('LBDS-292: the default calendar could not be provisioned', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         // LBDS-305 - link the user's external calendar sources to the
         // `users` row. A source connected BEFORE that row existed could

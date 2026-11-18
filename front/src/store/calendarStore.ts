@@ -46,6 +46,14 @@ export interface CalendarItem {
   // source of truth for whether the row should appear.
   archived_at: string | null
   selectable: boolean
+  // LBDS-292 - the protected element: the default calendar can neither
+  // be renamed nor deleted. The UI hides the edit/delete affordances
+  // for it. Optional because an older server does not send it yet.
+  protected?: boolean
+  // LBDS-292 - local calendars are the ones the user owns and creates.
+  // A mirrored row belongs to an external source and is not a valid
+  // destination for a "move". Optional for the same reason.
+  local?: boolean
 }
 
 /**

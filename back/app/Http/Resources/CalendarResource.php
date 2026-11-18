@@ -36,6 +36,14 @@ class CalendarResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'default' => (bool) $this->default,
+            // LBDS-292 - the protected element: the default calendar can
+            // neither be renamed nor deleted. The frontend hides the
+            // edit/delete affordances for it instead of relying on the
+            // API to reject the request.
+            'protected' => (bool) $this->default && $this->archived_at === null,
+            // LBDS-292 - local calendars are the ones a user owns and
+            // creates; the mirrored ones belong to an external source.
+            'local' => $this->source_id === null,
             // LBDS-305 - null for local rows; non-null for mirrors. The
             // frontend uses this to group rows and to know whether the
             // row came from a `calendar_sources` lifecycle event.

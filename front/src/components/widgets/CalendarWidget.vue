@@ -351,13 +351,15 @@ async function updateEvent(params: { data: { event: Event } }): Promise<void> {
         id_reminders: ids,
         // LBDS-298 - picker changes reach the server. `undefined`
         // keeps the row's existing calendar_id (no PATCH entry).
+        //
+        // LBDS-292 - `null` is not sent: an event always belongs to
+        // a calendar, so the key is omitted and the row keeps the
+        // calendar it already has.
         calendar_id:
           params.data.event.calendar_id !== undefined &&
           params.data.event.calendar_id !== null
             ? params.data.event.calendar_id
-            : params.data.event.calendar_id === null
-              ? null
-              : undefined,
+            : undefined,
       });
       await eventController.updateLocalEvent({
         id: params.data.event.id ?? 0,

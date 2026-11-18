@@ -91,6 +91,10 @@
                 <ion-icon slot="end" :icon="chevronForwardOutline"></ion-icon>
               </ion-item>
             </ion-list>
+
+            <!-- LBDS-292 - the local calendars the account owns: the
+                 protected default plus the ones the user created. -->
+            <LocalCalendarsSection />
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -158,6 +162,7 @@ const calendarSourceController = new CalendarSourceController();
 
 // 3. Components
 import ConnectionModal from '@/components/settings/ConnectionModal.vue';
+import LocalCalendarsSection from '@/views/settings/components/LocalCalendarsSection.vue';
 
 // 4. Interface and types imports
 import type { Ref } from 'vue';
