@@ -891,12 +891,14 @@ async function updateEvent(params: { event: CalendarEvent }): Promise<void> {
         // means "the picker did not move for this update" (the value
         // is omitted from the PATCH payload entirely so the row's
         // existing `calendar_id` is preserved).
+        //
+        // LBDS-292 - `null` is not sent: an event always belongs to
+        // a calendar, so the key is omitted and the row keeps the
+        // calendar it already has.
         calendar_id:
           params.event.calendar_id !== undefined && params.event.calendar_id !== null
             ? params.event.calendar_id
-            : params.event.calendar_id === null
-              ? null
-              : undefined,
+            : undefined,
       });
       await eventController.updateLocalEvent({
         id: params.event.id ?? 0,

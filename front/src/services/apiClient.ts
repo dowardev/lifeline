@@ -192,7 +192,7 @@ export const apiClient = {
     return doFetch({ url: params.url, method, data: params.data })
   },
 
-  async executeDelete(params: { url: string }): Promise<unknown> {
-    return doFetch({ url: params.url, method: 'DELETE' })
+  async executeDelete(params: { url: string; data?: unknown }): Promise<unknown> {
+    return doFetch({ url: params.url, method: 'DELETE', data: params.data })
   },
 }

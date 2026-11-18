@@ -239,9 +239,8 @@
                           "
                           class="calendar-select-note"
                         >
-                          No tenés calendarios. El evento se creará con
-                          <strong>calendar_id</strong> vacío; LBDS-292 lo
-                          auto-provisionará en el primer sync.
+                          No tenés calendarios. El evento se guardará en tu
+                          <strong>calendario por defecto</strong>.
                         </ion-note>
                       </ion-item>
 
@@ -832,7 +831,16 @@ const calendarPlaceholder = computed<string>(() => {
 const onCalendarSelectChange = (ev: CustomEvent<{ value: number | string | null }>): void => {
   const next = ev.detail?.value;
   if (next === null || next === undefined || next === "") {
-    event.calendarId.value = null;
+    // LBDS-292 - an event always belongs to a calendar, so an empty
+    // selection falls back to the default calendar instead of leaving
+    // the event detached.
+    //
+    // When the account has no default yet (the list could not be
+    // loaded, or it is empty), the value stays `null` and that `null`
+    // NEVER reaches the server: the create/update payload omits
+    // `calendar_id` altogether and the server resolves the default
+    // calendar when it receives the write.
+    event.calendarId.value = calendarController.getDefaultCalendar()?.id ?? null;
     return;
   }
   const id = Number(next);
@@ -933,15 +941,14 @@ async function loadCalendars(): Promise<void> {
 // opens. For create flows, that's the default calendar (the one
 // flagged `default: 1` or the first row). For updates, that's the
 // event's existing `calendar_id` IF that calendar is still in the
-// user's list; otherwise we fall back to the default. With zero
-// calendars the field stays `null` and the picker row is hidden.
+// user's list; otherwise we fall back to the default.
 //
-// `incoming === null` is an explicit state: the event was created
-// without a calendar (e.g. before LBDS-292 auto-provision, or
-// because the user deliberately cleared it). On edit we MUST
-// preserve that null - otherwise a no-touch save would silently
-// attach the user to the default calendar and break LBDS-292's
-// contract.
+// LBDS-292 - an event always belongs to a calendar, so an incoming
+// `null` is NOT preserved: it falls back to the default calendar.
+// With zero calendars (the list could not be loaded, or the account
+// has none yet) the field stays `null` and the payload omits
+// `calendar_id`; the server resolves the default when it receives the
+// write.
 function preSelectCalendar(): void {
   const list = calendarList.value;
   if (list.length === 0) {
@@ -952,13 +959,11 @@ function preSelectCalendar(): void {
     return;
   }
   const incoming = props.eventData?.calendar_id;
-  if (incoming === null) {
-    // LBDS-298 F4: explicit null on the incoming event stays null
-    // on edit. The update path then sends `calendar_id: null`,
-    // which `EventController.updateEvent` serialises as the
-    // `null` clear-the-field case (different from the `undefined`
-    // no-op case).
-    event.calendarId.value = null;
+  if (incoming === null || incoming === undefined) {
+    // LBDS-292 - an event without a calendar (created before the
+    // rule, or migrated by the server) falls back to the default
+    // calendar instead of staying detached.
+    event.calendarId.value = calendarController.getDefaultCalendar()?.id ?? null;
     return;
   }
   if (incoming !== undefined && list.some((c) => c.id === incoming)) {

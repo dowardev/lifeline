@@ -6,6 +6,7 @@
 namespace Tests\Feature;
 
 use App\Mail\EventInvitation;
+use App\Models\Calendar;
 use App\Models\Event;
 use App\Models\User;
 use App\Support\EventInvitations;
@@ -40,6 +41,12 @@ class EventInvitationsDedupTest extends TestCase
             'time_zone' => 'UTC',
             'availability' => 'busy',
             'guests' => $guests,
+            // LBDS-292 - an event always belongs to a calendar.
+            'calendar_id' => Calendar::create([
+                'name' => 'Personal',
+                'user_id' => $user->id,
+                'default' => true,
+            ])->id,
         ]);
         $event->user_id = $user->id;
         $event->save();

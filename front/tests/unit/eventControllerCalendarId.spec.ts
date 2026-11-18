@@ -15,8 +15,9 @@
  *   - updateEvent with calendar_id set sends it in the PUT body
  *   - updateEvent with calendar_id undefined omits the key entirely
  *     (preserves the server's existing value)
- *   - updateEvent with calendar_id null sends `null` so the server
- *     can clear the row's calendar_id field
+ *   - LBDS-292: updateEvent with calendar_id null ALSO omits the key.
+ *     An event always belongs to a calendar, so "clear the calendar"
+ *     is not a state the client may ask for.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
@@ -274,7 +275,7 @@ describe('EventController.updateEvent - calendar_id payload (LBDS-298)', () => {
     expect(wire).not.toContain('"calendar_id"')
   })
 
-  it('sends calendar_id: null when the caller explicitly clears the selection', async () => {
+  it('omits calendar_id from the PUT body when the caller passes null (LBDS-292)', async () => {
     const controller = new EventController()
     await controller.updateEvent({
       id: 7,
@@ -285,6 +286,8 @@ describe('EventController.updateEvent - calendar_id payload (LBDS-298)', () => {
     const put = apiCalls.find((c) => c.method === 'PUT' && c.url === '/events/7')
     expect(put).toBeDefined()
     const wire = JSON.stringify(put?.data ?? {})
-    expect(wire).toContain('"calendar_id":null')
+    // The client never asks the server to clear the calendar: the key is
+    // omitted and the row keeps the calendar it already has.
+    expect(wire).not.toContain('"calendar_id"')
   })
 })

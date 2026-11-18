@@ -16,10 +16,17 @@
  *     non-numbers) means "this event has no calendar" and resolves to
  *     `null`.
  *
- * `null` is NOT a fallback to a default calendar: the default calendar is
- * provisioned server-side (LBDS-292). Consumers must therefore treat
+ * `null` is NOT a fallback to a default calendar: the default calendar
+ * is provisioned server-side (LBDS-292) and the server resolves it when
+ * a write arrives without a calendar. Consumers must therefore treat
  * `null` as "no calendar yet" and keep the event visible instead of
  * attributing it to an arbitrary calendar.
+ *
+ * LBDS-292 - the READ contract is unchanged (an event that arrives
+ * without a calendar is still reported as `null`), but the WRITE
+ * contract is now strict: the client never sends `calendar_id: null`.
+ * A missing calendar is resolved server-side against the account's
+ * protected default calendar.
  */
 export function resolveCalendarId(params: {
   calendarId?: number | null | undefined
