@@ -67,3 +67,6 @@ findings.md
 *.tsbuildinfo
 front/vite.config.js
 front/vite.config.d.ts
+
+# ODD task notes stay local-only
+odd/
