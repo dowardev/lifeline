@@ -346,6 +346,26 @@ This rule exists because tickets (unlike code) are project-planning artifacts th
 - `front/src/components/calendar/fullcalendar/FullyCalendarVue3.vue`: FullCalendar wrapper with touch/click callbacks
 - `front/src/views/calendar/CalendarPage.vue`: main calendar page (reference for working touch behavior)
 
+# REGLA — docs durables para cambios de contrato
+
+La bitácora de trabajo del agente (`odd/`) **no se versiona**: es estado local
+y no cuenta como documentación. Cuando una feature altera un **contrato**
+(una invariante, la forma de la API, un mensaje, un formato de config), las
+decisiones que un humano tiene que respetar para no romper ese comportamiento
+van en un **doc durable versionado bajo `docs/`**, en el **mismo PR** que el
+cambio de comportamiento.
+
+Reglas:
+- El criterio es: *¿alguien del equipo va a leer esto dentro de seis meses
+  para no romper algo?* Si sí → `docs/`. Si no → no va al repo.
+- Si un doc durable ya existe para esa área, se **actualiza**; no se crea uno
+  nuevo por feature.
+- El doc durable y la bitácora local no pueden divergir: si divergen, gana
+  `docs/`.
+- El PR template trae el checklist; el agente lo completa sin que se lo pidan.
+
+Ejemplo de doc durable: `docs/lbds-292-default-calendar.md`.
+
 ## Pi lifecycle command guard (gentle-ai)
 
 > **Histórico (gentle-pi v2.2.0):** este guard era un problema de la extensión
