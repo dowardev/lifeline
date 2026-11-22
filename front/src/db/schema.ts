@@ -16,12 +16,15 @@ export interface EventRecord {
   calendar_id: number | null
   date_start?: string
   date_end?: string
-  notifications?: string
+  // The backend casts `notifications`, `guests` and `repeat` to arrays
+  // (see back/app/Models/Event.php), so the wire shape is a list; the
+  // app also writes the bare string form for `notifications`.
+  notifications?: string | string[]
   // The server stores the repeat rule as an array (Laravel casts the
   // column to `array`); the app also writes the bare type string.
   repeat?: string | ServerRepeat
   time_zone?: string
-  guests?: string
+  guests?: string | string[]
   description?: string
   availability?: string
   id_reminders?: number[]
@@ -54,7 +57,10 @@ export interface ConfigRecord {
 }
 
 export interface TaskRecord {
-  id?: number
+  // LBDS-231 - Dexie preserves the id it is given, so a row created
+  // offline carries a tempId string ('tmp-<uuid>') until the reconciler
+  // swaps it for the server id.
+  id?: number | string
   user_id: number
   title: string
   description?: string
@@ -68,7 +74,10 @@ export interface TaskRecord {
 }
 
 export interface DocumentRecord {
-  id?: number
+  // LBDS-231 - Dexie preserves the id it is given, so a row created
+  // offline carries a tempId string ('tmp-<uuid>') until the reconciler
+  // swaps it for the server id.
+  id?: number | string
   user_id: number
   title: string
   type: 'note' | 'list' | 'richtext' | 'todo'
@@ -78,7 +87,10 @@ export interface DocumentRecord {
 }
 
 export interface NoteRecord {
-  id?: number
+  // LBDS-231 - Dexie preserves the id it is given, so a row created
+  // offline carries a tempId string ('tmp-<uuid>') until the reconciler
+  // swaps it for the server id.
+  id?: number | string
   user_id: number
   document_id?: number
   title: string
@@ -161,6 +173,8 @@ export interface ExternalContactRecord {
   key: string
   sourceId?: number
   sourceName: string
+  /** Upstream contact id; kept so the cached row can be traced back. */
+  id: number
   displayName: string
   email: string
   phone: string

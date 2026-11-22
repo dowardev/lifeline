@@ -5,7 +5,9 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export interface DocumentItem {
-  id: number
+  // LBDS-231 - a row created while offline carries a tempId string
+  // ('tmp-<uuid>') until the reconciler swaps it for the server id.
+  id: number | string
   user_id: number
   title: string
   type: 'note' | 'list' | 'richtext' | 'todo'

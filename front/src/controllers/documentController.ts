@@ -9,7 +9,6 @@ import { extractListRows } from '@/utils/listResponse'
 import type { DocumentRecord } from '@/db/schema'
 import type { DocumentItem } from '@/store/documentStore'
 import { toPlainData } from '@/utils/plainData'
-import type { DocumentElement } from '@/controllers/documentController'
 import {
   createRepository,
   type RepositoryHooks,
@@ -44,6 +43,23 @@ interface ServerDocumentDto {
   elements?: unknown
 }
 
+/**
+ * Maps a server payload (flat or wrapped in `{ document: {...} }`) onto the
+ * local item shape. The backend answers with a Laravel resource, so the row
+ * arrives wrapped; the wrapper is stripped here.
+ */
+function toDocumentItem(params: { server: ServerDocumentDto }): DocumentItem {
+  const { server } = params
+  const raw = server as unknown as Record<string, unknown>
+  const inner =
+    raw && typeof raw === 'object' && 'document' in raw
+      ? ((raw as { document: Record<string, unknown> }).document ?? {})
+      : raw
+  // The server payload carries the document fields as they are; the local
+  // item type only declares the ones the UI reads.
+  return inner as unknown as DocumentItem
+}
+
 function buildHooks(): RepositoryHooks<DocumentItem> {
   const store = (): ReturnType<typeof useDocumentStore> => useDocumentStore()
   return {
@@ -76,11 +92,7 @@ function getRepository(): ReturnType<
       },
       fromServer: ({ server }) => {
         // C-3 (pre-merge review): strip the `{ document: {...} }` wrapper.
-        const response = server as { document?: Record<string, unknown> } | Record<string, unknown> | undefined
-        if (response && typeof response === 'object' && 'document' in response) {
-          return (response as { document: Record<string, unknown> }).document
-        }
-        return (response as Record<string, unknown>) ?? {}
+        return toDocumentItem({ server })
       },
       hooks: buildHooks(),
     })
@@ -108,14 +120,14 @@ function getRepository(): ReturnType<
               : undefined
         if (typeof id !== 'number' && typeof id !== 'string') return
 
-        const local = await db.documents.get(tempId as string)
-        const merged = { ...local, ...inner, id }
+        const local = await db.documents.get(tempId)
+        const merged = { ...local, ...inner, id } as unknown as DocumentRecord
         if (local) {
-          await db.documents.delete(tempId as string)
+          await db.documents.delete(tempId)
           await db.documents.put(merged)
         }
         const store = useDocumentStore()
-        const temp = store.documents.findIndex((d) => d.id === tempId)
+        const temp = store.documents.findIndex((d) => String(d.id) === tempId)
         if (temp !== -1) {
           store.removeDocument({ id: tempId as string })
           store.addDocument({ document: merged as DocumentItem })
@@ -200,7 +212,7 @@ export class DocumentController {
   }
 
   async updateDocument(params: {
-    id: number
+    id: number | string
     title?: string
     type?: string
     content?: string
@@ -271,7 +283,7 @@ export class DocumentController {
       const elements = [...(doc.elements as DocumentElement[])]
       elements[idx] = { ...elements[idx], data: params.data }
       this.store.updateDocument({ id: doc.id as number, updates: { elements } })
-      void this.updateDocument({ id: doc.id as number, document: { ...doc, elements } })
+      void this.updateDocument({ id: doc.id as number, elements })
     }
   }
 
@@ -282,7 +294,7 @@ export class DocumentController {
       const elements = [...(doc.elements as DocumentElement[])]
       elements[idx] = { ...elements[idx], reminders: params.data }
       this.store.updateDocument({ id: doc.id as number, updates: { elements } })
-      void this.updateDocument({ id: doc.id as number, document: { ...doc, elements } })
+      void this.updateDocument({ id: doc.id as number, elements })
     }
   }
 

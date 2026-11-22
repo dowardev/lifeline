@@ -7,6 +7,7 @@ import type { ExternalCalendarEvent } from '@/services/externalEventService'
 import { useEventStore } from '@/store/eventStore'
 import { useAuthStore } from '@/store/authStore'
 import type { EventItem } from '@/store/eventStore'
+import type { EventRecord } from '@/db/schema'
 import { db } from '@/db'
 import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import { extractListRows } from '@/utils/listResponse'
@@ -72,7 +73,7 @@ function buildHooks(): RepositoryHooks<EventItem> {
  * reconciler and `fromServer` both go through this so the merged row
  * never carries both spellings of the same field.
  */
-function eventFromServer(params: { server: unknown }): Record<string, unknown> {
+function eventFromServer(params: { server: unknown }): EventItem {
   const raw = (params.server ?? {}) as Record<string, unknown>
   const inner = raw.event && typeof raw.event === 'object'
     ? (raw.event as Record<string, unknown>)
@@ -96,7 +97,7 @@ function eventFromServer(params: { server: unknown }): Record<string, unknown> {
     guests: inner.guests as string | string[] | undefined,
     description: inner.description as string | undefined,
     id_reminders: inner.id_reminders as number[] | undefined,
-  })
+  }) as unknown as EventItem
 }
 
 let repositorySingleton: ReturnType<
@@ -158,9 +159,9 @@ function getRepository(): ReturnType<
         const local = await db.events.get(tempId as string)
         // GitLab #3 - the merged row must not carry a key whose value is
         // `undefined` (the optimistic row of an older write could).
-        const merged = stripUndefined({ ...local, ...fromServer, id })
+        const merged = stripUndefined({ ...local, ...fromServer, id }) as unknown as EventRecord
         if (local) {
-          await db.events.delete(tempId as string)
+          await db.events.delete(tempId)
           await db.events.put(merged)
         }
         const store = useEventStore()

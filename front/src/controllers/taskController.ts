@@ -40,6 +40,16 @@ interface ServerTaskDto {
   id_reminders?: number[]
 }
 
+/**
+ * Shape accepted by `updateTask`: the flat fields plus an optional nested
+ * `task` object. `status` arrives as a loose string from the callers and
+ * `id` may still be an offline temp id.
+ */
+type TaskUpdateData = Omit<Partial<TaskItem>, 'id' | 'status'> & {
+  id?: number | string
+  status?: string
+}
+
 function buildHooks(): RepositoryHooks<TaskItem> {
   const store = (): ReturnType<typeof useTaskStore> => useTaskStore()
   return {
@@ -75,9 +85,9 @@ function getRepository(): ReturnType<
         // the merged row carries the flat fields.
         const response = server as { task?: Record<string, unknown> } | Record<string, unknown> | undefined
         if (response && typeof response === 'object' && 'task' in response) {
-          return (response as { task: Record<string, unknown> }).task
+          return (response as { task: Record<string, unknown> }).task as unknown as TaskItem
         }
-        return (response as Record<string, unknown>) ?? {}
+        return (response as Record<string, unknown>) as unknown as TaskItem
       },
       hooks: buildHooks(),
     })
@@ -106,14 +116,14 @@ function getRepository(): ReturnType<
               : undefined
         if (typeof id !== 'number' && typeof id !== 'string') return
 
-        const local = await db.tasks.get(tempId as string)
-        const merged = { ...local, ...inner, id }
+        const local = await db.tasks.get(tempId)
+        const merged = { ...local, ...inner, id } as unknown as TaskRecord
         if (local) {
-          await db.tasks.delete(tempId as string)
+          await db.tasks.delete(tempId)
           await db.tasks.put(merged)
         }
         const store = useTaskStore()
-        const temp = store.tasks.findIndex((t) => t.id === tempId)
+        const temp = store.tasks.findIndex((t) => String(t.id) === tempId)
         if (temp !== -1) {
           store.removeTask({ id: tempId as string })
           store.addTask({ task: merged as TaskItem })
@@ -210,7 +220,7 @@ export class TaskController {
   }
 
   async updateTask(params: {
-    id?: number
+    id?: number | string
     task?: Partial<TaskItem>
     title?: string
     description?: string
@@ -224,7 +234,7 @@ export class TaskController {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
-      const data = params.task || params
+      const data = (params.task ?? params) as TaskUpdateData
       const id = params.id ?? data.id
       if (id === undefined) return
       const patch: Partial<TaskItem> = {}
@@ -245,8 +255,8 @@ export class TaskController {
         patch.priority = data.priority as number
       if (data.due_date !== undefined && patch.due_date === undefined)
         patch.due_date = data.due_date as string
-      if (data.subtasks !== undefined && (patch as { subtasks?: string }).subtasks === undefined)
-        ;(patch as { subtasks?: string }).subtasks = data.subtasks as string
+      if (data.subtasks !== undefined && patch.subtasks === undefined)
+        patch.subtasks = data.subtasks as string
       if (data.order !== undefined && patch.order === undefined) patch.order = data.order as number
       if (data.notifications !== undefined && patch.notifications === undefined)
         patch.notifications = data.notifications as string[]

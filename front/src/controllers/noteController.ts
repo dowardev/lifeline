@@ -7,6 +7,7 @@ import { db } from '@/db'
 import { getPendingMutations, clearPendingMutations } from '@/db/repository'
 import { extractListRows } from '@/utils/listResponse'
 import type { NoteItem } from '@/store/noteStore'
+import type { NoteRecord } from '@/db/schema'
 import {
   createRepository,
   type RepositoryHooks,
@@ -69,9 +70,9 @@ function getRepository(): ReturnType<
         // C-3 (pre-merge review): strip the `{ note: {...} }` wrapper.
         const response = server as { note?: Record<string, unknown> } | Record<string, unknown> | undefined
         if (response && typeof response === 'object' && 'note' in response) {
-          return (response as { note: Record<string, unknown> }).note
+          return (response as { note: Record<string, unknown> }).note as unknown as NoteItem
         }
-        return (response as Record<string, unknown>) ?? {}
+        return (response as Record<string, unknown>) as unknown as NoteItem
       },
       hooks: buildHooks(),
     })
@@ -99,14 +100,14 @@ function getRepository(): ReturnType<
               : undefined
         if (typeof id !== 'number' && typeof id !== 'string') return
 
-        const local = await db.notes.get(tempId as string)
-        const merged = { ...local, ...inner, id }
+        const local = await db.notes.get(tempId)
+        const merged = { ...local, ...inner, id } as unknown as NoteRecord
         if (local) {
-          await db.notes.delete(tempId as string)
+          await db.notes.delete(tempId)
           await db.notes.put(merged)
         }
         const store = useNoteStore()
-        const temp = store.notes.findIndex((n) => n.id === tempId)
+        const temp = store.notes.findIndex((n) => String(n.id) === tempId)
         if (temp !== -1) {
           store.removeNote({ id: tempId as string })
           store.addNote({ note: merged as NoteItem })
@@ -197,7 +198,7 @@ export class NoteController {
   }
 
   async updateNote(params: {
-    id: number
+    id: number | string
     title?: string
     content?: string
     reminder?: string
@@ -220,7 +221,7 @@ export class NoteController {
     }
   }
 
-  async deleteNote(params: { id: number }): Promise<void> {
+  async deleteNote(params: { id: number | string }): Promise<void> {
     this.store.setLoading({ loading: true })
     this.store.clearError()
     try {
