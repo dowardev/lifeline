@@ -29,6 +29,9 @@ export function useAddSourceSheet(params: { options: AddSourceSheetOptions }): {
         { text: "Cancelar", role: "cancel" },
       ],
     });
+    // Creating the overlay does not show it: without the presentation the
+    // click on "Agregar" looks like nothing happened.
+    await sheet.present();
     const result = await sheet.onDidDismiss();
     if (result.role === "google") {
       options.onGoogle();

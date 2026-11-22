@@ -10,9 +10,22 @@ describe('useAddSourceSheet', () => {
     vi.restoreAllMocks()
   })
 
-  function sheetWithRole(role: string): { onDidDismiss: ReturnType<typeof vi.fn> } {
-    return { onDidDismiss: vi.fn().mockResolvedValue({ role }) }
+  function sheetWithRole(role: string): { present: ReturnType<typeof vi.fn>; onDidDismiss: ReturnType<typeof vi.fn> } {
+    return {
+      present: vi.fn().mockResolvedValue(undefined),
+      onDidDismiss: vi.fn().mockResolvedValue({ role }),
+    };
   }
+
+  test('presents the sheet: creating it is not showing it', async (): Promise<void> => {
+    const sheet = sheetWithRole('cancel');
+    vi.spyOn(actionSheetController, 'create').mockResolvedValue(sheet as never)
+
+    const { open } = useAddSourceSheet({ options: { onGoogle: vi.fn(), onIcs: vi.fn() } })
+    await open()
+
+    expect(sheet.present).toHaveBeenCalledTimes(1)
+  })
 
   test('offers the Google account and the calendar by ICS URL', async (): Promise<void> => {
     const create = vi

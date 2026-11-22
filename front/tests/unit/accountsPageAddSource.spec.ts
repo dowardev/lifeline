@@ -103,8 +103,11 @@ describe('AccountsPage.vue - the Google Calendar "Agregar" menu', () => {
     })
   })
 
-  function sheetWithRole(role: string): { onDidDismiss: ReturnType<typeof vi.fn> } {
-    return { onDidDismiss: vi.fn().mockResolvedValue({ role }) }
+  function sheetWithRole(role: string): { present: ReturnType<typeof vi.fn>; onDidDismiss: ReturnType<typeof vi.fn> } {
+    return {
+      present: vi.fn().mockResolvedValue(undefined),
+      onDidDismiss: vi.fn().mockResolvedValue({ role }),
+    }
   }
 
   function mountPage(): VueWrapper {
@@ -122,13 +125,15 @@ describe('AccountsPage.vue - the Google Calendar "Agregar" menu', () => {
   }
 
   test('the Agregar button offers the Google account and the calendar by ICS URL', async (): Promise<void> => {
-    createMock.mockResolvedValue(sheetWithRole('cancel'))
+    const sheet = sheetWithRole('cancel')
+    createMock.mockResolvedValue(sheet)
     const wrapper = mountPage()
 
     await googleAgregarButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(createMock).toHaveBeenCalledTimes(1)
+    expect(sheet.present).toHaveBeenCalledTimes(1)
     const options = createMock.mock.calls[0][0] as { buttons: { text: string }[] }
     const texts = options.buttons.map((button) => button.text)
     expect(texts).toContain('Google Calendar')
