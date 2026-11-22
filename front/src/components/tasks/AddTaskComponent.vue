@@ -452,12 +452,39 @@ const authStore = useAuthStore();
 import RemindersComponent from "./reminders/RemindersComponent.vue";
 
 // 4. Interface and types imports
-import type { Task, TaskReminderRepeat } from "@/utils/interfaces";
+import type { TaskReminderRepeat } from "@/utils/interfaces";
 import type { TaskItem } from "@/store/taskStore";
+
+/**
+ * Shape the edit form understands. The tasks page feeds the store item
+ * (`TaskItem`), which carries `title` and a flat `notifications` list, while
+ * the legacy `Task` shape carries `name` and a nested `reminders` object.
+ */
+type EditableTask = {
+  id?: number | string;
+  name?: string;
+  title?: string;
+  description?: string;
+  timezone?: string;
+  guests?: Array<{ email: string }>;
+  notifications?: string[];
+  id_reminders?: number[];
+  subtasks?: unknown;
+  reminders?: {
+    start?: Date | null;
+    end?: Date | null;
+    notifications?: string[];
+    repeat?: {
+      frecuency: number;
+      type: "daily" | "weekly" | "monthly" | "annually";
+      daysWeek?: string[];
+    };
+  };
+};
 
 // 5. Main (props, emits)
 const props = defineProps({
-  taskData: { type: Object as () => Task, default: () => null },
+  taskData: { type: Object as () => EditableTask, default: () => null },
 });
 
 // 6. Vars and const
@@ -633,17 +660,20 @@ function removeSubTask(params: { index: number }): void {
   task.subtasks.value.splice(index, 1);
 }
 
-function setTask(params: { task: Task }): void {
+function setTask(params: { task: EditableTask }): void {
   const { task: taskData } = params;
-  task.name.value = taskData.name!;
+  task.name.value = taskData.name ?? taskData.title ?? "";
   task.description.value = taskData.description ?? "";
-  task.reminders.value.start = taskData.reminders!.start;
-  task.reminders.value.end = taskData.reminders!.end;
-  task.reminders.value.notifications = taskData.reminders!.notifications ?? [];
-  task.reminders.value.repeat = taskData.reminders!.repeat;
-  task.timezone.value = taskData.timezone!;
+  task.reminders.value.start = taskData.reminders?.start ?? new Date();
+  task.reminders.value.end = taskData.reminders?.end ?? new Date();
+  task.reminders.value.notifications =
+    taskData.reminders?.notifications ?? taskData.notifications ?? [];
+  task.reminders.value.repeat = taskData.reminders?.repeat ?? task.reminders.value.repeat;
+  task.timezone.value = taskData.timezone ?? task.timezone.value;
   task.guests.value = Array.isArray(taskData.guests) ? taskData.guests : [];
-  task.subtasks.value = taskData.subtasks ?? Array<any>();
+  task.subtasks.value = Array.isArray(taskData.subtasks)
+    ? (taskData.subtasks as Array<{ name: string; checked: boolean }>)
+    : [];
 }
 
 async function save(): Promise<void> {

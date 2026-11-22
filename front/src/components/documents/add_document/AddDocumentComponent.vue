@@ -357,7 +357,8 @@ const insertElement = (params: { id: number; type: TypeDocumentElement }): void 
   const document = documentComposable.getUserDocument({ documentId });
   if (!document?.elements) return;
   documentComposable.updateDocument({
-    document,
+    id: document.id,
+    elements: document.elements,
   });
 };
 
@@ -413,7 +414,8 @@ const updateTitle = async (): Promise<void> => {
   document.url = url;
 
   await documentComposable.updateDocument({
-    document,
+    id: document.id,
+    title: document.title,
   });
 
   router.replace(url);
@@ -473,7 +475,7 @@ const setNoteReminders = async (params: {
   const earliestStart = starts[0];
 
   // Upsert the Note row for this document (create if absent, else update).
-  let noteId: number;
+  let noteId: number | string;
   if (note?.id) {
     noteId = note.id;
     await noteComposable.updateNote({ id: noteId, reminder: earliestStart });

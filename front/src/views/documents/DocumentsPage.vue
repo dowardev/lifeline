@@ -179,7 +179,13 @@ const createDocument = async (): Promise<
   try {
     const response = await documentController.createDocument({ title: document.title });
     if (response == null) return undefined;
-    url = response.url;
+    // The document url is a local slug (`<title>-<id>`), the same shape the
+    // document page uses to find the row (see DocumentPage.vue).
+    url = `${document.title.replace(" ", "-")}-${response.id}`;
+    const created = documentController.getUserDocument({
+      documentId: String(response.id),
+    });
+    if (created) created.url = url;
     return { documentUrl: url };
   } catch (e) {
     console.error(e);
