@@ -40,12 +40,12 @@ export interface EventItem {
   calendar_id: number | null
   date_start?: string
   date_end?: string
-  notifications?: string
+  notifications?: string | string[]
   // The server stores the repeat rule as an array (Laravel casts the
   // column to `array`); the app also writes the bare type string.
   repeat?: string | ServerRepeat
   time_zone?: string
-  guests?: string
+  guests?: string | string[]
   description?: string
   availability?: string
   id_reminders?: number[]

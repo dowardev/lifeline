@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fixed the broken frontend type check: `front/` had 65 `vue-tsc` errors in 16
+  files, so `pnpm run build` failed on a clean checkout and the release job
+  (`frontend_build`) shipped whatever `vite build` produced without ever
+  type-checking it. The errors are fixed and the gate is real now: the release
+  build runs `pnpm run build` (type check + bundle) and a new
+  `frontend_typecheck` job runs on pull requests and branches — GL-16
+- Fixed the WakaTime widget reading the wrong shape from the endpoint: the
+  backend proxies the upstream payload, so the total is read from
+  `total_seconds` and the widget works in seconds instead of formatting the
+  whole payload as a number — GL-16
+- Fixed the document page losing the edited title and the new elements: the
+  update was calling the controller with a `document` payload the controller
+  never read, so the write was a no-op — GL-16
+- Fixed the task edit modal opening empty: the tasks page fed the store row
+  (`TaskItem`) into a form that expected the legacy `Task` shape, so the
+  fields (name, reminders, timezone) came back undefined — GL-16
+
 - Fixed the calendar-less events being silently filed under the first
   calendar: the calendar views coerced a missing `calendar_id` to `1`
   (`(source.calendar_id as number) || 1` and `event.calendar_id ?? 1`),

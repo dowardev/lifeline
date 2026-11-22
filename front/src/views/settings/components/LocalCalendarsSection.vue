@@ -156,7 +156,7 @@ import { CalendarController } from "@/controllers/calendarController";
 import { SystemController } from "@/controllers/systemController";
 
 // 4. Interface and types imports
-import type { InputEventDetail } from "@ionic/core";
+import type { InputInputEventDetail } from "@ionic/core";
 import type { CalendarItem } from "@/store/calendarStore";
 
 const calendarController = new CalendarController();
@@ -233,7 +233,7 @@ function closeRename(): void {
   renameDraft.value = "";
 }
 
-function onRenameInput(event: CustomEvent<InputEventDetail>): void {
+function onRenameInput(event: CustomEvent<InputInputEventDetail>): void {
   renameDraft.value = event.detail.value ?? "";
 }
 

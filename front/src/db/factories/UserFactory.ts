@@ -4,6 +4,12 @@
 import { getDB } from '@/db'
 import type { UserRecord, EventRecord } from '@/db/schema'
 
+/** Shape of the `/auth/user` payload as consumed by {@link UserFactory.fromBoth}. */
+export interface ServerUserPayload {
+  user?: UserRecord | null
+  events?: EventRecord[]
+}
+
 export class UserFactory {
   static async fromLocal(params: { userId: number }): Promise<{ user: UserRecord | null; events: EventRecord[] } | null> {
     const { userId } = params
@@ -14,9 +20,10 @@ export class UserFactory {
     return { user, events }
   }
 
-  static async fromServer(): Promise<unknown> {
+  static async fromServer(): Promise<ServerUserPayload | null> {
     const { authService } = await import('@/services/authService')
-    return authService.getUser()
+    const payload = await authService.getUser()
+    return payload as ServerUserPayload | null
   }
 
   static async fromBoth(params: { userId: number }): Promise<{ user: UserRecord | null; events: EventRecord[] }> {

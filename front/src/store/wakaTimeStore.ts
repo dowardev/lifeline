@@ -5,7 +5,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export interface WakaTimeToday {
-  time?: string
+  /** Total seconds tracked today, as reported by WakaTime. */
+  totalSeconds?: number
 }
 
 export const useWakaTimeStore = defineStore('wakaTime', () => {

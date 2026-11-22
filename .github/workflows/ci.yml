@@ -8,7 +8,7 @@
 #
 # Mapeo de jobs (nombres idénticos a propósito: son los required checks):
 #   backend_lint, frontend_lint
-#   backend_test, frontend_test, frontend_e2e_test
+#   backend_test, frontend_test, frontend_typecheck, frontend_e2e_test
 #   backend_assets_build, backend_build, frontend_build
 #   backend_deploy, frontend_deploy, rollback_backend, rollback_frontend
 #
@@ -212,6 +212,34 @@ jobs:
         working-directory: front
         run: pnpm run test:unit
 
+  # Type check del frontend. El job `frontend_build` tambien type-checkea
+  # (ver abajo), pero ese job solo corre en tags semver: sin este job, un
+  # PR podria mergear errores de tipos que solo aparecerian en el release.
+  frontend_typecheck:
+    name: frontend_typecheck
+    runs-on: ubuntu-latest
+    needs: [release_gate, backend_lint, frontend_lint]
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref_type == 'branch' || needs.release_gate.outputs.release == 'true'))
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: front/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        run: scripts/ci/frontend-install.sh
+
+      - name: Type check
+        working-directory: front
+        run: pnpm run typecheck
+
   # E2E de frontend: build offline (bypass de auth + API local) servido por el
   # harness y el suite de Cypress encima. El binario de Cypress necesita glibc
   # (no corre en alpine) y un display virtual.
@@ -378,7 +406,10 @@ jobs:
 
       - name: Build frontend
         working-directory: front
-        run: pnpm exec vite build
+        # `pnpm run build` = `vue-tsc && vite build`: el artifact que se
+        # despliega tiene que type-checkear. Un release que no type-checkea
+        # es un release que puede subir un error de tipos.
+        run: pnpm run build
 
       - name: Upload frontend build
         uses: actions/upload-artifact@v4
@@ -625,6 +656,10 @@ jobs:
           cd front
           pnpm install --frozen-lockfile
           printf '%s\n' "$FRONTEND_ENV_FILE" > .env.production
+          # El rollback reconstruye un tag ya publicado: NO type-checkea
+          # (los tags anteriores tienen errores de tipos conocidos y el
+          # rollback tiene que poder salir). El gate de tipos vive en
+          # `frontend_typecheck` y `frontend_build`.
           pnpm exec vite build
           cd ..
           tar -czf /tmp/frontend-rollback.tar.gz -C front/dist .

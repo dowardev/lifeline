@@ -26,12 +26,13 @@ export class WakaTimeController {
     await db.config.put({ name: 'wakatime_api_key', value: params.key })
   }
 
-  async fetchDurations(params: { date: string; apiKey?: string }): Promise<unknown> {
+  async fetchDurations(params: { date: string; apiKey?: string }): Promise<number> {
     const key = params.apiKey || this.store.wakaTimeApiKey
-    if (!key) return undefined
+    if (!key) return 0
     const response = await wakaTimeService.getDurations({ apiKey: key, date: params.date })
-    this.store.setToday({ today: response })
-    return response
+    const totalSeconds = response.total_seconds ?? 0
+    this.store.setToday({ today: { totalSeconds } })
+    return totalSeconds
   }
 
   async testWakaTimeApiKey(params: { apiKey: string; date?: string }): Promise<unknown> {

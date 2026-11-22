@@ -111,9 +111,7 @@ const selectedEventData = computed<Event | undefined>(() => {
     reminders: {
       start: event.date_start ? new Date(event.date_start) : new Date(),
       end: event.date_end ? new Date(event.date_end) : new Date(),
-      notifications: event.notifications
-        ? event.notifications.split(",").filter(Boolean)
-        : [],
+      notifications: parseNotifications(event.notifications),
       repeat: event.repeat
         ? { frecuency: 1, type: event.repeat as any, daysWeek: [] }
         : { frecuency: 1, type: "daily" as any, daysWeek: [] },
@@ -134,6 +132,20 @@ const selectedEventData = computed<Event | undefined>(() => {
 });
 
 // 9. OnMounted
+/**
+ * The backend casts `notifications` to an array (see back/app/Models/Event.php),
+ * while older local rows may still hold the comma-separated string form.
+ */
+function parseNotifications(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw.filter((value): value is string => typeof value === 'string');
+  }
+  if (typeof raw === 'string') {
+    return raw.split(",").filter(Boolean);
+  }
+  return [];
+}
+
 function parseGuests(raw: unknown): Array<{ email: string }> {
   if (Array.isArray(raw)) return raw;
   if (typeof raw === "string" && raw.trim()) {

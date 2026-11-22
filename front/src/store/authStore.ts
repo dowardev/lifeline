@@ -4,7 +4,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { db } from '@/db'
-import type { AuthUser } from '@/store/authStore'
 
 export interface AuthUser {
   id: number

@@ -8,11 +8,11 @@
     <GridStack
       :options="gridOptions"
       :components="widgetComponents"
-      @change="(e, nodes) => onGridChange({ nodes })"
+      @change="onGridChange"
       @added="(e, nodes) => onWidgetAdded({ nodes })"
       @removed="(e, nodes) => onWidgetRemoved({ nodes })"
-      @resizestop="(el) => onResizeStop({ el })"
-      @dragstop="(el) => onDragStop({ el })"
+      @resizestop="onResizeStop"
+      @dragstop="onDragStop"
     />
   </div>
 </template>
