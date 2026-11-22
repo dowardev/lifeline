@@ -5,11 +5,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HashesExternalUid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 class ExternalTask extends Model
 {
+    use HashesExternalUid;
+
     protected $fillable = [
         'sso_sub',
         'calendar_source_id',

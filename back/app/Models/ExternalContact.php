@@ -5,10 +5,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HashesExternalUid;
 use Illuminate\Database\Eloquent\Model;
 
 class ExternalContact extends Model
 {
+    use HashesExternalUid;
+
     protected $fillable = [
         'sso_sub',
         'calendar_source_id',
