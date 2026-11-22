@@ -12,6 +12,7 @@ use App\Models\ExternalTask;
 use App\Support\ExternalReminderParser;
 use App\Traits\ValidatesPublicUrl;
 use GuzzleHttp\Client;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
@@ -245,6 +246,7 @@ class CalendarSyncService
         foreach ($items as $item) {
             $uid = $item['uid'];
             $seen[] = $uid;
+            [$dueAt, $dueTimeZone] = $this->dueParts($item['due'] ?? null);
             ExternalTask::updateOrCreate(
                 [
                     'calendar_source_id' => $source->id,
@@ -255,7 +257,8 @@ class CalendarSyncService
                     'sso_sub' => $source->sso_sub,
                     'title' => $item['title'],
                     'status' => $item['status'],
-                    'due_at' => $item['due'],
+                    'due_at' => $dueAt,
+                    'time_zone' => $dueTimeZone,
                     'description' => $item['notes'],
                     // The Google Tasks API exposes no reminders at all.
                     'reminder_offsets_seconds' => [],
@@ -265,6 +268,40 @@ class CalendarSyncService
         }
 
         return $seen;
+    }
+
+    /**
+     * Splits a due date into the wall clock to store and the zone it belongs to.
+     *
+     * `external_tasks.due_at` holds a wall clock, so the zone has to travel
+     * with it: without the pair, two tasks due at "09:00" in different zones
+     * are the same value. The instant is preserved: a due date at
+     * 23:59-03:00 is stored as "23:59" with the zone "-03:00".
+     *
+     * @return array{0: string|null, 1: string|null}
+     */
+    private function dueParts(mixed $due): array
+    {
+        if ($due === null || $due === '') {
+            return [null, null];
+        }
+
+        try {
+            $moment = $due instanceof \DateTimeInterface
+                ? Carbon::instance($due)
+                : Carbon::parse((string) $due);
+        } catch (\Throwable $e) {
+            return [null, null];
+        }
+
+        $zone = $moment->getTimezone()->getName();
+        if ($zone === 'Z' || $zone === '+00:00' || $zone === '-00:00') {
+            // Carbon keeps the "Z" of an RFC3339 timestamp as the name of
+            // its zone; "UTC" is the name every engine understands.
+            $zone = 'UTC';
+        }
+
+        return [$moment->format('Y-m-d H:i:s'), $zone];
     }
 
     private function syncGoogleContacts(CalendarSource $source, string $href, array &$stats): array
@@ -347,6 +384,7 @@ class CalendarSyncService
                         $due = null;
                     }
                 }
+                [$dueAt, $dueTimeZone] = $this->dueParts($due);
                 ExternalTask::updateOrCreate(
                     [
                         'calendar_source_id' => $source->id,
@@ -357,7 +395,8 @@ class CalendarSyncService
                         'sso_sub' => $source->sso_sub,
                         'title' => trim((string) ($todo->SUMMARY ?? '(sin título)')),
                         'status' => isset($todo->STATUS) ? trim((string) $todo->STATUS) : null,
-                        'due_at' => $due,
+                        'due_at' => $dueAt,
+                        'time_zone' => $dueTimeZone,
                         'description' => isset($todo->DESCRIPTION) ? trim((string) $todo->DESCRIPTION) : null,
                         'reminder_offsets_seconds' => ExternalReminderParser::forVTodo($todo, $start, $due),
                     ]
