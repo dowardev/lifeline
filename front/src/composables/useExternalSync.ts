@@ -82,17 +82,21 @@ async function refreshExternalMirror(): Promise<{
   // M-8 (pre-merge review): if any of the three upstream calls
   // rejected, treat the whole refresh as failed and DO NOT touch
   // the local mirrors. Stale data is better than a partial wipe.
-  const settled = await Promise.allSettled([
+  const [eventResult, contactResult, taskResult] = await Promise.allSettled([
     externalEventService.listExternalEvents(),
     externalContactService.listExternalContacts(),
     externalTaskService.listExternalTasks(),
   ])
-  if (settled.some((r) => r.status === 'rejected')) {
+  if (
+    eventResult.status === 'rejected' ||
+    contactResult.status === 'rejected' ||
+    taskResult.status === 'rejected'
+  ) {
     return { events: 0, contacts: 0, tasks: 0 }
   }
-  const eventDtos = (settled[0] as PromiseFulfilledResult<unknown[]>).value
-  const contactDtos = (settled[1] as PromiseFulfilledResult<unknown[]>).value
-  const taskDtos = (settled[2] as PromiseFulfilledResult<unknown[]>).value
+  const eventDtos = eventResult.value
+  const contactDtos = contactResult.value
+  const taskDtos = taskResult.value
   const lastSyncOk = true
 
   const now = Date.now()
