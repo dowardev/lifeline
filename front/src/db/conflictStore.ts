@@ -22,6 +22,8 @@ export interface ConflictRecord {
   clientData: Record<string, unknown>
   detectedAt: number
   resolvedAt?: number
+  /** Which side won the conflict (kept for the LBDS-238 conflict UI). */
+  resolution?: 'server' | 'client' | 'merge'
 }
 
 /** Loads the full conflict list. Empty when the row is missing. */

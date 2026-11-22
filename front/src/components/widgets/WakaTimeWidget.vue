@@ -104,15 +104,15 @@ async function fetchStats(): Promise<void> {
       wakaTimeController.fetchDurations({
         date: weekStart.toISOString().split('T')[0],
         apiKey: apiKey.value,
-      }) as Promise<number>,
+      }),
       wakaTimeController.fetchDurations({
         date: monthStart.toISOString().split('T')[0],
         apiKey: apiKey.value,
-      }) as Promise<number>,
+      }),
     ])
 
-    weekTime.value = formatDuration({ seconds: weekRes as number })
-    monthTime.value = formatDuration({ seconds: monthRes as number })
+    weekTime.value = formatDuration({ seconds: weekRes })
+    monthTime.value = formatDuration({ seconds: monthRes })
   } catch (error) {
     console.error('Error fetching WakaTime stats:', error)
   }
