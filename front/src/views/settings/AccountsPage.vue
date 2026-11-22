@@ -27,7 +27,7 @@
                   fill="clear"
                   size="small"
                   :disabled="connectingGoogle"
-                  @click="connectGoogle()"
+                  @click="openAddSourceSheet()"
                 >
                   <ion-icon slot="start" :icon="addOutline"></ion-icon>
                   {{ connectingGoogle ? 'Conectando…' : 'Agregar' }}
@@ -157,8 +157,22 @@ import {
 // 2. Controllers / Composables
 import { CalendarSourceController } from '@/controllers/calendarSourceController';
 import type { ConnectionTestOutcome } from '@/controllers/calendarSourceController';
+import { useAddSourceSheet } from '@/composables/useAddSourceSheet';
 
 const calendarSourceController = new CalendarSourceController();
+
+// The "Agregar" menu of the Google Calendar section: a Google account or a
+// calendar published as an ICS URL.
+const { open: openAddSourceSheet } = useAddSourceSheet({
+  options: {
+    onGoogle: () => {
+      void connectGoogle();
+    },
+    onIcs: () => {
+      addIcsConnection();
+    },
+  },
+});
 
 // 3. Components
 import ConnectionModal from '@/components/settings/ConnectionModal.vue';
@@ -266,6 +280,32 @@ function newId(): string {
 
 function findGoogleConnection(params: { id: string }): GoogleConnection | undefined {
   return googleConnections.value.find((item) => item.id === params.id);
+}
+
+/**
+ * A draft for a calendar published as an ICS URL. The modal shows the
+ * Google ICS form for it and the save path creates the source.
+ */
+function addIcsConnection(): void {
+  const connection: GoogleConnection = {
+    id: newId(),
+    serverId: null,
+    isOAuth: false,
+    name: '',
+    icsUrl: '',
+    color: '#3880ff',
+    testing: false,
+    saving: false,
+    syncing: false,
+    discovering: false,
+    collections: [],
+    testOk: null,
+    testResult: null,
+    errorDetail: null,
+  };
+  selected.value = { connectionType: 'google', id: connection.id };
+  draft.value = { connectionType: 'google', connection };
+  isNewDraft.value = true;
 }
 
 function addCaldavConnection(): void {
