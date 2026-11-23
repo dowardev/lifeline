@@ -27,7 +27,7 @@
                   fill="clear"
                   size="small"
                   :disabled="connectingGoogle"
-                  @click="openAddSourceSheet()"
+                  @click="openAddSourcePopover({ event: $event })"
                 >
                   <ion-icon slot="start" :icon="addOutline"></ion-icon>
                   {{ connectingGoogle ? 'Conectando…' : 'Agregar' }}
@@ -117,6 +117,25 @@
           @update:connection="onModalUpdate({ connection: $event })"
         />
       </ion-modal>
+
+      <!-- The two ways in of the Google Calendar section. A popover keeps
+           the same gesture on a phone and on a desktop, anchored to the
+           button that opened it. -->
+      <ion-popover
+        :is-open="isAddSourcePopoverOpen"
+        :event="addSourcePopoverEvent"
+        @did-dismiss="closeAddSourcePopover()"
+      >
+        <ion-list>
+          <ion-item button lines="none" @click="chooseGoogleAccount()">
+            <ion-label>Google Calendar</ion-label>
+          </ion-item>
+
+          <ion-item button lines="none" @click="chooseIcsUrl()">
+            <ion-label>Calendario por URL (ICS)</ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-popover>
     </ion-content>
   </ion-page>
 </template>
@@ -138,6 +157,7 @@ import {
   IonListHeader,
   IonModal,
   IonPage,
+  IonPopover,
   IonRow,
   IonTitle,
   IonToolbar,
@@ -157,22 +177,8 @@ import {
 // 2. Controllers / Composables
 import { CalendarSourceController } from '@/controllers/calendarSourceController';
 import type { ConnectionTestOutcome } from '@/controllers/calendarSourceController';
-import { useAddSourceSheet } from '@/composables/useAddSourceSheet';
 
 const calendarSourceController = new CalendarSourceController();
-
-// The "Agregar" menu of the Google Calendar section: a Google account or a
-// calendar published as an ICS URL.
-const { open: openAddSourceSheet } = useAddSourceSheet({
-  options: {
-    onGoogle: () => {
-      void connectGoogle();
-    },
-    onIcs: () => {
-      addIcsConnection();
-    },
-  },
-});
 
 // 3. Components
 import ConnectionModal from '@/components/settings/ConnectionModal.vue';
@@ -205,6 +211,8 @@ const isNewDraft = ref(false);
 const route = useRoute();
 const router = useRouter();
 const connectingGoogle = ref(false);
+const isAddSourcePopoverOpen = ref(false);
+const addSourcePopoverEvent = ref<Event | undefined>(undefined);
 
 // 7. Watch
 // (none)
@@ -280,6 +288,29 @@ function newId(): string {
 
 function findGoogleConnection(params: { id: string }): GoogleConnection | undefined {
   return googleConnections.value.find((item) => item.id === params.id);
+}
+
+/**
+ * The "Agregar" menu of the Google Calendar section: a Google account or a
+ * calendar published as an ICS URL.
+ */
+function openAddSourcePopover(params: { event: Event }): void {
+  addSourcePopoverEvent.value = params.event;
+  isAddSourcePopoverOpen.value = true;
+}
+
+function closeAddSourcePopover(): void {
+  isAddSourcePopoverOpen.value = false;
+}
+
+function chooseGoogleAccount(): void {
+  closeAddSourcePopover();
+  void connectGoogle();
+}
+
+function chooseIcsUrl(): void {
+  closeAddSourcePopover();
+  addIcsConnection();
 }
 
 /**

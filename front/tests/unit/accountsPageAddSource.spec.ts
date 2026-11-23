@@ -6,8 +6,7 @@ import type { DefineComponent, VNode } from 'vue'
 import AccountsPage from '@/views/settings/AccountsPage.vue'
 import ConnectionModal from '@/components/settings/ConnectionModal.vue'
 
-const { createMock, controllerMock } = vi.hoisted(() => ({
-  createMock: vi.fn(),
+const { controllerMock } = vi.hoisted(() => ({
   controllerMock: {
     startGoogleOAuth: vi.fn(),
     listSources: vi.fn(),
@@ -32,6 +31,9 @@ function ionicStub(name: string): DefineComponent {
   })
 }
 
+// The popover carries the state of the menu, so its props are declared.
+// It is built inside the mock factory: the factory is hoisted above the
+// module scope.
 vi.mock(
   '@ionic/vue',
   (): Record<string, unknown> => ({
@@ -49,10 +51,10 @@ vi.mock(
     IonListHeader: ionicStub('IonListHeader'),
     IonModal: ionicStub('IonModal'),
     IonPage: ionicStub('IonPage'),
+    IonPopover: ionicStub('IonPopover'),
     IonRow: ionicStub('IonRow'),
     IonTitle: ionicStub('IonTitle'),
     IonToolbar: ionicStub('IonToolbar'),
-    actionSheetController: { create: (...args: unknown[]): unknown => createMock(...args) },
     toastController: { create: vi.fn().mockResolvedValue({ present: vi.fn() }) },
     alertController: { create: vi.fn().mockResolvedValue({ present: vi.fn() }) },
   }),
@@ -77,7 +79,7 @@ vi.mock('vue-router', async (importOriginal): Promise<Record<string, unknown>> =
       push: vi.fn(),
       replace: vi.fn(),
       back: vi.fn(),
-      resolve: (to: unknown): unknown => ({ href: to, path: '/', matched: [] }),
+      resolve: (to: unknown): unknown => ({ href: to, path: '/' }),
       currentRoute: { value: { path: '/' } },
     }),
   }
@@ -103,13 +105,6 @@ describe('AccountsPage.vue - the Google Calendar "Agregar" menu', () => {
     })
   })
 
-  function sheetWithRole(role: string): { present: ReturnType<typeof vi.fn>; onDidDismiss: ReturnType<typeof vi.fn> } {
-    return {
-      present: vi.fn().mockResolvedValue(undefined),
-      onDidDismiss: vi.fn().mockResolvedValue({ role }),
-    }
-  }
-
   function mountPage(): VueWrapper {
     return mount(AccountsPage)
   }
@@ -124,27 +119,52 @@ describe('AccountsPage.vue - the Google Calendar "Agregar" menu', () => {
     return button
   }
 
-  test('the Agregar button offers the Google account and the calendar by ICS URL', async (): Promise<void> => {
-    const sheet = sheetWithRole('cancel')
-    createMock.mockResolvedValue(sheet)
+  function popoverIsOpen(wrapper: VueWrapper): boolean {
+    const found = wrapper.find('.IonPopover')
+    expect(found.exists()).toBe(true)
+    return found.attributes('is-open') === 'true'
+  }
+
+  function popoverItem(wrapper: VueWrapper, text: string): VueWrapper {
+    const item = wrapper
+      .findAllComponents({ name: 'IonItem' })
+      .find((candidate) => candidate.text().includes(text))
+    expect(item).toBeTruthy()
+    return item!
+  }
+
+  test('the Agregar button opens a popover with the two ways in', async (): Promise<void> => {
     const wrapper = mountPage()
+
+    expect(popoverIsOpen(wrapper)).toBe(false)
 
     await googleAgregarButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(createMock).toHaveBeenCalledTimes(1)
-    expect(sheet.present).toHaveBeenCalledTimes(1)
-    const options = createMock.mock.calls[0][0] as { buttons: { text: string }[] }
-    const texts = options.buttons.map((button) => button.text)
-    expect(texts).toContain('Google Calendar')
-    expect(texts).toContain('Calendario por URL (ICS)')
+    expect(popoverIsOpen(wrapper)).toBe(true)
+    const texts = wrapper.findAllComponents({ name: 'IonItem' }).map((item) => item.text())
+    expect(texts.some((text) => text.includes('Google Calendar'))).toBe(true)
+    expect(texts.some((text) => text.includes('Calendario por URL (ICS)'))).toBe(true)
   })
 
-  test('choosing the calendar by ICS URL opens the connection modal with an empty ICS draft', async (): Promise<void> => {
-    createMock.mockResolvedValue(sheetWithRole('ics'))
+  test('choosing the Google account starts the OAuth flow', async (): Promise<void> => {
     const wrapper = mountPage()
 
     await googleAgregarButton(wrapper).trigger('click')
+    await flushPromises()
+    await popoverItem(wrapper, 'Google Calendar').trigger('click')
+    await flushPromises()
+
+    expect(controllerMock.startGoogleOAuth).toHaveBeenCalledTimes(1)
+    expect(popoverIsOpen(wrapper)).toBe(false)
+  })
+
+  test('choosing the calendar by ICS URL opens the connection modal with an empty ICS draft', async (): Promise<void> => {
+    const wrapper = mountPage()
+
+    await googleAgregarButton(wrapper).trigger('click')
+    await flushPromises()
+    await popoverItem(wrapper, 'Calendario por URL (ICS)').trigger('click')
     await flushPromises()
 
     const modal = wrapper.findComponent(ConnectionModal)
@@ -161,15 +181,22 @@ describe('AccountsPage.vue - the Google Calendar "Agregar" menu', () => {
     expect(connection.serverId).toBeNull()
     expect(connection.name).toBe('')
     expect(connection.icsUrl).toBe('')
+    expect(popoverIsOpen(wrapper)).toBe(false)
   })
 
-  test('choosing the Google account starts the OAuth flow', async (): Promise<void> => {
-    createMock.mockResolvedValue(sheetWithRole('google'))
+  test('the CalDAV Agregar button still opens a CalDAV draft', async (): Promise<void> => {
     const wrapper = mountPage()
 
-    await googleAgregarButton(wrapper).trigger('click')
+    const header = wrapper
+      .findAllComponents({ name: 'IonListHeader' })
+      .find((item) => item.text().includes('CalDAV'))
+    expect(header).toBeTruthy()
+    await header!.findComponent({ name: 'IonButton' }).trigger('click')
     await flushPromises()
 
-    expect(controllerMock.startGoogleOAuth).toHaveBeenCalledTimes(1)
+    const modal = wrapper.findComponent(ConnectionModal)
+    expect(modal.exists()).toBe(true)
+    expect(modal.props('connectionType')).toBe('caldav')
+    expect(popoverIsOpen(wrapper)).toBe(false)
   })
 })
