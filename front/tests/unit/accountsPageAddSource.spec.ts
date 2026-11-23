@@ -194,4 +194,41 @@ describe('AccountsPage.vue - the three kinds of external source', () => {
     expect(modal.exists()).toBe(true)
     expect(modal.props('connectionType')).toBe('caldav')
   })
+
+  test('the ICS form reaches the API with its name and its URL', async (): Promise<void> => {
+    controllerMock.testConnection.mockResolvedValue({ ok: true, kind: 'connection', message: 'OK' })
+    controllerMock.saveSource.mockResolvedValue({
+      ok: true,
+      kind: 'connection',
+      message: 'OK',
+      source: { id: 5 },
+    })
+    controllerMock.syncSource.mockResolvedValue({ ok: true, kind: 'connection', message: 'OK' })
+    const wrapper = mountPage()
+
+    await agregarButton(wrapper, 'Calendario por URL (ICS)').trigger('click')
+    await flushPromises()
+
+    const modal = wrapper.findComponent(ConnectionModal)
+    const draft = modal.props('connection') as { name: string; icsUrl: string }
+    modal.vm.$emit('update:connection', {
+      ...draft,
+      name: 'Días festivos',
+      icsUrl: 'https://www.calendarlabs.com/ical-calendar/ics/76/US_Holidays.ics',
+    })
+    modal.vm.$emit('save')
+    await flushPromises()
+
+    expect(controllerMock.saveSource).toHaveBeenCalledTimes(1)
+    expect(controllerMock.saveSource).toHaveBeenCalledWith({
+      serverId: null,
+      type: 'google',
+      name: 'Días festivos',
+      url: 'https://www.calendarlabs.com/ical-calendar/ics/76/US_Holidays.ics',
+      color: '#3880ff',
+      collections: [],
+    })
+    // The saved feed is listed under its own section.
+    expect(sectionText(wrapper, 'Calendario por URL (ICS)')).toContain('Días festivos')
+  })
 })

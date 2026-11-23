@@ -106,6 +106,38 @@ private server can all publish one), so it is a section of its own and not a
 kind of Google account. The frontend classifies the sources by their `type`;
 the backend stores the three types separately.
 
+## Checking an ICS feed by hand
+
+The URL of an ICS feed has to be **public**: the SSRF guard
+(`back/app/Traits/ValidatesPublicUrl.php`) rejects `localhost` and every
+private range, so a file served from your own machine will not work.
+
+A feed that is public and needs no account:
+
+```
+https://www.calendarlabs.com/ical-calendar/ics/76/US_Holidays.ics
+```
+
+The path to check it, from the UI:
+
+1. Settings → Cuentas → **Calendario por URL (ICS)** → *Agregar*.
+2. Name it (`Días festivos`) and paste the URL → *Guardar*. The app tests
+   the URL first, then creates the source and syncs it.
+3. The connection appears under its own section as "URL ICS guardada", and
+   the events of the feed show up in the calendar (27 events for the feed
+   above).
+
+The same thing from the API, with the owner of the sources:
+
+```
+GET /api/v1/calendar-sources?calendar_owner=<sub>   # the source, type "ics"
+GET /api/v1/external-events?calendar_owner=<sub>     # the imported events
+GET /api/v1/external-tasks?calendar_owner=<sub>      # the VTODOs of the feed
+```
+
+A feed with tasks is rare in the wild; the `VTODO` path is covered by the
+backend tests (`back/tests/Feature/ExternalReminderCaptureTest.php`).
+
 ## Client-visible API changes
 
 - `GET /api/v1/external-tasks` returns `due_at` with the offset of the
