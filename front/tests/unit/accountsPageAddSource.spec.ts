@@ -21,7 +21,7 @@ const { controllerMock } = vi.hoisted(() => ({
 
 // The Ionic web components need a whole app shell to boot, which is not what
 // this test is about: the page is stubbed with plain elements that keep their
-// slot content, so the wiring of the "Agregar" menu can be checked.
+// slot content, so the wiring of the sections can be checked.
 function ionicStub(name: string): DefineComponent {
   return defineComponent({
     name,
@@ -31,9 +31,6 @@ function ionicStub(name: string): DefineComponent {
   })
 }
 
-// The popover carries the state of the menu, so its props are declared.
-// It is built inside the mock factory: the factory is hoisted above the
-// module scope.
 vi.mock(
   '@ionic/vue',
   (): Record<string, unknown> => ({
@@ -51,7 +48,6 @@ vi.mock(
     IonListHeader: ionicStub('IonListHeader'),
     IonModal: ionicStub('IonModal'),
     IonPage: ionicStub('IonPage'),
-    IonPopover: ionicStub('IonPopover'),
     IonRow: ionicStub('IonRow'),
     IonTitle: ionicStub('IonTitle'),
     IonToolbar: ionicStub('IonToolbar'),
@@ -90,7 +86,7 @@ config.global.stubs = {
   LocalCalendarsSection: true,
 }
 
-describe('AccountsPage.vue - the Google Calendar "Agregar" menu', () => {
+describe('AccountsPage.vue - the three kinds of external source', () => {
   beforeEach((): void => {
     vi.clearAllMocks()
     controllerMock.listSources.mockResolvedValue([])
@@ -109,62 +105,41 @@ describe('AccountsPage.vue - the Google Calendar "Agregar" menu', () => {
     return mount(AccountsPage)
   }
 
-  function googleAgregarButton(wrapper: VueWrapper): VueWrapper {
+  function section(wrapper: VueWrapper, title: string): VueWrapper {
     const header = wrapper
       .findAllComponents({ name: 'IonListHeader' })
-      .find((item) => item.text().includes('Google Calendar'))
+      .find((item) => item.text().includes(title))
     expect(header).toBeTruthy()
-    const button = header!.findComponent({ name: 'IonButton' })
+    return header!
+  }
+
+  // The connections of a section are siblings of its header, inside the
+  // same list.
+  function sectionText(wrapper: VueWrapper, title: string): string {
+    const list = section(wrapper, title).element.closest('.IonList')
+    expect(list).toBeTruthy()
+    return list?.textContent ?? ''
+  }
+
+  function agregarButton(wrapper: VueWrapper, title: string): VueWrapper {
+    const button = section(wrapper, title).findComponent({ name: 'IonButton' })
     expect(button.exists()).toBe(true)
     return button
   }
 
-  function popoverIsOpen(wrapper: VueWrapper): boolean {
-    const found = wrapper.find('.IonPopover')
-    expect(found.exists()).toBe(true)
-    return found.attributes('is-open') === 'true'
-  }
-
-  function popoverItem(wrapper: VueWrapper, text: string): VueWrapper {
-    const item = wrapper
-      .findAllComponents({ name: 'IonItem' })
-      .find((candidate) => candidate.text().includes(text))
-    expect(item).toBeTruthy()
-    return item!
-  }
-
-  test('the Agregar button opens a popover with the two ways in', async (): Promise<void> => {
+  test('the Google Agregar button starts the OAuth flow, with no menu in between', async (): Promise<void> => {
     const wrapper = mountPage()
 
-    expect(popoverIsOpen(wrapper)).toBe(false)
-
-    await googleAgregarButton(wrapper).trigger('click')
-    await flushPromises()
-
-    expect(popoverIsOpen(wrapper)).toBe(true)
-    const texts = wrapper.findAllComponents({ name: 'IonItem' }).map((item) => item.text())
-    expect(texts.some((text) => text.includes('Google Calendar'))).toBe(true)
-    expect(texts.some((text) => text.includes('Calendario por URL (ICS)'))).toBe(true)
-  })
-
-  test('choosing the Google account starts the OAuth flow', async (): Promise<void> => {
-    const wrapper = mountPage()
-
-    await googleAgregarButton(wrapper).trigger('click')
-    await flushPromises()
-    await popoverItem(wrapper, 'Google Calendar').trigger('click')
+    await agregarButton(wrapper, 'Google Calendar').trigger('click')
     await flushPromises()
 
     expect(controllerMock.startGoogleOAuth).toHaveBeenCalledTimes(1)
-    expect(popoverIsOpen(wrapper)).toBe(false)
   })
 
-  test('choosing the calendar by ICS URL opens the connection modal with an empty ICS draft', async (): Promise<void> => {
+  test('the ICS section has its own Agregar button that opens an empty ICS draft', async (): Promise<void> => {
     const wrapper = mountPage()
 
-    await googleAgregarButton(wrapper).trigger('click')
-    await flushPromises()
-    await popoverItem(wrapper, 'Calendario por URL (ICS)').trigger('click')
+    await agregarButton(wrapper, 'Calendario por URL (ICS)').trigger('click')
     await flushPromises()
 
     const modal = wrapper.findComponent(ConnectionModal)
@@ -181,22 +156,42 @@ describe('AccountsPage.vue - the Google Calendar "Agregar" menu', () => {
     expect(connection.serverId).toBeNull()
     expect(connection.name).toBe('')
     expect(connection.icsUrl).toBe('')
-    expect(popoverIsOpen(wrapper)).toBe(false)
+    expect(controllerMock.startGoogleOAuth).not.toHaveBeenCalled()
+  })
+
+  test('a saved ICS feed is listed under its own section, not under Google', async (): Promise<void> => {
+    controllerMock.listSources.mockResolvedValue([
+      { id: 7, type: 'ics', name: 'Feed del equipo', url: 'https://cal.example.com/team.ics', color: '#3880ff' },
+    ])
+    const wrapper = mountPage()
+    await flushPromises()
+
+    const icsSection = sectionText(wrapper, 'Calendario por URL (ICS)')
+    expect(icsSection).toContain('Feed del equipo')
+
+    const googleSection = sectionText(wrapper, 'Google Calendar')
+    expect(googleSection).not.toContain('Feed del equipo')
+  })
+
+  test('a Google account is listed under the Google section', async (): Promise<void> => {
+    controllerMock.listSources.mockResolvedValue([
+      { id: 8, type: 'google', name: 'Mi Google', url: '', color: '#3880ff' },
+    ])
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(sectionText(wrapper, 'Google Calendar')).toContain('Mi Google')
+    expect(sectionText(wrapper, 'Calendario por URL (ICS)')).not.toContain('Mi Google')
   })
 
   test('the CalDAV Agregar button still opens a CalDAV draft', async (): Promise<void> => {
     const wrapper = mountPage()
 
-    const header = wrapper
-      .findAllComponents({ name: 'IonListHeader' })
-      .find((item) => item.text().includes('CalDAV'))
-    expect(header).toBeTruthy()
-    await header!.findComponent({ name: 'IonButton' }).trigger('click')
+    await agregarButton(wrapper, 'CalDAV').trigger('click')
     await flushPromises()
 
     const modal = wrapper.findComponent(ConnectionModal)
     expect(modal.exists()).toBe(true)
     expect(modal.props('connectionType')).toBe('caldav')
-    expect(popoverIsOpen(wrapper)).toBe(false)
   })
 })

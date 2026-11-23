@@ -90,6 +90,22 @@ shifts its instant by the offset of that zone. The next sync of the
 collection rewrites both fields from the source, and the row is correct
 again.
 
+## The three kinds of source
+
+The account can hold three kinds of external source, and the frontend keeps
+them apart because they are not the same thing:
+
+| Kind | `calendar_sources.type` | Where it lives in the app |
+|---|---|---|
+| A Google account (OAuth) | `google` | Settings → Cuentas → **Google Calendar** |
+| A calendar published as an ICS URL | `ics` | Settings → Cuentas → **Calendario por URL (ICS)** |
+| A CalDAV server | `caldav` | Settings → Cuentas → **CalDAV** |
+
+An ICS feed belongs to no provider (Google, Fastmail, Proton, iCloud or a
+private server can all publish one), so it is a section of its own and not a
+kind of Google account. The frontend classifies the sources by their `type`;
+the backend stores the three types separately.
+
 ## Client-visible API changes
 
 - `GET /api/v1/external-tasks` returns `due_at` with the offset of the

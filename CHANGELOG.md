@@ -10,8 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restored the way to create a calendar published as an ICS URL: the "Agregar"
   button of the Google Calendar section only started the OAuth flow, so a new
   ICS subscription could not be created anymore (the form only rendered for
-  the sources created before that change). The button now opens a menu with
-  "Google Calendar" and "Calendario por URL (ICS)" — LBDS-269
+  the sources created before that change). An ICS feed belongs to no
+  provider, so it now has its own section, "Calendario por URL (ICS)",
+  beside "Google Calendar" and "CalDAV" — LBDS-269
 
 - Fixed the timezone of the due date of an external task being lost on the way
   in: `external_tasks` stored only a wall clock, so two tasks due at "09:00"
