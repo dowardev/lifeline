@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Restored the way to create a calendar published as an ICS URL: the "Agregar"
+  button of the Google Calendar section only started the OAuth flow, so a new
+  ICS subscription could not be created anymore (the form only rendered for
+  the sources created before that change). An ICS feed belongs to no
+  provider, so it now has its own section, "Calendario por URL (ICS)",
+  beside "Google Calendar" and "CalDAV", with its own provider-neutral form —
+  LBDS-269
+
+- Fixed the timezone of the due date of an external task being lost on the way
+  in: `external_tasks` stored only a wall clock, so two tasks due at "09:00"
+  in different zones were the same value. The zone now travels with the due
+  date, and `GET /api/v1/external-tasks` returns `due_at` with the offset of
+  the task's own zone plus a `time_zone` field — LBDS-269
+- Fixed the unique key of the external tables not fitting MySQL 8: the
+  identity `(calendar_source_id, collection_href, external_uid)` needed about
+  6144 bytes in a `utf8mb4` index, above the 3072-byte InnoDB limit, so the
+  schema only worked on MariaDB. The identity is now indexed through a
+  derived `uid_hash` column (264 bytes), and existing databases are migrated
+  without losing a row — LBDS-269
+
 - Fixed the broken frontend type check: `front/` had 65 `vue-tsc` errors in 16
   files, so `pnpm run build` failed on a clean checkout and the release job
   (`frontend_build`) shipped whatever `vite build` produced without ever

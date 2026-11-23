@@ -173,8 +173,8 @@ import { collectionKindOf } from '@/components/settings/connectionModels';
 // 3. Components
 import CollectionList from '@/components/settings/CollectionList.vue';
 import CaldavForm from '@/components/settings/forms/CaldavForm.vue';
-import GoogleIcsForm from '@/components/settings/forms/GoogleIcsForm.vue';
 import GoogleOAuthForm from '@/components/settings/forms/GoogleOAuthForm.vue';
+import IcsUrlForm from '@/components/settings/forms/IcsUrlForm.vue';
 
 // 4. Interface and types imports
 import type {
@@ -226,10 +226,12 @@ watch(
 );
 
 // 8. Computed
+// A calendar published as an ICS URL belongs to no provider: the form is the
+// plain ICS one, not the Google account form.
 const formComponent = computed(() => {
   if (props.connectionType === 'caldav') return CaldavForm;
   const google = props.connection as GoogleConnection;
-  return google.isOAuth ? GoogleOAuthForm : GoogleIcsForm;
+  return google.isOAuth ? GoogleOAuthForm : IcsUrlForm;
 });
 
 // The single collection currently downloading, when the user syncs one row.

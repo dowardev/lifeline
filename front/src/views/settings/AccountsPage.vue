@@ -39,18 +39,44 @@
                 :key="connection.id"
                 button
                 class="transparent"
-                @click="openConnection({ connectionType: 'google', id: connection.id })"
+                @click="openConnection({ kind: 'google', id: connection.id })"
               >
-                <ion-icon
-                  slot="start"
-                  :icon="connection.isOAuth ? logoGoogle : linkOutline"
-                ></ion-icon>
+                <ion-icon slot="start" :icon="logoGoogle"></ion-icon>
 
                 <ion-label>
                   {{ connection.name || 'Nueva conexión' }}
-                  <p v-if="connection.isOAuth">Cuenta conectada</p>
+                  <p>Cuenta conectada</p>
+                </ion-label>
 
-                  <p v-else-if="connection.serverId !== null">URL ICS guardada</p>
+                <ion-icon slot="end" :icon="chevronForwardOutline"></ion-icon>
+              </ion-item>
+            </ion-list>
+
+            <!-- A feed by its ICS URL is a subscription of its own: it does
+                 not belong to any provider, so it does not live under
+                 Google. -->
+            <ion-list class="transparent">
+              <ion-list-header>
+                <ion-label>Calendario por URL (ICS)</ion-label>
+
+                <ion-button fill="clear" size="small" @click="addIcsConnection()">
+                  <ion-icon slot="start" :icon="addOutline"></ion-icon>
+                  Agregar
+                </ion-button>
+              </ion-list-header>
+
+              <ion-item
+                v-for="connection in icsConnections"
+                :key="connection.id"
+                button
+                class="transparent"
+                @click="openConnection({ kind: 'ics', id: connection.id })"
+              >
+                <ion-icon slot="start" :icon="linkOutline"></ion-icon>
+
+                <ion-label>
+                  {{ connection.name || 'Nueva conexión' }}
+                  <p v-if="connection.serverId !== null">URL ICS guardada</p>
 
                   <p v-else>Sin guardar</p>
                 </ion-label>
@@ -74,7 +100,7 @@
                 :key="connection.id"
                 button
                 class="transparent"
-                @click="openConnection({ connectionType: 'caldav', id: connection.id })"
+                @click="openConnection({ kind: 'caldav', id: connection.id })"
               >
                 <ion-icon slot="start" :icon="serverOutline"></ion-icon>
 
@@ -102,9 +128,9 @@
       <ion-modal :is-open="selected !== null" @did-dismiss="closeModal()">
         <ConnectionModal
           v-if="selectedConnection !== null"
-          :title="selectedConnection.name || 'Nueva conexión'"
+          :title="modalTitle"
           :connection="selectedConnection"
-          :connection-type="selected?.connectionType ?? 'google'"
+          :connection-type="selected?.kind === 'caldav' ? 'caldav' : 'google'"
           :form-disabled="isFormDisabled()"
           :is-new="isNewDraft"
           @close="closeModal()"
@@ -173,8 +199,23 @@ import type {
   GoogleConnection,
 } from '@/components/settings/connectionModels';
 
+/**
+ * The three kinds of external source the account can have:
+ * - `google`: a Google account connected through OAuth.
+ * - `ics`: a calendar published as an ICS URL. It belongs to no provider,
+ *   so it is a section of its own.
+ * - `caldav`: a CalDAV server with its collections.
+ */
+type ConnectionKind = 'google' | 'ics' | 'caldav';
+
+/**
+ * The type the connection modal understands: an ICS feed is edited with the
+ * Google ICS form, which is the `google` form without the OAuth part.
+ */
+type ModalType = 'google' | 'caldav';
+
 interface SelectedConnection {
-  connectionType: 'google' | 'caldav';
+  kind: ConnectionKind;
   id: string;
 }
 
@@ -183,10 +224,14 @@ interface SelectedConnection {
 
 // 6. Vars and const
 const googleConnections: Ref<GoogleConnection[]> = ref([]);
+const icsConnections: Ref<GoogleConnection[]> = ref([]);
 const caldavConnections: Ref<CaldavConnection[]> = ref([]);
 const selected: Ref<SelectedConnection | null> = ref(null);
-const draft: Ref<{ connectionType: 'google' | 'caldav'; connection: GoogleConnection | CaldavConnection } | null> =
-  ref(null);
+const draft: Ref<{
+  kind: ConnectionKind;
+  connectionType: ModalType;
+  connection: GoogleConnection | CaldavConnection;
+} | null> = ref(null);
 const isNewDraft = ref(false);
 const route = useRoute();
 const router = useRouter();
@@ -198,6 +243,17 @@ const connectingGoogle = ref(false);
 // 8. Computed
 const selectedConnection = computed(() => {
   return draft.value?.connection ?? null;
+});
+
+// The title of the connection modal: the name of the source, or what the
+// source is when it has no name yet.
+const modalTitle = computed(() => {
+  const name = draft.value?.connection.name ?? '';
+  if (name !== '') return name;
+  const kind = draft.value?.kind ?? 'google';
+  if (kind === 'ics') return 'Calendario por URL (ICS)';
+  if (kind === 'caldav') return 'Nueva conexión CalDAV';
+  return 'Cuenta de Google';
 });
 
 function draftGoogle(): GoogleConnection | undefined {
@@ -217,8 +273,7 @@ function commitDraft(params: {
   sourceId: number;
 }): void {
   const { connection, sourceId } = params;
-  const store =
-    draft.value?.connectionType === 'google' ? googleConnections.value : caldavConnections.value;
+  const store = listFor({ kind: draft.value?.kind ?? 'google' }).value;
   const real = (store as (GoogleConnection | CaldavConnection)[]).find(
     (item) => item.id === connection.id,
   );
@@ -243,11 +298,31 @@ function commitDraft(params: {
     return;
   }
   const created = persisted as GoogleConnection & CaldavConnection;
-  if (draft.value?.connectionType === 'google') {
-    googleConnections.value.push(created as GoogleConnection);
-  } else {
+  if (draft.value?.kind === 'caldav') {
     caldavConnections.value.push(created as CaldavConnection);
+    return;
   }
+  if (draft.value?.kind === 'ics') {
+    icsConnections.value.push(created as GoogleConnection);
+    return;
+  }
+  googleConnections.value.push(created as GoogleConnection);
+}
+
+/**
+ * The list a kind of source belongs to.
+ */
+function listFor(params: { kind: ConnectionKind }): Ref<(GoogleConnection | CaldavConnection)[]> {
+  if (params.kind === 'google') return googleConnections;
+  if (params.kind === 'ics') return icsConnections;
+  return caldavConnections;
+}
+
+/**
+ * The type the connection modal understands for a kind of source.
+ */
+function modalTypeFor(params: { kind: ConnectionKind }): ModalType {
+  return params.kind === 'caldav' ? 'caldav' : 'google';
 }
 
 // 9. OnMounted
@@ -268,6 +343,36 @@ function findGoogleConnection(params: { id: string }): GoogleConnection | undefi
   return googleConnections.value.find((item) => item.id === params.id);
 }
 
+function findIcsConnection(params: { id: string }): GoogleConnection | undefined {
+  return icsConnections.value.find((item) => item.id === params.id);
+}
+
+/**
+ * A draft for a calendar published as an ICS URL. The modal shows the
+ * Google ICS form for it and the save path creates the source.
+ */
+function addIcsConnection(): void {
+  const connection: GoogleConnection = {
+    id: newId(),
+    serverId: null,
+    isOAuth: false,
+    name: '',
+    icsUrl: '',
+    color: '#3880ff',
+    testing: false,
+    saving: false,
+    syncing: false,
+    discovering: false,
+    collections: [],
+    testOk: null,
+    testResult: null,
+    errorDetail: null,
+  };
+  selected.value = { kind: 'ics', id: connection.id };
+  draft.value = { kind: 'ics', connectionType: 'google', connection };
+  isNewDraft.value = true;
+}
+
 function addCaldavConnection(): void {
   const connection: CaldavConnection = {
     id: newId(),
@@ -286,8 +391,8 @@ function addCaldavConnection(): void {
     testResult: null,
     errorDetail: null,
   };
-  selected.value = { connectionType: 'caldav', id: connection.id };
-  draft.value = { connectionType: 'caldav', connection };
+  selected.value = { kind: 'caldav', id: connection.id };
+  draft.value = { kind: 'caldav', connectionType: 'caldav', connection };
   isNewDraft.value = true;
 }
 
@@ -295,16 +400,19 @@ function findCaldavConnection(params: { id: string }): CaldavConnection | undefi
   return caldavConnections.value.find((item) => item.id === params.id);
 }
 
-function openConnection(params: { connectionType: 'google' | 'caldav'; id: string }): void {
-  const { connectionType, id } = params;
+function openConnection(params: { kind: ConnectionKind; id: string }): void {
+  const { kind, id } = params;
   const item =
-    connectionType === 'google'
+    kind === 'google'
       ? findGoogleConnection({ id })
-      : findCaldavConnection({ id });
+      : kind === 'ics'
+        ? findIcsConnection({ id })
+        : findCaldavConnection({ id });
   if (!item) return;
-  selected.value = { connectionType, id };
+  selected.value = { kind, id };
   draft.value = {
-    connectionType,
+    kind,
+    connectionType: modalTypeFor({ kind }),
     connection: cloneConnection({ item }) as GoogleConnection | CaldavConnection,
   };
   isNewDraft.value = false;
@@ -387,7 +495,7 @@ async function bootFromRoute(): Promise<void> {
       googleConnections.value.find((item) => item.serverId === connectedId) ??
       googleConnections.value.find((item) => item.isOAuth);
     if (target) {
-      openConnection({ connectionType: 'google', id: target.id });
+      openConnection({ kind: 'google', id: target.id });
       const opened = draftGoogle();
       if (opened) await discoverGoogleConnection({ connection: opened });
     }
@@ -411,15 +519,33 @@ async function connectGoogle(): Promise<void> {
 
 async function loadPersistedSources(): Promise<void> {
   googleConnections.value = googleConnections.value.filter((item) => item.serverId === null);
+  icsConnections.value = icsConnections.value.filter((item) => item.serverId === null);
   caldavConnections.value = caldavConnections.value.filter((item) => item.serverId === null);
   try {
     const sources = await calendarSourceController.listSources();
     for (const source of sources) {
-      if (source.type === 'ics' || source.type === 'google') {
+      if (source.type === 'google') {
         googleConnections.value.push({
           id: newId(),
           serverId: source.id,
-          isOAuth: source.type === 'google',
+          isOAuth: true,
+          name: source.name,
+          icsUrl: source.url,
+          color: source.color,
+          testing: false,
+          saving: false,
+          syncing: false,
+          discovering: false,
+          collections: (source.collections ?? []).map((item) => ({ ...item, syncing: false })),
+          testOk: null,
+          testResult: null,
+          errorDetail: null,
+        });
+      } else if (source.type === 'ics') {
+        icsConnections.value.push({
+          id: newId(),
+          serverId: source.id,
+          isOAuth: false,
           name: source.name,
           icsUrl: source.url,
           color: source.color,
@@ -530,7 +656,7 @@ function googleDuplicate(params: { connection: GoogleConnection }): boolean {
   if (connection.isOAuth) return false;
   const url = normalizeConnectionUrl({ url: connection.icsUrl });
   if (url === '') return false;
-  return googleConnections.value.some(
+  return icsConnections.value.some(
     (item) =>
       !item.isOAuth &&
       item.serverId !== null &&
@@ -831,20 +957,26 @@ function onModalSyncCollection(params: { value: { href: string } }): void {
 }
 
 async function removeConnection(params: {
-  connectionType: 'google' | 'caldav';
+  kind: ConnectionKind;
   id: string;
 }): Promise<void> {
-  const { connectionType, id } = params;
+  const { kind, id } = params;
   const connection =
-    connectionType === 'google' ? findGoogleConnection({ id }) : findCaldavConnection({ id });
+    kind === 'google'
+      ? findGoogleConnection({ id })
+      : kind === 'ics'
+        ? findIcsConnection({ id })
+        : findCaldavConnection({ id });
   if (!connection) return;
   const outcome = await calendarSourceController.removeSource({ serverId: connection.serverId });
   if (!outcome.ok) {
     await reportOutcome({ outcome });
     return;
   }
-  if (connectionType === 'google') {
+  if (kind === 'google') {
     googleConnections.value = googleConnections.value.filter((item) => item.id !== id);
+  } else if (kind === 'ics') {
+    icsConnections.value = icsConnections.value.filter((item) => item.id !== id);
   } else {
     caldavConnections.value = caldavConnections.value.filter((item) => item.id !== id);
   }
@@ -885,11 +1017,11 @@ function onModalDiscover(): void {
 }
 
 function syncHiddenToReal(params: { draft: { collections: ConnectionCollection[]; id: string } }): void {
+  const kind = selected.value?.kind ?? 'google';
   const { draft } = params;
-  const real =
-    draftGoogle()?.id === draft.id
-      ? findGoogleConnection({ id: draft.id })
-      : findCaldavConnection({ id: draft.id });
+  const real = (
+    listFor({ kind }).value as (GoogleConnection | CaldavConnection)[]
+  ).find((item) => item.id === draft.id);
   if (!real) return;
   real.collections = draft.collections.map((item) => ({ ...item }));
 }
@@ -910,7 +1042,7 @@ function onModalToggleHidden(params: { value: { href: string } }): void {
 }
 
 function onModalToggleSubscription(params: { value: { href: string; subscribed: boolean } }): void {
-  if (selected.value?.connectionType === 'google') {
+  if (selected.value?.kind !== 'caldav') {
     toggleGoogleSubscription({ href: params.value.href, subscribed: params.value.subscribed });
   } else {
     toggleCaldavSubscription({ href: params.value.href, subscribed: params.value.subscribed });
@@ -931,7 +1063,7 @@ async function onModalRemove(): Promise<void> {
         role: 'destructive',
         cssClass: 'alert-button-danger',
         handler: (): void => {
-          void removeConnection({ connectionType: current.connectionType, id: current.id });
+          void removeConnection({ kind: current.kind, id: current.id });
         },
       },
     ],
