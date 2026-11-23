@@ -576,12 +576,16 @@ deploy_fullstack() {
     run_cmd "Backend: prepare build directory" \
       "mkdir -p '$BUILD_DIR' && cp -r $BACKEND_DIR/* $BACKEND_DIR/.[^.]* '$BUILD_DIR/'"
 
-    # Local packages (composer path repositories like ../packages/*) must be
-    # siblings of back/ so composer install can resolve them during the build.
-    if [[ -d "$BACKEND_DIR/../packages" ]]; then
-      run_cmd "Backend: stage local packages (path repositories)" \
-        "cp -r $BACKEND_DIR/../packages '$TMP_ROOT/packages'"
-    fi
+    # The SSO server comes from a composer PATH repository that points to the
+    # sibling `sso` monorepo: that monorepo is not part of this repository and
+    # does not exist inside the build directory, so composer cannot resolve
+    # it there. The package is published on Packagist, so the build resolves
+    # it from there — exactly what the CI does (scripts/ci/backend-install.sh).
+    # The copy of composer.json lives in the build directory, so the working
+    # tree is not touched. The helper takes the project root (it appends
+    # /back itself), and the build directory is $TMP_ROOT/back.
+    run_cmd "Backend: resolve the SSO package from Packagist" \
+      "CI_PROJECT_DIR='$TMP_ROOT' '$REPO_ROOT/scripts/ci/backend-install.sh' --no-dev --no-scripts"
 
     run_cmd "Backend: composer install --no-dev" \
       "cd '$BUILD_DIR' && composer install --no-dev --optimize-autoloader --no-interaction"

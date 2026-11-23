@@ -66,6 +66,20 @@ composer install --no-dev --optimize-autoloader
 > `--optimize-autoloader` generates an optimized class map
 > for better performance.
 
+> **The SSO package comes from Packagist, not from the sibling monorepo.**
+> `back/composer.json` depends on `dowardev/sso-server` through a composer
+> *path* repository that points to the sibling `sso` monorepo
+> (`../../sso/packages/sso-server`). That monorepo is not part of this
+> repository, so it does not exist on a server (nor inside the build
+> directory the deploy script creates) and composer fails with
+> *"Source path ... is not found for package dowardev/sso-server"*.
+> The package is published on Packagist, so the deploy resolves it from
+> there — the same thing the CI does through
+> `scripts/ci/backend-install.sh`. The deploy script runs that helper
+> against the build directory, so the working tree is never touched and the
+> artifact ships a real copy of the package (a path repository would be
+> installed as a symlink, and the symlink would be broken on the server).
+
 ### 3. Configure Environment
 
 Create `back/.env` from the example:
