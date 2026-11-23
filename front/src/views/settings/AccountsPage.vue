@@ -128,7 +128,7 @@
       <ion-modal :is-open="selected !== null" @did-dismiss="closeModal()">
         <ConnectionModal
           v-if="selectedConnection !== null"
-          :title="selectedConnection.name || 'Nueva conexión'"
+          :title="modalTitle"
           :connection="selectedConnection"
           :connection-type="selected?.kind === 'caldav' ? 'caldav' : 'google'"
           :form-disabled="isFormDisabled()"
@@ -243,6 +243,17 @@ const connectingGoogle = ref(false);
 // 8. Computed
 const selectedConnection = computed(() => {
   return draft.value?.connection ?? null;
+});
+
+// The title of the connection modal: the name of the source, or what the
+// source is when it has no name yet.
+const modalTitle = computed(() => {
+  const name = draft.value?.connection.name ?? '';
+  if (name !== '') return name;
+  const kind = draft.value?.kind ?? 'google';
+  if (kind === 'ics') return 'Calendario por URL (ICS)';
+  if (kind === 'caldav') return 'Nueva conexión CalDAV';
+  return 'Cuenta de Google';
 });
 
 function draftGoogle(): GoogleConnection | undefined {

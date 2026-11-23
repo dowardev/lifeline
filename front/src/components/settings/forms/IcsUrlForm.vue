@@ -10,7 +10,7 @@
       :value="connection.name"
       label="Nombre"
       label-placement="stacked"
-      placeholder="Mi calendario de Google"
+      placeholder="Mi calendario"
       @ion-input="updateField({ field: 'name', value: $event.detail.value as string })"
     ></ion-input>
   </ion-item>
@@ -19,9 +19,9 @@
     <ion-input
       :disabled="disabled"
       :value="connection.icsUrl"
-      label="URL ICS (dirección secreta iCal)"
+      label="URL ICS (dirección iCal)"
       label-placement="stacked"
-      placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
+      placeholder="https://ejemplo.com/calendario.ics"
       inputmode="url"
       @ion-input="updateField({ field: 'icsUrl', value: $event.detail.value as string })"
     ></ion-input>

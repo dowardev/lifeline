@@ -2,6 +2,7 @@ import { config, mount } from '@vue/test-utils'
 import { IonicVue, IonInput } from '@ionic/vue'
 import GoogleOAuthForm from '@/components/settings/forms/GoogleOAuthForm.vue'
 import CaldavForm from '@/components/settings/forms/CaldavForm.vue'
+import IcsUrlForm from '@/components/settings/forms/IcsUrlForm.vue'
 import ConnectionModal from '@/components/settings/ConnectionModal.vue'
 import { describe, expect, test } from 'vitest'
 
@@ -212,6 +213,60 @@ describe('CaldavForm.vue', () => {
     await wrapper.vm.updateField({ field: 'name', value: 'Mutated CalDAV Name' })
 
     expect(originalConnection.name).toBe('Original CalDAV')
+  })
+})
+describe('IcsUrlForm.vue', () => {
+  const icsConnection = {
+    id: 'ics-id-1',
+    serverId: null,
+    isOAuth: false,
+    name: 'Feed',
+    icsUrl: 'https://example.com/calendar.ics',
+    color: '#ff0000',
+    testing: false,
+    saving: false,
+    syncing: false,
+    discovering: false,
+    collections: [],
+    testOk: null,
+    testResult: null,
+    errorDetail: null,
+  }
+
+  test('names no provider: a feed by ICS URL belongs to nobody', () => {
+    const wrapper = mount(IcsUrlForm, {
+      props: { connection: icsConnection, disabled: false },
+    })
+
+    // The labels and the placeholders of the form are what the user reads.
+    const inputs = wrapper.findAllComponents(IonInput)
+    expect(inputs.length).toBeGreaterThan(0)
+    const texts = inputs
+      .map((input) => `${input.props('label') ?? ''} ${input.props('placeholder') ?? ''}`)
+      .join(' ')
+    expect(texts).not.toContain('Google')
+    expect(texts).not.toContain('google')
+    expect(texts).toContain('Mi calendario')
+    expect(texts).toContain('https://ejemplo.com/calendario.ics')
+  })
+
+  test('emits the new ICS URL without mutating the connection', async () => {
+    const wrapper = mount(IcsUrlForm, {
+      props: { connection: icsConnection, disabled: false },
+    })
+
+    await wrapper.vm.updateField({
+      field: 'icsUrl',
+      value: 'https://example.com/other.ics',
+    })
+
+    const emitted = wrapper.emitted('update:connection')
+    expect(emitted).toBeTruthy()
+    expect(emitted!.length).toBe(1)
+    expect((emitted![0][0] as typeof icsConnection).icsUrl).toBe(
+      'https://example.com/other.ics',
+    )
+    expect(icsConnection.icsUrl).toBe('https://example.com/calendar.ics')
   })
 })
 describe('ConnectionModal.vue', () => {

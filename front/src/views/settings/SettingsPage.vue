@@ -24,7 +24,7 @@
                 <ion-icon slot="start" :icon="peopleOutline"></ion-icon>
 
                 <ion-label>Cuentas</ion-label>
-                <p>Google y CalDAV</p>
+                <p>Google, ICS y CalDAV</p>
 
                 <ion-icon slot="end" :icon="chevronForwardOutline"></ion-icon>
               </ion-item>
